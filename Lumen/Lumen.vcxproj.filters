@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="precomp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="precomp.h" />
+    <ClInclude Include="Core\CoreTypes.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Defines.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Enums.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Frontend">
+      <UniqueIdentifier>{40f1bf65-7a59-44d5-a88b-ab5a1eebf391}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{8006f893-d806-4ca7-b6c9-f51fac445977}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
