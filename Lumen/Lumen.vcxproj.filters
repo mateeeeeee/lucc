@@ -3,6 +3,9 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="precomp.cpp" />
+    <ClCompile Include="Frontend\SourceBuffer.cpp">
+      <Filter>Frontend</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />
@@ -14,6 +17,18 @@
     </ClInclude>
     <ClInclude Include="Core\Enums.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\SourceBuffer.h">
+      <Filter>Frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\Token.h">
+      <Filter>Frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\SourceLocation.h">
+      <Filter>Frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\TokenTypes.h">
+      <Filter>Frontend</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
