@@ -17,9 +17,7 @@ namespace lumen
 	class Token
 	{
 	public:
-		Token() : type(TokenType::Unknown), flags(TokenFlagBit_None),
-			loc{}, data{} {}
-
+		Token() : type(TokenType::Unknown), flags(TokenFlagBit_None), loc{}, data{} {}
 
 		TokenType GetType() const { return type; }
 		void SetType(TokenType t) { type = t; }
@@ -33,12 +31,11 @@ namespace lumen
 			else return Is(t1) || IsOneOf(ts...);
 		}
 
-
-		void SetFlag(TokenFlagBits flag) 
+		void SetFlag(TokenFlagBits flag)
 		{
 			flags |= flag;
 		}
-		bool GetFlag(TokenFlagBits flag) const 
+		bool GetFlag(TokenFlagBits flag) const
 		{
 			return (flags & flag) != 0;
 		}
@@ -46,6 +43,24 @@ namespace lumen
 		{
 			flags &= ~flag;
 		}
+
+		template<typename T>
+		void SetData(T const& _data)
+		{
+			data = _data;
+		}
+		template<typename T>
+		T const& GetData() const
+		{
+			return std::any_cast<T>(data);
+		}
+
+		void SetLocation(SourceLocation const& _loc)
+		{
+			loc = _loc;
+		}
+		SourceLocation const& GetLocation() const { return loc; }
+
 	private:
 		TokenType type;
 		TokenFlags flags;

@@ -9,5 +9,4 @@ namespace lumen
 		Count
 	};
 
-
 }

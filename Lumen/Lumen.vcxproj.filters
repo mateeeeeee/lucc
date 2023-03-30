@@ -6,6 +6,9 @@
     <ClCompile Include="Frontend\SourceBuffer.cpp">
       <Filter>Frontend</Filter>
     </ClCompile>
+    <ClCompile Include="Frontend\Lexer.cpp">
+      <Filter>Frontend\Lexer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />
@@ -30,6 +33,12 @@
     <ClInclude Include="Frontend\TokenTypes.h">
       <Filter>Frontend</Filter>
     </ClInclude>
+    <ClInclude Include="Frontend\TokenDef.h">
+      <Filter>Frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\Lexer.h">
+      <Filter>Frontend\Lexer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Frontend">
@@ -37,6 +46,15 @@
     </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{8006f893-d806-4ca7-b6c9-f51fac445977}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Frontend\Preprocessor">
+      <UniqueIdentifier>{018d7e58-0a5d-473b-9455-2828bc395030}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Frontend\Lexer">
+      <UniqueIdentifier>{2940acaf-0524-4d2f-ad1e-d0f220c7dbb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Frontend\Parser">
+      <UniqueIdentifier>{8875749e-759b-4319-8f2c-723af3aa099a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

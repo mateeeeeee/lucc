@@ -2,8 +2,7 @@
 #include <string>
 
 namespace lumen
-{ 
-
+{
 	class SourceBuffer
 	{
 	public:
@@ -24,7 +23,7 @@ namespace lumen
 		{
 			return std::string_view{ data_buffer };
 		}
-		std::string_view GetRefName() const 
+		std::string_view GetRefName() const
 		{
 			return ref_name;
 		}
