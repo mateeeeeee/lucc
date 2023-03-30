@@ -10,5 +10,10 @@ namespace lumen
 
 	}
 
+	LexerResult Lexer::Lex()
+	{
+		return LexerResult::Ok;
+	}
+
 }
 
