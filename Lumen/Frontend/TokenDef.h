@@ -1,0 +1,112 @@
+#pragma once
+
+#ifndef TOKEN
+#define TOKEN(X)
+#endif
+#ifndef PUNCTUATOR
+#define PUNCTUATOR(X,Y) TOKEN(X)
+#endif
+#ifndef KEYWORD
+#define KEYWORD(X) TOKEN(X)
+#endif
+
+#ifndef PP_KEYWORD
+#define PP_KEYWORD(X)
+#endif
+
+TOKEN(Unknown)
+TOKEN(EoF)
+TOKEN(Comment)
+TOKEN(Number)
+TOKEN(Identifier)
+TOKEN(String)
+
+PUNCTUATOR(LeftSquare, "[")
+PUNCTUATOR(RightSquare, "]")
+PUNCTUATOR(LeftRound, "(")
+PUNCTUATOR(RightRound, ")")
+PUNCTUATOR(LeftBrace, "{")
+PUNCTUATOR(RightBrace, "}")
+PUNCTUATOR(Period, ".")
+PUNCTUATOR(Ellipsis, "...")
+PUNCTUATOR(Amp, "&")
+PUNCTUATOR(AmpAmp, "&&")
+PUNCTUATOR(AmpEqual, "&=")
+PUNCTUATOR(Star, "*")
+PUNCTUATOR(StarEqual, "*=")
+PUNCTUATOR(Plus, "+")
+PUNCTUATOR(PlusPlus, "++")
+PUNCTUATOR(PlusEqual, "+=")
+PUNCTUATOR(Minus, "-")
+PUNCTUATOR(Arrow, "->")
+PUNCTUATOR(MinusMinus, "--")
+PUNCTUATOR(MinusEqual, "-=")
+PUNCTUATOR(Tilde, "~")
+PUNCTUATOR(Exclaim, "!")
+PUNCTUATOR(ExclaimEqual, "!=")
+PUNCTUATOR(Slash, "/")
+PUNCTUATOR(SlashEqual, "/=")
+PUNCTUATOR(Modulo, "%")
+PUNCTUATOR(ModuloEqual, "%=")
+PUNCTUATOR(Less, "<")
+PUNCTUATOR(LessLess, "<<")
+PUNCTUATOR(LessEqual, "<=")
+PUNCTUATOR(LessLessEqual, "<<=")
+PUNCTUATOR(Greater, ">")
+PUNCTUATOR(GreaterGreater, ">>")
+PUNCTUATOR(GreaterEqual, ">=")
+PUNCTUATOR(GreaterGreatErequal, ">>=")
+PUNCTUATOR(Caret, "^")
+PUNCTUATOR(CaretEqual, "^=")
+PUNCTUATOR(Pipe, "|")
+PUNCTUATOR(PipePipe, "||")
+PUNCTUATOR(PipeEqual, "|=")
+PUNCTUATOR(Question, "?")
+PUNCTUATOR(Colon, ":")
+PUNCTUATOR(Semicolon, ";")
+PUNCTUATOR(Equal, "=")
+PUNCTUATOR(EqualEqual, "==")
+PUNCTUATOR(Comma, ",")
+
+KEYWORD(Break)
+KEYWORD(Case)
+KEYWORD(Char)
+KEYWORD(Const)
+KEYWORD(Continue)
+KEYWORD(Do)
+KEYWORD(double)
+KEYWORD(If)
+KEYWORD(Else)
+KEYWORD(Enum)
+KEYWORD(Float)
+KEYWORD(For)
+KEYWORD(Goto)
+KEYWORD(Int)
+KEYWORD(Long)
+KEYWORD(Bool)
+KEYWORD(return)
+KEYWORD(Struct)
+KEYWORD(Switch)
+KEYWORD(Typedef)
+KEYWORD(Unsigned)
+KEYWORD(Void)
+KEYWORD(While)
+
+PP_KEYWORD(if)
+PP_KEYWORD(ifdef)
+PP_KEYWORD(ifndef)
+PP_KEYWORD(elif)
+PP_KEYWORD(elifdef)
+PP_KEYWORD(elifndef)
+PP_KEYWORD(else)
+PP_KEYWORD(endif)
+PP_KEYWORD(defined)
+PP_KEYWORD(include)
+PP_KEYWORD(define)
+PP_KEYWORD(undef)
+
+#undef PP_KEYWORD
+#undef KEYWORD
+#undef PUNCTUATOR
+#undef TOKEN
+

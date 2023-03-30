@@ -4,6 +4,10 @@ namespace lumen
 {
 	enum class TokenType : uint16
 	{
-		Unknown
+		#define TOKEN(X) X
+		#include "TokenDef.h"
+		Count
 	};
+
+
 }
