@@ -29,7 +29,7 @@ namespace lumen
 			bool result = LexToken(current_token);
 
 			if (!result) return false;
-			if (tokens.back().Is(TokenType::newline)) current_token.SetFlag(TokenFlagBit_BeginningOfLine);
+			if (tokens.back().Is(TokenType::newline)) current_token.SetFlag(TokenFlag_BeginningOfLine);
 
 			tokens.push_back(current_token);
 		} while (!current_token.Is(TokenType::eof));
@@ -43,7 +43,7 @@ namespace lumen
 		{
 			++cur_ptr;
 			while ((*cur_ptr == ' ') || (*cur_ptr == '\t')) ++cur_ptr;
-			token.SetFlag(TokenFlagBit_LeadingSpace);
+			token.SetFlag(TokenFlag_LeadingSpace);
 			UpdatePointersAndLocation();
 		}
 
@@ -55,7 +55,7 @@ namespace lumen
 		case '\n':
 		{
 			loc.NewLine();
-			token.ClearFlag(TokenFlagBit_LeadingSpace);
+			token.ClearFlag(TokenFlag_LeadingSpace);
 			return LexNewLine(token);
 		}
 		case '\\':

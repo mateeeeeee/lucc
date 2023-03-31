@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Frontend\Lexer.cpp" />
+    <ClCompile Include="Frontend\Preprocessor.cpp" />
     <ClCompile Include="Frontend\SourceBuffer.cpp" />
     <ClCompile Include="Frontend\TokenTypes.cpp" />
     <ClCompile Include="main.cpp" />
@@ -149,13 +150,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">precomp.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Preprocessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\CoreTypes.h" />
     <ClInclude Include="Core\Defines.h" />
     <ClInclude Include="Core\Enums.h" />
     <ClInclude Include="Frontend\Lexer.h" />
+    <ClInclude Include="Frontend\Preprocessor.h" />
     <ClInclude Include="Frontend\SourceBuffer.h" />
     <ClInclude Include="Frontend\SourceLocation.h" />
     <ClInclude Include="Frontend\Token.h" />
@@ -165,7 +166,6 @@
     </ClInclude>
     <ClInclude Include="Frontend\TokenTypes.h" />
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="Preprocessor.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="test.txt" />
