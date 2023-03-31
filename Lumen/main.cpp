@@ -17,9 +17,11 @@ int main()
 			std::cout << "Type: " << GetTokenName(token.GetType()) << "\t";
 			if (token.HasData())
 			{
-				if (token.GetType() != TokenType::Number) std::cout << "Value: " << token.GetData<std::string>() << "\t";
+				if (token.GetType() != TokenType::number) std::cout << "Value: " << token.GetData<std::string>() << "\t";
 				else std::cout << "Value: " << token.GetData<int32>() << "\t";
 			}
+			auto const& loc = token.GetLocation();
+			std::cout << "Location: " << loc.filename << ", line: " << loc.line << ", column: " << loc.column;
 			std::cout << "\n";
 		}
 	}

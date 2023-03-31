@@ -10,7 +10,8 @@ namespace lumen
 	enum TokenFlagBits : uint32
 	{
 		TokenFlagBit_None = 0x0,
-		TokenFlagBit_LeadingSpace = 0x1
+		TokenFlagBit_LeadingSpace = 0x1,
+		TokenFlagBit_BeginningOfLine = 0x2,
 	};
 	DEFINE_ENUM_BIT_OPERATORS(TokenFlagBits);
 	using TokenFlags = uint32;
@@ -18,11 +19,11 @@ namespace lumen
 	class Token
 	{
 	public:
-		Token() : type(TokenType::Unknown), flags(TokenFlagBit_None), loc{}, data{} {}
+		Token() : type(TokenType::unknown), flags(TokenFlagBit_None), loc{}, data{} {}
 		
 		void Reset()
 		{
-			type = TokenType::Unknown;
+			type = TokenType::unknown;
 			flags = TokenFlagBit_None;
 			loc = {};
 			data.reset();

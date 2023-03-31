@@ -7,9 +7,9 @@ namespace lumen
 	class Preprocessor
 	{
 	public:
-		Preprocessor(Lexer&) {}
+		Preprocessor(Lexer&);
 
-		void Preprocess() {}
+		void Preprocess();
 
 	private:
 		Lexer& lexer;

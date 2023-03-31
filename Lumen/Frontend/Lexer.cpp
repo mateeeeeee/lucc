@@ -27,9 +27,12 @@ namespace lumen
 		{
 			current_token.Reset();
 			bool result = LexToken(current_token);
+
 			if (!result) return false;
+			if (tokens.back().Is(TokenType::newline)) current_token.SetFlag(TokenFlagBit_BeginningOfLine);
+
 			tokens.push_back(current_token);
-		} while (!current_token.Is(TokenType::EoF));
+		} while (!current_token.Is(TokenType::eof));
 		return true;
 	}
 
@@ -100,10 +103,9 @@ namespace lumen
 		return false;
 	}
 
-
 	bool Lexer::LexNumber(Token& t)
 	{
-		FillToken<int32>(t, TokenType::Number, [](char c) -> bool { return std::isdigit(c); }, IntegerTransform);
+		FillToken<int32>(t, TokenType::number, [](char c) -> bool { return std::isdigit(c); }, IntegerTransform);
 		if (std::isalpha(*cur_ptr)) return false;
 		UpdatePointersAndLocation();
 		return true;
@@ -111,7 +113,7 @@ namespace lumen
 
 	bool Lexer::LexIdentifier(Token& t)
 	{
-		FillToken<std::string>(t, TokenType::Identifier, [](char c) -> bool { return std::isalnum(c) || c == '_'; }, StringTransform);
+		FillToken<std::string>(t, TokenType::identifier, [](char c) -> bool { return std::isalnum(c) || c == '_'; }, StringTransform);
 		char const* identifier = t.GetData<std::string>().c_str();
 		if (IsKeyword(identifier))
 		{
@@ -123,7 +125,7 @@ namespace lumen
 
 	bool Lexer::LexString(Token& t)
 	{
-		FillToken<std::string>(t, TokenType::String, [](char c) -> bool { return c != '"'; }, StringTransform);
+		FillToken<std::string>(t, TokenType::string_literal, [](char c) -> bool { return c != '"'; }, StringTransform);
 		++cur_ptr; //skip the closing "
 		UpdatePointersAndLocation();
 		return true;
@@ -131,21 +133,21 @@ namespace lumen
 
 	bool Lexer::LexEndOfFile(Token& t)
 	{
-		t.SetType(TokenType::EoF);
+		t.SetType(TokenType::eof);
 		t.SetLocation(loc);
 		return true;
 	}
 
 	bool Lexer::LexNewLine(Token& t)
 	{
-		t.SetType(TokenType::NewLine);
+		t.SetType(TokenType::newline);
 		t.SetLocation(loc);
 		return true;
 	}
 
 	bool Lexer::LexComment(Token& t)
 	{
-		FillToken<std::string>(t, TokenType::Comment, [](char c) -> bool { return c != '\n' && c != '\0'; }, StringTransform);
+		FillToken<std::string>(t, TokenType::comment, [](char c) -> bool { return c != '\n' && c != '\0'; }, StringTransform);
 		UpdatePointersAndLocation();
 		return true;
 	}
@@ -156,43 +158,49 @@ namespace lumen
 		switch (c)
 		{
 		case '?':
-			t.SetType(TokenType::Question);
+			t.SetType(TokenType::question);
 			break;
 		case '[':
-			t.SetType(TokenType::LeftSquare);
+			t.SetType(TokenType::left_square);
 			break;
 		case ']':
-			t.SetType(TokenType::RightSquare);
+			t.SetType(TokenType::right_square);
 			break;
 		case '(':
-			t.SetType(TokenType::LeftRound);
+			t.SetType(TokenType::left_round);
 			break;
 		case ')':
-			t.SetType(TokenType::RightRound);
+			t.SetType(TokenType::right_round);
 			break;
 		case '{':
-			t.SetType(TokenType::LeftBrace);
+			t.SetType(TokenType::left_brace);
 			break;
 		case '}':
-			t.SetType(TokenType::RightBrace);
+			t.SetType(TokenType::right_brace);
+			break;
+		case '#':
+			if (*cur_ptr == '#')
+			{
+				t.SetType(TokenType::hash_hash);
+				++cur_ptr;
+			}
+			else t.SetType(TokenType::hash);
 			break;
 		case '.':
 			if (cur_ptr[0] == '.' && cur_ptr[1] == '.')
 			{
-				t.SetType(TokenType::Ellipsis);
+				t.SetType(TokenType::ellipsis);
 				cur_ptr += 2;
 			}
 			else 
 			{
-				t.SetType(TokenType::Period);
+				t.SetType(TokenType::period);
 			}
 		}
 		t.SetLocation(loc);
 		UpdatePointersAndLocation();
 		return true;
 	}
-
-	
 
 }
 
