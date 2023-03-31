@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="Frontend\Lexer.cpp" />
     <ClCompile Include="Frontend\SourceBuffer.cpp" />
+    <ClCompile Include="Frontend\TokenTypes.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="precomp.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -157,9 +158,13 @@
     <ClInclude Include="Frontend\SourceBuffer.h" />
     <ClInclude Include="Frontend\SourceLocation.h" />
     <ClInclude Include="Frontend\Token.h" />
-    <ClInclude Include="Frontend\TokenDef.h" />
+    <ClInclude Include="Frontend\TokenDef.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Frontend\TokenTypes.h" />
     <ClInclude Include="precomp.h" />
+    <ClInclude Include="Preprocessor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

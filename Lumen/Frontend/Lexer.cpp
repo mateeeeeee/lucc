@@ -3,17 +3,187 @@
 
 namespace lumen
 {
-
-	Lexer::Lexer(SourceBuffer const& source) : buf_start(source.GetBufferStart()), buf_end(source.GetBufferEnd()),
-		buf_ptr(source.GetBufferStart())
+	namespace
 	{
+		std::string StringTransform(const char* start, const char* end)
+		{
+			return std::string(start, end - start);
+		}
 
+		int32 IntegerTransform(const char* start, const char* end)
+		{
+			std::string number_string(start, end - start);
+			return std::stoi(number_string, nullptr, 0);
+		}
 	}
 
-	LexerResult Lexer::Lex()
+	Lexer::Lexer(SourceBuffer const& source) : buf_ptr(source.GetBufferStart()), 
+											   loc{ .filename = source.GetRefName().data()} {}
+
+	bool Lexer::Lex()
 	{
-		return LexerResult::Ok;
+		Token current_token{};
+		do
+		{
+			bool result = LexToken(current_token);
+			if (!result) return false;
+			tokens.push_back(current_token);
+		} while (!current_token.Is(TokenType::EoF));
+		return true;
 	}
+
+	bool Lexer::LexToken(Token& token)
+	{
+		UpdatePointersAndLocation();
+		if ((*cur_ptr == ' ') || (*cur_ptr == '\t'))
+		{
+			++cur_ptr;
+			while ((*cur_ptr == ' ') || (*cur_ptr == '\t')) ++cur_ptr;
+			token.SetFlag(TokenFlagBit_LeadingSpace);
+			UpdatePointersAndLocation();
+		}
+
+		char c = *cur_ptr++;
+		switch (c)
+		{
+		case '\n':
+		{
+			loc.NewLine();
+			cur_ptr = buf_ptr;
+			token.ClearFlag(TokenFlagBit_LeadingSpace);
+			break;
+		}
+		case '\\':
+		{
+			if (*cur_ptr == '\\')
+			{
+				++cur_ptr;
+				return LexComment(token);
+			}
+		}
+		case EOF:
+		{
+			return LexEndOfFile(token);
+		}
+		case '"':
+		{
+			return LexString(token);
+		}
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+		{
+			--cur_ptr;
+			return LexNumber(token);
+		}
+		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
+		case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
+		case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
+		case 'V': case 'W': case 'X': case 'Y': case 'Z':
+		case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
+		case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
+		case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
+		case 'v': case 'w': case 'x': case 'y': case 'z':
+		case '_':
+		{
+			--cur_ptr;
+			return LexIdentifier(token);
+		}
+		case '[': case ']': case '(': case ')': case '{': case '}': case '.':
+		case '&': case '*': case '+': case '-': case '~': case '!': case '/':
+		case '%': case '<': case '>': case '^': case '|': case '?': case ':':
+		case ';': case '=': case ',': case '#':
+		{
+			--cur_ptr;
+			return LexPunctuator(token);
+		}
+		}
+	}
+
+
+	bool Lexer::LexNumber(Token& t)
+	{
+		FillToken<int32>(t, TokenType::Number, cur_ptr, [](char c) -> bool { return std::isdigit(c); }, IntegerTransform);
+		if (std::isalpha(*cur_ptr)) return false;
+		UpdatePointersAndLocation();
+		return true;
+	}
+
+	bool Lexer::LexIdentifier(Token& t)
+	{
+		FillToken<std::string>(t, TokenType::Identifier, cur_ptr, [](char c) -> bool { return std::isalnum(c) || c == '_'; }, StringTransform);
+		char const* identifier = t.GetData<std::string>().c_str();
+		if (IsKeyword(identifier))
+		{
+			t.SetType(GetKeywordType(identifier));
+		}
+		UpdatePointersAndLocation();
+		return true;
+	}
+
+	bool Lexer::LexString(Token& t)
+	{
+		FillToken<std::string>(t, TokenType::String, cur_ptr, [](char c) -> bool { return c != '"'; }, StringTransform);
+		++cur_ptr; //skip the closing "
+		UpdatePointersAndLocation();
+		return true;
+	}
+
+	bool Lexer::LexEndOfFile(Token& t)
+	{
+		t.SetType(TokenType::EoF);
+		t.SetLocation(loc);
+		return true;
+	}
+
+	bool Lexer::LexComment(Token& t)
+	{
+		FillToken<std::string>(t, TokenType::Comment, cur_ptr, [](char c) -> bool { return c != '\n'; }, StringTransform);
+		UpdatePointersAndLocation();
+		return true;
+	}
+
+	bool Lexer::LexPunctuator(Token& t)
+	{
+		char c = *cur_ptr++;
+		switch (c)
+		{
+		case '?':
+			t.SetType(TokenType::Question);
+			break;
+		case '[':
+			t.SetType(TokenType::LeftSquare);
+			break;
+		case ']':
+			t.SetType(TokenType::RightSquare);
+			break;
+		case '(':
+			t.SetType(TokenType::LeftRound);
+			break;
+		case ')':
+			t.SetType(TokenType::RightRound);
+			break;
+		case '{':
+			t.SetType(TokenType::LeftBrace);
+			break;
+		case '}':
+			t.SetType(TokenType::RightBrace);
+			break;
+		case '.':
+			if (cur_ptr[0] == '.' && cur_ptr[1] == '.')
+			{
+				t.SetType(TokenType::Ellipsis);
+				cur_ptr += 2;
+			}
+			else 
+			{
+				t.SetType(TokenType::Period);
+			}
+		}
+		t.SetLocation(loc);
+		UpdatePointersAndLocation();
+	}
+
+	
 
 }
 

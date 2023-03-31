@@ -10,6 +10,7 @@ namespace lumen
 	enum TokenFlagBits : uint32
 	{
 		TokenFlagBit_None = 0x0,
+		TokenFlagBit_LeadingSpace = 0x1
 	};
 	DEFINE_ENUM_BIT_OPERATORS(TokenFlagBits);
 	using TokenFlags = uint32;

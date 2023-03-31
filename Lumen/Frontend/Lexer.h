@@ -1,15 +1,23 @@
 #pragma once
 #include <vector>
+#include <string>
+#include <functional>
 #include "Frontend/Token.h"
 
 namespace lumen
 {
 	class SourceBuffer;
 
-	enum class LexerResult : uint8
+	template<typename P>
+	concept CharPredicate = requires(P p, char a)
 	{
-		Ok,
-		UnknownToken
+		{ p(a) } -> std::convertible_to<bool>;
+	};
+
+	template<typename F, typename T>
+	concept CArrayToValueTransform = requires(F f, char const* start, char const* end)
+	{
+		{ f(start, end) } -> std::convertible_to<T>;
 	};
 
 	class Lexer
@@ -18,40 +26,59 @@ namespace lumen
 
 	public:
 		explicit Lexer(SourceBuffer const& source);
-		Lexer(const Lexer&) = delete;
-		Lexer& operator=(const Lexer&) = delete;
+		Lexer(Lexer const&) = delete;
+		Lexer& operator=(Lexer const&) = delete;
 
-		LexerResult Lex();
+		bool Lex();
 
 		std::vector<Token> const& GetTokens() const { return tokens; }
 
 	private:
-		char const* buf_start;
-		char const* buf_end;
 		char const* buf_ptr;
+		char const* cur_ptr;
 
 		SourceLocation loc;
 		std::vector<Token> tokens;
 	private:
 
-		bool NextToken(Token&);
+		bool LexToken(Token&);
+		bool LexNumber(Token&);
+		bool LexIdentifier(Token&);
+		bool LexString(Token&);
+		bool LexEndOfFile(Token&);
+		bool LexComment(Token&);
+		bool LexPunctuator(Token&);
 
-		char PeekChar()
+		void UpdatePointersAndLocation()
 		{
-			return *(buf_ptr + 1);
+			loc.NewChars(cur_ptr - buf_ptr);
+			buf_ptr = cur_ptr;
 		}
-		char CurrentChar()
+
+		template<CharPredicate P>
+		void ReadUntil(char const* start, P&& predicate)
 		{
-			return *buf_ptr;
+			while (predicate(start++));
 		}
-		char NextChar()
+
+		template<CharPredicate P>
+		void FillToken(Token& t, TokenType type, char const* start, P&& predicate)
 		{
-			return *buf_ptr++;
+			t.SetLocation(loc);
+			t.SetType(type);
+			char const* tmp_ptr = cur_ptr;
+			ReadUntil(tmp_ptr, std::forward<P>(predicate));
+			cur_ptr = tmp_ptr;
 		}
-		void PopChar(char& c)
+		template<typename T, CArrayToValueTransform<T> F, CharPredicate P>
+		void FillToken(Token& t, TokenType type, char const* start, P&& predicate, F&& transform)
 		{
-			c = *buf_ptr;
-			--buf_ptr;
+			t.SetLocation(loc);
+			t.SetType(type);
+			char const* tmp_ptr = cur_ptr;
+			ReadUntil(tmp_ptr, std::forward<P>(predicate));
+			t.SetData<T>(transform(cur_ptr, tmp_ptr));
+			cur_ptr = tmp_ptr;
 		}
 	};
 }

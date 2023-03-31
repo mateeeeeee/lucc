@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef TOKEN
 #define TOKEN(X)
 #endif
@@ -7,7 +5,7 @@
 #define PUNCTUATOR(X,Y) TOKEN(X)
 #endif
 #ifndef KEYWORD
-#define KEYWORD(X) TOKEN(X)
+#define KEYWORD(X) TOKEN(KW_##X)
 #endif
 
 #ifndef PP_KEYWORD
@@ -16,6 +14,7 @@
 
 TOKEN(Unknown)
 TOKEN(EoF)
+TOKEN(EoD)
 TOKEN(Comment)
 TOKEN(Number)
 TOKEN(Identifier)
@@ -55,7 +54,7 @@ PUNCTUATOR(LessLessEqual, "<<=")
 PUNCTUATOR(Greater, ">")
 PUNCTUATOR(GreaterGreater, ">>")
 PUNCTUATOR(GreaterEqual, ">=")
-PUNCTUATOR(GreaterGreatErequal, ">>=")
+PUNCTUATOR(GreaterGreatEqual, ">>=")
 PUNCTUATOR(Caret, "^")
 PUNCTUATOR(CaretEqual, "^=")
 PUNCTUATOR(Pipe, "|")
@@ -67,6 +66,7 @@ PUNCTUATOR(Semicolon, ";")
 PUNCTUATOR(Equal, "=")
 PUNCTUATOR(EqualEqual, "==")
 PUNCTUATOR(Comma, ",")
+PUNCTUATOR(Hash, "#")
 
 KEYWORD(While)
 KEYWORD(Break)
