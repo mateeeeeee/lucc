@@ -107,7 +107,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(SolutionDir)Lumen\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>Core/CoreTypes.h;precomp.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
@@ -127,7 +127,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(SolutionDir)Lumen\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>Core/CoreTypes.h;precomp.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
@@ -165,6 +165,9 @@
     <ClInclude Include="Frontend\TokenTypes.h" />
     <ClInclude Include="precomp.h" />
     <ClInclude Include="Preprocessor.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="test.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

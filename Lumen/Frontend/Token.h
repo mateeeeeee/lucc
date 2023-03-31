@@ -19,6 +19,14 @@ namespace lumen
 	{
 	public:
 		Token() : type(TokenType::Unknown), flags(TokenFlagBit_None), loc{}, data{} {}
+		
+		void Reset()
+		{
+			type = TokenType::Unknown;
+			flags = TokenFlagBit_None;
+			loc = {};
+			data.reset();
+		}
 
 		TokenType GetType() const { return type; }
 		void SetType(TokenType t) { type = t; }
@@ -53,7 +61,11 @@ namespace lumen
 		template<typename T>
 		T const& GetData() const
 		{
-			return std::any_cast<T>(data);
+			return std::any_cast<T const&>(data);
+		}
+		bool HasData() const
+		{
+			return data.has_value();
 		}
 
 		void SetLocation(SourceLocation const& _loc)

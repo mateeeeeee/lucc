@@ -20,8 +20,7 @@ namespace lumen
 		};
 		std::unordered_map<std::string, TokenType> keywords_map =
 		{
-			#define TOKEN(X) X
-			#define KEYWORD(X) {#X, TOKEN(KW_##X)},
+			#define KEYWORD(X) {#X, TokenType::##KW_##X},
 			#include "TokenDef.h"
 		};
 		std::unordered_set<std::string> const pp_keywords =
@@ -32,8 +31,7 @@ namespace lumen
 
 		std::unordered_map<std::string, TokenType> pp_keywords_map =
 		{
-			#define TOKEN(X) X
-			#define PP_KEYWORD(X) {#X, TOKEN(KW_##X)},
+			#define PP_KEYWORD(X) {#X, TokenType::##PP_##X},
 			#include "TokenDef.h"
 		};
 	}

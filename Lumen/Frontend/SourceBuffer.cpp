@@ -12,6 +12,7 @@ namespace lumen
 		std::ostringstream buf;
 		buf << input_stream.rdbuf();
 		data_buffer = buf.str();
+		data_buffer.push_back('\0');
 	}
 
 	SourceBuffer::SourceBuffer(char const* buffer_start, char const* buffer_end, char const* refname)

@@ -17,7 +17,7 @@ namespace lumen
 		}
 	}
 
-	Lexer::Lexer(SourceBuffer const& source) : buf_ptr(source.GetBufferStart()), 
+	Lexer::Lexer(SourceBuffer const& source) : buf_ptr(source.GetBufferStart()), cur_ptr(buf_ptr),
 											   loc{ .filename = source.GetRefName().data()} {}
 
 	bool Lexer::Lex()
@@ -25,6 +25,7 @@ namespace lumen
 		Token current_token{};
 		do
 		{
+			current_token.Reset();
 			bool result = LexToken(current_token);
 			if (!result) return false;
 			tokens.push_back(current_token);
@@ -46,12 +47,13 @@ namespace lumen
 		char c = *cur_ptr++;
 		switch (c)
 		{
+		case '\0':
+			return LexEndOfFile(token);
 		case '\n':
 		{
 			loc.NewLine();
-			cur_ptr = buf_ptr;
 			token.ClearFlag(TokenFlagBit_LeadingSpace);
-			break;
+			return LexNewLine(token);
 		}
 		case '\\':
 		{
@@ -60,10 +62,7 @@ namespace lumen
 				++cur_ptr;
 				return LexComment(token);
 			}
-		}
-		case EOF:
-		{
-			return LexEndOfFile(token);
+			else break;
 		}
 		case '"':
 		{
@@ -97,12 +96,14 @@ namespace lumen
 			return LexPunctuator(token);
 		}
 		}
+
+		return false;
 	}
 
 
 	bool Lexer::LexNumber(Token& t)
 	{
-		FillToken<int32>(t, TokenType::Number, cur_ptr, [](char c) -> bool { return std::isdigit(c); }, IntegerTransform);
+		FillToken<int32>(t, TokenType::Number, [](char c) -> bool { return std::isdigit(c); }, IntegerTransform);
 		if (std::isalpha(*cur_ptr)) return false;
 		UpdatePointersAndLocation();
 		return true;
@@ -110,7 +111,7 @@ namespace lumen
 
 	bool Lexer::LexIdentifier(Token& t)
 	{
-		FillToken<std::string>(t, TokenType::Identifier, cur_ptr, [](char c) -> bool { return std::isalnum(c) || c == '_'; }, StringTransform);
+		FillToken<std::string>(t, TokenType::Identifier, [](char c) -> bool { return std::isalnum(c) || c == '_'; }, StringTransform);
 		char const* identifier = t.GetData<std::string>().c_str();
 		if (IsKeyword(identifier))
 		{
@@ -122,7 +123,7 @@ namespace lumen
 
 	bool Lexer::LexString(Token& t)
 	{
-		FillToken<std::string>(t, TokenType::String, cur_ptr, [](char c) -> bool { return c != '"'; }, StringTransform);
+		FillToken<std::string>(t, TokenType::String, [](char c) -> bool { return c != '"'; }, StringTransform);
 		++cur_ptr; //skip the closing "
 		UpdatePointersAndLocation();
 		return true;
@@ -135,9 +136,16 @@ namespace lumen
 		return true;
 	}
 
+	bool Lexer::LexNewLine(Token& t)
+	{
+		t.SetType(TokenType::NewLine);
+		t.SetLocation(loc);
+		return true;
+	}
+
 	bool Lexer::LexComment(Token& t)
 	{
-		FillToken<std::string>(t, TokenType::Comment, cur_ptr, [](char c) -> bool { return c != '\n'; }, StringTransform);
+		FillToken<std::string>(t, TokenType::Comment, [](char c) -> bool { return c != '\n' && c != '\0'; }, StringTransform);
 		UpdatePointersAndLocation();
 		return true;
 	}
@@ -181,6 +189,7 @@ namespace lumen
 		}
 		t.SetLocation(loc);
 		UpdatePointersAndLocation();
+		return true;
 	}
 
 	

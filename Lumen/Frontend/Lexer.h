@@ -46,23 +46,24 @@ namespace lumen
 		bool LexIdentifier(Token&);
 		bool LexString(Token&);
 		bool LexEndOfFile(Token&);
+		bool LexNewLine(Token&);
 		bool LexComment(Token&);
 		bool LexPunctuator(Token&);
 
 		void UpdatePointersAndLocation()
 		{
-			loc.NewChars(cur_ptr - buf_ptr);
+			loc.NewChars(static_cast<int32>(cur_ptr - buf_ptr));
 			buf_ptr = cur_ptr;
 		}
 
 		template<CharPredicate P>
-		void ReadUntil(char const* start, P&& predicate)
+		void ReadUntil(char const*& start, P&& predicate)
 		{
-			while (predicate(start++));
+			for (; predicate(*start); ++start);
 		}
 
 		template<CharPredicate P>
-		void FillToken(Token& t, TokenType type, char const* start, P&& predicate)
+		void FillToken(Token& t, TokenType type,P&& predicate)
 		{
 			t.SetLocation(loc);
 			t.SetType(type);
@@ -71,7 +72,7 @@ namespace lumen
 			cur_ptr = tmp_ptr;
 		}
 		template<typename T, CArrayToValueTransform<T> F, CharPredicate P>
-		void FillToken(Token& t, TokenType type, char const* start, P&& predicate, F&& transform)
+		void FillToken(Token& t, TokenType type, P&& predicate, F&& transform)
 		{
 			t.SetLocation(loc);
 			t.SetType(type);
