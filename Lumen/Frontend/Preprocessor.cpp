@@ -28,12 +28,15 @@ namespace lu
 			return true;
 		}
 
-		for (auto& token : lexer.tokens) pp_tokens.emplace_back(token);
+		for (auto& token : lexer.tokens)
+		{
+			if(token.IsNot(TokenType::comment)) pp_tokens.emplace_back(token);
+		}
 		
 		auto curr = pp_tokens.begin();
 		while (curr->token.IsNot(TokenType::eof))
 		{
-			//#todo expand macro
+			if (ExpandMacro(curr)) continue;
 			
 			if (!curr->token.IsPPKeyword())
 			{
@@ -75,7 +78,7 @@ namespace lu
 				LU_ASSERT_MSG(false, "Not supported yet!");
 				break;
 			case TokenType::PP_endif:
-				LU_ASSERT_MSG(false, "Not supported yet!");
+				if (!ProcessEndif(curr)) return false;
 				break;
 			case TokenType::PP_defined:
 				LU_ASSERT_MSG(false, "Not supported yet!");
@@ -119,6 +122,7 @@ namespace lu
 			curr = pp_tokens.erase(curr);
 			lexer.tokens.pop_back(); //pop eof
 			for (auto&& token : lexer.tokens) pp_tokens.emplace(curr, token);
+			std::advance(curr, -static_cast<int64>(lexer.tokens.size()));
 			return true;
 		}
 		return false;
@@ -217,13 +221,27 @@ namespace lu
 			return false;
 		}
 		conditional_includes.top().ctx = ConditionalIncludeContext::Else;
-		++curr;
 		if (curr->token.IsNot(TokenType::newline))
 		{
 			//too much tokens
 			return false;
 		}
 		if (conditional_includes.top().included) IgnoreConditionalIncludes(curr);
+		return true;
+	}
+
+	bool Preprocessor::ProcessEndif(PPTokenPtr& curr)
+	{
+		if (conditional_includes.empty())
+		{
+			return false;
+		}
+		if (curr->token.IsNot(TokenType::newline) && curr->token.IsNot(TokenType::eof))
+		{
+			//too much tokens
+			return false;
+		}
+		conditional_includes.pop();
 		return true;
 	}
 
@@ -259,6 +277,24 @@ namespace lu
 			}
 			++curr;
 		}
+	}
+
+	bool Preprocessor::ExpandMacro(PPTokenPtr& curr)
+	{
+		std::string_view id = curr->token.GetIdentifier();
+		if (!macros.contains(id)) return false;
+
+		Macro const& m = macros[id];
+		if (!m.is_function) 
+		{
+			TokenFlags flags = curr->token.GetFlags();
+			curr = pp_tokens.erase(curr);
+			for (auto&& token : m.body) pp_tokens.emplace(curr, token);
+			std::advance(curr, -static_cast<int64>(m.body.size()));
+			curr->token.SetFlags(flags);
+			return true;
+		}
+		return false;
 	}
 
 }

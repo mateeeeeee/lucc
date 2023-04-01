@@ -20,7 +20,8 @@ namespace lu
 			if (!tokens.empty())
 			{
 				auto const& prev_token = tokens.back();
-				if (prev_token.Is(TokenType::newline)) current_token.SetFlag(TokenFlag_BeginningOfLine);
+				if (prev_token.Is(TokenType::newline))
+					current_token.SetFlag(TokenFlag_BeginningOfLine);
 				if (prev_token.Is(TokenType::hash) && prev_token.HasFlag(TokenFlag_BeginningOfLine))
 				{
 					std::string_view identifier = current_token.GetIdentifier();
@@ -32,6 +33,8 @@ namespace lu
 					}
 				}
 			}
+			else current_token.SetFlag(TokenFlag_BeginningOfLine);
+
 			tokens.push_back(current_token);
 		} while (current_token.IsNot(TokenType::eof));
 		return true;
@@ -74,6 +77,15 @@ namespace lu
 		{
 			return LexString(token);
 		}
+		case '.':
+		{
+			--cur_ptr;
+			if (std::isdigit(*(cur_ptr + 1)))
+			{
+				return LexNumber(token);
+			}
+			else return LexPunctuator(token);
+		}
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 		{
@@ -93,7 +105,7 @@ namespace lu
 			--cur_ptr;
 			return LexIdentifier(token);
 		}
-		case '[': case ']': case '(': case ')': case '{': case '}': case '.':
+		case '[': case ']': case '(': case ')': case '{': case '}': /*case '.': */
 		case '&': case '*': case '+': case '-': case '~': case '!': case '/':
 		case '%': case '<': case '>': case '^': case '|': case '?': case ':':
 		case ';': case '=': case ',': case '#':
@@ -108,8 +120,14 @@ namespace lu
 
 	bool Lexer::LexNumber(Token& t)
 	{
-		FillToken(t, TokenType::number, [](char c) -> bool { return std::isdigit(c); });
-		if (std::isalpha(*cur_ptr)) return false;
+		char const* tmp_ptr = cur_ptr;
+		Consume(tmp_ptr, [](char c) -> bool { return std::isdigit(c); });
+		if (*tmp_ptr == 'f' || *tmp_ptr == 'F')
+		{
+			++tmp_ptr;
+			FillToken(t, TokenType::number, tmp_ptr);
+		}
+		else return false;
 		UpdatePointersAndLocation();
 		return true;
 	}

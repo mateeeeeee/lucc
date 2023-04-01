@@ -1,3 +1,6 @@
-\\this is a comment
 #include "test2.txt"
-int abc (...)  . 424
+#ifdef Flag
+int a
+#else
+float b
+#endif

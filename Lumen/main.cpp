@@ -1,13 +1,18 @@
 #include "Frontend/SourceBuffer.h"
 #include "Frontend/Lexer.h"
 #include "Frontend/Preprocessor.h"
+#include "Core/CLIParser.h"
 #include <iostream>
 
 using namespace lu;
 
-int main()
+int main(int argc, char** argv)
 {
-	//#todo add cmd line parsing 
+	//cmd
+	CLIParser parser{};
+	CLIArg& opt = parser.AddArg(false, "-opt");
+	parser.Parse(argc, argv);
+
 	//#todo add diagnostics 
 
 	SourceBuffer buff("test.txt");
@@ -20,8 +25,8 @@ int main()
 		{
 			std::cout << "Type: " << GetTokenName(token.GetType()) << "\t";
 			std::cout << "Value: " << token.GetIdentifier() << "\t";
-			auto const& loc = token.GetLocation();
-			std::cout << "Location: " << loc.filename << ", line: " << loc.line << ", column: " << loc.column;
+			//auto const& loc = token.GetLocation();
+			//std::cout << "Location: " << loc.filename << ", line: " << loc.line << ", column: " << loc.column;
 			std::cout << "\n";
 		}
 	}
@@ -36,8 +41,8 @@ int main()
 		{
 			std::cout << "Type: " << GetTokenName(token.GetType()) << "\t";
 			std::cout << "Value: " << token.GetIdentifier() << "\t";
-			auto const& loc = token.GetLocation();
-			std::cout << "Location: " << loc.filename << ", line: " << loc.line << ", column: " << loc.column;
+			//auto const& loc = token.GetLocation();
+			//std::cout << "Location: " << loc.filename << ", line: " << loc.line << ", column: " << loc.column;
 			std::cout << "\n";
 		}
 	}

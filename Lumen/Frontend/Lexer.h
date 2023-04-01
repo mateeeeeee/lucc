@@ -53,12 +53,6 @@ namespace lu
 			buf_ptr = cur_ptr;
 		}
 
-		template<CharPredicate P>
-		void ReadUntil(char const*& start, P&& predicate)
-		{
-			for (; predicate(*start); ++start);
-		}
-
 		void FillToken(Token& t, TokenType type, char const* end)
 		{
 			t.SetLocation(loc);
@@ -66,13 +60,19 @@ namespace lu
 			t.SetIdentifier(cur_ptr, end);
 			cur_ptr = end;
 		}
+
+		template<CharPredicate P>
+		void Consume(char const*& start, P&& predicate)
+		{
+			for (; predicate(*start); ++start);
+		}
 		template<CharPredicate P>
 		void FillToken(Token& t, TokenType type, P&& predicate)
 		{
 			t.SetLocation(loc);
 			t.SetType(type);
 			char const* tmp_ptr = cur_ptr;
-			ReadUntil(tmp_ptr, std::forward<P>(predicate));
+			Consume(tmp_ptr, std::forward<P>(predicate));
 			t.SetIdentifier(cur_ptr, tmp_ptr);
 			cur_ptr = tmp_ptr;
 		}

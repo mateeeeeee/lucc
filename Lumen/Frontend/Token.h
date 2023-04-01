@@ -53,15 +53,23 @@ namespace lu
 		{
 			flags |= flag;
 		}
-		bool HasFlag(TokenFlag flag) const
-		{
-			return (flags & flag) != 0;
-		}
 		void ClearFlag(TokenFlag flag)
 		{
 			flags &= ~flag;
 		}
-
+		bool HasFlag(TokenFlag flag) const
+		{
+			return (flags & flag) != 0;
+		}
+		TokenFlags GetFlags() const 
+		{ 
+			return flags;
+		}
+		void SetFlags(TokenFlags _flags) 
+		{
+			flags = _flags;
+		}
+		
 		void SetIdentifier(char const* p_data, size_t count)
 		{
 			data = std::string(p_data, count);

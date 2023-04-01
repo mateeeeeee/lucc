@@ -59,6 +59,7 @@ namespace lu
 		std::stack<ConditionalInclude> conditional_includes;
 		std::unordered_map<std::string_view, Macro> macros;
 		std::unordered_map<std::string_view, bool> pragma_once;
+
 	private:
 		bool ProcessInclude(PPTokenPtr& curr);
 		bool ProcessDefine(PPTokenPtr& curr);
@@ -66,8 +67,10 @@ namespace lu
 		bool ProcessIfDef(PPTokenPtr& curr);
 		bool ProcessIfNDef(PPTokenPtr& curr);
 		bool ProcessElse(PPTokenPtr& curr);
+		bool ProcessEndif(PPTokenPtr& curr);
 
 		void IgnoreConditionalIncludes(PPTokenPtr& curr);
 		void IgnoreConditionalIncludesUtil(PPTokenPtr& curr);
+		bool ExpandMacro(PPTokenPtr& curr);
 	};
 }
