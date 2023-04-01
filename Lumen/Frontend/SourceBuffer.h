@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace lumen
+namespace lu
 {
 	class SourceBuffer
 	{

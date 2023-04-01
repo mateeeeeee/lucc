@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace lumen
+namespace lu
 {
 	using uint8 = uint8_t;
 	using uint16 = uint16_t;

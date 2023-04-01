@@ -2,7 +2,7 @@
 #include <type_traits>
 #include <concepts>
 
-namespace lumen
+namespace lu
 {
 
 #define DEFINE_ENUM_BIT_OPERATORS(ENUMTYPE) \

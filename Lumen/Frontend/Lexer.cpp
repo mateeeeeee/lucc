@@ -1,7 +1,7 @@
 #include "Lexer.h"
 #include "SourceBuffer.h"
 
-namespace lumen
+namespace lu
 {
 
 	Lexer::Lexer(SourceBuffer const& source) : buf_ptr(source.GetBufferStart()), cur_ptr(buf_ptr),

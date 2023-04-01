@@ -4,7 +4,7 @@
 #include "SourceLocation.h"
 #include "Core/Enums.h"
 
-namespace lumen
+namespace lu
 {
 
 	enum TokenFlag : uint32

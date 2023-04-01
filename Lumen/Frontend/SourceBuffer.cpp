@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 
-namespace lumen
+namespace lu
 {
 
 	SourceBuffer::SourceBuffer(char const* source_file)

@@ -1,7 +1,7 @@
 #pragma once
 #include <string_view>
 
-namespace lumen
+namespace lu
 {
 	enum class TokenType : uint16
 	{

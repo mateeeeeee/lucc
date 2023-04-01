@@ -4,7 +4,7 @@
 #include <functional>
 #include "Frontend/Token.h"
 
-namespace lumen
+namespace lu
 {
 	class SourceBuffer;
 

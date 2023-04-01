@@ -1,137 +1,31 @@
-#include <stack>
-#include <string>
-#include <list>
-#include <unordered_set>
 #include "Preprocessor.h"
 #include "Token.h"
 #include "Lexer.h"
+#include "Hideset.h"
+#include "Core/Defines.h"
 
-
-namespace lumen
+namespace lu
 {
 	namespace
 	{
-		class Hideset
-		{
-		public:
-			explicit Hideset(char const* name) : hideset() 
-			{
-				hideset.push_back(name);
-			}
-
-			void Union(Hideset const& hs)
-			{
-				//if(!std::is_sorted(hideset.begin(), hideset.end())) std::sort(hideset.begin(), hideset.end());
-				//if(!std::is_sorted(hs->hideset.begin(), hs->hideset.end())) std::sort(hs->hideset.begin(), hs->hideset.end());
-				std::vector<std::string> union_hs;
-				std::set_union(hideset.begin(), hideset.end(), hs.hideset.begin(), hs.hideset.end(), std::back_inserter(union_hs));
-				std::swap(hideset, union_hs);
-			}
-			void Intersection(Hideset const& hs)
-			{
-				std::vector<std::string> intersection_hs;
-				std::set_intersection(hideset.begin(), hideset.end(), hs.hideset.begin(), hs.hideset.end(), std::back_inserter(intersection_hs));
-				std::swap(hideset, intersection_hs);
-			}
-			bool Contains(char const* name) const
-			{
-				for (auto const& s : hideset) if (s.compare(name)) return true;
-				return false;
-			}
-		private:
-			std::vector<std::string> hideset;
-		};
-		struct PreprocessorItem
-		{
-			PreprocessorItem(Token* token) : token(token) {}
-			void InitializeHideset(char const* name)
-			{
-				hideset = std::make_unique<Hideset>(name);
-			}
-			
-			Token* token;
-			std::unique_ptr<Hideset> hideset;
-		};
-
-		using MacroParam = std::string_view;
-		struct MacroArg
-		{
-			std::string_view name;
-			Token* tok;
-		};
-		struct Macro
-		{
-			std::string_view name = "";
-			bool is_function = false;
-			std::vector<MacroParam> params{};
-			std::vector<PreprocessorItem*> body{};
-		};
-
-		enum class CondInclContext : uint8
-		{
-			If,
-			Elif,
-			Else
-		};
-		struct ConditionalInclude
-		{
-			CondInclContext ctx = CondInclContext::If;
-			bool included = false;
-			Token* token = nullptr;
-		};
-
-		std::list<PreprocessorItem> pp_items;
-		std::stack<ConditionalInclude> conditional_includes;
-		std::unordered_map<std::string_view, Macro> macros;
-		std::unordered_map<std::string_view, bool> pragma_once;
 		
-		using PPListIterator = std::list<PreprocessorItem>::iterator;
+	}
 
-		void Reset()
-		{
-			while (!conditional_includes.empty()) conditional_includes.pop();
-			macros.clear();
-			pragma_once.clear();
-			pp_items.clear();
-		}
+	Preprocessor::Preprocessor()
+	{
+		Reset();
+	}
 
-		bool ProcessDefine(PPListIterator& pp_item)
-		{
-			std::string_view macro_name = pp_item->token->GetData();
-			Macro m{.name = macro_name};
-			++pp_item;
-			if (!pp_item->token->HasFlag(TokenFlag_LeadingSpace) && pp_item->token->Is(TokenType::left_round))
-			{
-				m.is_function = true;
-				while (pp_item->token->IsNot(TokenType::right_brace))
-				{
-					++pp_item;
-					if (pp_item->token->IsNot(TokenType::identifier)) return false;
-					m.params.push_back(pp_item->token->GetData());
-					++pp_item;
-					if (pp_item->token->Is(TokenType::comma)) ++pp_item;
-				}
-				while (pp_item->token->IsNot(TokenType::newline))
-				{
-					m.body.push_back(&*pp_item);
-				}
-			}
-			else
-			{
-				m.is_function = false;
-				while (pp_item->token->IsNot(TokenType::newline))
-				{
-					m.body.push_back(&*pp_item);
-				}
-			}
-			macros[macro_name] = std::move(m);
-		}
-		
+	void Preprocessor::Reset()
+	{
+		while (!conditional_includes.empty()) conditional_includes.pop();
+		macros.clear();
+		pragma_once.clear();
+		pp_items.clear();
 	}
 
 	bool Preprocessor::Preprocess(Lexer& lexer)
 	{
-		Reset();
 		for (auto& token : lexer.tokens) pp_items.emplace_back(&token);
 		
 		auto curr = pp_items.begin();
@@ -145,78 +39,193 @@ namespace lumen
 				continue;
 			}
 			
-			switch (curr->token->GetType())
+			TokenType pp_token_type = curr->token->GetType();
+			++curr;
+			switch (pp_token_type)
 			{
 			case TokenType::PP_if:
 			{
-
+				LU_ASSERT_MSG(false, "Not supported yet!");
 			}
 			break;
 			case TokenType::PP_else:
 			{
-
+				if (!ProcessElse(curr)) return false;
+				break;
 			}
 			break;
 			case TokenType::PP_elif:
 			{
-
+				LU_ASSERT_MSG(false, "Not supported yet!");
 			}
 			break;
 			case TokenType::PP_ifdef:
-			{
-
-			}
+				if (!ProcessIfDef(curr)) return false;
+				break;
 			break;
 			case TokenType::PP_ifndef:
-			{
-
-			}
-			break;
+				if (!ProcessIfNDef(curr)) return false;
+				break;
 			case TokenType::PP_elifdef:
-			{
-
-			}
-			break;
+				LU_ASSERT_MSG(false, "Not supported yet!");
+				break;
 			case TokenType::PP_elifndef:
-			{
-
-			}
-			break;
+				LU_ASSERT_MSG(false, "Not supported yet!");
+				break;
 			case TokenType::PP_endif:
-			{
-
-			}
-			break;
+				LU_ASSERT_MSG(false, "Not supported yet!");
+				break;
 			case TokenType::PP_defined:
-			{
-
-			}
-			break;
+				LU_ASSERT_MSG(false, "Not supported yet!");
+				break;
 			case TokenType::PP_include:
-			{
-
-			}
-			break;
+				LU_ASSERT_MSG(false, "Not supported yet!");
+				break;
 			case TokenType::PP_define:
-			{
-				++curr;
-				if (curr->token->IsNot(TokenType::identifier))
-				{
-					//diag-error 
-					return false;
-				}
 				if (!ProcessDefine(curr)) return false;
-			}
-			break;
+				break;
 			case TokenType::PP_undef:
-			{
-
-			}
-			break;
+				if (!ProcessUndef(curr)) return false;
+				break;
 			}
 		}
-
 		return true;
+	}
+
+	bool Preprocessor::ProcessDefine(PPTokenPtr& curr)
+	{
+		if (curr->token->IsNot(TokenType::identifier))
+		{
+			return false;
+		}
+
+		std::string_view macro_name = curr->token->GetData();
+		Macro m{ .name = macro_name };
+		++curr;
+		if (!curr->token->HasFlag(TokenFlag_LeadingSpace) && curr->token->Is(TokenType::left_round))
+		{
+			m.is_function = true;
+			while (curr->token->IsNot(TokenType::right_brace))
+			{
+				++curr;
+				if (curr->token->IsNot(TokenType::identifier)) return false;
+				m.params.push_back(curr->token->GetData());
+				++curr;
+				if (curr->token->Is(TokenType::comma)) ++curr;
+			}
+			while (curr->token->IsNot(TokenType::newline))
+			{
+				m.body.push_back(&*curr);
+			}
+		}
+		else
+		{
+			m.is_function = false;
+			while (curr->token->IsNot(TokenType::newline))
+			{
+				m.body.push_back(&*curr);
+			}
+		}
+		macros[macro_name] = std::move(m);
+		return true;
+	}
+
+	bool Preprocessor::ProcessUndef(PPTokenPtr& curr)
+	{
+		if (curr->token->IsNot(TokenType::identifier)) 
+		{
+			return false;
+		}
+		macros.erase(curr->token->GetData());
+		return true;
+	}
+
+	bool Preprocessor::ProcessIfDef(PPTokenPtr& curr)
+	{
+		if (curr->token->IsNot(TokenType::identifier))
+		{
+			return false;
+		}
+		bool defined = macros.contains(curr->token->GetData());
+		conditional_includes.emplace(ConditionalIncludeContext::If, defined);
+
+		++curr;
+		if (curr->token->IsNot(TokenType::newline))
+		{
+			//too much tokens
+			return false;
+		}
+		if (!defined) IgnoreConditionalIncludes(curr);
+		return true;
+	}
+
+	bool Preprocessor::ProcessIfNDef(PPTokenPtr& curr)
+	{
+		if (curr->token->IsNot(TokenType::identifier))
+		{
+			return false;
+		}
+		bool defined = macros.contains(curr->token->GetData());
+		conditional_includes.emplace(ConditionalIncludeContext::If, !defined);
+
+		++curr;
+		if (curr->token->IsNot(TokenType::newline))
+		{
+			return false;
+		}
+		if (defined) IgnoreConditionalIncludes(curr);
+		return true;
+	}
+
+	bool Preprocessor::ProcessElse(PPTokenPtr& curr)
+	{
+		if (conditional_includes.empty() 
+			|| conditional_includes.top().ctx == ConditionalIncludeContext::Else)
+		{
+			return false;
+		}
+		conditional_includes.top().ctx = ConditionalIncludeContext::Else;
+		++curr;
+		if (curr->token->IsNot(TokenType::newline))
+		{
+			//too much tokens
+			return false;
+		}
+		if (conditional_includes.top().included) IgnoreConditionalIncludes(curr);
+	}
+
+	void Preprocessor::IgnoreConditionalIncludes(PPTokenPtr& curr)
+	{
+		using enum TokenType;
+		while (curr->token->IsNot(eof))
+		{
+			if (curr->token->IsOneOf(PP_if, PP_ifdef, PP_ifndef))
+			{
+				IgnoreConditionalIncludesUtil(++curr);
+				continue;
+			}
+			if (curr->token->IsOneOf(PP_elif, PP_else, PP_endif)) break;
+			++curr;
+		}
+	}
+
+	void Preprocessor::IgnoreConditionalIncludesUtil(PPTokenPtr& curr)
+	{
+		using enum TokenType;
+		while (curr->token->IsNot(eof))
+		{
+			if (curr->token->IsOneOf(PP_if, PP_ifdef, PP_ifndef))
+			{
+				IgnoreConditionalIncludesUtil(++curr);
+				continue;
+			}
+			if (curr->token->IsOneOf(PP_endif))
+			{
+				++curr;
+				return;
+			}
+			++curr;
+		}
 	}
 
 }

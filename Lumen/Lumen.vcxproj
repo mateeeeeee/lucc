@@ -152,10 +152,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\CLIParser.h" />
     <ClInclude Include="Core\CoreTypes.h" />
     <ClInclude Include="Core\Defines.h" />
     <ClInclude Include="Core\Enums.h" />
+    <ClInclude Include="Frontend\Hideset.h" />
     <ClInclude Include="Frontend\Lexer.h" />
+    <ClInclude Include="Frontend\Parser.h" />
     <ClInclude Include="Frontend\Preprocessor.h" />
     <ClInclude Include="Frontend\SourceBuffer.h" />
     <ClInclude Include="Frontend\SourceLocation.h" />

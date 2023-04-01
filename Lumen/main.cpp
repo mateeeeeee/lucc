@@ -2,7 +2,7 @@
 #include "Frontend/Lexer.h"
 #include <iostream>
 
-using namespace lumen;
+using namespace lu;
 
 int main()
 {
