@@ -1,5 +1,5 @@
 #pragma once
-#include <any>
+#include <string_view>
 #include "TokenTypes.h"
 #include "SourceLocation.h"
 #include "Core/Enums.h"
@@ -7,13 +7,13 @@
 namespace lumen
 {
 
-	enum TokenFlagBits : uint32
+	enum TokenFlag : uint32
 	{
 		TokenFlag_None = 0x0,
 		TokenFlag_LeadingSpace = 0x1,
 		TokenFlag_BeginningOfLine = 0x2,
 	};
-	DEFINE_ENUM_BIT_OPERATORS(TokenFlagBits);
+	DEFINE_ENUM_BIT_OPERATORS(TokenFlag);
 	using TokenFlags = uint32;
 
 	class Token
@@ -26,7 +26,7 @@ namespace lumen
 			type = TokenType::unknown;
 			flags = TokenFlag_None;
 			loc = {};
-			data.reset();
+			data = {};
 		}
 
 		TokenType GetType() const { return type; }
@@ -41,32 +41,34 @@ namespace lumen
 			else return Is(t1) || IsOneOf(ts...);
 		}
 
-		void SetFlag(TokenFlagBits flag)
+		void SetFlag(TokenFlag flag)
 		{
 			flags |= flag;
 		}
-		bool GetFlag(TokenFlagBits flag) const
+		bool GetFlag(TokenFlag flag) const
 		{
 			return (flags & flag) != 0;
 		}
-		void ClearFlag(TokenFlagBits flag)
+		void ClearFlag(TokenFlag flag)
 		{
 			flags &= ~flag;
 		}
 
-		template<typename T>
-		void SetData(T const& _data)
+		void SetData(char const* p_data, size_t count)
 		{
-			data = _data;
+			data = std::string_view(p_data, count);
 		}
-		template<typename T>
-		T const& GetData() const
+		void SetData(char const* start, char const* end)
 		{
-			return std::any_cast<T const&>(data);
+			data = std::string_view(start, end - start);
+		}
+		std::string_view GetData() const
+		{
+			return data;
 		}
 		bool HasData() const
 		{
-			return data.has_value();
+			return !data.empty();
 		}
 
 		void SetLocation(SourceLocation const& _loc)
@@ -79,6 +81,6 @@ namespace lumen
 		TokenType type;
 		TokenFlags flags;
 		SourceLocation loc;
-		std::any data;
+		std::string_view data;
 	};
 }

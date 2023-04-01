@@ -14,12 +14,6 @@ namespace lumen
 		{ p(a) } -> std::convertible_to<bool>;
 	};
 
-	template<typename F, typename T>
-	concept CArrayToValueTransform = requires(F f, char const* start, char const* end)
-	{
-		{ f(start, end) } -> std::convertible_to<T>;
-	};
-
 	class Lexer
 	{
 		friend class Preprocessor;
@@ -69,16 +63,7 @@ namespace lumen
 			t.SetType(type);
 			char const* tmp_ptr = cur_ptr;
 			ReadUntil(tmp_ptr, std::forward<P>(predicate));
-			cur_ptr = tmp_ptr;
-		}
-		template<typename T, CArrayToValueTransform<T> F, CharPredicate P>
-		void FillToken(Token& t, TokenType type, P&& predicate, F&& transform)
-		{
-			t.SetLocation(loc);
-			t.SetType(type);
-			char const* tmp_ptr = cur_ptr;
-			ReadUntil(tmp_ptr, std::forward<P>(predicate));
-			t.SetData<T>(transform(cur_ptr, tmp_ptr));
+			t.SetData(cur_ptr, tmp_ptr);
 			cur_ptr = tmp_ptr;
 		}
 	};
