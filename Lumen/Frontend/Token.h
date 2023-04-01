@@ -41,11 +41,19 @@ namespace lumen
 			else return Is(t1) || IsOneOf(ts...);
 		}
 
+		bool IsPPKeyword() const
+		{
+			return IsOneOf(TokenType::PP_define,  TokenType::PP_defined,  TokenType::PP_elif,
+						   TokenType::PP_elifdef, TokenType::PP_elifndef, TokenType::PP_else,
+						   TokenType::PP_endif,   TokenType::PP_if,       TokenType::PP_ifdef, 
+						   TokenType::PP_ifndef,  TokenType::PP_include,  TokenType::PP_undef);
+		}
+
 		void SetFlag(TokenFlag flag)
 		{
 			flags |= flag;
 		}
-		bool GetFlag(TokenFlag flag) const
+		bool HasFlag(TokenFlag flag) const
 		{
 			return (flags & flag) != 0;
 		}

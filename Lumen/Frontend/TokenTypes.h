@@ -1,4 +1,5 @@
 #pragma once
+#include <string_view>
 
 namespace lumen
 {
@@ -10,10 +11,10 @@ namespace lumen
 	};
 	char const* GetTokenName(TokenType t);
 
-	bool IsKeyword(char const* identifer);
-	TokenType GetKeywordType(char const* identifer);
+	bool IsKeyword(std::string_view identifer);
+	TokenType GetKeywordType(std::string_view identifer);
 
-	bool IsPreprocessorKeyword(char const* identifer);
-	TokenType GetPreprocessorKeywordType(char const* identifer);
+	bool IsPreprocessorKeyword(std::string_view identifer);
+	TokenType GetPreprocessorKeywordType(std::string_view identifer);
 
 }

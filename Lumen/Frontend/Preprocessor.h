@@ -6,6 +6,6 @@ namespace lumen
 	class Preprocessor
 	{
 	public:	
-		static void Preprocess(Lexer&);
+		static bool Preprocess(Lexer&);
 	};
 }

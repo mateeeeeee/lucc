@@ -56,8 +56,15 @@ namespace lumen
 			for (; predicate(*start); ++start);
 		}
 
+		void FillToken(Token& t, TokenType type, char const* end)
+		{
+			t.SetLocation(loc);
+			t.SetType(type);
+			t.SetData(cur_ptr, end);
+			cur_ptr = end;
+		}
 		template<CharPredicate P>
-		void FillToken(Token& t, TokenType type,P&& predicate)
+		void FillToken(Token& t, TokenType type, P&& predicate)
 		{
 			t.SetLocation(loc);
 			t.SetType(type);

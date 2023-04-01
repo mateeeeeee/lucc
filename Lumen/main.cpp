@@ -6,6 +6,9 @@ using namespace lumen;
 
 int main()
 {
+	//#todo add cmd line parsing 
+	//#todo add diagnostics 
+
 	SourceBuffer buff("test.txt");
 	Lexer lex(buff);
 

@@ -16,10 +16,19 @@ namespace lumen
 			bool result = LexToken(current_token);
 
 			if (!result) return false;
-			if (!tokens.empty() && tokens.back().Is(TokenType::newline)) current_token.SetFlag(TokenFlag_BeginningOfLine);
-
+			if (!tokens.empty())
+			{
+				auto const& prev_token = tokens.back();
+				if (prev_token.Is(TokenType::newline)) current_token.SetFlag(TokenFlag_BeginningOfLine);
+				if (prev_token.Is(TokenType::hash) && prev_token.HasFlag(TokenFlag_BeginningOfLine))
+				{
+					std::string_view identifier = current_token.GetData();
+					if (IsPreprocessorKeyword(identifier)) current_token.SetType(GetPreprocessorKeywordType(identifier));
+					tokens.pop_back();
+				}
+			}
 			tokens.push_back(current_token);
-		} while (!current_token.Is(TokenType::eof));
+		} while (current_token.IsNot(TokenType::eof));
 		return true;
 	}
 
@@ -103,7 +112,7 @@ namespace lumen
 	bool Lexer::LexIdentifier(Token& t)
 	{
 		FillToken(t, TokenType::identifier, [](char c) -> bool { return std::isalnum(c) || c == '_'; });
-		char const* identifier = t.GetData().data();
+		std::string_view identifier = t.GetData();
 		if (IsKeyword(identifier))
 		{
 			t.SetType(GetKeywordType(identifier));
@@ -163,6 +172,9 @@ namespace lumen
 			break;
 		case '{':
 			t.SetType(TokenType::left_brace);
+			break;
+		case ',':
+			t.SetType(TokenType::comma);
 			break;
 		case '}':
 			t.SetType(TokenType::right_brace);
