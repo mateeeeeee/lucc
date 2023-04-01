@@ -7,8 +7,8 @@ namespace lu
 	{
 	public:
 
-		explicit SourceBuffer(char const* source_file);
-		SourceBuffer(char const* buffer_start, char const* buffer_end, char const* refname = "");
+		explicit SourceBuffer(std::string_view source_file);
+		SourceBuffer(char const* buffer_start, char const* buffer_end, std::string_view refname = "");
 
 		SourceBuffer(SourceBuffer const&) = delete;
 		SourceBuffer(SourceBuffer&&) = default;

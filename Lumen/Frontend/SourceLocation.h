@@ -4,7 +4,7 @@ namespace lu
 {
 	struct SourceLocation
 	{
-		char const* filename = nullptr;
+		std::string filename = "";
 		uint32 line = 1;
 		uint32 column = 1;
 

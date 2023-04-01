@@ -5,7 +5,8 @@ namespace lu
 {
 
 	Lexer::Lexer(SourceBuffer const& source) : buf_ptr(source.GetBufferStart()), cur_ptr(buf_ptr),
-											   loc{ .filename = source.GetRefName().data()} {}
+											   loc{ .filename = std::string(source.GetRefName().data(), source.GetRefName().size())}, 
+											   pp_tokens_count(0) {}
 
 	bool Lexer::Lex()
 	{
@@ -22,9 +23,13 @@ namespace lu
 				if (prev_token.Is(TokenType::newline)) current_token.SetFlag(TokenFlag_BeginningOfLine);
 				if (prev_token.Is(TokenType::hash) && prev_token.HasFlag(TokenFlag_BeginningOfLine))
 				{
-					std::string_view identifier = current_token.GetData();
-					if (IsPreprocessorKeyword(identifier)) current_token.SetType(GetPreprocessorKeywordType(identifier));
-					tokens.pop_back();
+					std::string_view identifier = current_token.GetIdentifier();
+					if (IsPreprocessorKeyword(identifier))
+					{
+						current_token.SetType(GetPreprocessorKeywordType(identifier));
+						tokens.pop_back();
+						++pp_tokens_count;
+					}
 				}
 			}
 			tokens.push_back(current_token);
@@ -112,7 +117,7 @@ namespace lu
 	bool Lexer::LexIdentifier(Token& t)
 	{
 		FillToken(t, TokenType::identifier, [](char c) -> bool { return std::isalnum(c) || c == '_'; });
-		std::string_view identifier = t.GetData();
+		std::string_view identifier = t.GetIdentifier();
 		if (IsKeyword(identifier))
 		{
 			t.SetType(GetKeywordType(identifier));

@@ -3,6 +3,7 @@
 #include <string>
 #include <list>
 #include <unordered_set>
+#include "Token.h"
 
 namespace lu
 {
@@ -25,9 +26,9 @@ namespace lu
 		};
 		struct PreprocessorToken
 		{
-			PreprocessorToken(Token* token) : token(token) {}
-			Token* token;
-			std::unique_ptr<Hideset> hideset;
+			PreprocessorToken(Token const& token) : token(token), hideset(nullptr) {}
+			Token token;
+			Hideset* hideset;
 		};
 		using PPTokenPtr = std::list<PreprocessorToken>::iterator;
 
@@ -54,12 +55,12 @@ namespace lu
 		bool Preprocess(Lexer&);
 
 	private:
-		std::list<PreprocessorToken> pp_items;
+		std::list<PreprocessorToken> pp_tokens;
 		std::stack<ConditionalInclude> conditional_includes;
 		std::unordered_map<std::string_view, Macro> macros;
 		std::unordered_map<std::string_view, bool> pragma_once;
-
 	private:
+		bool ProcessInclude(PPTokenPtr& curr);
 		bool ProcessDefine(PPTokenPtr& curr);
 		bool ProcessUndef(PPTokenPtr& curr);
 		bool ProcessIfDef(PPTokenPtr& curr);

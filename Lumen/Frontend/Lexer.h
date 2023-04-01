@@ -14,6 +14,8 @@ namespace lu
 		{ p(a) } -> std::convertible_to<bool>;
 	};
 
+	
+
 	class Lexer
 	{
 		friend class Preprocessor;
@@ -33,6 +35,7 @@ namespace lu
 
 		SourceLocation loc;
 		std::vector<Token> tokens;
+		uint32 pp_tokens_count;
 	private:
 
 		bool LexToken(Token&);
@@ -60,7 +63,7 @@ namespace lu
 		{
 			t.SetLocation(loc);
 			t.SetType(type);
-			t.SetData(cur_ptr, end);
+			t.SetIdentifier(cur_ptr, end);
 			cur_ptr = end;
 		}
 		template<CharPredicate P>
@@ -70,7 +73,7 @@ namespace lu
 			t.SetType(type);
 			char const* tmp_ptr = cur_ptr;
 			ReadUntil(tmp_ptr, std::forward<P>(predicate));
-			t.SetData(cur_ptr, tmp_ptr);
+			t.SetIdentifier(cur_ptr, tmp_ptr);
 			cur_ptr = tmp_ptr;
 		}
 	};

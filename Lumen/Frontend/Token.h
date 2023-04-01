@@ -62,21 +62,17 @@ namespace lu
 			flags &= ~flag;
 		}
 
-		void SetData(char const* p_data, size_t count)
+		void SetIdentifier(char const* p_data, size_t count)
 		{
-			data = std::string_view(p_data, count);
+			data = std::string(p_data, count);
 		}
-		void SetData(char const* start, char const* end)
+		void SetIdentifier(char const* start, char const* end)
 		{
-			data = std::string_view(start, end - start);
+			data = std::string(start, end - start);
 		}
-		std::string_view GetData() const
+		std::string_view GetIdentifier() const
 		{
 			return data;
-		}
-		bool HasData() const
-		{
-			return !data.empty();
 		}
 
 		void SetLocation(SourceLocation const& _loc)
@@ -89,6 +85,6 @@ namespace lu
 		TokenType type;
 		TokenFlags flags;
 		SourceLocation loc;
-		std::string_view data;
+		std::string data;
 	};
 }
