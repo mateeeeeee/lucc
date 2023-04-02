@@ -29,7 +29,6 @@ namespace lu
 					{
 						current_token.SetType(GetPreprocessorKeywordType(identifier));
 						tokens.pop_back();
-						++pp_tokens_count;
 					}
 				}
 			}

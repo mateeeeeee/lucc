@@ -5,29 +5,19 @@
 #include "Hideset.h"
 #include "Core/Defines.h"
 
+//preprocessor todo list:
+//1. #if,#elif
+//2. macros variable
+//3. pragma once
+//4. macros function
+
 namespace lu
 {
-	Preprocessor::Preprocessor()
-	{
-		Reset();
-	}
+	Preprocessor::Preprocessor(Lexer& lexer) : lexer(lexer)
+	{}
 
-	void Preprocessor::Reset()
+	bool Preprocessor::Preprocess()
 	{
-		while (!conditional_includes.empty()) conditional_includes.pop();
-		macros.clear();
-		pragma_once.clear();
-		pp_tokens.clear();
-	}
-
-	bool Preprocessor::Preprocess(Lexer& lexer)
-	{
-		if (lexer.pp_tokens_count == 0)
-		{
-			//diag
-			return true;
-		}
-
 		for (auto& token : lexer.tokens)
 		{
 			if(token.IsNot(TokenType::comment)) pp_tokens.emplace_back(token);
@@ -72,16 +62,16 @@ namespace lu
 				if (!ProcessIfNDef(curr)) return false;
 				break;
 			case TokenType::PP_elifdef:
-				LU_ASSERT_MSG(false, "Not supported yet!");
+				if (!ProcessElifDef(curr)) return false;
 				break;
 			case TokenType::PP_elifndef:
-				LU_ASSERT_MSG(false, "Not supported yet!");
+				if (!ProcessElifNDef(curr)) return false;
 				break;
 			case TokenType::PP_endif:
 				if (!ProcessEndif(curr)) return false;
 				break;
 			case TokenType::PP_defined:
-				LU_ASSERT_MSG(false, "Not supported yet!");
+				LU_ASSERT_MSG(false, "Must be part of the #if/#elif directive!");
 				break;
 			case TokenType::PP_include:
 				if (!ProcessInclude(curr)) return false;
@@ -99,10 +89,9 @@ namespace lu
 		for (auto&& token : pp_tokens)
 		{
 			if (token.IsPPKeyword()) continue;
-			if (token.Is(TokenType::comment)) continue;
+			if (token.IsOneOf(TokenType::comment, TokenType::newline)) continue;
 			if (token.HasFlag(TokenFlag_PartOfPPDirective)) continue;
-			if (token.HasFlag(TokenFlag_IgnoredByPP)) continue;
-
+			if (token.HasFlag(TokenFlag_SkipedByPP)) continue;
 			lexer.tokens.push_back(std::move(token));
 		}
 		return true;
@@ -117,17 +106,17 @@ namespace lu
 			if (pragma_once.contains(filename)) return true;
 			
 			SourceBuffer src(filename);
-			Lexer lexer(src);
-			if (!lexer.Lex())
+			Lexer include_lexer(src);
+			if (!include_lexer.Lex())
 			{
 				//diag
 				return false;
 			}
 			curr->SetFlag(TokenFlag_PartOfPPDirective);
 			++curr;
-			lexer.tokens.pop_back(); //pop eof
-			for (auto&& token : lexer.tokens) pp_tokens.emplace(curr, token);
-			std::advance(curr, -static_cast<int64>(lexer.tokens.size()));
+			include_lexer.tokens.pop_back(); //pop eof
+			for (auto&& token : include_lexer.tokens) pp_tokens.emplace(curr, token);
+			std::advance(curr, -static_cast<int64>(include_lexer.tokens.size()));
 			return true;
 		}
 		return false;
@@ -194,9 +183,6 @@ namespace lu
 		{
 			return false;
 		}
-		bool defined = macros.contains(curr->GetIdentifier());
-		conditional_includes.emplace(ConditionalIncludeContext::If, defined);
-
 		curr->SetFlag(TokenFlag_PartOfPPDirective);
 		++curr;
 		if (curr->IsNot(TokenType::newline))
@@ -204,7 +190,67 @@ namespace lu
 			//too much tokens
 			return false;
 		}
+		bool defined = macros.contains(curr->GetIdentifier());
+		conditional_includes.emplace(ConditionalIncludeContext::If, defined);
 		if (!defined) IgnoreConditionalIncludes(curr);
+		return true;
+	}
+
+	bool Preprocessor::ProcessElifDef(TokenPtr& curr)
+	{
+		if (conditional_includes.empty())
+		{
+			return false;
+		}
+		ConditionalInclude& curr_cond_incl = conditional_includes.top();
+		if (curr_cond_incl.ctx == ConditionalIncludeContext::Else)
+		{
+			return false;
+		}
+		curr_cond_incl.ctx = ConditionalIncludeContext::Elif;
+		if (curr->IsNot(TokenType::identifier))
+		{
+			return false;
+		}
+		curr->SetFlag(TokenFlag_PartOfPPDirective);
+		++curr;
+		if (curr->IsNot(TokenType::newline))
+		{
+			//too much tokens
+			return false;
+		}
+		bool defined = macros.contains(curr->GetIdentifier());
+		if (!curr_cond_incl.included && defined) curr_cond_incl.included = true;
+		else IgnoreConditionalIncludes(curr);
+		return true;
+	}
+
+	bool Preprocessor::ProcessElifNDef(TokenPtr& curr)
+	{
+		if (conditional_includes.empty())
+		{
+			return false;
+		}
+		ConditionalInclude& curr_cond_incl = conditional_includes.top();
+		if (curr_cond_incl.ctx == ConditionalIncludeContext::Else)
+		{
+			return false;
+		}
+		curr_cond_incl.ctx = ConditionalIncludeContext::Elif;
+		if (curr->IsNot(TokenType::identifier))
+		{
+			return false;
+		}
+		curr->SetFlag(TokenFlag_PartOfPPDirective);
+		++curr;
+		if (curr->IsNot(TokenType::newline))
+		{
+			//too much tokens
+			return false;
+		}
+		bool defined = macros.contains(curr->GetIdentifier());
+		if (!curr_cond_incl.included && !defined) curr_cond_incl.included = true;
+		else IgnoreConditionalIncludes(curr);
 		return true;
 	}
 
@@ -214,32 +260,36 @@ namespace lu
 		{
 			return false;
 		}
-		bool defined = macros.contains(curr->GetIdentifier());
-		conditional_includes.emplace(ConditionalIncludeContext::If, !defined);
 		curr->SetFlag(TokenFlag_PartOfPPDirective);
 		++curr;
 		if (curr->IsNot(TokenType::newline))
 		{
 			return false;
 		}
+		bool defined = macros.contains(curr->GetIdentifier());
+		conditional_includes.emplace(ConditionalIncludeContext::If, !defined);
 		if (defined) IgnoreConditionalIncludes(curr);
 		return true;
 	}
 
 	bool Preprocessor::ProcessElse(TokenPtr& curr)
 	{
-		if (conditional_includes.empty() 
-			|| conditional_includes.top().ctx == ConditionalIncludeContext::Else)
+		if (conditional_includes.empty())
 		{
 			return false;
 		}
-		conditional_includes.top().ctx = ConditionalIncludeContext::Else;
+		ConditionalInclude& curr_cond_incl = conditional_includes.top();
+		if (curr_cond_incl.ctx == ConditionalIncludeContext::Else)
+		{
+			return false;
+		}
+		curr_cond_incl.ctx = ConditionalIncludeContext::Else;
 		if (curr->IsNot(TokenType::newline))
 		{
 			//too much tokens
 			return false;
 		}
-		if (conditional_includes.top().included) IgnoreConditionalIncludes(curr);
+		if (curr_cond_incl.included) IgnoreConditionalIncludes(curr);
 		return true;
 	}
 
@@ -269,7 +319,7 @@ namespace lu
 				continue;
 			}
 			if (curr->IsOneOf(PP_elif, PP_else, PP_endif)) break;
-			curr->SetFlag(TokenFlag_IgnoredByPP);
+			curr->SetFlag(TokenFlag_SkipedByPP);
 			++curr;
 		}
 	}
@@ -289,7 +339,7 @@ namespace lu
 				++curr;
 				return;
 			}
-			curr->SetFlag(TokenFlag_IgnoredByPP);
+			curr->SetFlag(TokenFlag_SkipedByPP);
 			++curr;
 		}
 	}
@@ -313,3 +363,24 @@ namespace lu
 	}
 
 }
+
+/*
+The ‘#if’ directive allows you to test the value of an arithmetic expression, rather than the mere existence of one macro. Its syntax is
+
+#if expression
+
+controlled text
+
+#endif // expression
+expression is a C expression of integer type, subject to stringent restrictions.It may contain
+
+- Integer constants.
+- Character constants, which are interpreted as they would be in normal code.
+- Arithmetic operators for addition, subtraction, multiplication, division, bitwise operations, shifts, comparisons, and logical operations(&& and|| ).The latter two obey the usual short - circuiting rules of standard C.
+- Macros.All macros in the expression are expanded before actual computation of the expression’s value begins.
+- Uses of the defined operator, which lets you check whether macros are defined in the middle of an ‘#if’.
+- Identifiers that are not macros, which are all considered to be the number zero.This allows you to write #if MACRO instead of #ifdef MACRO, if you know that MACRO, when defined, will always have a nonzero value.Function - like macros used without their function call parentheses are also treated as zero.
+
+preprocessor does not know anything about types in the language.Therefore, sizeof operators are not recognized in ‘#if’, and neither are enum constants.They will be taken as identifiers which are not macros, and replaced by zero.In the case of sizeof, this is likely to cause the expression to be invalid.
+The preprocessor calculates the value of expression.It carries out all calculations in the widest integer type known to the compiler; on most machines supported by GCC this is 64 bits.This is not the same rule as the compiler uses to calculate the value of a constant expression, and may give different results in some cases.If the value comes out to be nonzero, the ‘#if’ succeedsand the controlled text is included; otherwise it is skipped.
+*/

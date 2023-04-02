@@ -39,14 +39,14 @@ namespace lu
 		};
 
 	public:	
-		Preprocessor();
+		Preprocessor(Lexer&);
 		Preprocessor(Preprocessor const&) = delete;
 		Preprocessor& operator=(Preprocessor const&) = delete;
-		void Reset();
 
-		bool Preprocess(Lexer&);
+		bool Preprocess();
 
 	private:
+		Lexer& lexer;
 		std::list<Token> pp_tokens;
 		std::stack<ConditionalInclude> conditional_includes;
 		std::unordered_map<std::string_view, Macro> macros;
@@ -58,6 +58,8 @@ namespace lu
 		bool ProcessDefine(TokenPtr& curr);
 		bool ProcessUndef(TokenPtr& curr);
 		bool ProcessIfDef(TokenPtr& curr);
+		bool ProcessElifDef(TokenPtr& curr);
+		bool ProcessElifNDef(TokenPtr& curr);
 		bool ProcessIfNDef(TokenPtr& curr);
 		bool ProcessElse(TokenPtr& curr);
 		bool ProcessEndif(TokenPtr& curr);

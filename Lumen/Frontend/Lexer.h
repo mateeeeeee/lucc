@@ -14,8 +14,6 @@ namespace lu
 		{ p(a) } -> std::convertible_to<bool>;
 	};
 
-	
-
 	class Lexer
 	{
 		friend class Preprocessor;
@@ -35,7 +33,6 @@ namespace lu
 
 		SourceLocation loc;
 		std::vector<Token> tokens;
-		uint32 pp_tokens_count;
 	private:
 
 		bool LexToken(Token&);
