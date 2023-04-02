@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Frontend\Hideset.cpp" />
     <ClCompile Include="Frontend\Lexer.cpp" />
     <ClCompile Include="Frontend\Preprocessor.cpp" />
@@ -153,6 +154,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Compiler.h" />
     <ClInclude Include="Core\CLIParser.h" />
     <ClInclude Include="Core\CoreTypes.h" />
     <ClInclude Include="Core\Defines.h" />
