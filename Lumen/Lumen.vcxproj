@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Frontend\Hideset.cpp" />
     <ClCompile Include="Frontend\Lexer.cpp" />
     <ClCompile Include="Frontend\Preprocessor.cpp" />
     <ClCompile Include="Frontend\SourceBuffer.cpp" />

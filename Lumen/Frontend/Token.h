@@ -12,6 +12,8 @@ namespace lu
 		TokenFlag_None = 0x0,
 		TokenFlag_LeadingSpace = 0x1,
 		TokenFlag_BeginningOfLine = 0x2,
+		TokenFlag_PartOfPPDirective = 0x4,
+		TokenFlag_IgnoredByPP = 0x8
 	};
 	DEFINE_ENUM_BIT_OPERATORS(TokenFlag);
 	using TokenFlags = uint32;

@@ -64,14 +64,18 @@ namespace lu
 			token.ClearFlag(TokenFlag_LeadingSpace);
 			return ret;
 		}
-		case '\\':
+		case '/':
 		{
-			if (*cur_ptr == '\\')
+			if (*cur_ptr == '/') 
 			{
 				++cur_ptr;
 				return LexComment(token);
 			}
-			else break;
+			else
+			{
+				--cur_ptr;
+				return LexPunctuator(token);
+			}
 		}
 		case '"':
 		{
@@ -106,7 +110,7 @@ namespace lu
 			return LexIdentifier(token);
 		}
 		case '[': case ']': case '(': case ')': case '{': case '}': /*case '.': */
-		case '&': case '*': case '+': case '-': case '~': case '!': case '/':
+		case '&': case '*': case '+': case '-': case '~': case '!': /*case '/':*/
 		case '%': case '<': case '>': case '^': case '|': case '?': case ':':
 		case ';': case '=': case ',': case '#':
 		{

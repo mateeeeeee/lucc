@@ -9,7 +9,6 @@ namespace lu
 {
 	class Lexer;
 	class Token;
-	class Hideset;
 
 	class Preprocessor
 	{
@@ -24,13 +23,6 @@ namespace lu
 			ConditionalIncludeContext ctx = ConditionalIncludeContext::If;
 			bool included = false;
 		};
-		struct PreprocessorToken
-		{
-			PreprocessorToken(Token const& token) : token(token), hideset(nullptr) {}
-			Token token;
-			Hideset* hideset;
-		};
-		using PPTokenPtr = std::list<PreprocessorToken>::iterator;
 
 		using MacroParam = std::string_view;
 		struct MacroArg
@@ -43,7 +35,7 @@ namespace lu
 			std::string_view name = "";
 			bool is_function = false;
 			std::vector<MacroParam> params{};
-			std::vector<PreprocessorToken*> body{};
+			std::vector<Token*> body{};
 		};
 
 	public:	
@@ -55,22 +47,23 @@ namespace lu
 		bool Preprocess(Lexer&);
 
 	private:
-		std::list<PreprocessorToken> pp_tokens;
+		std::list<Token> pp_tokens;
 		std::stack<ConditionalInclude> conditional_includes;
 		std::unordered_map<std::string_view, Macro> macros;
 		std::unordered_map<std::string_view, bool> pragma_once;
 
 	private:
-		bool ProcessInclude(PPTokenPtr& curr);
-		bool ProcessDefine(PPTokenPtr& curr);
-		bool ProcessUndef(PPTokenPtr& curr);
-		bool ProcessIfDef(PPTokenPtr& curr);
-		bool ProcessIfNDef(PPTokenPtr& curr);
-		bool ProcessElse(PPTokenPtr& curr);
-		bool ProcessEndif(PPTokenPtr& curr);
+		using TokenPtr = std::list<Token>::iterator;
+		bool ProcessInclude(TokenPtr& curr);
+		bool ProcessDefine(TokenPtr& curr);
+		bool ProcessUndef(TokenPtr& curr);
+		bool ProcessIfDef(TokenPtr& curr);
+		bool ProcessIfNDef(TokenPtr& curr);
+		bool ProcessElse(TokenPtr& curr);
+		bool ProcessEndif(TokenPtr& curr);
 
-		void IgnoreConditionalIncludes(PPTokenPtr& curr);
-		void IgnoreConditionalIncludesUtil(PPTokenPtr& curr);
-		bool ExpandMacro(PPTokenPtr& curr);
+		void IgnoreConditionalIncludes(TokenPtr& curr);
+		void IgnoreConditionalIncludesUtil(TokenPtr& curr);
+		bool ExpandMacro(TokenPtr& curr);
 	};
 }
