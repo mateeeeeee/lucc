@@ -1,1 +1,1 @@
-//#define Flag2
+#define Flag A,C

@@ -6,10 +6,10 @@
 #include "Core/Defines.h"
 
 //preprocessor todo list:
-//1. #if,#elif
-//2. macros variable
-//3. pragma once
-//4. macros function
+//- pragma once
+//- macros function
+//- stringify, concat operators
+//- #if,#elif
 
 namespace lu
 {
@@ -18,7 +18,7 @@ namespace lu
 
 	bool Preprocessor::Preprocess()
 	{
-		for (auto& token : lexer.tokens)
+		for (auto const& token : lexer.tokens)
 		{
 			if(token.IsNot(TokenType::comment)) pp_tokens.emplace_back(token);
 		}
@@ -355,9 +355,14 @@ namespace lu
 		{
 			TokenFlags flags = curr->GetFlags();
 			curr = pp_tokens.erase(curr);
-			for (auto&& token : m.body) pp_tokens.emplace(curr, *token);
+			for (auto&& token : m.body)
+			{
+				auto emplaced_token = pp_tokens.emplace(curr, *token);
+				emplaced_token->ClearFlag(TokenFlag_PartOfPPDirective);
+			}
 			std::advance(curr, -static_cast<int64>(m.body.size()));
 			curr->SetFlags(flags);
+			curr->ClearFlag(TokenFlag_PartOfPPDirective);
 			return true;
 		}
 		return false;
