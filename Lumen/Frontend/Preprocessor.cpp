@@ -184,13 +184,13 @@ namespace lu
 			return false;
 		}
 		curr->SetFlag(TokenFlag_PartOfPPDirective);
+		bool defined = macros.contains(curr->GetIdentifier());
 		++curr;
 		if (curr->IsNot(TokenType::newline))
 		{
 			//too much tokens
 			return false;
 		}
-		bool defined = macros.contains(curr->GetIdentifier());
 		conditional_includes.emplace(ConditionalIncludeContext::If, defined);
 		if (!defined) IgnoreConditionalIncludes(curr);
 		return true;
@@ -213,13 +213,14 @@ namespace lu
 			return false;
 		}
 		curr->SetFlag(TokenFlag_PartOfPPDirective);
+		bool defined = macros.contains(curr->GetIdentifier());
+
 		++curr;
 		if (curr->IsNot(TokenType::newline))
 		{
 			//too much tokens
 			return false;
 		}
-		bool defined = macros.contains(curr->GetIdentifier());
 		if (!curr_cond_incl.included && defined) curr_cond_incl.included = true;
 		else IgnoreConditionalIncludes(curr);
 		return true;
@@ -242,13 +243,13 @@ namespace lu
 			return false;
 		}
 		curr->SetFlag(TokenFlag_PartOfPPDirective);
+		bool defined = macros.contains(curr->GetIdentifier());
 		++curr;
 		if (curr->IsNot(TokenType::newline))
 		{
 			//too much tokens
 			return false;
 		}
-		bool defined = macros.contains(curr->GetIdentifier());
 		if (!curr_cond_incl.included && !defined) curr_cond_incl.included = true;
 		else IgnoreConditionalIncludes(curr);
 		return true;
@@ -318,7 +319,7 @@ namespace lu
 				IgnoreConditionalIncludesUtil(++curr);
 				continue;
 			}
-			if (curr->IsOneOf(PP_elif, PP_else, PP_endif)) break;
+			if (curr->IsOneOf(PP_elif, PP_elifdef, PP_elifndef, PP_else, PP_endif)) break;
 			curr->SetFlag(TokenFlag_SkipedByPP);
 			++curr;
 		}

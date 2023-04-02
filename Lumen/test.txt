@@ -1,6 +1,8 @@
 #include "test2.txt"
 #ifdef Flag
 int a
+#elifdef Flag2
+bool b
 #else
-float b
+float c
 #endif
