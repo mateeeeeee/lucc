@@ -9,6 +9,16 @@
     <ClCompile Include="Frontend\Lexer.cpp">
       <Filter>Frontend\Lexer</Filter>
     </ClCompile>
+    <ClCompile Include="Compiler.cpp" />
+    <ClCompile Include="Frontend\Hideset.cpp">
+      <Filter>Frontend\Preprocessor</Filter>
+    </ClCompile>
+    <ClCompile Include="Frontend\Preprocessor.cpp">
+      <Filter>Frontend\Preprocessor</Filter>
+    </ClCompile>
+    <ClCompile Include="Frontend\TokenTypes.cpp">
+      <Filter>Frontend</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />
@@ -39,6 +49,19 @@
     <ClInclude Include="Frontend\Lexer.h">
       <Filter>Frontend\Lexer</Filter>
     </ClInclude>
+    <ClInclude Include="Compiler.h" />
+    <ClInclude Include="Frontend\Hideset.h">
+      <Filter>Frontend\Preprocessor</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\Preprocessor.h">
+      <Filter>Frontend\Preprocessor</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\CLIParser.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\Parser.h">
+      <Filter>Frontend\Parser</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Frontend">
@@ -56,5 +79,9 @@
     <Filter Include="Frontend\Parser">
       <UniqueIdentifier>{8875749e-759b-4319-8f2c-723af3aa099a}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="test.txt" />
+    <Text Include="test2.txt" />
   </ItemGroup>
 </Project>
