@@ -20,14 +20,14 @@ namespace lu
 			if (!tokens.empty())
 			{
 				auto const& prev_token = tokens.back();
-				if (prev_token.Is(TokenType::newline))
+				if (prev_token.Is(TokenKind::newline))
 					current_token.SetFlag(TokenFlag_BeginningOfLine);
-				if (prev_token.Is(TokenType::hash) && prev_token.HasFlag(TokenFlag_BeginningOfLine))
+				if (prev_token.Is(TokenKind::hash) && prev_token.HasFlag(TokenFlag_BeginningOfLine))
 				{
 					std::string_view identifier = current_token.GetIdentifier();
 					if (IsPreprocessorKeyword(identifier))
 					{
-						current_token.SetType(GetPreprocessorKeywordType(identifier));
+						current_token.SetKind(GetPreprocessorKeywordType(identifier));
 						tokens.pop_back();
 					}
 				}
@@ -35,7 +35,7 @@ namespace lu
 			else current_token.SetFlag(TokenFlag_BeginningOfLine);
 
 			tokens.push_back(current_token);
-		} while (current_token.IsNot(TokenType::eof));
+		} while (current_token.IsNot(TokenKind::eof));
 		return true;
 	}
 
@@ -128,7 +128,7 @@ namespace lu
 		if (*tmp_ptr == 'f' || *tmp_ptr == 'F')
 		{
 			++tmp_ptr;
-			FillToken(t, TokenType::number, tmp_ptr);
+			FillToken(t, TokenKind::number, tmp_ptr);
 		}
 		else return false;
 		UpdatePointersAndLocation();
@@ -137,11 +137,11 @@ namespace lu
 
 	bool Lexer::LexIdentifier(Token& t)
 	{
-		FillToken(t, TokenType::identifier, [](char c) -> bool { return std::isalnum(c) || c == '_'; });
+		FillToken(t, TokenKind::identifier, [](char c) -> bool { return std::isalnum(c) || c == '_'; });
 		std::string_view identifier = t.GetIdentifier();
 		if (IsKeyword(identifier))
 		{
-			t.SetType(GetKeywordType(identifier));
+			t.SetKind(GetKeywordType(identifier));
 		}
 		UpdatePointersAndLocation();
 		return true;
@@ -149,7 +149,7 @@ namespace lu
 
 	bool Lexer::LexString(Token& t)
 	{
-		FillToken(t, TokenType::string_literal, [](char c) -> bool { return c != '"'; });
+		FillToken(t, TokenKind::string_literal, [](char c) -> bool { return c != '"'; });
 		++cur_ptr; //skip the closing "
 		UpdatePointersAndLocation();
 		return true;
@@ -157,21 +157,21 @@ namespace lu
 
 	bool Lexer::LexEndOfFile(Token& t)
 	{
-		t.SetType(TokenType::eof);
+		t.SetKind(TokenKind::eof);
 		t.SetLocation(loc);
 		return true;
 	}
 
 	bool Lexer::LexNewLine(Token& t)
 	{
-		t.SetType(TokenType::newline);
+		t.SetKind(TokenKind::newline);
 		t.SetLocation(loc);
 		return true;
 	}
 
 	bool Lexer::LexComment(Token& t)
 	{
-		FillToken(t, TokenType::comment, [](char c) -> bool { return c != '\n' && c != '\0'; });
+		FillToken(t, TokenKind::comment, [](char c) -> bool { return c != '\n' && c != '\0'; });
 		UpdatePointersAndLocation();
 		return true;
 	}
@@ -182,46 +182,46 @@ namespace lu
 		switch (c)
 		{
 		case '?':
-			t.SetType(TokenType::question);
+			t.SetKind(TokenKind::question);
 			break;
 		case '[':
-			t.SetType(TokenType::left_square);
+			t.SetKind(TokenKind::left_square);
 			break;
 		case ']':
-			t.SetType(TokenType::right_square);
+			t.SetKind(TokenKind::right_square);
 			break;
 		case '(':
-			t.SetType(TokenType::left_round);
+			t.SetKind(TokenKind::left_round);
 			break;
 		case ')':
-			t.SetType(TokenType::right_round);
+			t.SetKind(TokenKind::right_round);
 			break;
 		case '{':
-			t.SetType(TokenType::left_brace);
+			t.SetKind(TokenKind::left_brace);
 			break;
 		case ',':
-			t.SetType(TokenType::comma);
+			t.SetKind(TokenKind::comma);
 			break;
 		case '}':
-			t.SetType(TokenType::right_brace);
+			t.SetKind(TokenKind::right_brace);
 			break;
 		case '#':
 			if (*cur_ptr == '#')
 			{
-				t.SetType(TokenType::hash_hash);
+				t.SetKind(TokenKind::hash_hash);
 				++cur_ptr;
 			}
-			else t.SetType(TokenType::hash);
+			else t.SetKind(TokenKind::hash);
 			break;
 		case '.':
 			if (cur_ptr[0] == '.' && cur_ptr[1] == '.')
 			{
-				t.SetType(TokenType::ellipsis);
+				t.SetKind(TokenKind::ellipsis);
 				cur_ptr += 2;
 			}
 			else 
 			{
-				t.SetType(TokenType::period);
+				t.SetKind(TokenKind::period);
 			}
 		}
 		t.SetLocation(loc);

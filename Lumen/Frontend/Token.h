@@ -21,23 +21,23 @@ namespace lu
 	class Token
 	{
 	public:
-		Token() : type(TokenType::unknown), flags(TokenFlag_None), loc{}, data{} {}
+		Token() : type(TokenKind::unknown), flags(TokenFlag_None), loc{}, data{} {}
 		
 		void Reset()
 		{
-			type = TokenType::unknown;
+			type = TokenKind::unknown;
 			flags = TokenFlag_None;
 			loc = {};
 			data = {};
 		}
 
-		TokenType GetType() const { return type; }
-		void SetType(TokenType t) { type = t; }
+		TokenKind GetKind() const { return type; }
+		void SetKind(TokenKind t) { type = t; }
 
-		bool Is(TokenType t) const { return type == t; }
-		bool IsNot(TokenType t) const { return type != t; }
+		bool Is(TokenKind t) const { return type == t; }
+		bool IsNot(TokenKind t) const { return type != t; }
 		template <typename... Ts>
-		bool IsOneOf(TokenType t1, Ts... ts) const
+		bool IsOneOf(TokenKind t1, Ts... ts) const
 		{
 			if constexpr (sizeof...(Ts) == 0) return Is(t1);
 			else return Is(t1) || IsOneOf(ts...);
@@ -45,10 +45,10 @@ namespace lu
 
 		bool IsPPKeyword() const
 		{
-			return IsOneOf(TokenType::PP_define,  TokenType::PP_defined,  TokenType::PP_elif,
-						   TokenType::PP_elifdef, TokenType::PP_elifndef, TokenType::PP_else,
-						   TokenType::PP_endif,   TokenType::PP_if,       TokenType::PP_ifdef, 
-						   TokenType::PP_ifndef,  TokenType::PP_include,  TokenType::PP_undef);
+			return IsOneOf(TokenKind::PP_define,  TokenKind::PP_defined,  TokenKind::PP_elif,
+						   TokenKind::PP_elifdef, TokenKind::PP_elifndef, TokenKind::PP_else,
+						   TokenKind::PP_endif,   TokenKind::PP_if,       TokenKind::PP_ifdef, 
+						   TokenKind::PP_ifndef,  TokenKind::PP_include,  TokenKind::PP_undef);
 		}
 
 		void SetFlag(TokenFlag flag)
@@ -92,7 +92,7 @@ namespace lu
 		SourceLocation const& GetLocation() const { return loc; }
 
 	private:
-		TokenType type;
+		TokenKind type;
 		TokenFlags flags;
 		SourceLocation loc;
 		std::string data;

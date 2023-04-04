@@ -20,11 +20,11 @@ namespace lu
 	{
 		for (auto const& token : lexer.tokens)
 		{
-			if(token.IsNot(TokenType::comment)) pp_tokens.emplace_back(token);
+			if(token.IsNot(TokenKind::comment)) pp_tokens.emplace_back(token);
 		}
 		
 		auto curr = pp_tokens.begin();
-		while (curr->IsNot(TokenType::eof))
+		while (curr->IsNot(TokenKind::eof))
 		{
 			if (ExpandMacro(curr)) continue;
 			
@@ -34,52 +34,52 @@ namespace lu
 				continue;
 			}
 			
-			TokenType pp_token_type = curr->GetType();
+			TokenKind pp_token_type = curr->GetKind();
 			++curr;
 			switch (pp_token_type)
 			{
-			case TokenType::PP_if:
+			case TokenKind::PP_if:
 			{
 				LU_ASSERT_MSG(false, "Not supported yet!");
 			}
 			break;
-			case TokenType::PP_else:
+			case TokenKind::PP_else:
 			{
 				if (!ProcessElse(curr)) return false;
 				break;
 			}
 			break;
-			case TokenType::PP_elif:
+			case TokenKind::PP_elif:
 			{
 				LU_ASSERT_MSG(false, "Not supported yet!");
 			}
 			break;
-			case TokenType::PP_ifdef:
+			case TokenKind::PP_ifdef:
 				if (!ProcessIfDef(curr)) return false;
 				break;
 			break;
-			case TokenType::PP_ifndef:
+			case TokenKind::PP_ifndef:
 				if (!ProcessIfNDef(curr)) return false;
 				break;
-			case TokenType::PP_elifdef:
+			case TokenKind::PP_elifdef:
 				if (!ProcessElifDef(curr)) return false;
 				break;
-			case TokenType::PP_elifndef:
+			case TokenKind::PP_elifndef:
 				if (!ProcessElifNDef(curr)) return false;
 				break;
-			case TokenType::PP_endif:
+			case TokenKind::PP_endif:
 				if (!ProcessEndif(curr)) return false;
 				break;
-			case TokenType::PP_defined:
+			case TokenKind::PP_defined:
 				LU_ASSERT_MSG(false, "Must be part of the #if/#elif directive!");
 				break;
-			case TokenType::PP_include:
+			case TokenKind::PP_include:
 				if (!ProcessInclude(curr)) return false;
 				break;
-			case TokenType::PP_define:
+			case TokenKind::PP_define:
 				if (!ProcessDefine(curr)) return false;
 				break;
-			case TokenType::PP_undef:
+			case TokenKind::PP_undef:
 				if (!ProcessUndef(curr)) return false;
 				break;
 			}
@@ -89,7 +89,7 @@ namespace lu
 		for (auto&& token : pp_tokens)
 		{
 			if (token.IsPPKeyword()) continue;
-			if (token.IsOneOf(TokenType::comment, TokenType::newline)) continue;
+			if (token.IsOneOf(TokenKind::comment, TokenKind::newline)) continue;
 			if (token.HasFlag(TokenFlag_PartOfPPDirective)) continue;
 			if (token.HasFlag(TokenFlag_SkipedByPP)) continue;
 			lexer.tokens.push_back(std::move(token));
@@ -99,7 +99,7 @@ namespace lu
 
 	bool Preprocessor::ProcessInclude(TokenPtr& curr)
 	{
-		using enum TokenType;
+		using enum TokenKind;
 		if (curr->IsOneOf(string_literal)) //add <>
 		{
 			std::string_view filename = curr->GetIdentifier();
@@ -124,7 +124,7 @@ namespace lu
 
 	bool Preprocessor::ProcessDefine(TokenPtr& curr)
 	{
-		if (curr->IsNot(TokenType::identifier))
+		if (curr->IsNot(TokenKind::identifier))
 		{
 			return false;
 		}
@@ -134,18 +134,18 @@ namespace lu
 		Macro m{ .name = macro_name };
 		
 		++curr;
-		if (!curr->HasFlag(TokenFlag_LeadingSpace) && curr->Is(TokenType::left_round))
+		if (!curr->HasFlag(TokenFlag_LeadingSpace) && curr->Is(TokenKind::left_round))
 		{
 			m.is_function = true;
-			while (curr->IsNot(TokenType::right_brace))
+			while (curr->IsNot(TokenKind::right_brace))
 			{
 				++curr;
-				if (curr->IsNot(TokenType::identifier)) return false;
+				if (curr->IsNot(TokenKind::identifier)) return false;
 				m.params.push_back(curr->GetIdentifier());
 				++curr;
-				if (curr->Is(TokenType::comma)) ++curr;
+				if (curr->Is(TokenKind::comma)) ++curr;
 			}
-			while (curr->IsNot(TokenType::newline))
+			while (curr->IsNot(TokenKind::newline))
 			{
 				m.body.push_back(&*curr);
 				++curr;
@@ -154,7 +154,7 @@ namespace lu
 		else
 		{
 			m.is_function = false;
-			while (curr->IsNot(TokenType::newline))
+			while (curr->IsNot(TokenKind::newline))
 			{
 				m.body.push_back(&*curr);
 				++curr;
@@ -168,7 +168,7 @@ namespace lu
 
 	bool Preprocessor::ProcessUndef(TokenPtr& curr)
 	{
-		if (curr->IsNot(TokenType::identifier)) 
+		if (curr->IsNot(TokenKind::identifier)) 
 		{
 			return false;
 		}
@@ -179,14 +179,14 @@ namespace lu
 
 	bool Preprocessor::ProcessIfDef(TokenPtr& curr)
 	{
-		if (curr->IsNot(TokenType::identifier))
+		if (curr->IsNot(TokenKind::identifier))
 		{
 			return false;
 		}
 		curr->SetFlag(TokenFlag_PartOfPPDirective);
 		bool defined = macros.contains(curr->GetIdentifier());
 		++curr;
-		if (curr->IsNot(TokenType::newline))
+		if (curr->IsNot(TokenKind::newline))
 		{
 			//too much tokens
 			return false;
@@ -208,7 +208,7 @@ namespace lu
 			return false;
 		}
 		curr_cond_incl.ctx = ConditionalIncludeContext::Elif;
-		if (curr->IsNot(TokenType::identifier))
+		if (curr->IsNot(TokenKind::identifier))
 		{
 			return false;
 		}
@@ -216,7 +216,7 @@ namespace lu
 		bool defined = macros.contains(curr->GetIdentifier());
 
 		++curr;
-		if (curr->IsNot(TokenType::newline))
+		if (curr->IsNot(TokenKind::newline))
 		{
 			//too much tokens
 			return false;
@@ -238,14 +238,14 @@ namespace lu
 			return false;
 		}
 		curr_cond_incl.ctx = ConditionalIncludeContext::Elif;
-		if (curr->IsNot(TokenType::identifier))
+		if (curr->IsNot(TokenKind::identifier))
 		{
 			return false;
 		}
 		curr->SetFlag(TokenFlag_PartOfPPDirective);
 		bool defined = macros.contains(curr->GetIdentifier());
 		++curr;
-		if (curr->IsNot(TokenType::newline))
+		if (curr->IsNot(TokenKind::newline))
 		{
 			//too much tokens
 			return false;
@@ -257,13 +257,13 @@ namespace lu
 
 	bool Preprocessor::ProcessIfNDef(TokenPtr& curr)
 	{
-		if (curr->IsNot(TokenType::identifier))
+		if (curr->IsNot(TokenKind::identifier))
 		{
 			return false;
 		}
 		curr->SetFlag(TokenFlag_PartOfPPDirective);
 		++curr;
-		if (curr->IsNot(TokenType::newline))
+		if (curr->IsNot(TokenKind::newline))
 		{
 			return false;
 		}
@@ -285,7 +285,7 @@ namespace lu
 			return false;
 		}
 		curr_cond_incl.ctx = ConditionalIncludeContext::Else;
-		if (curr->IsNot(TokenType::newline))
+		if (curr->IsNot(TokenKind::newline))
 		{
 			//too much tokens
 			return false;
@@ -300,7 +300,7 @@ namespace lu
 		{
 			return false;
 		}
-		if (curr->IsNot(TokenType::newline) && curr->IsNot(TokenType::eof))
+		if (curr->IsNot(TokenKind::newline) && curr->IsNot(TokenKind::eof))
 		{
 			//too much tokens
 			return false;
@@ -311,7 +311,7 @@ namespace lu
 
 	void Preprocessor::IgnoreConditionalIncludes(TokenPtr& curr)
 	{
-		using enum TokenType;
+		using enum TokenKind;
 		while (curr->IsNot(eof))
 		{
 			if (curr->IsOneOf(PP_if, PP_ifdef, PP_ifndef))
@@ -327,7 +327,7 @@ namespace lu
 
 	void Preprocessor::IgnoreConditionalIncludesUtil(TokenPtr& curr)
 	{
-		using enum TokenType;
+		using enum TokenKind;
 		while (curr->IsNot(eof))
 		{
 			if (curr->IsOneOf(PP_if, PP_ifdef, PP_ifndef))

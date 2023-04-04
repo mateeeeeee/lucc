@@ -1,8 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
-#include <functional>
-#include "Frontend/Token.h"
+#include "Token.h"
 
 namespace lu
 {
@@ -50,24 +49,23 @@ namespace lu
 			buf_ptr = cur_ptr;
 		}
 
-		void FillToken(Token& t, TokenType type, char const* end)
+		void FillToken(Token& t, TokenKind type, char const* end)
 		{
 			t.SetLocation(loc);
-			t.SetType(type);
+			t.SetKind(type);
 			t.SetIdentifier(cur_ptr, end);
 			cur_ptr = end;
 		}
-
 		template<CharPredicate P>
 		void Consume(char const*& start, P&& predicate)
 		{
 			for (; predicate(*start); ++start);
 		}
 		template<CharPredicate P>
-		void FillToken(Token& t, TokenType type, P&& predicate)
+		void FillToken(Token& t, TokenKind type, P&& predicate)
 		{
 			t.SetLocation(loc);
-			t.SetType(type);
+			t.SetKind(type);
 			char const* tmp_ptr = cur_ptr;
 			Consume(tmp_ptr, std::forward<P>(predicate));
 			t.SetIdentifier(cur_ptr, tmp_ptr);

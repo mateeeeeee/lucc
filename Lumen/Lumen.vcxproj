@@ -142,6 +142,7 @@
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Frontend\Hideset.cpp" />
     <ClCompile Include="Frontend\Lexer.cpp" />
+    <ClCompile Include="Frontend\Parser.cpp" />
     <ClCompile Include="Frontend\Preprocessor.cpp" />
     <ClCompile Include="Frontend\SourceBuffer.cpp" />
     <ClCompile Include="Frontend\TokenTypes.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="Core\CoreTypes.h" />
     <ClInclude Include="Core\Defines.h" />
     <ClInclude Include="Core\Enums.h" />
+    <ClInclude Include="Frontend\AST.h" />
     <ClInclude Include="Frontend\Hideset.h" />
     <ClInclude Include="Frontend\Lexer.h" />
     <ClInclude Include="Frontend\Parser.h" />
@@ -171,6 +173,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Frontend\TokenTypes.h" />
+    <ClInclude Include="Frontend\Type.h" />
     <ClInclude Include="precomp.h" />
   </ItemGroup>
   <ItemGroup>

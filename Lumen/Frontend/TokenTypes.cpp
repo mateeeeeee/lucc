@@ -17,9 +17,9 @@ namespace lu
 			#define KEYWORD(X) #X,
 			#include "TokenDef.h"
 		};
-		std::unordered_map<std::string_view, TokenType> keywords_map =
+		std::unordered_map<std::string_view, TokenKind> keywords_map =
 		{
-			#define KEYWORD(X) {#X, TokenType::##KW_##X},
+			#define KEYWORD(X) {#X, TokenKind::##KW_##X},
 			#include "TokenDef.h"
 		};
 		std::unordered_set<std::string_view> const pp_keywords =
@@ -28,14 +28,14 @@ namespace lu
 			#include "TokenDef.h"
 		};
 
-		std::unordered_map<std::string_view, TokenType> pp_keywords_map =
+		std::unordered_map<std::string_view, TokenKind> pp_keywords_map =
 		{
-			#define PP_KEYWORD(X) {#X, TokenType::##PP_##X},
+			#define PP_KEYWORD(X) {#X, TokenKind::##PP_##X},
 			#include "TokenDef.h"
 		};
 	}
 
-	char const* GetTokenName(TokenType t)
+	char const* GetTokenName(TokenKind t)
 	{
 		return token_names[(size_t)t];
 	}
@@ -44,7 +44,7 @@ namespace lu
 	{
 		return keywords.contains(identifer);
 	}
-	TokenType GetKeywordType(std::string_view identifer)
+	TokenKind GetKeywordType(std::string_view identifer)
 	{
 		return keywords_map[std::string(identifer)];
 	}
@@ -53,7 +53,7 @@ namespace lu
 	{
 		return pp_keywords.contains(identifer);
 	}
-	TokenType GetPreprocessorKeywordType(std::string_view identifer)
+	TokenKind GetPreprocessorKeywordType(std::string_view identifer)
 	{
 		return pp_keywords_map[std::string(identifer)];
 	}

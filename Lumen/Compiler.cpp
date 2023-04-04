@@ -13,7 +13,7 @@ namespace lu
 			std::cout << name << "\n";
 			for (auto&& token : tokens)
 			{
-				std::cout << "Type: " << GetTokenName(token.GetType()) << "\t";
+				std::cout << "Type: " << GetTokenName(token.GetKind()) << "\t";
 				std::cout << "Value: " << token.GetIdentifier() << "\t";
 				//auto const& loc = token.GetLocation();
 				//std::cout << "Location: " << loc.filename << ", line: " << loc.line << ", column: " << loc.column;
