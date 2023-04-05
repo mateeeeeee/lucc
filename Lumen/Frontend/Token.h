@@ -50,6 +50,46 @@ namespace lu
 						   TokenKind::PP_endif,   TokenKind::PP_if,       TokenKind::PP_ifdef, 
 						   TokenKind::PP_ifndef,  TokenKind::PP_include,  TokenKind::PP_undef);
 		}
+		bool IsDeclSpec() const
+		{
+			return IsOneOf(
+				TokenKind::KW_inline,
+				TokenKind::KW_enum,
+				TokenKind::KW_struct,
+				TokenKind::KW_union,
+				TokenKind::KW_const,
+				TokenKind::KW_volatile,
+				TokenKind::KW_typedef,
+				TokenKind::KW_static,
+				TokenKind::KW_extern,
+				TokenKind::KW_auto,
+				TokenKind::KW_register,
+				TokenKind::KW_restrict,
+				TokenKind::KW_bool,
+				TokenKind::KW_char,
+				TokenKind::KW_int,
+				TokenKind::KW_signed,
+				TokenKind::KW_unsigned,
+				TokenKind::KW_long,
+				TokenKind::KW_float,
+				TokenKind::KW_double,
+				TokenKind::KW_void,
+				TokenKind::KW__Alignas,
+				TokenKind::KW__Atomic,
+				TokenKind::KW__Thread_local);
+		}
+		bool IsStorageSpecifier() const
+		{
+			return IsOneOf(
+				TokenKind::KW_inline,
+				TokenKind::KW_typedef,
+				TokenKind::KW_static,
+				TokenKind::KW_extern,
+				TokenKind::KW_auto,
+				TokenKind::KW_register,
+				TokenKind::KW__Atomic,
+				TokenKind::KW__Thread_local);
+		}
 
 		void SetFlag(TokenFlag flag)
 		{

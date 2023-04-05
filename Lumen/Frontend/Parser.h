@@ -11,6 +11,9 @@ namespace lu
 
 	class Parser
 	{
+		struct DeclSpecInfo;
+		struct DeclaratorInfo;
+
 		using TokenPtr = std::vector<Token>::iterator;
 	public:
 
@@ -32,8 +35,20 @@ namespace lu
 			}
 			else return false;
 		}
+		template<typename... Ts>
+		bool Consume(TokenKind k, Ts... ts)
+		{
+			if (current_token->IsOneOf(k, ts...))
+			{
+				++current_token; return true;
+			}
+			else return false;
+		}
 
 		bool ParseTranslationUnit();
 		std::unique_ptr<DeclAST> ParseExternalDeclaration();
+
+		bool ParseDeclSpec(DeclSpecInfo& decl_spec);
+		bool ParseDeclarator(DeclaratorInfo& declarator);
 	};
 }

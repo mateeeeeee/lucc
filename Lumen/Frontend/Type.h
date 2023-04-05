@@ -1,8 +1,11 @@
 #pragma once
 #include "Core/Enums.h"
+#include <unordered_map>
 
 namespace lu
 {
+	class Object;
+
 	enum class TypeKind : uint8
 	{
 		Void,
@@ -12,16 +15,16 @@ namespace lu
 		Function,
 		Array,
 		Struct,
-		Union,
+		Union
 	};
 
 	class Type
 	{
 	public:
-		bool IsComplete() const { return is_complete; }
-		size_t GetSize() const { return size; }
-		size_t GetAlign() const { return align; }
-		void SetAlign(size_t _align) { align = _align; }
+		constexpr bool IsComplete() const { return is_complete; }
+		constexpr size_t GetSize() const { return size; }
+		constexpr size_t GetAlign() const { return align; }
+		constexpr void SetAlign(size_t _align) { align = _align; }
 
 		TypeKind GetKind() const { return kind; }
 		bool Is(TypeKind t) const { return kind == t; }
@@ -42,9 +45,9 @@ namespace lu
 	protected:
 		constexpr Type(TypeKind kind, bool is_complete,
 			size_t size = 0, size_t align = 0)
-			: kind{ kind }, is_complete{ is_complete }, size{ size }, align{ align } {}
-		void SetComplete() { is_complete = true; }
-		void SetSize(std::size_t size) { size = size; }
+			: kind( kind ), is_complete( is_complete ), size( size ), align( align ) {}
+		constexpr void SetComplete() { is_complete = true; }
+		constexpr void SetSize(size_t _size) { size = _size; }
 	};
 
 	enum QualifierFlag : uint8
@@ -132,32 +135,145 @@ namespace lu
 		size_t arr_size = 0;
 	};
 
-	enum ArithmeticFlag : uint32
-	{
-		Bool = 1 << 0,
-		Char = 1 << 1,
-		Int = 1 << 2,
-		Float = 1 << 3,
-		Double = 1 << 4,
-		Short = 1 << 5,
-		Long = 1 << 6,
-		LongLong = 1 << 7,
-		Signed = 1 << 8,
-		Unsigned = 1 << 9
-	};
-	DEFINE_ENUM_BIT_OPERATORS(ArithmeticFlag);
-	using ArithmeticFlags = uint32;
-
 	class ArithmeticType : public Type
 	{
+		static constexpr size_t CHAR_SIZE = 1;
+		static constexpr size_t SHORT_SIZE = 2;
+		static constexpr size_t INT_SIZE = 4;
+		static constexpr size_t LONG_LONG_SIZE = 8;
+		static constexpr size_t LONG_DOUBLE_SIZE = 16;
 	public:
-		explicit ArithmeticType(ArithmeticFlags flags) : Type(TypeKind::Arithmetic, true), flags(flags) {}
+		enum ArithmeticFlag : uint32
+		{
+			Bool = 1 << 0,
+			Char = 1 << 1,
+			Short = 1 << 2,
+			Int = 1 << 3,
+			Long = 1 << 4,
+			LongLong = 1 << 5,
+			Float = 1 << 6,
+			Double = 1 << 7
+		};
+		using ArithmeticFlags = uint32;
+
+	public:
+		constexpr explicit ArithmeticType(ArithmeticFlags flags, bool is_unsigned = false) 
+			: Type(TypeKind::Arithmetic, true), flags(flags) 
+		{
+		
+			if ((flags & Short) || (flags & Long) || (flags & LongLong)) flags &= ~Int;
+			switch (flags) 
+			{
+			case Bool:
+			case Char:
+				SetSize(CHAR_SIZE); break;
+			case Short:
+				SetSize(SHORT_SIZE); break;
+			case Int:
+			case Float:
+			case Long:
+				SetSize(INT_SIZE); break;
+			case Double:
+			case LongLong:
+				SetSize(LONG_LONG_SIZE); break;
+			case Double | Long:
+				SetSize(LONG_DOUBLE_SIZE); break;
+			}
+			SetAlign(GetSize());
+		}
 		ArithmeticFlags GetFlags() const { return flags; }
+		bool IsUnsigned() const { return is_unsigned; }
+		uint32 ConversionRank() const
+		{
+			int rank = 0;
+			switch (flags)
+			{
+			case Bool: rank = 1; break;
+			case Char: rank = 2; break;
+			case Short: rank = 4; break;
+			case Int: rank = 6; break;
+			case Long: rank = 8; break;
+			case LongLong: rank = 10; break;
+			case Float: rank = 12; break;
+			case Double: rank = 13; break;
+			case Double | Long: rank = 14; break;
+			}
+			if (is_unsigned) ++rank;
+			return rank;
+		}
 	private:
 		ArithmeticFlags flags;
+		bool is_unsigned = false;
+
+	private:
 	};
 
-	//todo: add functiontype and structtype
+	enum class FunctionSpecifier : bool
+	{
+		None,
+		Inline
+	};
+	class FuncType : public Type 
+	{
+	public:
+		
+		FuncType(QualifiedType const& return_qtype, std::vector<Object*> const& params = {}, bool is_variadic = false)
+			: Type{ TypeKind::Function, false },
+			return_qtype( return_qtype ), params( params ), is_variadic(is_variadic), has_prototype( false ){}
+		
+		bool IsInline() const { return specifier == FunctionSpecifier::Inline; }
+		void SetInline() { specifier == FunctionSpecifier::Inline; }
+		
+		QualifiedType RetQType() const { return return_qtype; }
+		const std::vector<Object*>& Params() const { return params; }
+
+		void UpdateParams(const std::vector<Object*>& _params) { params = _params; }
+		
+		void EncounteredDefinition() { SetComplete(); }
+		bool HasDefinition() const { return IsComplete(); }
+		void EncounterPrototype() { has_prototype = true; }
+		bool HasPrototype() const { return has_prototype; }
+		
+	private:
+		QualifiedType return_qtype;
+		std::vector<Object*> params;
+		bool is_variadic = false;
+		bool has_prototype = false;
+		FunctionSpecifier specifier = FunctionSpecifier::None;
+	};
+	
+	class RecordType : public Type 
+	{
+	public:
+		explicit RecordType(std::string_view tag_name, bool is_union = false)
+			: Type{ is_union ? TypeKind::Union : TypeKind::Struct, false }, tag_name{ tag_name } {}
+
+		RecordType(std::vector<Object*> const& members, std::string_view tag_name = "", bool is_union = false)
+			: RecordType(tag_name, is_union) {}
+		
+		std::string_view TagName() const { return tag_name; }
+		std::vector<Object*> const& Members() const { return members; }
+		void EncounterDefinition(std::vector<Object*> const& members)
+		{
+			SetComplete();
+		}
+		
+		bool HasMember(std::string_view name) const
+		{
+			return members_map.find(name) != members_map.cend();
+		}
+		Object* GetMember(std::string_view name)
+		{
+			return nullptr;
+		}
+		bool IsModifiableLValue() const { return is_modifiable_lvalue; }
+	private:
+
+		std::string tag_name;
+		std::vector<Object*> members{};
+		std::unordered_map<std::string_view, Object*> members_map{};
+		bool is_modifiable_lvalue = false;
+	};
 
 	template<typename T>
 	T& TypeCast(Type& t)

@@ -90,7 +90,6 @@ namespace lu
 		SourceLocation loc;
 	};
 
-	//
 	struct AST
 	{
 		std::unique_ptr<TranslationUnitDeclAST> tr_unit;
