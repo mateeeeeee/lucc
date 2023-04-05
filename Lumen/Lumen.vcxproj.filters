@@ -19,6 +19,9 @@
     <ClCompile Include="Frontend\TokenTypes.cpp">
       <Filter>Frontend</Filter>
     </ClCompile>
+    <ClCompile Include="Frontend\Parser.cpp">
+      <Filter>Frontend\Parser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />
@@ -61,6 +64,10 @@
     </ClInclude>
     <ClInclude Include="Frontend\Parser.h">
       <Filter>Frontend\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\AST.h" />
+    <ClInclude Include="Frontend\Type.h">
+      <Filter>Frontend</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -56,7 +56,7 @@ namespace lu
 	DEFINE_ENUM_BIT_OPERATORS(QualifierFlag);
 	using Qualifiers = uint8;
 
-	class QualifiedType 
+	class QualifiedType
 	{
 	public:
 		friend class Type;
@@ -67,22 +67,22 @@ namespace lu
 		bool IsVolatile() const { return qualifiers & QualifierVolatile; }
 		void AddConst() { qualifiers |= QualifierConst; }
 		void AddVolatile() { qualifiers |= QualifierVolatile; }
-		
+
 		void RmConst() { qualifiers &= ~QualifierConst; }
 		void RmVolatile() { qualifiers &= ~QualifierVolatile; }
 		void RemoveQualifiers() { qualifiers = QualifierNone; }
-		
+
 		bool HasRawType() const { return type != nullptr; }
 		void SetRawType(Type const* _type) { type = _type; }
 		void ResetRawType() { type = nullptr; }
 		Type const* RawType() const { return type; }
-		
+
 		Type const* operator->() const {
 			return type;
 		}
 		Type const& operator*() const { return *RawType(); }
 		operator Type const& () const { return *RawType(); }
-		
+
 	private:
 		Type const* type = nullptr;
 		Qualifiers qualifiers;
@@ -97,17 +97,17 @@ namespace lu
 	class PointerType : public Type
 	{
 	public:
-		PointerType(QualifiedType& const pointee_qtype)
+		PointerType(QualifiedType const& pointee_qtype)
 			: Type{ TypeKind::Pointer, true, 8, 8 },
 			pointee_qtype{ pointee_qtype } {}
-		
-		QualifiedType PointeeQTy() const { return pointee_qtype; }
+
+		QualifiedType PointeeQType() const { return pointee_qtype; }
 
 	private:
 		QualifiedType pointee_qtype;
 	};
 
-	class ArrayType : public Type 
+	class ArrayType : public Type
 	{
 	public:
 		explicit ArrayType(QualifiedType const& base_qtype)

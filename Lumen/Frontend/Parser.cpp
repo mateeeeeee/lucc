@@ -1,39 +1,35 @@
 #include "Parser.h"
 #include "Lexer.h"
+#include "AST.h"
 
 namespace lu
 {
 
-	Parser::Parser(std::vector<Token> const& _tokens) 
+	Parser::Parser(std::vector<Token> const& _tokens)
 		: tokens(_tokens), current_token(tokens.begin())
 	{}
 
 	bool Parser::Parse()
 	{
+		ast = std::make_unique<AST>();
 		return ParseTranslationUnit();
 	}
 
-	//translation_unit --> : external_declaration | translation_unit external_declaration;
+	//<translation-unit> ::= { <external-declaration> }*
 	bool Parser::ParseTranslationUnit()
 	{
 		while (current_token->IsNot(TokenKind::eof))
 		{
-			if (!ParseExternalDeclaration()) return false;
+			std::unique_ptr<DeclAST> ext_decl = ParseExternalDeclaration();
+			if (!ext_decl) return false;
+			ast->tr_unit->AddExternalDeclaration(std::move(ext_decl));
 		}
 		return true;
 	}
 
-	//external_declaration : function_definition | declaration;
-	bool Parser::ParseExternalDeclaration()
+	std::unique_ptr<DeclAST> Parser::ParseExternalDeclaration()
 	{
-		bool is_typedef = Consume(TokenKind::KW_typedef);
-
-		return true;
-	}
-
-	bool Parser::ParseDeclarationSpecifiers()
-	{
-		return true;
+		return nullptr;
 	}
 
 }
