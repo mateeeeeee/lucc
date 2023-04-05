@@ -65,9 +65,11 @@
     <ClInclude Include="Frontend\Parser.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
-    <ClInclude Include="Frontend\AST.h" />
+    <ClInclude Include="Frontend\AST.h">
+      <Filter>Frontend\Parser</Filter>
+    </ClInclude>
     <ClInclude Include="Frontend\Type.h">
-      <Filter>Frontend</Filter>
+      <Filter>Frontend\Parser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
