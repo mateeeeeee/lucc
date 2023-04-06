@@ -247,19 +247,19 @@ namespace lu
 	{
 		std::string name = "";
 		QualifiedType qtype{};
-		int idx;
-		size_t align;
-		size_t offset;
+		size_t idx = 0;
+		size_t align = 0;
+		size_t offset = 0;
 		// Bitfield
-		size_t bit_offset;
-		size_t bit_width;
-		bool is_bitfield;
+		bool is_bitfield = false;
+		size_t bit_offset = 0;
+		size_t bit_width = 0;
 	};
 	class RecordType : public Type 
 	{
 	public:
 		explicit RecordType(std::string_view tag_name, bool is_union = false)
-			: Type{ is_union ? TypeKind::Union : TypeKind::Struct, false }, tag_name{ tag_name } {}
+			: Type( is_union ? TypeKind::Union : TypeKind::Struct, false ), tag_name( tag_name ) {}
 
 		RecordType(std::vector<Member> const& members, std::string_view tag_name = "", bool is_union = false)
 			: RecordType(tag_name, is_union) {}

@@ -53,9 +53,9 @@ namespace lu
 			QualifiedType* type_def;
 			struct EnumVar
 			{
-				Type* enum_type;
-				int32 enum_value;
-			};
+				Type* underlying_type;
+				int32 value;
+			} enum_var;
 		};
 		
 	};
@@ -64,20 +64,6 @@ namespace lu
 	{
 		class SymbolTable
 		{
-			struct VarAttributes
-			{
-				QualifiedType qtype{};
-				Linkage linkage = Linkage::External;
-				Storage specifier = Storage::None;
-				SourceLocation source_loc{};
-			};
-			typedef struct {
-				Obj* var;
-				Type* type_def;
-				Type* enum_ty;
-				int enum_val;
-			} VarScope;
-
 		public:
 			SymbolTable() = default;
 
@@ -101,6 +87,8 @@ namespace lu
 		void EnterBlock() { scopes.emplace_back(SymbolTable{}, ScopeKind::Block); }
 		void ExitPrototype() { scopes.pop_back(); }
 		void ExitBlock() { scopes.pop_back(); }
+
+		
 
 		ScopeKind GetCurrentScope() const { return scopes.back().scope; }
 	private:

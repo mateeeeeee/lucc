@@ -1,7 +1,7 @@
 #include "Parser.h"
 #include "Lexer.h"
 #include "AST.h"
-#include "Symbol.h"
+#include "ScopeStack.h"
 
 namespace lu
 {
