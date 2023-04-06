@@ -1,7 +1,7 @@
 #include "Parser.h"
 #include "Lexer.h"
 #include "AST.h"
-
+#include "Symbol.h"
 
 namespace lu
 {
@@ -24,22 +24,11 @@ namespace lu
 		static constexpr ArithmeticType LongDouble = ArithmeticType(ArithmeticType::Double | ArithmeticType::Long);
 	}
 
-	enum class StorageSpecifier : uint8
-	{
-		None,
-		Auto,
-		Register,
-		Static,
-		Extern,
-		ThreadLocal,
-		Typedef
-	};
-
 	struct Parser::DeclSpecInfo
 	{
 		size_t align = 0;
 		QualifiedType qtype = types::Int;
-		StorageSpecifier storage = StorageSpecifier::None;
+		Storage storage = Storage::None;
 		FunctionSpecifier func_spec = FunctionSpecifier::None;
 	};
 
@@ -77,7 +66,7 @@ namespace lu
 		if (!ParseDeclSpec(decl_spec)) return false;
 
 		// Typedef
-		if (decl_spec.storage == StorageSpecifier::Typedef)
+		if (decl_spec.storage == Storage::Typedef)
 		{
 			auto typedef_decls = ParseTypedefDeclaration(decl_spec);
 			if (typedef_decls.empty()) return false;
@@ -124,7 +113,7 @@ namespace lu
 			TokenKind kind = current_token->GetKind();
 			if (current_token->IsStorageSpecifier())
 			{
-				if (decl_spec.storage != StorageSpecifier::None)
+				if (decl_spec.storage != Storage::None)
 				{
 					//diag
 					return false;
@@ -133,19 +122,19 @@ namespace lu
 				switch (kind)
 				{
 				case TokenKind::KW_static:
-					decl_spec.storage = StorageSpecifier::Static;
+					decl_spec.storage = Storage::Static;
 					break;
 				case TokenKind::KW_register:
-					decl_spec.storage = StorageSpecifier::Register;
+					decl_spec.storage = Storage::Register;
 					break;
 				case TokenKind::KW_typedef:
-					decl_spec.storage = StorageSpecifier::Typedef;
+					decl_spec.storage = Storage::Typedef;
 					break;
 				case TokenKind::KW__Thread_local:
-					decl_spec.storage = StorageSpecifier::ThreadLocal;
+					decl_spec.storage = Storage::ThreadLocal;
 					break;
 				case TokenKind::KW_extern:
-					decl_spec.storage = StorageSpecifier::Extern;
+					decl_spec.storage = Storage::Extern;
 					break;
 				}
 			}
