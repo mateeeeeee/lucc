@@ -8,6 +8,8 @@ namespace lu
 {
 	struct AST;
 	class DeclAST;
+	class TypedefDeclAST;
+	class QualifiedType;
 
 	class Parser
 	{
@@ -24,10 +26,10 @@ namespace lu
 	private:
 		std::vector<Token> tokens;
 		TokenPtr current_token;
-
 		std::unique_ptr<AST> ast;
+
 	private:
-		bool Consume(TokenKind k)
+		[[nodiscard]] bool Consume(TokenKind k)
 		{
 			if (current_token->Is(k))
 			{
@@ -36,7 +38,7 @@ namespace lu
 			else return false;
 		}
 		template<typename... Ts>
-		bool Consume(TokenKind k, Ts... ts)
+		[[nodiscard]] bool Consume(TokenKind k, Ts... ts)
 		{
 			if (current_token->IsOneOf(k, ts...))
 			{
@@ -45,10 +47,14 @@ namespace lu
 			else return false;
 		}
 
-		bool ParseTranslationUnit();
-		std::unique_ptr<DeclAST> ParseExternalDeclaration();
+		[[nodiscard]] bool ParseTranslationUnit();
+		[[nodiscard]] bool ParseExternalDeclaration();
+		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclSpecInfo& decl_spec);
 
 		bool ParseDeclSpec(DeclSpecInfo& decl_spec);
-		bool ParseDeclarator(DeclaratorInfo& declarator);
+		bool ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
+
+		void ParsePointers(QualifiedType& type);
+		void ParseTypeSuffix(QualifiedType& type);
 	};
 }

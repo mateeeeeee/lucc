@@ -65,7 +65,8 @@ namespace lu
 		friend class Type;
 
 		explicit QualifiedType(Qualifiers qualifiers = QualifierNone) : qualifiers{ qualifiers } {}
-		QualifiedType(Type const* type, Qualifiers qualifiers = QualifierNone) : type{ type }, qualifiers{ qualifiers } {}
+		QualifiedType(Type const& _type, Qualifiers qualifiers = QualifierNone) : qualifiers{ qualifiers }
+		{}
 		bool IsConst() const { return qualifiers & QualifierConst; }
 		bool IsVolatile() const { return qualifiers & QualifierVolatile; }
 		void AddConst() { qualifiers |= QualifierConst; }
@@ -75,19 +76,19 @@ namespace lu
 		void RmVolatile() { qualifiers &= ~QualifierVolatile; }
 		void RemoveQualifiers() { qualifiers = QualifierNone; }
 
-		bool HasRawType() const { return type != nullptr; }
-		void SetRawType(Type const* _type) { type = _type; }
-		void ResetRawType() { type = nullptr; }
-		Type const* RawType() const { return type; }
+		bool HasRawType() const { return type.has_value(); }
+		void SetRawType(Type const& _type) { type = _type; }
+		void ResetRawType() { type = std::nullopt; }
+		Type const& RawType() const { return *type; }
 
-		Type const* operator->() const {
+		std::optional<Type> const& operator->() const {
 			return type;
 		}
-		Type const& operator*() const { return *RawType(); }
-		operator Type const& () const { return *RawType(); }
+		Type const& operator*() const { return RawType(); }
+		operator Type const& () const { return RawType(); }
 
 	private:
-		Type const* type = nullptr;
+		std::optional<Type> type = std::nullopt;
 		Qualifiers qualifiers;
 	};
 
@@ -114,19 +115,19 @@ namespace lu
 	{
 	public:
 		explicit ArrayType(QualifiedType const& base_qtype)
-			: Type{ TypeKind::Array, false, 0, base_qtype->GetAlign() },
-			base_qtype{ base_qtype } {}
+			: Type( TypeKind::Array, false, 0, (*base_qtype).GetAlign() ),
+			base_qtype( base_qtype ) {}
 
 		ArrayType(QualifiedType const& base_qtype, size_t arr_size)
-			: Type{ TypeKind::Array, true, base_qtype->GetSize() * arr_size, base_qtype->GetAlign() },
-			base_qtype{ base_qtype }, arr_size{ arr_size } {}
+			: Type(TypeKind::Array, true, (*base_qtype).GetSize()* arr_size, (*base_qtype).GetAlign()),
+			base_qtype(base_qtype ), arr_size(arr_size ) {}
 
 		QualifiedType BaseQualifiedType() const { return base_qtype; }
 		size_t ArrSize() const { return arr_size; }
 		void SetArrSize(size_t _arr_size)
 		{
 			arr_size = _arr_size;
-			SetSize(arr_size * base_qtype->GetSize());
+			SetSize(arr_size * (*base_qtype).GetSize());
 			SetComplete();
 		}
 
@@ -222,12 +223,12 @@ namespace lu
 			return_qtype( return_qtype ), params( params ), is_variadic(is_variadic), has_prototype( false ){}
 		
 		bool IsInline() const { return specifier == FunctionSpecifier::Inline; }
-		void SetInline() { specifier == FunctionSpecifier::Inline; }
+		void SetInline() { specifier = FunctionSpecifier::Inline; }
 		
 		QualifiedType RetQType() const { return return_qtype; }
-		const std::vector<Object*>& Params() const { return params; }
+		std::vector<Object*> const& Params() const { return params; }
 
-		void UpdateParams(const std::vector<Object*>& _params) { params = _params; }
+		void UpdateParams(std::vector<Object*> const& _params) { params = _params; }
 		
 		void EncounteredDefinition() { SetComplete(); }
 		bool HasDefinition() const { return IsComplete(); }
@@ -285,4 +286,5 @@ namespace lu
 	{
 		return static_cast<T&>(t);
 	}
+
 }

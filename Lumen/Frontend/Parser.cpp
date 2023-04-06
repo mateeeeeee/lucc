@@ -35,26 +35,18 @@ namespace lu
 		Typedef
 	};
 
-	enum class ScopeKind : uint8
-	{
-		File,
-		Block,
-		Prototype,
-		Function
-	};
-
 	struct Parser::DeclSpecInfo
 	{
 		size_t align = 0;
-		QualifiedType qtype = &types::Int;
+		QualifiedType qtype = types::Int;
 		StorageSpecifier storage = StorageSpecifier::None;
 		FunctionSpecifier func_spec = FunctionSpecifier::None;
 	};
 
 	struct Parser::DeclaratorInfo
 	{
-		std::string name;
-		QualifiedType qtype;
+		std::string name = "";
+		QualifiedType qtype{};
 		SourceLocation loc;
 	};
 
@@ -74,27 +66,54 @@ namespace lu
 	{
 		while (current_token->IsNot(TokenKind::eof))
 		{
-			std::unique_ptr<DeclAST> ext_decl = ParseExternalDeclaration();
-			if (!ext_decl) return false;
-			ast->tr_unit->AddExternalDeclaration(std::move(ext_decl));
+			if (!ParseExternalDeclaration()) return false;
 		}
 		return true;
 	}
 
-	std::unique_ptr<DeclAST> Parser::ParseExternalDeclaration()
+	bool Parser::ParseExternalDeclaration()
 	{
 		DeclSpecInfo decl_spec{};
-		if (!ParseDeclSpec(decl_spec)) return nullptr;
+		if (!ParseDeclSpec(decl_spec)) return false;
 
 		// Typedef
 		if (decl_spec.storage == StorageSpecifier::Typedef)
 		{
-			//Parse Typedef
+			auto typedef_decls = ParseTypedefDeclaration(decl_spec);
+			if (typedef_decls.empty()) return false;
+			for(auto&& typedef_decl : typedef_decls)
+				ast->tr_unit->AddExternalDeclaration(std::move(typedef_decl));
 		}
 
+		return false;
+	}
 
+	std::vector<std::unique_ptr<TypedefDeclAST>> Parser::ParseTypedefDeclaration(DeclSpecInfo& decl_spec)
+	{
+		bool first = true;
+		std::vector<std::unique_ptr<TypedefDeclAST>> typedefs{};
+		while (!Consume(TokenKind::semicolon)) 
+		{
+			if (!first && !Consume(TokenKind::comma)) 
+			{
+				//diag
+				return {};
+			}
+			first = false;
 
-		return nullptr;
+			DeclaratorInfo typedef_info{};
+			ParseDeclarator(decl_spec, typedef_info);
+
+			if (typedef_info.name.empty())
+			{
+				//diag
+				return {};
+			}
+
+			//push_scope(get_ident(ty->name))->type_def = ty;
+		}
+		
+		return {};
 	}
 
 	bool Parser::ParseDeclSpec(DeclSpecInfo& decl_spec)
@@ -129,14 +148,23 @@ namespace lu
 					decl_spec.storage = StorageSpecifier::Extern;
 					break;
 				}
-
-				//check that typedef was first declared, so the typedef int new_int is ok, but int typedef new_int is not
 			}
-			//ignore for now, later add support: const, atomic, tls, alignas
-			if (Consume(TokenKind::KW_const, TokenKind::KW_volatile,
+			//ignore for now, later add support: atomic, tls, alignas
+			if (Consume(
 				TokenKind::KW_auto, TokenKind::KW_register, TokenKind::KW__Atomic,
 				TokenKind::KW__Alignas, TokenKind::KW__Thread_local))
 				continue;
+
+			if (Consume(TokenKind::KW_const))
+			{
+				decl_spec.qtype.AddConst();
+				continue;
+			}
+			if (Consume(TokenKind::KW_volatile))
+			{
+				decl_spec.qtype.AddVolatile();
+				continue;
+			}
 
 			//#todo Add support for user-defined types
 
@@ -170,69 +198,68 @@ namespace lu
 			case TokenKind::KW_signed: counter += SIGNED; break;
 			case TokenKind::KW_unsigned: counter += UNSIGNED; break;
 			}
-
 			switch (counter) 
 			{
 			case VOID:
-				decl_spec.qtype = &types::Void;
+				decl_spec.qtype.SetRawType(types::Void);
 				break;
 			case BOOL:
-				decl_spec.qtype = &types::Bool;
+				decl_spec.qtype.SetRawType(types::Bool);
 				break;
 			case CHAR:
 			case SIGNED + CHAR:
-				decl_spec.qtype = &types::Char;
+				decl_spec.qtype.SetRawType(types::Char);
 				break;
 			case UNSIGNED + CHAR:
-				decl_spec.qtype = &types::UnsignedChar;
+				decl_spec.qtype.SetRawType(types::UnsignedChar);
 				break;
 			case SHORT:
 			case SHORT + INT:
 			case SIGNED + SHORT:
 			case SIGNED + SHORT + INT:
-				decl_spec.qtype = &types::Short;
+				decl_spec.qtype.SetRawType(types::Short);
 				break;
 			case UNSIGNED + SHORT:
 			case UNSIGNED + SHORT + INT:
-				decl_spec.qtype = &types::UnsignedShort;
+				decl_spec.qtype.SetRawType(types::UnsignedShort);
 				break;
 			case INT:
 			case SIGNED:
 			case SIGNED + INT:
-				decl_spec.qtype = &types::Int;
+				decl_spec.qtype.SetRawType(types::Int);
 				break;
 			case UNSIGNED:
 			case UNSIGNED + INT:
-				decl_spec.qtype = &types::UnsignedInt;
+				decl_spec.qtype.SetRawType(types::UnsignedInt);
 				break;
 			case LONG:
 			case LONG + INT:
 			case SIGNED + LONG:
 			case SIGNED + LONG + INT:
-				decl_spec.qtype = &types::Long;
+				decl_spec.qtype.SetRawType(types::Long);
 				break;
 			case LONG + LONG:
 			case LONG + LONG + INT:
 			case SIGNED + LONG + LONG:
 			case SIGNED + LONG + LONG + INT:
-				decl_spec.qtype = &types::LongLong;
+				decl_spec.qtype.SetRawType(types::LongLong);
 				break;
 			case UNSIGNED + LONG:
 			case UNSIGNED + LONG + INT:
-				decl_spec.qtype = &types::UnsignedLong;
+				decl_spec.qtype.SetRawType(types::UnsignedLong);
 				break;
 			case UNSIGNED + LONG + LONG:
 			case UNSIGNED + LONG + LONG + INT:
-				decl_spec.qtype = &types::UnsignedLongLong;
+				decl_spec.qtype.SetRawType(types::UnsignedLongLong);
 				break;
 			case FLOAT:
-				decl_spec.qtype = &types::Float;
+				decl_spec.qtype.SetRawType(types::Float);
 				break;
 			case DOUBLE:
-				decl_spec.qtype = &types::Double;
+				decl_spec.qtype.SetRawType(types::Double);
 				break;
 			case LONG + DOUBLE:
-				decl_spec.qtype = &types::LongDouble;
+				decl_spec.qtype.SetRawType(types::LongDouble);
 				break;
 			default:
 				//diag 
@@ -242,9 +269,69 @@ namespace lu
 		return true;
 	}
 
-	bool Parser::ParseDeclarator(DeclaratorInfo& declarator)
+	//declarator = pointers ("(" ident ")" | "(" declarator ")" | ident) type-suffix
+	bool Parser::ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator)
 	{
-		return false;
+		declarator.qtype = decl_spec.qtype;
+		ParsePointers(declarator.qtype);
+
+		if (Consume(TokenKind::left_round))
+		{
+			//#todo handle ()
+			return false;
+		}
+
+		if (current_token->Is(TokenKind::identifier))
+		{
+			declarator.name = current_token->GetIdentifier();
+			declarator.loc = current_token->GetLocation();
+			++current_token;
+		}
+		ParseTypeSuffix(declarator.qtype);
+		return true;
+	}
+
+	//pointers = ("*" ("const" | "volatile" | "restrict")*)*
+	void Parser::ParsePointers(QualifiedType& qtype)
+	{
+		while (Consume(TokenKind::star))
+		{
+			PointerType ptr_type(qtype);
+			qtype.SetRawType(ptr_type);
+			if (current_token->Is(TokenKind::KW_const))
+			{
+				qtype.AddConst();
+				++current_token;
+			}
+			if (current_token->Is(TokenKind::KW_volatile))
+			{
+				qtype.AddVolatile();
+				++current_token;
+			}
+			//add restrict later
+		}
+	}
+	void Parser::ParseTypeSuffix(QualifiedType& type)
+	{
+		if (Consume(TokenKind::left_round))
+		{
+			// func-params = ("void" | param ("," param)* ("," "...")?)? ")"
+			// param       = declspec declarator
+		}
+		else if (Consume(TokenKind::left_square))
+		{
+			// array-dimensions = "["("static" | "restrict")* const-expr? "]" type-suffix
+			while (Consume(TokenKind::KW_static, TokenKind::KW_break));
+			if (Consume(TokenKind::right_square)) 
+			{
+				ArrayType arr_type(type);
+				type.SetRawType(arr_type);
+				ParseTypeSuffix(type);
+				return;
+			}
+			
+		}
+		
 	}
 
 }

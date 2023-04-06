@@ -71,6 +71,9 @@
     <ClInclude Include="Frontend\Type.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
+    <ClInclude Include="Frontend\Scope.h">
+      <Filter>Frontend\Parser</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Frontend">

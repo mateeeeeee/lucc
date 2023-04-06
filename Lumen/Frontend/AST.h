@@ -68,6 +68,18 @@ namespace lu
 		std::unique_ptr<StmtAST> init_stmt;
 	};
 
+	class TypedefDeclAST : public DeclAST
+	{
+	public:
+		TypedefDeclAST(QualifiedType const& type, std::string_view typealias)
+			: type(type), typealias(typealias)
+		{}
+
+	private:
+		QualifiedType type;
+		std::string typealias;
+	};
+
 	//statements & expressions
 	class ExprAST : public StmtAST
 	{
