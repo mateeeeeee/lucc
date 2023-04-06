@@ -6,6 +6,7 @@
 
 namespace lu
 {
+	class ScopeStack;
 	struct AST;
 	class DeclAST;
 	class TypedefDeclAST;
@@ -27,6 +28,7 @@ namespace lu
 		std::vector<Token> tokens;
 		TokenPtr current_token;
 		std::unique_ptr<AST> ast;
+		std::unique_ptr<ScopeStack> scope_stack;
 
 	private:
 		[[nodiscard]] bool Consume(TokenKind k)

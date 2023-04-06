@@ -4,8 +4,6 @@
 
 namespace lu
 {
-	class Object;
-
 	enum class TypeKind : uint8
 	{
 		Void,
@@ -208,6 +206,7 @@ namespace lu
 
 	private:
 	};
+	using EnumType = ArithmeticType;
 
 	enum class FunctionSpecifier : bool
 	{
@@ -218,17 +217,17 @@ namespace lu
 	{
 	public:
 		
-		FuncType(QualifiedType const& return_qtype, std::vector<Object*> const& params = {}, bool is_variadic = false)
-			: Type{ TypeKind::Function, false },
-			return_qtype( return_qtype ), params( params ), is_variadic(is_variadic), has_prototype( false ){}
+		FuncType(QualifiedType const& return_qtype, std::vector<QualifiedType> const& param_types = {}, bool is_variadic = false)
+			: Type( TypeKind::Function, false ),
+			return_qtype( return_qtype ), param_types(param_types), is_variadic(is_variadic), has_prototype( false ){}
 		
 		bool IsInline() const { return specifier == FunctionSpecifier::Inline; }
 		void SetInline() { specifier = FunctionSpecifier::Inline; }
 		
-		QualifiedType RetQType() const { return return_qtype; }
-		std::vector<Object*> const& Params() const { return params; }
+		QualifiedType GetReturnType() const { return return_qtype; }
+		std::vector<QualifiedType> const& GetParamTypes() const { return param_types; }
 
-		void UpdateParams(std::vector<Object*> const& _params) { params = _params; }
+		void UpdateParamTypes(std::vector<QualifiedType> const& _param_types) { param_types = _param_types; }
 		
 		void EncounteredDefinition() { SetComplete(); }
 		bool HasDefinition() const { return IsComplete(); }
@@ -237,24 +236,37 @@ namespace lu
 		
 	private:
 		QualifiedType return_qtype;
-		std::vector<Object*> params;
+		std::vector<QualifiedType> param_types;
 		bool is_variadic = false;
 		bool has_prototype = false;
 		FunctionSpecifier specifier = FunctionSpecifier::None;
 	};
 	
+	// Struct member
+	struct Member 
+	{
+		std::string name = "";
+		QualifiedType qtype{};
+		int idx;
+		size_t align;
+		size_t offset;
+		// Bitfield
+		size_t bit_offset;
+		size_t bit_width;
+		bool is_bitfield;
+	};
 	class RecordType : public Type 
 	{
 	public:
 		explicit RecordType(std::string_view tag_name, bool is_union = false)
 			: Type{ is_union ? TypeKind::Union : TypeKind::Struct, false }, tag_name{ tag_name } {}
 
-		RecordType(std::vector<Object*> const& members, std::string_view tag_name = "", bool is_union = false)
+		RecordType(std::vector<Member> const& members, std::string_view tag_name = "", bool is_union = false)
 			: RecordType(tag_name, is_union) {}
 		
-		std::string_view TagName() const { return tag_name; }
-		std::vector<Object*> const& Members() const { return members; }
-		void EncounterDefinition(std::vector<Object*> const& members)
+		std::string_view GetTagName() const { return tag_name; }
+		std::vector<Member> const& GetMembers() const { return members; }
+		void EncounterDefinition(std::vector<Member> const& members)
 		{
 			SetComplete();
 		}
@@ -263,16 +275,16 @@ namespace lu
 		{
 			return members_map.find(name) != members_map.cend();
 		}
-		Object* GetMember(std::string_view name)
+		Member& GetMember(std::string_view name)
 		{
-			return nullptr;
+			return members_map[name];
 		}
 		bool IsModifiableLValue() const { return is_modifiable_lvalue; }
 	private:
 
 		std::string tag_name;
-		std::vector<Object*> members{};
-		std::unordered_map<std::string_view, Object*> members_map{};
+		std::vector<Member> members{};
+		std::unordered_map<std::string_view, Member> members_map{};
 		bool is_modifiable_lvalue = false;
 	};
 

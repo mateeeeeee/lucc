@@ -31,14 +31,12 @@ namespace lu
 		Storage storage = Storage::None;
 		FunctionSpecifier func_spec = FunctionSpecifier::None;
 	};
-
 	struct Parser::DeclaratorInfo
 	{
 		std::string name = "";
 		QualifiedType qtype{};
 		SourceLocation loc;
 	};
-
 
 	Parser::Parser(std::vector<Token> const& _tokens)
 		: tokens(_tokens), current_token(tokens.begin())
@@ -47,6 +45,7 @@ namespace lu
 	bool Parser::Parse()
 	{
 		ast = std::make_unique<AST>();
+		scope_stack = std::make_unique<ScopeStack>();
 		return ParseTranslationUnit();
 	}
 
@@ -98,7 +97,7 @@ namespace lu
 				//diag
 				return {};
 			}
-
+			
 			//push_scope(get_ident(ty->name))->type_def = ty;
 		}
 		

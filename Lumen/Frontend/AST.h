@@ -32,6 +32,7 @@ namespace lu
 	};
 	class StmtAST : public NodeAST
 	{
+	public:
 		StmtAST() = default;
 
 		virtual void Visit(NodeASTVisitor& visitor) const override {}
@@ -55,17 +56,90 @@ namespace lu
 		std::vector<std::unique_ptr<DeclAST>> external_declarations;
 	};
 	//declarations
+
 	class VarDeclAST : public DeclAST
 	{
 	public:
 		VarDeclAST(QualifiedType const& type, std::string_view id, std::unique_ptr<StmtAST>&& stmt = nullptr)
 			: type(type), identifier(id), init_stmt(std::move(stmt))
 		{}
-
 	private:
 		QualifiedType type;
 		std::string identifier;
 		std::unique_ptr<StmtAST> init_stmt;
+	};
+	class ParamVarDeclAST : public DeclAST
+	{
+	public:
+		ParamVarDeclAST(QualifiedType const& type, std::string_view id)
+			: type(type), identifier(id)
+		{}
+	private:
+		QualifiedType type;
+		std::string identifier;
+	};
+	class FieldDeclAST : public DeclAST
+	{
+	public:
+		FieldDeclAST(QualifiedType const& type, std::string_view id)
+			: type(type), identifier(id)
+		{}
+	private:
+		QualifiedType type;
+		std::string identifier;
+	};
+	class CompoundStmtAST : public StmtAST
+	{
+	public:
+		CompoundStmtAST() = default;
+
+		void AddStatement(std::unique_ptr<StmtAST>&& stmt)
+		{
+			statements.push_back(std::move(stmt));
+		}
+
+		virtual void Visit(NodeASTVisitor& visitor) const override
+		{
+			for (auto&& stmt : statements) stmt->Visit(visitor);
+		}
+	private:
+		std::vector<std::unique_ptr<StmtAST>> statements;
+	};
+	class RecordDeclAST : public DeclAST
+	{
+	public:
+		RecordDeclAST() = default;
+
+		void AddField(std::unique_ptr<FieldDeclAST>&& field)
+		{
+			fields.push_back(std::move(field));
+		}
+
+		virtual void Visit(NodeASTVisitor& visitor) const override
+		{
+			for (auto&& field : fields) field->Visit(visitor);
+		}
+	private:
+		std::vector<std::unique_ptr<FieldDeclAST>> fields;
+	};
+	class FunctionDeclAST : public DeclAST
+	{
+	public:
+		FunctionDeclAST() = default;
+
+		void AddBody(std::unique_ptr<CompoundStmtAST>&& body)
+		{
+			func_body = std::move(body);
+		}
+
+		virtual void Visit(NodeASTVisitor& visitor) const override
+		{
+			for (auto&& param : param_decls) param->Visit(visitor);
+			func_body->Visit(visitor);
+		}
+	private:
+		std::vector<std::unique_ptr<ParamVarDeclAST>> param_decls;
+		std::unique_ptr<CompoundStmtAST> func_body;
 	};
 
 	class TypedefDeclAST : public DeclAST
