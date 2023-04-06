@@ -31,20 +31,30 @@ namespace lu
 
 			DebugNodeVisitorAST(AST* ast)
 			{
-				Visit(*ast->tr_unit);
+				ast->tr_unit->Accept(*this, 0);
 			}
 
-			virtual void Visit(TranslationUnitDeclAST const& node) override
+			virtual void Visit(TranslationUnitDeclAST const& node, size_t indent) override
 			{
-
+				std::string indentation(indent * 3, '-'); if (!indentation.empty())
+				{
+					indentation.front() = '`';
+					indentation.back() = '>';
+				}
+				std::cout << indentation << "TranslationUnitDeclAST \n";
 			}
-			virtual void Visit(TypedefDeclAST const& node) override
+			virtual void Visit(TypedefDeclAST const& node, size_t indent) override
 			{
-
+				std::string indentation(indent * 3, '-'); if (!indentation.empty())
+				{
+					indentation.front() = '`';
+					indentation.back() = '>';
+				}
+				std::cout << indentation << "TypedefDeclAST \n";
 			}
-			virtual void Visit(NodeAST const& node)
+			virtual void Visit(NodeAST const& node, size_t indent)
 			{
-				//
+				
 			}
 		};
 	}

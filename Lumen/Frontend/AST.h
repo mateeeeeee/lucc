@@ -15,16 +15,16 @@ namespace lu
 	{
 	public:
 		virtual ~NodeVisitorAST() = default;
-		virtual void Visit(TranslationUnitDeclAST const& node) = 0;
-		virtual void Visit(TypedefDeclAST const& node) = 0;
-		virtual void Visit(NodeAST const& node) = 0;
+		virtual void Visit(TranslationUnitDeclAST const& node, size_t indent) = 0;
+		virtual void Visit(TypedefDeclAST const& node, size_t indent) = 0;
+		virtual void Visit(NodeAST const& node, size_t indent) = 0;
 	};
 
 	class NodeAST
 	{
 	public:
 		virtual ~NodeAST() = default;
-		virtual void Accept(NodeVisitorAST& visitor) const = 0;
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const = 0;
 
 	protected:
 		NodeAST() = default;
@@ -34,7 +34,7 @@ namespace lu
 	{
 	public:
 		DeclAST() = default;
-		virtual void Accept(NodeVisitorAST& visitor) const override 
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override 
 		{
 			
 		}
@@ -44,10 +44,11 @@ namespace lu
 	{
 	public:
 		StmtAST() = default;
-		virtual void Accept(NodeVisitorAST& visitor) const override 
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override 
 		{
 			
 		}
+
 	};
 
 	class TranslationUnitDeclAST : public DeclAST
@@ -58,10 +59,10 @@ namespace lu
 		{
 			external_declarations.push_back(std::move(ext_decl));
 		}
-		virtual void Accept(NodeVisitorAST& visitor) const override
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
 		{
-			visitor.Visit(*this);
-			for (auto&& decl : external_declarations) decl->Accept(visitor);
+			visitor.Visit(*this, indent);
+			for (auto&& decl : external_declarations) decl->Accept(visitor, indent + 1);
 		}
 
 	private:
@@ -75,10 +76,10 @@ namespace lu
 			: type(type), identifier(id), init_stmt(std::move(stmt))
 		{}
 
-		virtual void Accept(NodeVisitorAST& visitor) const override
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
 		{
-			visitor.Visit(*this);
-			init_stmt->Accept(visitor);
+			visitor.Visit(*this, indent);
+			init_stmt->Accept(visitor, indent + 1);
 		}
 
 	private:
@@ -93,9 +94,9 @@ namespace lu
 		ParamVarDeclAST(QualifiedType const& type, std::string_view id)
 			: type(type), identifier(id)
 		{}
-		virtual void Accept(NodeVisitorAST& visitor) const override
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
 		{
-			visitor.Visit(*this);
+			visitor.Visit(*this, indent);
 		}
 
 	private:
@@ -123,9 +124,10 @@ namespace lu
 		{
 			statements.push_back(std::move(stmt));
 		}
-		virtual void Accept(NodeVisitorAST& visitor) const override
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
 		{
-			for (auto&& stmt : statements) stmt->Accept(visitor);
+			visitor.Visit(*this, indent);
+			for (auto&& stmt : statements) stmt->Accept(visitor, indent + 1);
 		}
 	
 	private:
@@ -140,9 +142,10 @@ namespace lu
 		{
 			fields.push_back(std::move(field));
 		}
-		virtual void Accept(NodeVisitorAST& visitor) const override
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
 		{
-			for (auto&& field : fields) field->Accept(visitor);
+			visitor.Visit(*this, indent);
+			for (auto&& field : fields) field->Accept(visitor, indent + 1);
 		}
 
 	private:
@@ -157,10 +160,11 @@ namespace lu
 		{
 			func_body = std::move(body);
 		}
-		virtual void Accept(NodeVisitorAST& visitor) const override
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
 		{
-			for (auto&& param : param_decls) param->Accept(visitor);
-			func_body->Accept(visitor);
+			visitor.Visit(*this, indent);
+			for (auto&& param : param_decls) param->Accept(visitor, indent + 1);
+			func_body->Accept(visitor, indent + 1);
 		}
 	
 	private:
@@ -175,6 +179,10 @@ namespace lu
 			: type(type), typealias(typealias)
 		{}
 
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
+		{
+			visitor.Visit(*this, indent);
+		}
 	private:
 		QualifiedType type;
 		std::string typealias;
