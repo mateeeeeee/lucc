@@ -42,6 +42,8 @@ namespace lu
 		: tokens(_tokens), current_token(tokens.begin())
 	{}
 
+	Parser::~Parser() = default;
+
 	bool Parser::Parse()
 	{
 		ast = std::make_unique<AST>();
@@ -71,12 +73,14 @@ namespace lu
 			if (typedef_decls.empty()) return false;
 			for(auto&& typedef_decl : typedef_decls)
 				ast->tr_unit->AddExternalDeclaration(std::move(typedef_decl));
+			return true;
 		}
+
 
 		return false;
 	}
 
-	std::vector<std::unique_ptr<TypedefDeclAST>> Parser::ParseTypedefDeclaration(DeclSpecInfo& decl_spec)
+	std::vector<std::unique_ptr<TypedefDeclAST>> Parser::ParseTypedefDeclaration(DeclSpecInfo const& decl_spec)
 	{
 		bool first = true;
 		std::vector<std::unique_ptr<TypedefDeclAST>> typedefs{};
@@ -97,11 +101,14 @@ namespace lu
 				//diag
 				return {};
 			}
+			typedefs.push_back(std::make_unique<TypedefDeclAST>(typedef_info.qtype, typedef_info.name));
 			
-			//push_scope(get_ident(ty->name))->type_def = ty;
+			Var& typedef_var = scope_stack->AddVar(typedef_info.name);
+			typedef_var.kind = Var::Kind::Typedef;
+			typedef_var.type_def = typedef_info.qtype;
 		}
 		
-		return {};
+		return typedefs;
 	}
 
 	bool Parser::ParseDeclSpec(DeclSpecInfo& decl_spec)
@@ -112,6 +119,7 @@ namespace lu
 			TokenKind kind = current_token->GetKind();
 			if (current_token->IsStorageSpecifier())
 			{
+				++current_token;
 				if (decl_spec.storage != Storage::None)
 				{
 					//diag
@@ -154,6 +162,8 @@ namespace lu
 				continue;
 			}
 
+			kind = current_token->GetKind();
+			++current_token;
 			//#todo Add support for user-defined types
 
 			//builtin types
@@ -186,6 +196,7 @@ namespace lu
 			case TokenKind::KW_signed: counter += SIGNED; break;
 			case TokenKind::KW_unsigned: counter += UNSIGNED; break;
 			}
+
 			switch (counter) 
 			{
 			case VOID:

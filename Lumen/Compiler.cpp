@@ -1,7 +1,10 @@
 #include "Compiler.h"
+#include "Frontend/SourceBuffer.h"
 #include "Frontend/Preprocessor.h"
 #include "Frontend/Lexer.h"
-#include "Frontend/SourceBuffer.h"
+#include "Frontend/Parser.h"
+#include "Frontend/AST.h"
+
 
 #include <iostream>
 namespace lu
@@ -21,6 +24,29 @@ namespace lu
 			}
 			std::cout << "\n\n";
 		}
+
+		class DebugNodeVisitorAST : public NodeVisitorAST
+		{
+		public:
+
+			DebugNodeVisitorAST(AST* ast)
+			{
+				Visit(*ast->tr_unit);
+			}
+
+			virtual void Visit(TranslationUnitDeclAST const& node) override
+			{
+
+			}
+			virtual void Visit(TypedefDeclAST const& node) override
+			{
+
+			}
+			virtual void Visit(NodeAST const& node)
+			{
+				//
+			}
+		};
 	}
 
 	bool Compile(CompilerInput& input)
@@ -45,6 +71,16 @@ namespace lu
 		debug::PrintTokens("\n\nAfter preprocessor", lex.GetTokens());
 		//do parsing
 
+		Parser parser(lex.GetTokens());
+
+		if (!parser.Parse())
+		{
+			//diag
+			return false;
+		}
+		AST* ast = parser.GetAST();
+
+		debug::DebugNodeVisitorAST visitor(ast);
 		//do optimizations
 
 		//do codegen

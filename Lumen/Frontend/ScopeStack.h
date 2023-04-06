@@ -50,14 +50,19 @@ namespace lu
 		union 
 		{
 			Object* obj;
-			QualifiedType* type_def;
+			QualifiedType type_def{};
 			struct EnumVar
 			{
-				Type* underlying_type;
+				ArithmeticType* underlying_type;
 				int32 value;
 			} enum_var;
 		};
 		
+	};
+	struct Tag
+	{
+		std::string name = "";
+		QualifiedType qtype{};
 	};
 
 	class ScopeStack
@@ -67,9 +72,37 @@ namespace lu
 		public:
 			SymbolTable() = default;
 
+			Var& AddVar(std::string_view name)
+			{
+				return var_map[name];
+			}
+			bool HasVar(std::string_view name) const
+			{
+				return var_map.contains(name);
+			}
+			Var const& GetVar(std::string_view name)
+			{
+				return var_map[name];
+			}
+
+			Tag& AddTag(std::string_view name, Tag const& type)
+			{
+				tags_map[name] = type;
+				return tags_map[name];
+			}
+			bool HasTag(std::string_view name) const
+			{
+				return tags_map.contains(name);
+			}
+			Tag const& GetTag(std::string_view name)
+			{
+				return tags_map[name];
+			}
+
+
 		private:
 			std::unordered_map<std::string_view, Var> var_map;
-			std::unordered_map<std::string_view, QualifiedType> tags_map;
+			std::unordered_map<std::string_view, Tag> tags_map;
 		};
 		struct SymbolTableScopePair
 		{
@@ -88,9 +121,33 @@ namespace lu
 		void ExitPrototype() { scopes.pop_back(); }
 		void ExitBlock() { scopes.pop_back(); }
 
-		
+		Var& AddVar(std::string_view name)
+		{
+			return scopes.back().sym_table.AddVar(name);
+		}
+		bool HasVar(std::string_view name) const
+		{
+			return scopes.back().sym_table.HasVar(name);
+		}
+		Var const& GetVar(std::string_view name)
+		{
+			return scopes.back().sym_table.GetVar(name);
+		}
 
-		ScopeKind GetCurrentScope() const { return scopes.back().scope; }
+		Tag& AddTag(std::string_view name, Tag const& type)
+		{
+			return scopes.back().sym_table.AddTag(name, type);
+		}
+		bool HasTag(std::string_view name) const
+		{
+			return scopes.back().sym_table.HasTag(name);
+		}
+		Tag const& GetTag(std::string_view name)
+		{
+			return scopes.back().sym_table.GetTag(name);
+		}
+
+		ScopeKind GetCurrentScopeKind() const { return scopes.back().scope; }
 	private:
 		std::vector<SymbolTableScopePair> scopes;
 	};

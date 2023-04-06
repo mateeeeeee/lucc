@@ -21,6 +21,7 @@ namespace lu
 	public:
 
 		explicit Parser(std::vector<Token> const& tokens);
+		~Parser();
 		bool Parse();
 		AST* GetAST() const { return ast.get(); }
 
@@ -51,7 +52,7 @@ namespace lu
 
 		[[nodiscard]] bool ParseTranslationUnit();
 		[[nodiscard]] bool ParseExternalDeclaration();
-		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclSpecInfo& decl_spec);
+		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclSpecInfo const& decl_spec);
 
 		bool ParseDeclSpec(DeclSpecInfo& decl_spec);
 		bool ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);

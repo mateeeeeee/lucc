@@ -199,11 +199,14 @@ namespace lu
 		case '{':
 			t.SetKind(TokenKind::left_brace);
 			break;
+		case '}':
+			t.SetKind(TokenKind::right_brace);
+			break;
 		case ',':
 			t.SetKind(TokenKind::comma);
 			break;
-		case '}':
-			t.SetKind(TokenKind::right_brace);
+		case ';':
+			t.SetKind(TokenKind::semicolon);
 			break;
 		case '#':
 			if (*cur_ptr == '#')
