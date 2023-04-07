@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Compiler.cpp" />
+    <ClCompile Include="Frontend\Diagnostics.cpp" />
     <ClCompile Include="Frontend\Hideset.cpp" />
     <ClCompile Include="Frontend\Lexer.cpp" />
     <ClCompile Include="Frontend\Parser.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="Core\Defines.h" />
     <ClInclude Include="Core\Enums.h" />
     <ClInclude Include="Frontend\AST.h" />
+    <ClInclude Include="Frontend\Diagnostics.h" />
     <ClInclude Include="Frontend\Hideset.h" />
     <ClInclude Include="Frontend\Lexer.h" />
     <ClInclude Include="Frontend\Parser.h" />
@@ -169,10 +171,10 @@
     <ClInclude Include="Frontend\SourceBuffer.h" />
     <ClInclude Include="Frontend\SourceLocation.h" />
     <ClInclude Include="Frontend\Token.h" />
-    <ClInclude Include="Frontend\TokenDef.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <None Include="Frontend\Tokens.def">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </None>
     <ClInclude Include="Frontend\TokenTypes.h" />
     <ClInclude Include="Frontend\Type.h" />
     <ClInclude Include="precomp.h" />
@@ -180,6 +182,9 @@
   <ItemGroup>
     <Text Include="test.txt" />
     <Text Include="test2.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Frontend\Diagnostics.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

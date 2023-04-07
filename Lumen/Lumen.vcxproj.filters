@@ -22,6 +22,9 @@
     <ClCompile Include="Frontend\Parser.cpp">
       <Filter>Frontend\Parser</Filter>
     </ClCompile>
+    <ClCompile Include="Frontend\Diagnostics.cpp">
+      <Filter>Frontend\Diagnostics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />
@@ -44,9 +47,6 @@
       <Filter>Frontend</Filter>
     </ClInclude>
     <ClInclude Include="Frontend\TokenTypes.h">
-      <Filter>Frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="Frontend\TokenDef.h">
       <Filter>Frontend</Filter>
     </ClInclude>
     <ClInclude Include="Frontend\Lexer.h">
@@ -74,6 +74,9 @@
     <ClInclude Include="Frontend\ScopeStack.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
+    <ClInclude Include="Frontend\Diagnostics.h">
+      <Filter>Frontend\Diagnostics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Frontend">
@@ -91,9 +94,20 @@
     <Filter Include="Frontend\Parser">
       <UniqueIdentifier>{8875749e-759b-4319-8f2c-723af3aa099a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Frontend\Diagnostics">
+      <UniqueIdentifier>{b58771ba-0d5f-4200-93d2-29e6007885f8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="test.txt" />
     <Text Include="test2.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Frontend\Diagnostics.def">
+      <Filter>Frontend\Diagnostics</Filter>
+    </None>
+    <None Include="Frontend\Tokens.def">
+      <Filter>Frontend</Filter>
+    </None>
   </ItemGroup>
 </Project>

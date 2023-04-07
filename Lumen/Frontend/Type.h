@@ -2,7 +2,7 @@
 #include "Core/Enums.h"
 #include <unordered_map>
 
-namespace lu
+namespace lucc
 {
 	enum class TypeKind : uint8
 	{

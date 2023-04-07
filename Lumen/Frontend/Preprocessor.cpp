@@ -11,7 +11,7 @@
 //- stringify, concat operators
 //- #if,#elif
 
-namespace lu
+namespace lucc
 {
 	Preprocessor::Preprocessor(Lexer& lexer) : lexer(lexer)
 	{}

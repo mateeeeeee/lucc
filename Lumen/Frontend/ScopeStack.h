@@ -4,7 +4,7 @@
 #include <vector>
 #include "Type.h"
 
-namespace lu
+namespace lucc
 {
 	enum class ScopeKind : uint8
 	{

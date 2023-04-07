@@ -5,7 +5,7 @@
 #include "Type.h"
 #include "SourceLocation.h"
 
-namespace lu
+namespace lucc
 {
 	class NodeAST;
 	class TranslationUnitDeclAST;

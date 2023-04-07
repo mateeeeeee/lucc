@@ -1,7 +1,7 @@
 #include "Hideset.h"
 #include <algorithm>
 
-namespace lu
+namespace lucc
 {
 
 	Hideset::Hideset(std::string_view name) : hideset()

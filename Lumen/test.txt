@@ -1,3 +1,1 @@
-#include "test2.txt"
-
-typedef int a;
+int typedef a,b,c;

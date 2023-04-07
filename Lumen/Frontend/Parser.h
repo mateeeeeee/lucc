@@ -4,7 +4,7 @@
 #include "Token.h"
 
 
-namespace lu
+namespace lucc
 {
 	class ScopeStack;
 	struct AST;

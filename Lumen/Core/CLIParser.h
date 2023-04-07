@@ -3,7 +3,7 @@
 #include <string>
 #include "Defines.h"
 
-namespace lu
+namespace lucc
 {
 	class CLIArg
 	{

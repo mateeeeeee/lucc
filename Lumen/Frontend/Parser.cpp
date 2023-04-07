@@ -2,10 +2,11 @@
 #include "Lexer.h"
 #include "AST.h"
 #include "ScopeStack.h"
+#include "Core/Defines.h"
 
-namespace lu
+namespace lucc
 {
-	namespace types
+	namespace builtin_types
 	{
 		static constexpr Type Void = VoidType();
 		static constexpr ArithmeticType Bool = ArithmeticType(ArithmeticType::Bool);
@@ -27,7 +28,7 @@ namespace lu
 	struct Parser::DeclSpecInfo
 	{
 		size_t align = 0;
-		QualifiedType qtype = types::Int;
+		QualifiedType qtype = builtin_types::Int;
 		Storage storage = Storage::None;
 		FunctionSpecifier func_spec = FunctionSpecifier::None;
 	};
@@ -114,11 +115,28 @@ namespace lu
 	bool Parser::ParseDeclSpec(DeclSpecInfo& decl_spec)
 	{
 		decl_spec = DeclSpecInfo{};
+		decl_spec.qtype = builtin_types::Int;
+
+		enum TypeFlags
+		{
+			VOID = 1 << 0,
+			BOOL = 1 << 2,
+			CHAR = 1 << 4,
+			SHORT = 1 << 6,
+			INT = 1 << 8,
+			LONG = 1 << 10,
+			FLOAT = 1 << 12,
+			DOUBLE = 1 << 14,
+			OTHER = 1 << 16,
+			SIGNED = 1 << 17,
+			UNSIGNED = 1 << 18,
+		};
+		uint32 counter = 0;
 		while (current_token->IsDeclSpec())
 		{
-			TokenKind kind = current_token->GetKind();
 			if (current_token->IsStorageSpecifier())
 			{
+				TokenKind kind = current_token->GetKind();
 				++current_token;
 				if (decl_spec.storage != Storage::None)
 				{
@@ -143,8 +161,11 @@ namespace lu
 				case TokenKind::KW_extern:
 					decl_spec.storage = Storage::Extern;
 					break;
+				default:
+					LU_UNREACHABLE();
 				}
 			}
+
 			//ignore for now, later add support: atomic, tls, alignas
 			if (Consume(
 				TokenKind::KW_auto, TokenKind::KW_register, TokenKind::KW__Atomic,
@@ -162,27 +183,12 @@ namespace lu
 				continue;
 			}
 
-			kind = current_token->GetKind();
-			++current_token;
+			if (!current_token->IsDeclSpec()) break;
+
+			TokenKind kind = current_token->GetKind();
 			//#todo Add support for user-defined types
 
 			//builtin types
-
-			enum TypeFlags
-			{
-				VOID = 1 << 0,
-				BOOL = 1 << 2,
-				CHAR = 1 << 4,
-				SHORT = 1 << 6,
-				INT = 1 << 8,
-				LONG = 1 << 10,
-				FLOAT = 1 << 12,
-				DOUBLE = 1 << 14,
-				OTHER = 1 << 16,
-				SIGNED = 1 << 17,
-				UNSIGNED = 1 << 18,
-			};
-			uint32 counter = 0;
 			switch (kind)
 			{
 			case TokenKind::KW_void: counter += VOID; break;
@@ -195,70 +201,72 @@ namespace lu
 			case TokenKind::KW_double: counter += DOUBLE; break;
 			case TokenKind::KW_signed: counter += SIGNED; break;
 			case TokenKind::KW_unsigned: counter += UNSIGNED; break;
+			default: LU_UNREACHABLE();
 			}
+			++current_token;
 
 			switch (counter) 
 			{
 			case VOID:
-				decl_spec.qtype.SetRawType(types::Void);
+				decl_spec.qtype.SetRawType(builtin_types::Void);
 				break;
 			case BOOL:
-				decl_spec.qtype.SetRawType(types::Bool);
+				decl_spec.qtype.SetRawType(builtin_types::Bool);
 				break;
 			case CHAR:
 			case SIGNED + CHAR:
-				decl_spec.qtype.SetRawType(types::Char);
+				decl_spec.qtype.SetRawType(builtin_types::Char);
 				break;
 			case UNSIGNED + CHAR:
-				decl_spec.qtype.SetRawType(types::UnsignedChar);
+				decl_spec.qtype.SetRawType(builtin_types::UnsignedChar);
 				break;
 			case SHORT:
 			case SHORT + INT:
 			case SIGNED + SHORT:
 			case SIGNED + SHORT + INT:
-				decl_spec.qtype.SetRawType(types::Short);
+				decl_spec.qtype.SetRawType(builtin_types::Short);
 				break;
 			case UNSIGNED + SHORT:
 			case UNSIGNED + SHORT + INT:
-				decl_spec.qtype.SetRawType(types::UnsignedShort);
+				decl_spec.qtype.SetRawType(builtin_types::UnsignedShort);
 				break;
 			case INT:
 			case SIGNED:
 			case SIGNED + INT:
-				decl_spec.qtype.SetRawType(types::Int);
+				decl_spec.qtype.SetRawType(builtin_types::Int);
 				break;
 			case UNSIGNED:
 			case UNSIGNED + INT:
-				decl_spec.qtype.SetRawType(types::UnsignedInt);
+				decl_spec.qtype.SetRawType(builtin_types::UnsignedInt);
 				break;
 			case LONG:
 			case LONG + INT:
 			case SIGNED + LONG:
 			case SIGNED + LONG + INT:
-				decl_spec.qtype.SetRawType(types::Long);
+				decl_spec.qtype.SetRawType(builtin_types::Long);
 				break;
 			case LONG + LONG:
 			case LONG + LONG + INT:
 			case SIGNED + LONG + LONG:
 			case SIGNED + LONG + LONG + INT:
-				decl_spec.qtype.SetRawType(types::LongLong);
+				decl_spec.qtype.SetRawType(builtin_types::LongLong);
 				break;
 			case UNSIGNED + LONG:
 			case UNSIGNED + LONG + INT:
-				decl_spec.qtype.SetRawType(types::UnsignedLong);
+				decl_spec.qtype.SetRawType(builtin_types::UnsignedLong);
 				break;
 			case UNSIGNED + LONG + LONG:
 			case UNSIGNED + LONG + LONG + INT:
-				decl_spec.qtype.SetRawType(types::UnsignedLongLong);
+				decl_spec.qtype.SetRawType(builtin_types::UnsignedLongLong);
 				break;
 			case FLOAT:
-				decl_spec.qtype.SetRawType(types::Float);
+				decl_spec.qtype.SetRawType(builtin_types::Float);
 				break;
 			case DOUBLE:
-				decl_spec.qtype.SetRawType(types::Double);
+				decl_spec.qtype.SetRawType(builtin_types::Double);
 				break;
 			case LONG + DOUBLE:
-				decl_spec.qtype.SetRawType(types::LongDouble);
+				decl_spec.qtype.SetRawType(builtin_types::LongDouble);
 				break;
 			default:
 				//diag 

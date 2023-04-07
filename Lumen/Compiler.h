@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Enums.h"
 
-namespace lu
+namespace lucc
 {
 	enum CompilerOpt : uint32 
 	{

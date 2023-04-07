@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 
-namespace lu
+namespace lucc
 {
 	class Hideset
 	{

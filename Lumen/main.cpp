@@ -2,7 +2,7 @@
 #include "Core/CLIParser.h"
 #include <iostream>
 
-using namespace lu;
+using namespace lucc;
 
 int main(int argc, char** argv)
 {
@@ -12,8 +12,8 @@ int main(int argc, char** argv)
 	parser.Parse(argc, argv);
 
 	//#todo add diagnostics 
-	lu::CompilerInput compiler_input{};
+	lucc::CompilerInput compiler_input{};
 	compiler_input.input = "test.txt";
-	compiler_input.options = lu::CompilerOpt_None;
+	compiler_input.options = lucc::CompilerOpt_None;
 	bool result = Compile(compiler_input);
 }

@@ -3,7 +3,7 @@
 #include <string>
 #include "Token.h"
 
-namespace lu
+namespace lucc
 {
 	class SourceBuffer;
 

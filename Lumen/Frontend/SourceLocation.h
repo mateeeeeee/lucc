@@ -1,6 +1,6 @@
 #pragma once
 
-namespace lu
+namespace lucc
 {
 	struct SourceLocation
 	{

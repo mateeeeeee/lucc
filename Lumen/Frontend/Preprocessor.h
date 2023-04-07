@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include "Token.h"
 
-namespace lu
+namespace lucc
 {
 	class Lexer;
 	class Token;

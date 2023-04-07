@@ -1,0 +1,9 @@
+#ifndef DIAG
+#define DIAG(diag_code, diag_class, diag_msg)
+#endif
+
+DIAG(lexing_failed, error, "Lexing failed!")
+DIAG(preprocessing_failed, error, "Preprocessing failed!")
+DIAG(parsing_failed, error, "Parsing failed!")
+
+#undef DIAG

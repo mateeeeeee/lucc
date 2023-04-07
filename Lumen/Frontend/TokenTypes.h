@@ -1,15 +1,14 @@
 #pragma once
 #include <string_view>
 
-namespace lu
+namespace lucc
 {
 	enum class TokenKind : uint16
 	{
 		#define TOKEN(X) X,
-		#include "TokenDef.h"
-		Count
+		#include "Tokens.def"
 	};
-	char const* GetTokenName(TokenKind t);
+	std::string_view GetTokenName(TokenKind t);
 
 	bool IsKeyword(std::string_view identifer);
 	TokenKind GetKeywordType(std::string_view identifer);

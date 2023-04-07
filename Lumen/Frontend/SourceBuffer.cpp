@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 
-namespace lu
+namespace lucc
 {
 	
 
