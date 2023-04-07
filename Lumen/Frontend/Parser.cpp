@@ -2,6 +2,7 @@
 #include "Lexer.h"
 #include "AST.h"
 #include "ScopeStack.h"
+#include "Diagnostics.h"
 #include "Core/Defines.h"
 
 namespace lucc
@@ -38,6 +39,20 @@ namespace lucc
 		QualifiedType qtype{};
 		SourceLocation loc;
 	};
+	struct Parser::DeclarationInfo
+	{
+		DeclarationInfo() {}
+		DeclarationInfo(DeclSpecInfo const& decl_spec, DeclaratorInfo const& declarator)
+			: name(declarator.name), qtype(declarator.qtype), loc(declarator.loc),
+			  align(decl_spec.align), storage(decl_spec.storage), func_spec(decl_spec.func_spec)
+		{}
+		std::string name = "";
+		QualifiedType qtype{};
+		SourceLocation loc;
+		size_t align = 0;
+		Storage storage = Storage::None;
+		FunctionSpecifier func_spec = FunctionSpecifier::None;
+	};
 
 	Parser::Parser(std::vector<Token> const& _tokens)
 		: tokens(_tokens), current_token(tokens.begin())
@@ -66,7 +81,6 @@ namespace lucc
 	{
 		DeclSpecInfo decl_spec{};
 		if (!ParseDeclSpec(decl_spec)) return false;
-
 		// Typedef
 		if (decl_spec.storage == Storage::Typedef)
 		{
@@ -77,6 +91,18 @@ namespace lucc
 			return true;
 		}
 
+		DeclaratorInfo declarator_info{};
+		ParseDeclarator(decl_spec, declarator_info);
+		if (declarator_info.qtype->Is(TypeKind::Function))
+		{
+			auto func_decl = ParseFunctionDeclaration(DeclarationInfo(decl_spec, declarator_info));
+			if (func_decl) ast->tr_unit->AddExternalDeclaration(std::move(func_decl));
+			return func_decl != nullptr;
+		}
+		else //global variable
+		{
+
+		}
 
 		return false;
 	}
@@ -112,7 +138,17 @@ namespace lucc
 		return typedefs;
 	}
 
-	bool Parser::ParseDeclSpec(DeclSpecInfo& decl_spec)
+	std::unique_ptr<FunctionDeclAST> Parser::ParseFunctionDeclaration(DeclarationInfo const& declaration)
+	{
+		if (Consume(TokenKind::semicolon))
+		{
+
+		}
+
+		return nullptr;
+	}
+
+	bool Parser::ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs)
 	{
 		decl_spec = DeclSpecInfo{};
 		decl_spec.qtype = builtin_types::Int;
@@ -136,6 +172,12 @@ namespace lucc
 		{
 			if (current_token->IsStorageSpecifier())
 			{
+				if (forbid_storage_specs)
+				{
+					Report(diag::storage_specifier_forbidden_context, current_token->GetLocation());
+					return false;
+				}
+
 				TokenKind kind = current_token->GetKind();
 				++current_token;
 				if (decl_spec.storage != Storage::None)
@@ -284,7 +326,7 @@ namespace lucc
 
 		if (Consume(TokenKind::left_round))
 		{
-			//#todo handle ()
+			//#todo handle recursive declarators ()
 			return false;
 		}
 
@@ -294,12 +336,11 @@ namespace lucc
 			declarator.loc = current_token->GetLocation();
 			++current_token;
 		}
-		ParseTypeSuffix(declarator.qtype);
-		return true;
+		return ParseTypeSuffix(declarator.qtype);
 	}
 
 	//pointers = ("*" ("const" | "volatile" | "restrict")*)*
-	void Parser::ParsePointers(QualifiedType& qtype)
+	bool Parser::ParsePointers(QualifiedType& qtype)
 	{
 		while (Consume(TokenKind::star))
 		{
@@ -317,28 +358,102 @@ namespace lucc
 			}
 			//add restrict later
 		}
+		return true;
 	}
-	void Parser::ParseTypeSuffix(QualifiedType& type)
+
+	// func-params = ("void" | param ("," param)* ("," "...")?)? ")"
+	// param = declspec declarator
+	// array-dimensions = "["("static" | "restrict")* const-expr? "]" type-suffix
+	bool Parser::ParseTypeSuffix(QualifiedType& type)
 	{
 		if (Consume(TokenKind::left_round))
 		{
-			// func-params = ("void" | param ("," param)* ("," "...")?)? ")"
-			// param       = declspec declarator
+			if (Consume(TokenKind::KW_void))
+			{
+				FuncType func_type(type);
+				type.SetRawType(func_type);
+				if (!Consume(TokenKind::right_round))
+				{
+					Report(diag::function_params_not_closed, current_token->GetLocation());
+					return false;
+				}
+				else return true;
+			}
+			else
+			{
+				bool is_variadic = false;
+				std::vector<FunctionParameter> param_types{};
+				bool first = true;
+				while (!Consume(TokenKind::right_round))
+				{
+					if (!first && !Consume(TokenKind::comma))
+					{
+						Report(diag::function_params_missing_coma, current_token->GetLocation());
+						return false;
+					}
+					first = false;
+					
+					if (Consume(TokenKind::ellipsis))
+					{
+						is_variadic = true;
+						if (!Consume(TokenKind::right_round))
+						{
+							Report(diag::variadic_params_not_last, current_token->GetLocation());
+							return false;
+						}
+						else break;
+					}
+
+					DeclSpecInfo param_decl_spec{};
+					if (!ParseDeclSpec(param_decl_spec)) return false;
+					DeclaratorInfo param_declarator{};
+					if (!ParseDeclarator(param_decl_spec, param_declarator)) return false;
+					QualifiedType& qtype = param_declarator.qtype;
+					if (qtype->Is(TypeKind::Void)) return false;
+					else if (qtype->Is(TypeKind::Array))
+					{
+						ArrayType const& array_type = TypeCast<ArrayType const&>(*qtype);
+						QualifiedType base_type = array_type.BaseQualifiedType();
+						PointerType decayed_param_type(base_type);
+						qtype = QualifiedType(decayed_param_type);
+					}
+					else if (qtype->Is(TypeKind::Function))
+					{
+						FuncType const& function_type = TypeCast<FuncType const&>(*qtype);
+						PointerType decayed_param_type(function_type);
+						qtype = QualifiedType(decayed_param_type);
+					}
+					param_types.emplace_back(param_declarator.name, param_declarator.qtype);
+				}
+				FuncType func_type(type, param_types, is_variadic);
+				type.SetRawType(func_type);
+				return true;
+			}
 		}
 		else if (Consume(TokenKind::left_square))
 		{
-			// array-dimensions = "["("static" | "restrict")* const-expr? "]" type-suffix
-			while (Consume(TokenKind::KW_static, TokenKind::KW_break));
+			while (Consume(TokenKind::KW_static, TokenKind::KW_restrict));
 			if (Consume(TokenKind::right_square)) 
 			{
 				ArrayType arr_type(type);
 				type.SetRawType(arr_type);
-				ParseTypeSuffix(type);
-				return;
+				return ParseTypeSuffix(type);
 			}
-			
+			else if (current_token->Is(TokenKind::number))
+			{
+				size_t array_size = std::stoull(current_token->GetIdentifier().data(), nullptr, 0); //#todo check if the it succeeded
+				
+				ArrayType arr_type(type, array_size);
+				type.SetRawType(arr_type);
+				if (!Consume(TokenKind::right_square))
+				{
+					Report(diag::function_params_not_closed, current_token->GetLocation());
+					return false;
+				}
+				else return ParseTypeSuffix(type);
+			}
 		}
-		
+		return true;
 	}
 
 }

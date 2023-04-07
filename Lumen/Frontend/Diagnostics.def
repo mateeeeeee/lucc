@@ -5,9 +5,20 @@
 DIAG(lexing_failed, error, "Lexing failed")
 DIAG(preprocessing_failed, error, "Preprocessing failed")
 DIAG(parsing_failed, error, "Parsing failed")
+
+//lexing diagnostics
 DIAG(invalid_number_literal, error, "Invalid number literal")
 DIAG(invalid_token, error, "Invalid token")
+
+//preprocessing diagnostics
 DIAG(defined_misplaced, error, "Stray #defined")
 DIAG(header_name_error, error, "Invalid header name")
+
+//parsing diagnostics
+DIAG(function_params_not_closed, error, "Function parameters not closed")
+DIAG(array_brackets_not_closed, error, "Array brackets not closed")
+DIAG(function_params_missing_coma, error, "Missing coma in function parameters declaration")
+DIAG(variadic_params_not_last, error, "Variadic parameters have to be last parameter")
+DIAG(storage_specifier_forbidden_context, error, "Storage specifier in a forbidden context")
 
 #undef DIAG

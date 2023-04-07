@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Enums.h"
 #include <unordered_map>
+#include <span>
 
 namespace lucc
 {
@@ -62,9 +63,9 @@ namespace lucc
 	public:
 		friend class Type;
 
-		explicit QualifiedType(Qualifiers qualifiers = QualifierNone) : qualifiers{ qualifiers } {}
-		QualifiedType(Type const& _type, Qualifiers qualifiers = QualifierNone) : qualifiers{ qualifiers }
-		{}
+		explicit QualifiedType(Qualifiers qualifiers = QualifierNone) : qualifiers( qualifiers ) {}
+		QualifiedType(Type const& _type, Qualifiers qualifiers = QualifierNone) : qualifiers(qualifiers) {}
+		Qualifiers GetQualifiers() const { return qualifiers; }
 		bool IsConst() const { return qualifiers & QualifierConst; }
 		bool IsVolatile() const { return qualifiers & QualifierVolatile; }
 		void AddConst() { qualifiers |= QualifierConst; }
@@ -103,7 +104,7 @@ namespace lucc
 			: Type{ TypeKind::Pointer, true, 8, 8 },
 			pointee_qtype{ pointee_qtype } {}
 
-		QualifiedType PointeeQType() const { return pointee_qtype; }
+		QualifiedType PointeeQualfiedType() const { return pointee_qtype; }
 
 	private:
 		QualifiedType pointee_qtype;
@@ -213,21 +214,26 @@ namespace lucc
 		None,
 		Inline
 	};
+	struct FunctionParameter
+	{
+		std::string name = "";
+		QualifiedType qtype{};
+	};
 	class FuncType : public Type 
 	{
 	public:
 		
-		FuncType(QualifiedType const& return_qtype, std::vector<QualifiedType> const& param_types = {}, bool is_variadic = false)
+		FuncType(QualifiedType const& return_qtype, std::span<FunctionParameter> param_types = {}, bool is_variadic = false)
 			: Type( TypeKind::Function, false ),
-			return_qtype( return_qtype ), param_types(param_types), is_variadic(is_variadic), has_prototype( false ){}
+			return_qtype( return_qtype ), param_types(param_types.begin(), param_types.end()), is_variadic(is_variadic), has_prototype( false ){}
 		
 		bool IsInline() const { return specifier == FunctionSpecifier::Inline; }
 		void SetInline() { specifier = FunctionSpecifier::Inline; }
 		
 		QualifiedType GetReturnType() const { return return_qtype; }
-		std::vector<QualifiedType> const& GetParamTypes() const { return param_types; }
+		std::span<FunctionParameter const> GetParamTypes() const { return param_types; }
 
-		void UpdateParamTypes(std::vector<QualifiedType> const& _param_types) { param_types = _param_types; }
+		void UpdateParamTypes(std::span<FunctionParameter> _param_types) { param_types.assign(_param_types.begin(),_param_types.end()); }
 		
 		void EncounteredDefinition() { SetComplete(); }
 		bool HasDefinition() const { return IsComplete(); }
@@ -236,14 +242,14 @@ namespace lucc
 		
 	private:
 		QualifiedType return_qtype;
-		std::vector<QualifiedType> param_types;
+		std::vector<FunctionParameter> param_types;
 		bool is_variadic = false;
 		bool has_prototype = false;
 		FunctionSpecifier specifier = FunctionSpecifier::None;
 	};
 	
 	// Struct member
-	struct Member 
+	struct RecordField 
 	{
 		std::string name = "";
 		QualifiedType qtype{};
@@ -261,21 +267,25 @@ namespace lucc
 		explicit RecordType(std::string_view tag_name, bool is_union = false)
 			: Type( is_union ? TypeKind::Union : TypeKind::Struct, false ), tag_name( tag_name ) {}
 
-		RecordType(std::vector<Member> const& members, std::string_view tag_name = "", bool is_union = false)
-			: RecordType(tag_name, is_union) {}
-		
-		std::string_view GetTagName() const { return tag_name; }
-		std::vector<Member> const& GetMembers() const { return members; }
-		void EncounterDefinition(std::vector<Member> const& members)
+		RecordType(std::span<RecordField> _fields, std::string_view tag_name = "", bool is_union = false)
+			: RecordType(tag_name, is_union) 
 		{
-			SetComplete();
+			fields.assign(_fields.begin(), _fields.end());
 		}
 		
-		bool HasMember(std::string_view name) const
+		std::string_view GetTagName() const { return tag_name; }
+		std::span<RecordField const> GetFields() const { return fields; }
+		void EncounterDefinition(std::span<RecordField> _fields)
+		{
+			SetComplete();
+			fields.assign(_fields.begin(), _fields.end());
+		}
+		
+		bool HasField(std::string_view name) const
 		{
 			return members_map.find(name) != members_map.cend();
 		}
-		Member& GetMember(std::string_view name)
+		RecordField& GetField(std::string_view name)
 		{
 			return members_map[name];
 		}
@@ -283,8 +293,8 @@ namespace lucc
 	private:
 
 		std::string tag_name;
-		std::vector<Member> members{};
-		std::unordered_map<std::string_view, Member> members_map{};
+		std::vector<RecordField> fields{};
+		std::unordered_map<std::string_view, RecordField> members_map{};
 		bool is_modifiable_lvalue = false;
 	};
 
@@ -296,7 +306,7 @@ namespace lucc
 	template<typename T>
 	T const& TypeCast(Type const& t)
 	{
-		return static_cast<T&>(t);
+		return static_cast<T const&>(t);
 	}
 
 }

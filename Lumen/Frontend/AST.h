@@ -91,8 +91,7 @@ namespace lucc
 	class ParamVarDeclAST : public DeclAST
 	{
 	public:
-		ParamVarDeclAST(QualifiedType const& type, std::string_view id)
-			: type(type), identifier(id)
+		ParamVarDeclAST(FunctionParameter const& param) : param(param)
 		{}
 		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
 		{
@@ -100,8 +99,7 @@ namespace lucc
 		}
 
 	private:
-		QualifiedType type;
-		std::string identifier;
+		FunctionParameter param;
 	};
 
 	class FieldDeclAST : public DeclAST
@@ -156,6 +154,10 @@ namespace lucc
 	{
 	public:
 		FunctionDeclAST() = default;
+		void AddParamDeclaration(std::unique_ptr<ParamVarDeclAST>&& param)
+		{
+			param_decls.push_back(std::move(param));
+		}
 		void AddBody(std::unique_ptr<CompoundStmtAST>&& body)
 		{
 			func_body = std::move(body);

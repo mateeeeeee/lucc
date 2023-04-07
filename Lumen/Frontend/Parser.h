@@ -6,16 +6,18 @@
 
 namespace lucc
 {
-	class ScopeStack;
 	struct AST;
 	class DeclAST;
 	class TypedefDeclAST;
+	class FunctionDeclAST;
 	class QualifiedType;
+	class ScopeStack;
 
 	class Parser
 	{
 		struct DeclSpecInfo;
 		struct DeclaratorInfo;
+		struct DeclarationInfo;
 
 		using TokenPtr = std::vector<Token>::iterator;
 	public:
@@ -53,11 +55,12 @@ namespace lucc
 		[[nodiscard]] bool ParseTranslationUnit();
 		[[nodiscard]] bool ParseExternalDeclaration();
 		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclSpecInfo const& decl_spec);
+		[[nodiscard]] std::unique_ptr<FunctionDeclAST> ParseFunctionDeclaration(DeclarationInfo const& declaration);
 
-		bool ParseDeclSpec(DeclSpecInfo& decl_spec);
+		bool ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
 		bool ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
 
-		void ParsePointers(QualifiedType& type);
-		void ParseTypeSuffix(QualifiedType& type);
+		bool ParsePointers(QualifiedType& type);
+		bool ParseTypeSuffix(QualifiedType& type);
 	};
 }
