@@ -37,6 +37,7 @@ namespace lucc
 		QualifiedType qtype{};
 		Linkage linkage = Linkage::NoLinkage;
 		Storage storage = Storage::None;
+		bool is_defined = false;
 	};
 
 	struct Var
@@ -49,7 +50,7 @@ namespace lucc
 		} kind;
 		union 
 		{
-			Object* obj;
+			Object* obj; //use unique ptr if possible with union
 			QualifiedType type_def{};
 			struct EnumVar
 			{
@@ -71,6 +72,13 @@ namespace lucc
 		{
 		public:
 			SymbolTable() = default;
+			~SymbolTable()
+			{
+				for (auto& [name, var] : var_map)
+				{
+					if (var.kind == Var::Kind::Object) delete var.obj;
+				}
+			}
 
 			Var& AddVar(std::string_view name)
 			{

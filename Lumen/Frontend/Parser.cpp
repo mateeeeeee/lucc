@@ -93,11 +93,17 @@ namespace lucc
 
 		DeclaratorInfo declarator_info{};
 		ParseDeclarator(decl_spec, declarator_info);
+		LU_ASSERT(declarator_info.qtype.HasRawType());
 		if (declarator_info.qtype->Is(TypeKind::Function))
 		{
 			auto func_decl = ParseFunctionDeclaration(DeclarationInfo(decl_spec, declarator_info));
-			if (func_decl) ast->tr_unit->AddExternalDeclaration(std::move(func_decl));
-			return func_decl != nullptr;
+			if (func_decl)
+			{
+				ast->tr_unit->AddExternalDeclaration(std::move(func_decl));
+				return true;
+			}
+			else return false;
+			
 		}
 		else //global variable
 		{
@@ -140,9 +146,50 @@ namespace lucc
 
 	std::unique_ptr<FunctionDeclAST> Parser::ParseFunctionDeclaration(DeclarationInfo const& declaration)
 	{
+		std::string_view func_name = declaration.name;
+		if (func_name.empty())
+		{
+			Report(diag::missing_function_name, current_token->GetLocation());
+			return nullptr;
+		}
+		
+		if (scope_stack->HasVar(func_name))
+		{
+			Var const& var = scope_stack->GetVar(func_name);
+			
+			if (var.kind != Var::Kind::Object || !var.obj->qtype->Is(TypeKind::Function))
+			{
+				Report(diag::redeclared_but_different_type, current_token->GetLocation());
+				return nullptr;
+			}
+			
+			if (var.obj->is_defined && current_token->Is(TokenKind::left_brace))
+			{
+				Report(diag::redefinition_of_function, current_token->GetLocation());
+				return nullptr;
+			}
+
+			if (var.obj->storage != declaration.storage)
+			{
+				Report(diag::storage_specifier_mismatch, current_token->GetLocation());
+				return nullptr;
+			}
+			var.obj->is_defined = var.obj->is_defined || current_token->Is(TokenKind::left_brace);
+		}
+		else 
+		{
+			Var& gvar = scope_stack->AddVar(func_name);
+			gvar.kind = Var::Kind::Object;
+			gvar.obj = new Object();
+			gvar.obj->is_defined = current_token->Is(TokenKind::left_brace);
+			gvar.obj->name = func_name;
+			gvar.obj->qtype = declaration.qtype;
+			gvar.obj->storage = declaration.storage;
+		}
+
 		if (Consume(TokenKind::semicolon))
 		{
-
+			std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>();
 		}
 
 		return nullptr;
