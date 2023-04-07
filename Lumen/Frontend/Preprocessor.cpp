@@ -1,5 +1,6 @@
 #include "Preprocessor.h"
 #include "SourceBuffer.h"
+#include "Diagnostics.h"
 #include "Token.h"
 #include "Lexer.h"
 #include "Hideset.h"
@@ -70,9 +71,6 @@ namespace lucc
 			case TokenKind::PP_endif:
 				if (!ProcessEndif(curr)) return false;
 				break;
-			case TokenKind::PP_defined:
-				LU_ASSERT_MSG(false, "Must be part of the #if/#elif directive!");
-				break;
 			case TokenKind::PP_include:
 				if (!ProcessInclude(curr)) return false;
 				break;
@@ -82,6 +80,9 @@ namespace lucc
 			case TokenKind::PP_undef:
 				if (!ProcessUndef(curr)) return false;
 				break;
+			case TokenKind::PP_defined:
+				Report(diag::defined_misplaced, curr->GetLocation());
+				return false;
 			}
 		}
 
@@ -109,7 +110,7 @@ namespace lucc
 			Lexer include_lexer(src);
 			if (!include_lexer.Lex())
 			{
-				//diag
+				Report(diag::lexing_failed, curr->GetLocation());
 				return false;
 			}
 			curr->SetFlag(TokenFlag_PartOfPPDirective);
@@ -119,6 +120,7 @@ namespace lucc
 			std::advance(curr, -static_cast<int64>(include_lexer.tokens.size()));
 			return true;
 		}
+		Report(diag::header_name_error, curr->GetLocation());
 		return false;
 	}
 

@@ -1,5 +1,6 @@
 #include "Lexer.h"
 #include "SourceBuffer.h"
+#include "Diagnostics.h"
 
 namespace lucc
 {
@@ -117,7 +118,7 @@ namespace lucc
 			return LexPunctuator(token);
 		}
 		}
-
+		Report(diag::lexing_failed, loc);
 		return false;
 	}
 
@@ -130,7 +131,12 @@ namespace lucc
 			++tmp_ptr;
 			FillToken(t, TokenKind::number, tmp_ptr);
 		}
-		else return false;
+		else 
+		{
+			UpdatePointersAndLocation();
+			Report(diag::invalid_number_literal, loc);
+			return false;
+		}
 		UpdatePointersAndLocation();
 		return true;
 	}

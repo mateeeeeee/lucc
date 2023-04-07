@@ -1,1 +1,3 @@
 int typedef a,b,c;
+
+123a

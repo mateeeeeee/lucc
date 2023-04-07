@@ -54,7 +54,7 @@ namespace lucc::diag
 	void Report(Code code, SourceLocation const& loc)
 	{
 		Class dclass = diag_classes[code];
-		std::string output = std::format("[Diagnostics][{}]: {} in file {} at line: {}, col: {}",
+		std::string output = std::format("[Diagnostics][{}]: {} in file {} at line: {}, col: {}\n",
 										 ToString(dclass), diag_msgs[code], loc.filename, loc.line, loc.column);
 		
 		for (auto* os : output_streams) *os << output;
@@ -63,7 +63,7 @@ namespace lucc::diag
 	void Report(Code code)
 	{
 		Class dclass = diag_classes[code];
-		std::string output = std::format("[Diagnostics][{}]: {}", ToString(dclass), diag_msgs[code]);
+		std::string output = std::format("[Diagnostics][{}]: {}\n", ToString(dclass), diag_msgs[code]);
 		for (auto* os : output_streams) *os << output;
 	}
 

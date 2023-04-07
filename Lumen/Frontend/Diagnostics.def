@@ -2,8 +2,12 @@
 #define DIAG(diag_code, diag_class, diag_msg)
 #endif
 
-DIAG(lexing_failed, error, "Lexing failed!")
-DIAG(preprocessing_failed, error, "Preprocessing failed!")
-DIAG(parsing_failed, error, "Parsing failed!")
+DIAG(lexing_failed, error, "Lexing failed")
+DIAG(preprocessing_failed, error, "Preprocessing failed")
+DIAG(parsing_failed, error, "Parsing failed")
+DIAG(invalid_number_literal, error, "Invalid number literal")
+DIAG(invalid_token, error, "Invalid token")
+DIAG(defined_misplaced, error, "Stray #defined")
+DIAG(header_name_error, error, "Invalid header name")
 
 #undef DIAG
