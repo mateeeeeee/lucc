@@ -144,6 +144,11 @@ namespace lucc
 			scopes.emplace_back(SymbolTable{}, ScopeKind::File);
 		}
 
+		bool InFileScope() const
+		{
+			return scopes.size() == 1;
+		}
+
 		void EnterPrototype() { scopes.emplace_back(SymbolTable{}, ScopeKind::Prototype); }
 		void EnterBlock() { scopes.emplace_back(SymbolTable{}, ScopeKind::Block); }
 		void ExitPrototype() { scopes.pop_back(); }

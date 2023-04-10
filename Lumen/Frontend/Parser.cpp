@@ -222,7 +222,9 @@ namespace lucc
 		}
 		func_type.EncounteredDefinition();
 
+		current_func_type = &func_type;
 		std::unique_ptr<CompoundStmtAST> compound_stmt = ParseCompoundStatement();
+		current_func_type = nullptr;
 		if (!compound_stmt) return nullptr;
 		symtable_stack->ExitPrototype();
 
@@ -302,16 +304,15 @@ namespace lucc
 	{
 		switch (current_token->GetKind()) 
 		{
-		//case TokenKind::left_brace: return ParseCmpdStmt();
-		//case TokenKind::KW_if: return ParseIfStmt();
-		//case TokenKind::KW_while: return ParseWhileStmt();
-		//case TokenKind::KW_do: return ParseDoStmt();
+		case TokenKind::left_brace: return ParseCompoundStatement();
+		case TokenKind::KW_if: return ParseIfStatement();
+		case TokenKind::KW_while: return ParseWhileStatement();
+		case TokenKind::KW_do: return ParseDoWhileStatement();
 		//case TokenKind::KW_for: return ParseForStmt();
 		//case TokenKind::KW_switch: return ParseSwitchStmt();
-		//case TokenKind::KW_goto: return ParseGotoStmt();
 		//case TokenKind::KW_continue: return ParseContinueStmt();
 		//case TokenKind::KW_break: return ParseBreakStmt();
-		//case TokenKind::KW_return: return ParseReturnStmt();
+		case TokenKind::KW_return: return ParseReturnStatement();
 		//case TokenKind::KW_case: return ParseCaseStmt();
 		//case TokenKind::KW_default: return ParseCaseStmt();
 		default:
@@ -323,6 +324,48 @@ namespace lucc
 	std::unique_ptr<ExprAST> Parser::ParseExpression()
 	{
 		return nullptr;
+	}
+
+	std::unique_ptr<IfStmtAST> Parser::ParseIfStatement()
+	{
+		return nullptr;
+	}
+
+	std::unique_ptr<WhileStmtAST> Parser::ParseWhileStatement()
+	{
+		return nullptr;
+	}
+
+	std::unique_ptr<DoWhileStmtAST> Parser::ParseDoWhileStatement()
+	{
+		return nullptr;
+	}
+
+	std::unique_ptr<ReturnStmtAST> Parser::ParseReturnStatement()
+	{
+		Consume(TokenKind::KW_return);
+		if (symtable_stack->InFileScope() || current_func_type == nullptr)
+		{
+			Report(diag::return_in_file_scope, current_token->GetLocation());
+			return nullptr;
+		}
+
+		if (Consume(TokenKind::semicolon))
+		{
+			if (current_func_type->GetReturnType().RawType().Is(TypeKind::Void))
+			{
+				return std::make_unique<ReturnStmtAST>();
+			}
+			else
+			{
+				Report(diag::return_type_mismatch, current_token->GetLocation());
+				return nullptr;
+			}
+		}
+
+		//#todo cover other return statements
+		return nullptr;
+
 	}
 
 	bool Parser::ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs)

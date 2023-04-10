@@ -25,5 +25,7 @@ DIAG(redeclared_but_different_type, error, "Symbol is redeclared but with a diff
 DIAG(redefinition_of_function, error, "Function is being redefined")
 DIAG(storage_specifier_mismatch, error, "Storage specifier doesn't match the previous declaration")
 DIAG(expected_function_definition, error, "Expected function definition")
+DIAG(return_in_file_scope, error, "Return statement can only appear inside function definition")
+DIAG(return_type_mismatch, error, "Type of return statement doesn't agree with return type of a function")
 
 #undef DIAG

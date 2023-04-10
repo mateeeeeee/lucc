@@ -148,6 +148,52 @@ namespace lucc
 	private:
 		std::vector<std::unique_ptr<StmtAST>> statements;
 	};
+	class IfStmtAST : public StmtAST
+	{
+	public:
+		IfStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& then_stmt,
+			std::unique_ptr<StmtAST>&& else_stmt) : condition(std::move(condition)), then_stmt(std::move(then_stmt)),
+			else_stmt(std::move(else_stmt))
+		{}
+
+	private:
+		std::unique_ptr<ExprAST> condition;
+		std::unique_ptr<StmtAST> then_stmt;
+		std::unique_ptr<StmtAST> else_stmt;
+	};
+	class WhileStmtAST : public StmtAST
+	{
+	public:
+		WhileStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& body) 
+			: condition(std::move(condition)), body(std::move(body))
+		{}
+
+	private:
+		std::unique_ptr<ExprAST> condition;
+		std::unique_ptr<StmtAST> body;
+	};
+	class DoWhileStmtAST : public StmtAST
+	{
+	public:
+		DoWhileStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& body)
+			: condition(std::move(condition)), body(std::move(body))
+		{}
+
+	private:
+		std::unique_ptr<ExprAST> condition;
+		std::unique_ptr<StmtAST> body;
+	};
+	class ReturnStmtAST : public StmtAST
+	{
+	public:
+		ReturnStmtAST() = default;
+		explicit ReturnStmtAST(std::unique_ptr<ExprAST>&& expr) : expr(std::move(expr)) {}
+
+	private:
+		std::unique_ptr<ExprAST> expr;
+	};
+
+
 
 	template<std::integral T>
 	class IntegerLiteralAST : public ExprAST

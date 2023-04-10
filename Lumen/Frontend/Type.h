@@ -64,7 +64,7 @@ namespace lucc
 		friend class Type;
 
 		explicit QualifiedType(Qualifiers qualifiers = QualifierNone) : qualifiers( qualifiers ) {}
-		QualifiedType(Type const& _type, Qualifiers qualifiers = QualifierNone) : qualifiers(qualifiers) {}
+		QualifiedType(Type const& _type, Qualifiers qualifiers = QualifierNone)  : type(_type), qualifiers(qualifiers) {}
 		Qualifiers GetQualifiers() const { return qualifiers; }
 		bool IsConst() const { return qualifiers & QualifierConst; }
 		bool IsVolatile() const { return qualifiers & QualifierVolatile; }

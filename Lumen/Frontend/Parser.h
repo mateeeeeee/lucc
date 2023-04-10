@@ -10,9 +10,17 @@ namespace lucc
 	class DeclAST;
 	class StmtAST;
 	class ExprAST;
+
+	class CompoundStmtAST;
+	class IfStmtAST;
+	class WhileStmtAST;
+	class DoWhileStmtAST;
+	class ReturnStmtAST;
+
 	class TypedefDeclAST;
 	class FunctionDeclAST;
-	class CompoundStmtAST;
+	
+	class FuncType;
 	class QualifiedType;
 	class SymbolTableStack;
 
@@ -36,8 +44,9 @@ namespace lucc
 		std::unique_ptr<AST> ast;
 		std::unique_ptr<SymbolTableStack> symtable_stack;
 
+		FuncType const* current_func_type = nullptr;
 	private:
-		[[nodiscard]] bool Consume(TokenKind k)
+		bool Consume(TokenKind k)
 		{
 			if (current_token->Is(k))
 			{
@@ -46,7 +55,7 @@ namespace lucc
 			else return false;
 		}
 		template<typename... Ts>
-		[[nodiscard]] bool Consume(TokenKind k, Ts... ts)
+		bool Consume(TokenKind k, Ts... ts)
 		{
 			if (current_token->IsOneOf(k, ts...))
 			{
@@ -62,6 +71,10 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<CompoundStmtAST> ParseCompoundStatement();
 		[[nodiscard]] std::unique_ptr<StmtAST> ParseStatement();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
+		[[nodiscard]] std::unique_ptr<IfStmtAST> ParseIfStatement();
+		[[nodiscard]] std::unique_ptr<WhileStmtAST> ParseWhileStatement();
+		[[nodiscard]] std::unique_ptr<DoWhileStmtAST> ParseDoWhileStatement();
+		[[nodiscard]] std::unique_ptr<ReturnStmtAST> ParseReturnStatement();
 
 		bool ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
 		bool ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
