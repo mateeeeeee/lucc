@@ -190,8 +190,8 @@ namespace lucc
 			gvar.Set(std::move(obj));
 		}
 
-		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>();
 		FuncType const& func_type = TypeCast<FuncType const&>(declaration.qtype);
+		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_type, func_name);
 		for (auto&& func_param : func_type.GetParamTypes())
 		{
 			std::unique_ptr<ParamVarDeclAST> param_decl = std::make_unique<ParamVarDeclAST>(func_param);
@@ -272,11 +272,13 @@ namespace lucc
 				std::unique_ptr<ExprAST> init_expr = nullptr;
 				if (current_token->Is(TokenKind::equal)) init_expr = ParseExpression();
 				var_decl = std::make_unique<VarDeclAST>(declarator.qtype, declarator.name, std::move(init_expr));
+				if (!var_decl) return nullptr;
 				compound_stmt->AddStatement(std::make_unique<DeclStmtAST>(std::move(var_decl)));
 			}
 			else
 			{
 				std::unique_ptr<StmtAST> stmt = ParseStatement();
+				if (!stmt) return nullptr;
 				compound_stmt->AddStatement(std::move(stmt));
 			}
 		}

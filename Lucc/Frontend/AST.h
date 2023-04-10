@@ -43,9 +43,9 @@ namespace lucc
 	public:
 		DeclAST() = default;
 		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override 
-		{
-			
-		}
+		{}
+	private:
+		//SourceLocation Loc;
 	};
 	class StmtAST : public NodeAST
 	{
@@ -67,10 +67,29 @@ namespace lucc
 	private:
 		std::vector<std::unique_ptr<DeclAST>> external_declarations;
 	};
-	class VarDeclAST : public DeclAST
+
+	/// Represent the declaration of a variable (in which case it is
+	/// an lvalue) a function (in which case it is a function designator) or
+	/// an enum constant.
+	class ValueDeclAST : public DeclAST
 	{
 	public:
-		VarDeclAST(QualifiedType const& type, std::string_view id, std::unique_ptr<ExprAST>&& expr = nullptr);
+		ValueDeclAST(QualifiedType const& type, std::string_view id)
+			: type(type), identifier(id)
+		{}
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
+		{
+			visitor.Visit(*this, indent);
+		}
+	private:
+		QualifiedType type;
+		std::string identifier;
+	};
+	class VarDeclAST : public ValueDeclAST
+	{
+	public:
+		VarDeclAST(QualifiedType const& type, std::string_view id, std::unique_ptr<ExprAST>&& expr = nullptr)
+			: ValueDeclAST(type, id) {}
 		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
 
 	private:
@@ -78,15 +97,27 @@ namespace lucc
 		std::string identifier;
 		std::unique_ptr<ExprAST> init_expr;
 	};
-	class ParamVarDeclAST : public DeclAST
+	class ParamVarDeclAST : public VarDeclAST
 	{
 	public:
 		ParamVarDeclAST(FunctionParameter const& param);
 		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
+	};
+	class FunctionDeclAST : public ValueDeclAST
+	{
+	public:
+		FunctionDeclAST(QualifiedType const& qtype, std::string_view name) :
+			ValueDeclAST(qtype, name)
+		{}
+		void AddParamDeclaration(std::unique_ptr<ParamVarDeclAST>&& param);
+		void AddBody(std::unique_ptr<CompoundStmtAST>&& body);
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
 
 	private:
-		FunctionParameter param;
+		std::vector<std::unique_ptr<ParamVarDeclAST>> param_decls;
+		std::unique_ptr<CompoundStmtAST> func_body;
 	};
+
 	class FieldDeclAST : public DeclAST
 	{
 	public:
@@ -105,18 +136,6 @@ namespace lucc
 
 	private:
 		std::vector<std::unique_ptr<FieldDeclAST>> fields;
-	};
-	class FunctionDeclAST : public DeclAST
-	{
-	public:
-		FunctionDeclAST() = default;
-		void AddParamDeclaration(std::unique_ptr<ParamVarDeclAST>&& param);
-		void AddBody(std::unique_ptr<CompoundStmtAST>&& body);
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
-
-	private:
-		std::vector<std::unique_ptr<ParamVarDeclAST>> param_decls;
-		std::unique_ptr<CompoundStmtAST> func_body;
 	};
 	class TypedefDeclAST : public DeclAST
 	{
@@ -137,14 +156,6 @@ namespace lucc
 
 	private:
 		std::unique_ptr<DeclAST> decl;
-	};
-	class ExprAST : public StmtAST
-	{
-	public:
-		ExprAST() = default;
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override {}
-
-	private:
 	};
 	class CompoundStmtAST : public StmtAST
 	{
@@ -201,6 +212,35 @@ namespace lucc
 		std::unique_ptr<ExprAST> expr;
 	};
 
+	enum class ExprKind : bool
+	{
+		LValue,
+		RValue
+	};
+	class ExprAST : public StmtAST
+	{
+	public:
+		ExprAST(QualifiedType const& type, ExprKind kind = ExprKind::LValue)
+			: type(type), kind(kind) {}
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override {}
+
+		ExprKind GetKind() const { return kind; }
+	private:
+		ExprKind kind;
+		QualifiedType type;
+	};
+
+	class DeclRefExprAST : public ExprAST
+	{
+	public:
+		DeclRefExprAST(QualifiedType const& type, std::unique_ptr<ValueDeclAST>&& ref_decl)
+			: ExprAST(type), decl(std::move(ref_decl))
+		{}
+
+	private:
+		std::unique_ptr<ValueDeclAST> decl;
+	};
+
 	enum class UnaryOpKind : uint8
 	{
 		PreIncrement, PreDecrement,
@@ -237,15 +277,25 @@ namespace lucc
 	};
 
 	template<std::integral T>
-	class IntegerLiteralAST : public ExprAST
+	class IntegerLiteralAST final : public ExprAST
 	{
 	public:
-		IntegerLiteralAST(T value, QualifiedType const& type, SourceLocation const l) : value(value), type(type), loc(l)
+		IntegerLiteralAST(T value, QualifiedType const& type, SourceLocation const l) : ExprAST(type, ExprKind::RValue), value(value), loc(loc)
 		{}
 
 	private:
 		T value;
-		QualifiedType type;
+		SourceLocation loc;
+	};
+
+	class StringLiteralAST final : public ExprAST
+	{
+	public:
+		StringLiteralAST(std::string_view value, QualifiedType const& type, SourceLocation const l) : ExprAST(type, ExprKind::RValue), value(value), loc(loc)
+		{}
+
+	private:
+		std::string_view value;
 		SourceLocation loc;
 	};
 

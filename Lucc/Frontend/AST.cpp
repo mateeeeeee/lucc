@@ -12,14 +12,13 @@ namespace lucc
 		for (auto&& decl : external_declarations) decl->Accept(visitor, indent + 1);
 	}
 
-	VarDeclAST::VarDeclAST(QualifiedType const& type, std::string_view id, std::unique_ptr<ExprAST>&& expr /*= nullptr*/) : type(type), identifier(id), init_expr(std::move(expr)){}
 	void VarDeclAST::Accept(NodeVisitorAST& visitor, size_t indent) const
 	{
 		visitor.Visit(*this, indent);
 		init_expr->Accept(visitor, indent + 1);
 	}
 
-	ParamVarDeclAST::ParamVarDeclAST(FunctionParameter const& param) : param(param){}
+	ParamVarDeclAST::ParamVarDeclAST(FunctionParameter const& param) : VarDeclAST(param.qtype, param.name){}
 	void ParamVarDeclAST::Accept(NodeVisitorAST& visitor, size_t indent) const
 	{
 		visitor.Visit(*this, indent);
