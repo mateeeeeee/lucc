@@ -25,6 +25,9 @@
     <ClCompile Include="Frontend\Diagnostics.cpp">
       <Filter>Frontend\Diagnostics</Filter>
     </ClCompile>
+    <ClCompile Include="Frontend\AST.cpp">
+      <Filter>Frontend\Parser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />

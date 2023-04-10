@@ -282,8 +282,41 @@ namespace lucc
 		return compound_stmt;
 	}
 
+
+	// stmt = "return" expr? ";"
+	//      | "if" "(" expr ")" stmt ("else" stmt)?
+	//      | "switch" "(" expr ")" stmt
+	//      | "case" const-expr ("..." const-expr)? ":" stmt
+	//      | "default" ":" stmt
+	//      | "for" "(" expr-stmt expr? ";" expr? ")" stmt
+	//      | "while" "(" expr ")" stmt
+	//      | "do" stmt "while" "(" expr ")" ";"
+	//      | "asm" asm-stmt
+	//      | "goto" (ident | "*" expr) ";"
+	//      | "break" ";"
+	//      | "continue" ";"
+	//      | ident ":" stmt
+	//      | "{" compound-stmt
+	//      | expr-stmt
 	std::unique_ptr<StmtAST> Parser::ParseStatement()
 	{
+		switch (current_token->GetKind()) 
+		{
+		//case TokenKind::left_brace: return ParseCmpdStmt();
+		//case TokenKind::KW_if: return ParseIfStmt();
+		//case TokenKind::KW_while: return ParseWhileStmt();
+		//case TokenKind::KW_do: return ParseDoStmt();
+		//case TokenKind::KW_for: return ParseForStmt();
+		//case TokenKind::KW_switch: return ParseSwitchStmt();
+		//case TokenKind::KW_goto: return ParseGotoStmt();
+		//case TokenKind::KW_continue: return ParseContinueStmt();
+		//case TokenKind::KW_break: return ParseBreakStmt();
+		//case TokenKind::KW_return: return ParseReturnStmt();
+		//case TokenKind::KW_case: return ParseCaseStmt();
+		//case TokenKind::KW_default: return ParseCaseStmt();
+		default:
+			return ParseExpression();
+		}
 		return nullptr;
 	}
 

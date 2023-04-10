@@ -10,6 +10,8 @@ namespace lucc
 	class NodeAST;
 	class TranslationUnitDeclAST;
 	class TypedefDeclAST;
+	class ExprAST;
+	class CompoundStmtAST;
 
 	class NodeVisitorAST
 	{
@@ -29,7 +31,6 @@ namespace lucc
 	protected:
 		NodeAST() = default;
 	};
-
 	class DeclAST : public NodeAST
 	{
 	public:
@@ -39,7 +40,6 @@ namespace lucc
 			
 		}
 	};
-
 	class StmtAST : public NodeAST
 	{
 	public:
@@ -49,14 +49,84 @@ namespace lucc
 			
 		}
 	};
+
+	class TranslationUnitDeclAST : public DeclAST
+	{
+	public:
+		TranslationUnitDeclAST() = default;
+		void AddExternalDeclaration(std::unique_ptr<DeclAST>&& ext_decl);
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
+
+	private:
+		std::vector<std::unique_ptr<DeclAST>> external_declarations;
+	};
+	class VarDeclAST : public DeclAST
+	{
+	public:
+		VarDeclAST(QualifiedType const& type, std::string_view id, std::unique_ptr<ExprAST>&& expr = nullptr);
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
+
+	private:
+		QualifiedType type;
+		std::string identifier;
+		std::unique_ptr<ExprAST> init_expr;
+	};
+	class ParamVarDeclAST : public DeclAST
+	{
+	public:
+		ParamVarDeclAST(FunctionParameter const& param);
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
+
+	private:
+		FunctionParameter param;
+	};
+	class FieldDeclAST : public DeclAST
+	{
+	public:
+		FieldDeclAST(QualifiedType const& type, std::string_view id);
+
+	private:
+		QualifiedType type;
+		std::string identifier;
+	};
+	class RecordDeclAST : public DeclAST
+	{
+	public:
+		RecordDeclAST() = default;
+		void AddField(std::unique_ptr<FieldDeclAST>&& field);
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
+
+	private:
+		std::vector<std::unique_ptr<FieldDeclAST>> fields;
+	};
+	class FunctionDeclAST : public DeclAST
+	{
+	public:
+		FunctionDeclAST() = default;
+		void AddParamDeclaration(std::unique_ptr<ParamVarDeclAST>&& param);
+		void AddBody(std::unique_ptr<CompoundStmtAST>&& body);
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
+
+	private:
+		std::vector<std::unique_ptr<ParamVarDeclAST>> param_decls;
+		std::unique_ptr<CompoundStmtAST> func_body;
+	};
+	class TypedefDeclAST : public DeclAST
+	{
+	public:
+		TypedefDeclAST(QualifiedType const& type, std::string_view typealias);
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
+
+	private:
+		QualifiedType type;
+		std::string typealias;
+	};
+
 	class DeclStmtAST : public StmtAST
 	{
 	public:
-		DeclStmtAST(std::unique_ptr<DeclAST>&& _decl) : decl(std::move(_decl)) {}
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
-		{
-			decl->Accept(visitor, indent);
-		}
+		DeclStmtAST(std::unique_ptr<DeclAST>&& _decl);
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
 
 	private:
 		std::unique_ptr<DeclAST> decl;
@@ -68,141 +138,15 @@ namespace lucc
 
 	private:
 	};
-
-	class TranslationUnitDeclAST : public DeclAST
-	{
-	public:
-		TranslationUnitDeclAST() = default;
-		void AddExternalDeclaration(std::unique_ptr<DeclAST>&& ext_decl)
-		{
-			external_declarations.push_back(std::move(ext_decl));
-		}
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
-		{
-			visitor.Visit(*this, indent);
-			for (auto&& decl : external_declarations) decl->Accept(visitor, indent + 1);
-		}
-
-	private:
-		std::vector<std::unique_ptr<DeclAST>> external_declarations;
-	};
-	class VarDeclAST : public DeclAST
-	{
-	public:
-		VarDeclAST(QualifiedType const& type, std::string_view id, std::unique_ptr<ExprAST>&& expr = nullptr)
-			: type(type), identifier(id), init_expr(std::move(expr))
-		{}
-
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
-		{
-			visitor.Visit(*this, indent);
-			init_expr->Accept(visitor, indent + 1);
-		}
-
-	private:
-		QualifiedType type;
-		std::string identifier;
-		std::unique_ptr<ExprAST> init_expr;
-	};
-	class ParamVarDeclAST : public DeclAST
-	{
-	public:
-		ParamVarDeclAST(FunctionParameter const& param) : param(param)
-		{}
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
-		{
-			visitor.Visit(*this, indent);
-		}
-
-	private:
-		FunctionParameter param;
-	};
-	class FieldDeclAST : public DeclAST
-	{
-	public:
-		FieldDeclAST(QualifiedType const& type, std::string_view id)
-			: type(type), identifier(id)
-		{}
-
-	private:
-		QualifiedType type;
-		std::string identifier;
-	};
-	
 	class CompoundStmtAST : public StmtAST
 	{
 	public:
 		CompoundStmtAST() = default;
-		void AddStatement(std::unique_ptr<StmtAST>&& stmt)
-		{
-			statements.push_back(std::move(stmt));
-		}
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
-		{
-			visitor.Visit(*this, indent);
-			for (auto&& stmt : statements) stmt->Accept(visitor, indent + 1);
-		}
+		void AddStatement(std::unique_ptr<StmtAST>&& stmt);
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
 	
 	private:
 		std::vector<std::unique_ptr<StmtAST>> statements;
-	};
-	
-	class RecordDeclAST : public DeclAST
-	{
-	public:
-		RecordDeclAST() = default;
-		void AddField(std::unique_ptr<FieldDeclAST>&& field)
-		{
-			fields.push_back(std::move(field));
-		}
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
-		{
-			visitor.Visit(*this, indent);
-			for (auto&& field : fields) field->Accept(visitor, indent + 1);
-		}
-
-	private:
-		std::vector<std::unique_ptr<FieldDeclAST>> fields;
-	};
-	
-	class FunctionDeclAST : public DeclAST
-	{
-	public:
-		FunctionDeclAST() = default;
-		void AddParamDeclaration(std::unique_ptr<ParamVarDeclAST>&& param)
-		{
-			param_decls.push_back(std::move(param));
-		}
-		void AddBody(std::unique_ptr<CompoundStmtAST>&& body)
-		{
-			func_body = std::move(body);
-		}
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
-		{
-			visitor.Visit(*this, indent);
-			for (auto&& param : param_decls) param->Accept(visitor, indent + 1);
-			func_body->Accept(visitor, indent + 1);
-		}
-	
-	private:
-		std::vector<std::unique_ptr<ParamVarDeclAST>> param_decls;
-		std::unique_ptr<CompoundStmtAST> func_body;
-	};
-
-	class TypedefDeclAST : public DeclAST
-	{
-	public:
-		TypedefDeclAST(QualifiedType const& type, std::string_view typealias)
-			: type(type), typealias(typealias)
-		{}
-
-		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
-		{
-			visitor.Visit(*this, indent);
-		}
-	private:
-		QualifiedType type;
-		std::string typealias;
 	};
 
 	template<std::integral T>

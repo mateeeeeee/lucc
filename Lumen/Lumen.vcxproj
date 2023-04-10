@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Compiler.cpp" />
+    <ClCompile Include="Frontend\AST.cpp" />
     <ClCompile Include="Frontend\Diagnostics.cpp" />
     <ClCompile Include="Frontend\Hideset.cpp" />
     <ClCompile Include="Frontend\Lexer.cpp" />
