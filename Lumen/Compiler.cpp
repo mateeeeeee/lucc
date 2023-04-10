@@ -29,11 +29,12 @@ namespace lucc
 		{
 			static constexpr std::string GetIndentation(size_t indent)
 			{
-				std::string indentation(indent * 3, '-');
+				std::string indentation(indent * 3, ' ');
 				if (!indentation.empty())
 				{
-					indentation.front() = '`';
-					indentation.back() = '>';
+					indentation[indent * 3 - 3] = '`';
+					indentation[indent * 3 - 2] = '-';
+					indentation[indent * 3 - 1] = '>';
 				}
 				return indentation;
 			}
@@ -57,7 +58,19 @@ namespace lucc
 			{
 				std::cout << GetIndentation(indent) << "FunctionDeclAST \n";
 			}
-			virtual void Visit(NodeAST const& node, size_t indent)
+			virtual void Visit(CompoundStmtAST const& node, size_t indent) override
+			{
+				std::cout << GetIndentation(indent) << "CompoundStmtAST \n";
+			}
+			virtual void Visit(ReturnStmtAST const& node, size_t indent) override
+			{
+				std::cout << GetIndentation(indent) << "ReturnStmtAST \n";
+			}
+			virtual void Visit(ParamVarDeclAST const& node, size_t indent) override
+			{
+				std::cout << GetIndentation(indent) << "ParamVarDeclAST \n";
+			}
+			virtual void Visit(NodeAST const& node, size_t indent) override
 			{
 				std::cout << GetIndentation(indent) << "NodeType not implemented \n";
 			}

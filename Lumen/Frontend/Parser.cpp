@@ -280,10 +280,10 @@ namespace lucc
 				compound_stmt->AddStatement(std::move(stmt));
 			}
 		}
+		Consume(TokenKind::right_brace);
 		symtable_stack->ExitBlock();
 		return compound_stmt;
 	}
-
 
 	// stmt = "return" expr? ";"
 	//      | "if" "(" expr ")" stmt ("else" stmt)?
@@ -675,7 +675,6 @@ namespace lucc
 		}
 		return true;
 	}
-
 }
 
 #pragma warning(pop)

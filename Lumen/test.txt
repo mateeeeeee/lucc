@@ -1,3 +1,6 @@
 int typedef a,b,c;
 
-void f(int);
+void f(int)
+{
+	return;
+}

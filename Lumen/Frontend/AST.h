@@ -12,7 +12,9 @@ namespace lucc
 	class TypedefDeclAST;
 	class ExprAST;
 	class FunctionDeclAST;
+	class ParamVarDeclAST;
 	class CompoundStmtAST;
+	class ReturnStmtAST;
 
 	class NodeVisitorAST
 	{
@@ -21,6 +23,9 @@ namespace lucc
 		virtual void Visit(TranslationUnitDeclAST const& node, size_t indent) = 0;
 		virtual void Visit(TypedefDeclAST const& node, size_t indent) = 0;
 		virtual void Visit(FunctionDeclAST const& node, size_t indent) = 0;
+		virtual void Visit(CompoundStmtAST const& node, size_t indent) = 0;
+		virtual void Visit(ReturnStmtAST const& node, size_t indent) = 0;
+		virtual void Visit(ParamVarDeclAST const& node, size_t indent) = 0;
 		virtual void Visit(NodeAST const& node, size_t indent) = 0;
 	};
 
@@ -137,6 +142,7 @@ namespace lucc
 	{
 	public:
 		ExprAST() = default;
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override {}
 
 	private:
 	};
@@ -190,12 +196,45 @@ namespace lucc
 	public:
 		ReturnStmtAST() = default;
 		explicit ReturnStmtAST(std::unique_ptr<ExprAST>&& expr) : expr(std::move(expr)) {}
-
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
 	private:
 		std::unique_ptr<ExprAST> expr;
 	};
 
+	enum class UnaryOpKind : uint8
+	{
+		PreIncrement, PreDecrement,
+		PostIncrement, PostDecrement,
+		Plus, Minus, 
+		BitNot, LogicalNot,
+		Dereference, AddressOf,
+		Cast
+	};
 
+	class UnaryExprAST : public ExprAST
+	{
+	public:
+
+	private:
+	};
+
+	enum class BinaryOpKind : uint8 
+	{
+		Assignment,
+		Add, Sub, Mul, Div, Mod,
+		BitAnd, BitOr, BitXor, BitShl, BitShr,
+		LogicalAnd, LogicalOr,
+		Equal, NEqual, Less, Greater, LessEq, GreaterEq,
+		MemberAccess,
+		kComma
+	};
+
+	class BinaryExprAST : public ExprAST
+	{
+	public:
+
+	private:
+	};
 
 	template<std::integral T>
 	class IntegerLiteralAST : public ExprAST

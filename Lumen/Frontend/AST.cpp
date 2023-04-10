@@ -81,5 +81,10 @@ namespace lucc
 		for (auto&& stmt : statements) stmt->Accept(visitor, indent + 1);
 	}
 
+	void ReturnStmtAST::Accept(NodeVisitorAST& visitor, size_t indent) const
+	{
+		visitor.Visit(*this, indent);
+	}
+
 }
 
