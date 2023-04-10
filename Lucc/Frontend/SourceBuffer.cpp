@@ -9,7 +9,7 @@ namespace lucc
 	SourceBuffer::SourceBuffer(std::string_view source_file)
 		: ref_name(source_file)
 	{
-		std::string path = PROJECT_DIR + std::string(source_file);
+		std::string path(source_file);
 		std::ifstream input_stream(path);
 		auto good = input_stream.good();
 		std::ostringstream buf;

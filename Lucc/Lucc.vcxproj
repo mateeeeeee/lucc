@@ -18,11 +18,50 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Compiler.cpp" />
+    <ClCompile Include="Frontend\AST.cpp" />
+    <ClCompile Include="Frontend\Diagnostics.cpp" />
+    <ClCompile Include="Frontend\Lexer.cpp" />
+    <ClCompile Include="Frontend\Parser.cpp" />
+    <ClCompile Include="Frontend\Preprocessor.cpp" />
+    <ClCompile Include="Frontend\SourceBuffer.cpp" />
+    <ClCompile Include="Frontend\TokenTypes.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="precomp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Compiler.h" />
+    <ClInclude Include="Core\CLIParser.h" />
+    <ClInclude Include="Core\CoreTypes.h" />
+    <ClInclude Include="Core\Defines.h" />
+    <ClInclude Include="Core\Enums.h" />
+    <ClInclude Include="Frontend\AST.h" />
+    <ClInclude Include="Frontend\Diagnostics.h" />
+    <ClInclude Include="Frontend\Lexer.h" />
+    <ClInclude Include="Frontend\Parser.h" />
+    <ClInclude Include="Frontend\Preprocessor.h" />
+    <ClInclude Include="Frontend\SourceBuffer.h" />
+    <ClInclude Include="Frontend\SourceLocation.h" />
+    <ClInclude Include="Frontend\SymbolTableStack.h" />
+    <ClInclude Include="Frontend\Token.h" />
+    <ClInclude Include="Frontend\TokenTypes.h" />
+    <ClInclude Include="Frontend\Type.h" />
+    <ClInclude Include="precomp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="test.txt" />
+    <Text Include="test2.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Frontend\Diagnostics.def" />
+    <None Include="Frontend\Tokens.def" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{983c421e-4a80-4caa-9043-9d786da91c58}</ProjectGuid>
-    <RootNamespace>Lumen</RootNamespace>
+    <ProjectGuid>{ccf04fcc-e2b8-4f8f-aa04-9698ce5c5d84}</ProjectGuid>
+    <RootNamespace>Lucc</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -102,14 +141,13 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);PROJECT_DIR=R"($(ProjectDir))"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)Lumen\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
-      <ForcedIncludeFiles>Core/CoreTypes.h;precomp.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)Lucc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(SolutionDir)Lucc\precomp.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -122,14 +160,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);PROJECT_DIR =R"($(ProjectDir))"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)Lumen\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
-      <ForcedIncludeFiles>Core/CoreTypes.h;precomp.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)Lucc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(SolutionDir)Lucc\precomp.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -138,55 +175,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Compiler.cpp" />
-    <ClCompile Include="Frontend\AST.cpp" />
-    <ClCompile Include="Frontend\Diagnostics.cpp" />
-    <ClCompile Include="Frontend\Hideset.cpp" />
-    <ClCompile Include="Frontend\Lexer.cpp" />
-    <ClCompile Include="Frontend\Parser.cpp" />
-    <ClCompile Include="Frontend\Preprocessor.cpp" />
-    <ClCompile Include="Frontend\SourceBuffer.cpp" />
-    <ClCompile Include="Frontend\TokenTypes.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="precomp.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">precomp.h</PrecompiledHeaderFile>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">precomp.h</PrecompiledHeaderFile>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Compiler.h" />
-    <ClInclude Include="Core\CLIParser.h" />
-    <ClInclude Include="Core\CoreTypes.h" />
-    <ClInclude Include="Core\Defines.h" />
-    <ClInclude Include="Core\Enums.h" />
-    <ClInclude Include="Frontend\AST.h" />
-    <ClInclude Include="Frontend\Diagnostics.h" />
-    <ClInclude Include="Frontend\Hideset.h" />
-    <ClInclude Include="Frontend\Lexer.h" />
-    <ClInclude Include="Frontend\Parser.h" />
-    <ClInclude Include="Frontend\Preprocessor.h" />
-    <ClInclude Include="Frontend\SymbolTableStack.h" />
-    <ClInclude Include="Frontend\SourceBuffer.h" />
-    <ClInclude Include="Frontend\SourceLocation.h" />
-    <ClInclude Include="Frontend\Token.h" />
-    <None Include="Frontend\Tokens.def">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </None>
-    <ClInclude Include="Frontend\TokenTypes.h" />
-    <ClInclude Include="Frontend\Type.h" />
-    <ClInclude Include="precomp.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="test.txt" />
-    <Text Include="test2.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Frontend\Diagnostics.def" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
