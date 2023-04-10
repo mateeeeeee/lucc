@@ -18,6 +18,7 @@
 #include <type_traits>
 #include <concepts>
 #include <any>
+#include <variant>
 #include <string_view>
 
 #include "Core/CoreTypes.h"

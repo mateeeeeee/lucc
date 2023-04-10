@@ -71,7 +71,7 @@
     <ClInclude Include="Frontend\Type.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
-    <ClInclude Include="Frontend\ScopeStack.h">
+    <ClInclude Include="Frontend\SymbolTableStack.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Frontend\Diagnostics.h">

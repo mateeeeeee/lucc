@@ -8,10 +8,13 @@ namespace lucc
 {
 	struct AST;
 	class DeclAST;
+	class StmtAST;
+	class ExprAST;
 	class TypedefDeclAST;
 	class FunctionDeclAST;
+	class CompoundStmtAST;
 	class QualifiedType;
-	class ScopeStack;
+	class SymbolTableStack;
 
 	class Parser
 	{
@@ -31,7 +34,7 @@ namespace lucc
 		std::vector<Token> tokens;
 		TokenPtr current_token;
 		std::unique_ptr<AST> ast;
-		std::unique_ptr<ScopeStack> scope_stack;
+		std::unique_ptr<SymbolTableStack> symtable_stack;
 
 	private:
 		[[nodiscard]] bool Consume(TokenKind k)
@@ -56,6 +59,9 @@ namespace lucc
 		[[nodiscard]] bool ParseExternalDeclaration();
 		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclSpecInfo const& decl_spec);
 		[[nodiscard]] std::unique_ptr<FunctionDeclAST> ParseFunctionDeclaration(DeclarationInfo const& declaration);
+		[[nodiscard]] std::unique_ptr<CompoundStmtAST> ParseCompoundStatement();
+		[[nodiscard]] std::unique_ptr<StmtAST> ParseStatement();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
 
 		bool ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
 		bool ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);

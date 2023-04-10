@@ -39,13 +39,13 @@ namespace lucc
 		TypeKind kind;
 		size_t size;
 		size_t align;
-		bool is_complete;
+		mutable bool is_complete;
 
 	protected:
 		constexpr Type(TypeKind kind, bool is_complete,
 			size_t size = 0, size_t align = 0)
 			: kind( kind ), is_complete( is_complete ), size( size ), align( align ) {}
-		constexpr void SetComplete() { is_complete = true; }
+		constexpr void SetComplete() const { is_complete = true; }
 		constexpr void SetSize(size_t _size) { size = _size; }
 	};
 
@@ -235,16 +235,16 @@ namespace lucc
 
 		void UpdateParamTypes(std::span<FunctionParameter> _param_types) { param_types.assign(_param_types.begin(),_param_types.end()); }
 		
-		void EncounteredDefinition() { SetComplete(); }
+		void EncounteredDefinition() const { SetComplete(); }
 		bool HasDefinition() const { return IsComplete(); }
-		void EncounterPrototype() { has_prototype = true; }
+		void EncounterPrototype() const { has_prototype = true; }
 		bool HasPrototype() const { return has_prototype; }
 		
 	private:
 		QualifiedType return_qtype;
 		std::vector<FunctionParameter> param_types;
 		bool is_variadic = false;
-		bool has_prototype = false;
+		mutable bool has_prototype = false;
 		FunctionSpecifier specifier = FunctionSpecifier::None;
 	};
 	

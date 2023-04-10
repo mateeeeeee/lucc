@@ -48,7 +48,25 @@ namespace lucc
 		{
 			
 		}
+	};
+	class DeclStmtAST : public StmtAST
+	{
+	public:
+		DeclStmtAST(std::unique_ptr<DeclAST>&& _decl) : decl(std::move(_decl)) {}
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
+		{
+			decl->Accept(visitor, indent);
+		}
 
+	private:
+		std::unique_ptr<DeclAST> decl;
+	};
+	class ExprAST : public StmtAST
+	{
+	public:
+		ExprAST() = default;
+
+	private:
 	};
 
 	class TranslationUnitDeclAST : public DeclAST
@@ -68,26 +86,24 @@ namespace lucc
 	private:
 		std::vector<std::unique_ptr<DeclAST>> external_declarations;
 	};
-
 	class VarDeclAST : public DeclAST
 	{
 	public:
-		VarDeclAST(QualifiedType const& type, std::string_view id, std::unique_ptr<StmtAST>&& stmt = nullptr)
-			: type(type), identifier(id), init_stmt(std::move(stmt))
+		VarDeclAST(QualifiedType const& type, std::string_view id, std::unique_ptr<ExprAST>&& expr = nullptr)
+			: type(type), identifier(id), init_expr(std::move(expr))
 		{}
 
 		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override
 		{
 			visitor.Visit(*this, indent);
-			init_stmt->Accept(visitor, indent + 1);
+			init_expr->Accept(visitor, indent + 1);
 		}
 
 	private:
 		QualifiedType type;
 		std::string identifier;
-		std::unique_ptr<StmtAST> init_stmt;
+		std::unique_ptr<ExprAST> init_expr;
 	};
-
 	class ParamVarDeclAST : public DeclAST
 	{
 	public:
@@ -101,7 +117,6 @@ namespace lucc
 	private:
 		FunctionParameter param;
 	};
-
 	class FieldDeclAST : public DeclAST
 	{
 	public:
@@ -189,15 +204,7 @@ namespace lucc
 		QualifiedType type;
 		std::string typealias;
 	};
-	
-	class ExprAST : public StmtAST
-	{
-	public:
-		ExprAST() = default;
 
-	private:
-	};
-	
 	template<std::integral T>
 	class IntegerLiteralAST : public ExprAST
 	{

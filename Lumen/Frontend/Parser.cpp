@@ -1,9 +1,12 @@
 #include "Parser.h"
 #include "Lexer.h"
 #include "AST.h"
-#include "ScopeStack.h"
+#include "SymbolTableStack.h"
 #include "Diagnostics.h"
 #include "Core/Defines.h"
+
+#pragma warning(push)
+#pragma warning(disable : 26830)
 
 namespace lucc
 {
@@ -63,7 +66,7 @@ namespace lucc
 	bool Parser::Parse()
 	{
 		ast = std::make_unique<AST>();
-		scope_stack = std::make_unique<ScopeStack>();
+		symtable_stack = std::make_unique<SymbolTableStack>();
 		return ParseTranslationUnit();
 	}
 
@@ -86,8 +89,7 @@ namespace lucc
 		{
 			auto typedef_decls = ParseTypedefDeclaration(decl_spec);
 			if (typedef_decls.empty()) return false;
-			for(auto&& typedef_decl : typedef_decls)
-				ast->tr_unit->AddExternalDeclaration(std::move(typedef_decl));
+			for(auto&& typedef_decl : typedef_decls) ast->tr_unit->AddExternalDeclaration(std::move(typedef_decl));
 			return true;
 		}
 
@@ -103,7 +105,6 @@ namespace lucc
 				return true;
 			}
 			else return false;
-			
 		}
 		else //global variable
 		{
@@ -136,9 +137,8 @@ namespace lucc
 			}
 			typedefs.push_back(std::make_unique<TypedefDeclAST>(typedef_info.qtype, typedef_info.name));
 			
-			Var& typedef_var = scope_stack->AddVar(typedef_info.name);
-			typedef_var.kind = Var::Kind::Typedef;
-			typedef_var.type_def = typedef_info.qtype;
+			Var& typedef_var = symtable_stack->AddVar(typedef_info.name);
+			typedef_var.value = typedef_info.qtype;
 		}
 		
 		return typedefs;
@@ -153,45 +153,142 @@ namespace lucc
 			return nullptr;
 		}
 		
-		if (scope_stack->HasVar(func_name))
+		if (symtable_stack->HasVar(func_name))
 		{
-			Var const& var = scope_stack->GetVar(func_name);
+			Var& var = symtable_stack->GetVar(func_name);
 			
-			if (var.kind != Var::Kind::Object || !var.obj->qtype->Is(TypeKind::Function))
+			if (var.Active() != Var::OBJECT || !var.Get<Var::OBJECT>().qtype->Is(TypeKind::Function))
 			{
 				Report(diag::redeclared_but_different_type, current_token->GetLocation());
 				return nullptr;
 			}
-			
-			if (var.obj->is_defined && current_token->Is(TokenKind::left_brace))
+			Object& obj = var.Get<Var::OBJECT>();
+
+			if (obj.is_defined && current_token->Is(TokenKind::left_brace))
 			{
 				Report(diag::redefinition_of_function, current_token->GetLocation());
 				return nullptr;
 			}
 
-			if (var.obj->storage != declaration.storage)
+			if (obj.storage != declaration.storage)
 			{
 				Report(diag::storage_specifier_mismatch, current_token->GetLocation());
 				return nullptr;
 			}
-			var.obj->is_defined = var.obj->is_defined || current_token->Is(TokenKind::left_brace);
+			obj.is_defined = obj.is_defined || current_token->Is(TokenKind::left_brace);
 		}
 		else 
 		{
-			Var& gvar = scope_stack->AddVar(func_name);
-			gvar.kind = Var::Kind::Object;
-			gvar.obj = new Object();
-			gvar.obj->is_defined = current_token->Is(TokenKind::left_brace);
-			gvar.obj->name = func_name;
-			gvar.obj->qtype = declaration.qtype;
-			gvar.obj->storage = declaration.storage;
+			Var& gvar = symtable_stack->AddVar(func_name);
+			Object obj{};
+			obj.is_defined = current_token->Is(TokenKind::left_brace);
+			obj.is_local = false;
+			obj.is_inline = TypeCast<FuncType>(declaration.qtype).IsInline();
+			obj.name = func_name;
+			obj.qtype = declaration.qtype;
+			obj.storage = declaration.storage;
+			gvar.Set(std::move(obj));
 		}
 
+		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>();
+		FuncType const& func_type = TypeCast<FuncType const&>(declaration.qtype);
+		for (auto&& func_param : func_type.GetParamTypes())
+		{
+			std::unique_ptr<ParamVarDeclAST> param_decl = std::make_unique<ParamVarDeclAST>(func_param);
+			func_decl->AddParamDeclaration(std::move(param_decl));
+		}
 		if (Consume(TokenKind::semicolon))
 		{
-			std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>();
+			func_type.EncounterPrototype();
+			return func_decl;
 		}
 
+		symtable_stack->EnterPrototype();
+		for (auto&& func_param : func_type.GetParamTypes())
+		{
+			Var& lvar = symtable_stack->AddVar(func_param.name);
+			Object obj{};
+			obj.is_local = true;
+			obj.name = func_name;
+			obj.qtype = func_param.qtype;
+			obj.storage = Storage::Auto;
+			lvar.Set(std::move(obj));
+		}
+		
+		if (!Consume(TokenKind::left_brace))
+		{
+			Report(diag::expected_function_definition, current_token->GetLocation());
+			return nullptr;
+		}
+		func_type.EncounteredDefinition();
+
+		std::unique_ptr<CompoundStmtAST> compound_stmt = ParseCompoundStatement();
+		if (!compound_stmt) return nullptr;
+		symtable_stack->ExitPrototype();
+
+		func_decl->AddBody(std::move(compound_stmt));
+		return func_decl;
+	}
+
+	// compound-stmt = (typedef | declaration | stmt)* "}"
+	std::unique_ptr<CompoundStmtAST> Parser::ParseCompoundStatement()
+	{
+		symtable_stack->EnterBlock();
+
+		std::unique_ptr<CompoundStmtAST> compound_stmt = std::make_unique<CompoundStmtAST>();
+		while (current_token->IsNot(TokenKind::right_brace))
+		{
+			bool exists = symtable_stack->HasVar(current_token->GetIdentifier());
+			bool is_typedef_name = false;
+			if (exists)
+			{
+				Var const& var = symtable_stack->GetVar(current_token->GetIdentifier());
+				is_typedef_name = var.Active() == Var::TYPEDEF;
+			}
+			if (current_token->IsDeclSpec() || is_typedef_name)
+			{
+				DeclSpecInfo decl_spec{};
+				if (!ParseDeclSpec(decl_spec)) return nullptr;
+				// Typedef
+				if (decl_spec.storage == Storage::Typedef)
+				{
+					auto typedef_decls = ParseTypedefDeclaration(decl_spec);
+					for(auto&& typedef_decl : typedef_decls) compound_stmt->AddStatement(std::make_unique<DeclStmtAST>(std::move(typedef_decl)));
+					continue;
+				}
+				else if (decl_spec.storage == Storage::Extern)
+				{
+					//global variable
+					continue;
+				}
+
+				DeclaratorInfo declarator{};
+				if (!ParseDeclarator(decl_spec, declarator)) return nullptr;
+				DeclarationInfo declaration(decl_spec, declarator);
+
+				std::unique_ptr<VarDeclAST> var_decl = nullptr;
+				std::unique_ptr<ExprAST> init_expr = nullptr;
+				if (current_token->Is(TokenKind::equal)) init_expr = ParseExpression();
+				var_decl = std::make_unique<VarDeclAST>(declarator.qtype, declarator.name, std::move(init_expr));
+				compound_stmt->AddStatement(std::make_unique<DeclStmtAST>(std::move(var_decl)));
+			}
+			else
+			{
+				std::unique_ptr<StmtAST> stmt = ParseStatement();
+				compound_stmt->AddStatement(std::move(stmt));
+			}
+		}
+		symtable_stack->ExitBlock();
+		return compound_stmt;
+	}
+
+	std::unique_ptr<StmtAST> Parser::ParseStatement()
+	{
+		return nullptr;
+	}
+
+	std::unique_ptr<ExprAST> Parser::ParseExpression()
+	{
 		return nullptr;
 	}
 
@@ -505,3 +602,4 @@ namespace lucc
 
 }
 
+#pragma warning(pop)

@@ -167,7 +167,7 @@
     <ClInclude Include="Frontend\Lexer.h" />
     <ClInclude Include="Frontend\Parser.h" />
     <ClInclude Include="Frontend\Preprocessor.h" />
-    <ClInclude Include="Frontend\ScopeStack.h" />
+    <ClInclude Include="Frontend\SymbolTableStack.h" />
     <ClInclude Include="Frontend\SourceBuffer.h" />
     <ClInclude Include="Frontend\SourceLocation.h" />
     <ClInclude Include="Frontend\Token.h" />

@@ -24,5 +24,6 @@ DIAG(missing_function_name, error, "Function name is missing")
 DIAG(redeclared_but_different_type, error, "Symbol is redeclared but with a different type")
 DIAG(redefinition_of_function, error, "Function is being redefined")
 DIAG(storage_specifier_mismatch, error, "Storage specifier doesn't match the previous declaration")
+DIAG(expected_function_definition, error, "Expected function definition")
 
 #undef DIAG

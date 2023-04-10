@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <string_view>
 #include <vector>
+#include <variant>
 #include "Type.h"
 
 namespace lucc
@@ -37,28 +38,53 @@ namespace lucc
 		QualifiedType qtype{};
 		Linkage linkage = Linkage::NoLinkage;
 		Storage storage = Storage::None;
+
+		size_t offset = 0;
 		bool is_defined = false;
+		bool is_local = false;
+		bool is_inline = false;
 	};
+	struct EnumVar
+	{
+		ArithmeticType* underlying_type;
+		int32 value;
+	};
+
+	using TypedefVar = QualifiedType;
 
 	struct Var
 	{
-		enum class Kind : uint8
+		enum Index 
 		{
-			Object,
-			Typedef,
-			EnumVar
-		} kind;
-		union 
-		{
-			Object* obj; //use unique ptr if possible with union
-			QualifiedType type_def{};
-			struct EnumVar
-			{
-				ArithmeticType* underlying_type;
-				int32 value;
-			} enum_var;
+			OBJECT,
+			TYPEDEF,
+			ENUMVAR
 		};
+
+		template<typename T>
+		void Set(T&& t)
+		{
+			value = std::move(t);
+		}
+
+		template<Index i>
+		auto& Get()
+		{
+			return std::get<i>(value);
+		}
+
+		template<Index i>
+		auto const& Get() const
+		{
+			return std::get<i>(value);
+		}
 		
+		Index Active() const
+		{
+			return static_cast<Index>(value.index());
+		}
+
+		std::variant<Object, TypedefVar, EnumVar> value;
 	};
 	struct Tag
 	{
@@ -66,19 +92,13 @@ namespace lucc
 		QualifiedType qtype{};
 	};
 
-	class ScopeStack
+	class SymbolTableStack
 	{
 		class SymbolTable
 		{
 		public:
 			SymbolTable() = default;
-			~SymbolTable()
-			{
-				for (auto& [name, var] : var_map)
-				{
-					if (var.kind == Var::Kind::Object) delete var.obj;
-				}
-			}
+			~SymbolTable() = default;
 
 			Var& AddVar(std::string_view name)
 			{
@@ -88,7 +108,7 @@ namespace lucc
 			{
 				return var_map.contains(name);
 			}
-			Var const& GetVar(std::string_view name)
+			Var& GetVar(std::string_view name)
 			{
 				return var_map[name];
 			}
@@ -119,7 +139,7 @@ namespace lucc
 		};
 
 	public:
-		ScopeStack()
+		SymbolTableStack()
 		{
 			scopes.emplace_back(SymbolTable{}, ScopeKind::File);
 		}
@@ -137,7 +157,7 @@ namespace lucc
 		{
 			return scopes.back().sym_table.HasVar(name);
 		}
-		Var const& GetVar(std::string_view name)
+		Var& GetVar(std::string_view name)
 		{
 			return scopes.back().sym_table.GetVar(name);
 		}
