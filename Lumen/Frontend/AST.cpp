@@ -52,7 +52,7 @@ namespace lucc
 	{
 		visitor.Visit(*this, indent);
 		for (auto&& param : param_decls) param->Accept(visitor, indent + 1);
-		func_body->Accept(visitor, indent + 1);
+		if(func_body) func_body->Accept(visitor, indent + 1);
 	}
 
 	TypedefDeclAST::TypedefDeclAST(QualifiedType const& type, std::string_view typealias) : type(type), typealias(typealias)

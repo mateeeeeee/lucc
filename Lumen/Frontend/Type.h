@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Enums.h"
 #include <unordered_map>
+#include <memory>
 #include <span>
 
 namespace lucc
@@ -64,7 +65,13 @@ namespace lucc
 		friend class Type;
 
 		explicit QualifiedType(Qualifiers qualifiers = QualifierNone) : qualifiers( qualifiers ) {}
-		QualifiedType(Type const& _type, Qualifiers qualifiers = QualifierNone)  : type(_type), qualifiers(qualifiers) {}
+
+		template<std::derived_from<Type> DType> 
+		QualifiedType(DType const& _type, Qualifiers qualifiers = QualifierNone)  : qualifiers(qualifiers)
+		{
+			type = std::make_shared<DType>(_type);
+		}
+
 		Qualifiers GetQualifiers() const { return qualifiers; }
 		bool IsConst() const { return qualifiers & QualifierConst; }
 		bool IsVolatile() const { return qualifiers & QualifierVolatile; }
@@ -75,19 +82,24 @@ namespace lucc
 		void RmVolatile() { qualifiers &= ~QualifierVolatile; }
 		void RemoveQualifiers() { qualifiers = QualifierNone; }
 
-		bool HasRawType() const { return type.has_value(); }
-		void SetRawType(Type const& _type) { type = _type; }
-		void ResetRawType() { type = std::nullopt; }
+		bool HasRawType() const { return type != nullptr; }
+
+		template<std::derived_from<Type> DType>
+		void SetRawType(DType const& _type) 
+		{ 
+			type = std::make_shared<DType>(_type);
+		}
+		void ResetRawType() { type = nullptr; }
 		Type const& RawType() const { return *type; }
 
-		std::optional<Type> const& operator->() const {
-			return type;
+		Type const* operator->() const {
+			return type.get();
 		}
 		Type const& operator*() const { return RawType(); }
 		operator Type const& () const { return RawType(); }
 
 	private:
-		std::optional<Type> type = std::nullopt;
+		std::shared_ptr<Type> type = nullptr;
 		Qualifiers qualifiers;
 	};
 

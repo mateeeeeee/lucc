@@ -11,6 +11,7 @@ namespace lucc
 	class TranslationUnitDeclAST;
 	class TypedefDeclAST;
 	class ExprAST;
+	class FunctionDeclAST;
 	class CompoundStmtAST;
 
 	class NodeVisitorAST
@@ -19,6 +20,7 @@ namespace lucc
 		virtual ~NodeVisitorAST() = default;
 		virtual void Visit(TranslationUnitDeclAST const& node, size_t indent) = 0;
 		virtual void Visit(TypedefDeclAST const& node, size_t indent) = 0;
+		virtual void Visit(FunctionDeclAST const& node, size_t indent) = 0;
 		virtual void Visit(NodeAST const& node, size_t indent) = 0;
 	};
 

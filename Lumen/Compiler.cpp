@@ -27,6 +27,16 @@ namespace lucc
 
 		class DebugNodeVisitorAST : public NodeVisitorAST
 		{
+			static constexpr std::string GetIndentation(size_t indent)
+			{
+				std::string indentation(indent * 3, '-');
+				if (!indentation.empty())
+				{
+					indentation.front() = '`';
+					indentation.back() = '>';
+				}
+				return indentation;
+			}
 		public:
 
 			DebugNodeVisitorAST(AST* ast)
@@ -37,25 +47,19 @@ namespace lucc
 
 			virtual void Visit(TranslationUnitDeclAST const& node, size_t indent) override
 			{
-				std::string indentation(indent * 3, '-'); if (!indentation.empty())
-				{
-					indentation.front() = '`';
-					indentation.back() = '>';
-				}
-				std::cout << indentation << "TranslationUnitDeclAST \n";
+				std::cout << GetIndentation(indent) << "TranslationUnitDeclAST \n";
 			}
 			virtual void Visit(TypedefDeclAST const& node, size_t indent) override
 			{
-				std::string indentation(indent * 3, '-'); if (!indentation.empty())
-				{
-					indentation.front() = '`';
-					indentation.back() = '>';
-				}
-				std::cout << indentation << "TypedefDeclAST \n";
+				std::cout << GetIndentation(indent) << "TypedefDeclAST \n";
+			}
+			virtual void Visit(FunctionDeclAST const& node, size_t indent) override
+			{
+				std::cout << GetIndentation(indent) << "FunctionDeclAST \n";
 			}
 			virtual void Visit(NodeAST const& node, size_t indent)
 			{
-				
+				std::cout << GetIndentation(indent) << "NodeType not implemented \n";
 			}
 		};
 	}
