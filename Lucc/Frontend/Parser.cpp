@@ -156,20 +156,17 @@ namespace lucc
 		if (symtable_stack->HasVar(func_name))
 		{
 			Var& var = symtable_stack->GetVar(func_name);
-			
 			if (var.Active() != Var::OBJECT || !var.Get<Var::OBJECT>().qtype->Is(TypeKind::Function))
 			{
 				Report(diag::redeclared_but_different_type, current_token->GetLocation());
 				return nullptr;
 			}
 			Object& obj = var.Get<Var::OBJECT>();
-
 			if (obj.is_defined && current_token->Is(TokenKind::left_brace))
 			{
 				Report(diag::redefinition_of_function, current_token->GetLocation());
 				return nullptr;
 			}
-
 			if (obj.storage != declaration.storage)
 			{
 				Report(diag::storage_specifier_mismatch, current_token->GetLocation());

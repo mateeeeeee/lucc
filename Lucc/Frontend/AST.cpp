@@ -85,5 +85,27 @@ namespace lucc
 		visitor.Visit(*this, indent);
 	}
 
+	void IfStmtAST::Accept(NodeVisitorAST& visitor, size_t indent) const
+	{
+		visitor.Visit(*this, indent);
+		condition->Accept(visitor, indent + 1);
+		then_stmt->Accept(visitor, indent + 1);
+		if (else_stmt) else_stmt->Accept(visitor, indent + 1);
+	}
+
+	void WhileStmtAST::Accept(NodeVisitorAST& visitor, size_t indent) const
+	{
+		visitor.Visit(*this, indent);
+		condition->Accept(visitor, indent + 1);
+		body->Accept(visitor, indent + 1);
+	}
+
+	void DoWhileStmtAST::Accept(NodeVisitorAST& visitor, size_t indent) const
+	{
+		visitor.Visit(*this, indent);
+		condition->Accept(visitor, indent + 1);
+		body->Accept(visitor, indent + 1);
+	}
+
 }
 

@@ -53,7 +53,6 @@ namespace lucc
 		StmtAST() = default;
 		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override 
 		{
-			
 		}
 	};
 
@@ -175,6 +174,8 @@ namespace lucc
 			else_stmt(std::move(else_stmt))
 		{}
 
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
+
 	private:
 		std::unique_ptr<ExprAST> condition;
 		std::unique_ptr<StmtAST> then_stmt;
@@ -187,6 +188,8 @@ namespace lucc
 			: condition(std::move(condition)), body(std::move(body))
 		{}
 
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
+
 	private:
 		std::unique_ptr<ExprAST> condition;
 		std::unique_ptr<StmtAST> body;
@@ -198,6 +201,7 @@ namespace lucc
 			: condition(std::move(condition)), body(std::move(body))
 		{}
 
+		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
 	private:
 		std::unique_ptr<ExprAST> condition;
 		std::unique_ptr<StmtAST> body;
@@ -241,7 +245,7 @@ namespace lucc
 		std::unique_ptr<ValueDeclAST> decl;
 	};
 
-	enum class UnaryOpKind : uint8
+	enum class UnaryOperatorKind : uint8
 	{
 		PreIncrement, PreDecrement,
 		PostIncrement, PostDecrement,
@@ -251,11 +255,20 @@ namespace lucc
 		Cast
 	};
 
-	class UnaryExprAST : public ExprAST
+	class UnaryOperatorAST final : public ExprAST
 	{
+		using Opcode = UnaryOperatorKind;
 	public:
+		UnaryOperatorAST(QualifiedType const& type, ExprKind kind, Opcode code,
+			std::unique_ptr<ExprAST>&& ref_expr) : ExprAST(type, kind), opcode(code),
+			ref_expr(std::move(ref_expr))
+		{}
+
+		Opcode GetOpcode() const { return opcode; }
 
 	private:
+		Opcode opcode;
+		std::unique_ptr<ExprAST> ref_expr;
 	};
 
 	enum class BinaryOpKind : uint8 
@@ -269,11 +282,22 @@ namespace lucc
 		kComma
 	};
 
-	class BinaryExprAST : public ExprAST
+	class BinaryOperatorAST final : public ExprAST
 	{
+		using Opcode = BinaryOpKind;
 	public:
+		BinaryOperatorAST(QualifiedType const& type, ExprKind kind, Opcode code,
+			std::unique_ptr<ExprAST>&& lhs_operand, 
+			std::unique_ptr<ExprAST>&& rhs_operand) : ExprAST(type, kind), opcode(code),
+			lhs_operand(std::move(lhs_operand)), rhs_operand(std::move(rhs_operand))
+		{}
+
+		Opcode GetOpcode() const { return opcode; }
 
 	private:
+		Opcode opcode;
+		std::unique_ptr<ExprAST> lhs_operand;
+		std::unique_ptr<ExprAST> rhs_operand;
 	};
 
 	template<std::integral T>
