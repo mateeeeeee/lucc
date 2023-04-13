@@ -325,9 +325,47 @@ namespace lucc
 		return nullptr;
 	}
 
+	std::unique_ptr<StmtAST> Parser::ParseExpressionStatement()
+	{
+		if (Consume(TokenKind::semicolon)) return std::make_unique<NullStmtAST>();
+		std::unique_ptr<ExprAST> expr = ParseExpression();
+		if (!Consume(TokenKind::semicolon))
+		{
+			Report(diag::expected_semicolon, current_token->GetLocation());
+			return nullptr;
+		}
+		return std::make_unique<ExprStmtAST>(std::move(expr));
+	}
+
 	std::unique_ptr<IfStmtAST> Parser::ParseIfStatement()
 	{
-		return nullptr;
+		Consume(TokenKind::KW_if);
+		if (!Consume(TokenKind::left_round))
+		{
+			Report(diag::if_condition_not_in_parentheses, current_token->GetLocation());
+			return nullptr;
+		}
+		std::unique_ptr<ExprAST> condition = ParseExpression();
+		if (condition == nullptr) return nullptr;
+		if (!Consume(TokenKind::right_round))
+		{
+			Report(diag::if_condition_not_in_parentheses, current_token->GetLocation());
+			return nullptr;
+		}
+
+		std::unique_ptr<IfStmtAST> if_stmt;
+		std::unique_ptr<StmtAST> then_stmt;
+		if (Consume(TokenKind::left_brace)) then_stmt = ParseCompoundStatement();
+		else then_stmt = ParseStatement();
+
+		if_stmt = std::make_unique<IfStmtAST>(std::move(condition), std::move(then_stmt));
+		if (Consume(TokenKind::KW_else))
+		{
+			std::unique_ptr<StmtAST> else_stmt = ParseStatement();
+			if_stmt->AddElseStatement(std::move(else_stmt));
+		}
+
+		return if_stmt;
 	}
 
 	std::unique_ptr<WhileStmtAST> Parser::ParseWhileStatement()

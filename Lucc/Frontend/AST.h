@@ -147,6 +147,7 @@ namespace lucc
 		std::string typealias;
 	};
 
+	class NullStmtAST : public StmtAST {};
 	class DeclStmtAST : public StmtAST
 	{
 	public:
@@ -155,6 +156,15 @@ namespace lucc
 
 	private:
 		std::unique_ptr<DeclAST> decl;
+	};
+	class ExprStmtAST : public StmtAST 
+	{
+	public:
+		ExprStmtAST(std::unique_ptr<ExprAST>&& _expr)
+			: expr(std::move(_expr)) {}
+		
+	private:
+		std::unique_ptr<ExprAST> expr;
 	};
 	class CompoundStmtAST : public StmtAST
 	{
@@ -169,10 +179,14 @@ namespace lucc
 	class IfStmtAST : public StmtAST
 	{
 	public:
-		IfStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& then_stmt,
-			std::unique_ptr<StmtAST>&& else_stmt) : condition(std::move(condition)), then_stmt(std::move(then_stmt)),
+		IfStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& then_stmt) : condition(std::move(condition)), then_stmt(std::move(then_stmt)),
 			else_stmt(std::move(else_stmt))
 		{}
+
+		void AddElseStatement(std::unique_ptr<StmtAST>&& _else_stmt)
+		{
+			else_stmt = std::move(_else_stmt);
+		}
 
 		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override;
 
@@ -216,7 +230,7 @@ namespace lucc
 		std::unique_ptr<ExprAST> expr;
 	};
 
-	enum class ExprKind : bool
+	enum class ExprValueCategory : bool
 	{
 		LValue,
 		RValue
@@ -224,13 +238,13 @@ namespace lucc
 	class ExprAST : public StmtAST
 	{
 	public:
-		ExprAST(QualifiedType const& type, ExprKind kind = ExprKind::LValue)
+		ExprAST(QualifiedType const& type, ExprValueCategory kind = ExprValueCategory::LValue)
 			: type(type), kind(kind) {}
 		virtual void Accept(NodeVisitorAST& visitor, size_t indent) const override {}
 
-		ExprKind GetKind() const { return kind; }
+		ExprValueCategory GetValueCategory() const { return kind; }
 	private:
-		ExprKind kind;
+		ExprValueCategory kind;
 		QualifiedType type;
 	};
 
@@ -259,7 +273,7 @@ namespace lucc
 	{
 		using Opcode = UnaryOperatorKind;
 	public:
-		UnaryOperatorAST(QualifiedType const& type, ExprKind kind, Opcode code,
+		UnaryOperatorAST(QualifiedType const& type, ExprValueCategory kind, Opcode code,
 			std::unique_ptr<ExprAST>&& ref_expr) : ExprAST(type, kind), opcode(code),
 			ref_expr(std::move(ref_expr))
 		{}
@@ -286,7 +300,7 @@ namespace lucc
 	{
 		using Opcode = BinaryOpKind;
 	public:
-		BinaryOperatorAST(QualifiedType const& type, ExprKind kind, Opcode code,
+		BinaryOperatorAST(QualifiedType const& type, ExprValueCategory kind, Opcode code,
 			std::unique_ptr<ExprAST>&& lhs_operand, 
 			std::unique_ptr<ExprAST>&& rhs_operand) : ExprAST(type, kind), opcode(code),
 			lhs_operand(std::move(lhs_operand)), rhs_operand(std::move(rhs_operand))
@@ -304,7 +318,7 @@ namespace lucc
 	class IntegerLiteralAST final : public ExprAST
 	{
 	public:
-		IntegerLiteralAST(T value, QualifiedType const& type, SourceLocation const l) : ExprAST(type, ExprKind::RValue), value(value), loc(loc)
+		IntegerLiteralAST(T value, QualifiedType const& type, SourceLocation const l) : ExprAST(type, ExprValueCategory::RValue), value(value), loc(loc)
 		{}
 
 	private:
@@ -315,12 +329,25 @@ namespace lucc
 	class StringLiteralAST final : public ExprAST
 	{
 	public:
-		StringLiteralAST(std::string_view value, QualifiedType const& type, SourceLocation const l) : ExprAST(type, ExprKind::RValue), value(value), loc(loc)
+		StringLiteralAST(std::string_view value, QualifiedType const& type, SourceLocation const l) : ExprAST(type, ExprValueCategory::RValue), value(value), loc(loc)
 		{}
 
 	private:
 		std::string_view value;
 		SourceLocation loc;
+	};
+
+	class CallExprAST final : public ExprAST
+	{
+	public:
+		CallExprAST(QualifiedType const& type, std::unique_ptr<DeclRefExprAST>&& fn) : ExprAST(type), fn(std::move(fn)) {}
+		void AddArgument(std::unique_ptr<ExprAST>&& arg)
+		{
+			args.push_back(std::move(arg));
+		}
+	private:
+		std::unique_ptr<DeclRefExprAST> fn;
+		std::vector<std::unique_ptr<ExprAST>> args;
 	};
 
 	struct AST
