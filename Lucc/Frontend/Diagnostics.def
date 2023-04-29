@@ -28,6 +28,7 @@ DIAG(expected_function_definition, error, "Expected function definition")
 DIAG(return_in_file_scope, error, "Return statement can only appear inside function definition")
 DIAG(return_type_mismatch, error, "Type of return statement doesn't agree with return type of a function")
 DIAG(if_condition_not_in_parentheses, error, "If condition should be surrounded with parentheses")
+DIAG(while_condition_not_in_parentheses, error, "While condition should be surrounded with parentheses")
 DIAG(expected_semicolon, error, "Expected semicolon after expression statement")
 
 #undef DIAG

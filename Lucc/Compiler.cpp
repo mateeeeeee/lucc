@@ -3,8 +3,6 @@
 #include "Frontend/Diagnostics.h"
 #include "Frontend/Preprocessor.h"
 #include "Frontend/Lexer.h"
-#include "Frontend/Parser.h"
-#include "Frontend/AST.h"
 #include <iostream>
 
 namespace lucc
@@ -24,57 +22,6 @@ namespace lucc
 			}
 			std::cout << "\n\n";
 		}
-
-		class DebugNodeVisitorAST : public NodeVisitorAST
-		{
-			static constexpr std::string GetIndentation(size_t indent)
-			{
-				std::string indentation(indent * 3, ' ');
-				if (!indentation.empty())
-				{
-					indentation[indent * 3 - 3] = '`';
-					indentation[indent * 3 - 2] = '-';
-					indentation[indent * 3 - 1] = '>';
-				}
-				return indentation;
-			}
-		public:
-
-			DebugNodeVisitorAST(AST* ast)
-			{
-				std::cout << "AST Traversal:\n";
-				ast->tr_unit->Accept(*this, 0);
-			}
-
-			virtual void Visit(TranslationUnitDeclAST const& node, size_t indent) override
-			{
-				std::cout << GetIndentation(indent) << "TranslationUnitDeclAST \n";
-			}
-			virtual void Visit(TypedefDeclAST const& node, size_t indent) override
-			{
-				std::cout << GetIndentation(indent) << "TypedefDeclAST \n";
-			}
-			virtual void Visit(FunctionDeclAST const& node, size_t indent) override
-			{
-				std::cout << GetIndentation(indent) << "FunctionDeclAST \n";
-			}
-			virtual void Visit(CompoundStmtAST const& node, size_t indent) override
-			{
-				std::cout << GetIndentation(indent) << "CompoundStmtAST \n";
-			}
-			virtual void Visit(ReturnStmtAST const& node, size_t indent) override
-			{
-				std::cout << GetIndentation(indent) << "ReturnStmtAST \n";
-			}
-			virtual void Visit(ParamVarDeclAST const& node, size_t indent) override
-			{
-				std::cout << GetIndentation(indent) << "ParamVarDeclAST \n";
-			}
-			virtual void Visit(NodeAST const& node, size_t indent) override
-			{
-				std::cout << GetIndentation(indent) << "NodeType not implemented \n";
-			}
-		};
 	}
 
 	bool Compile(CompilerInput& input)
@@ -98,15 +45,15 @@ namespace lucc
 			return false;
 		}
 		debug::PrintTokens("\n\nAfter preprocessor:", lex.GetTokens());
-		Parser parser(lex.GetTokens());
-
-		if (!parser.Parse())
-		{
-			Report(diag::parsing_failed);
-			return false;
-		}
-		AST* ast = parser.GetAST();
-		debug::DebugNodeVisitorAST visitor(ast);
+		//Parser parser(lex.GetTokens());
+		//
+		//if (!parser.Parse())
+		//{
+		//	Report(diag::parsing_failed);
+		//	return false;
+		//}
+		//AST* ast = parser.GetAST();
+		//debug::DebugNodeVisitorAST visitor(ast);
 
 		//do optimizations
 		//do codegen
