@@ -126,17 +126,14 @@ namespace lucc
 	{
 		char const* tmp_ptr = cur_ptr;
 		Consume(tmp_ptr, [](char c) -> bool { return std::isdigit(c); });
-		if (*tmp_ptr == 'f' || *tmp_ptr == 'F')
-		{
-			++tmp_ptr;
-			FillToken(t, TokenKind::number, tmp_ptr);
-		}
-		else 
+		if (*tmp_ptr == 'f' || *tmp_ptr == 'F') ++tmp_ptr;
+		else if (std::isalpha(*tmp_ptr))
 		{
 			UpdatePointersAndLocation();
 			Report(diag::invalid_number_literal, loc);
 			return false;
 		}
+		FillToken(t, TokenKind::number, tmp_ptr);
 		UpdatePointersAndLocation();
 		return true;
 	}
@@ -187,6 +184,18 @@ namespace lucc
 		char c = *cur_ptr++;
 		switch (c)
 		{
+		case '+':
+			t.SetKind(TokenKind::plus);
+			break;
+		case '-':
+			t.SetKind(TokenKind::minus);
+			break;
+		case '*':
+			t.SetKind(TokenKind::star);
+			break;
+		case '/':
+			t.SetKind(TokenKind::slash);
+			break;
 		case '?':
 			t.SetKind(TokenKind::question);
 			break;

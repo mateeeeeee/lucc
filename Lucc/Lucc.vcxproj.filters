@@ -19,6 +19,9 @@
     <Filter Include="Frontend\Lexer">
       <UniqueIdentifier>{183427ba-5584-4bfb-b2ff-dd2cd709e429}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Frontend\Parser">
+      <UniqueIdentifier>{561a5b64-d52c-4a1a-9119-e052e29c9891}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Compiler.cpp" />
@@ -36,14 +39,20 @@
     <ClCompile Include="Frontend\Preprocessor.cpp">
       <Filter>Frontend\Preprocessor</Filter>
     </ClCompile>
-    <ClCompile Include="..\deprecated\AST.cpp">
+    <ClCompile Include="..\deprecated\Old_AST.cpp">
       <Filter>deprecated</Filter>
     </ClCompile>
-    <ClCompile Include="..\deprecated\Parser.cpp">
+    <ClCompile Include="..\deprecated\Old_Parser.cpp">
       <Filter>deprecated</Filter>
     </ClCompile>
     <ClCompile Include="Frontend\Lexer.cpp">
       <Filter>Frontend\Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="Frontend\Parser.cpp">
+      <Filter>Frontend\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Frontend\AST.cpp">
+      <Filter>Frontend\Parser</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -79,20 +88,26 @@
     <ClInclude Include="Frontend\Preprocessor.h">
       <Filter>Frontend\Preprocessor</Filter>
     </ClInclude>
-    <ClInclude Include="..\deprecated\AST.h">
+    <ClInclude Include="..\deprecated\Old_AST.h">
       <Filter>deprecated</Filter>
     </ClInclude>
-    <ClInclude Include="..\deprecated\Parser.h">
+    <ClInclude Include="..\deprecated\Old_Parser.h">
       <Filter>deprecated</Filter>
     </ClInclude>
-    <ClInclude Include="..\deprecated\SymbolTableStack.h">
+    <ClInclude Include="..\deprecated\Old_SymbolTableStack.h">
       <Filter>deprecated</Filter>
     </ClInclude>
-    <ClInclude Include="..\deprecated\Type.h">
+    <ClInclude Include="..\deprecated\Old_Type.h">
       <Filter>deprecated</Filter>
     </ClInclude>
     <ClInclude Include="Frontend\Lexer.h">
       <Filter>Frontend\Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\Parser.h">
+      <Filter>Frontend\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\AST.h">
+      <Filter>Frontend\Parser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

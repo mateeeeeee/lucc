@@ -30,5 +30,6 @@ DIAG(return_type_mismatch, error, "Type of return statement doesn't agree with r
 DIAG(if_condition_not_in_parentheses, error, "If condition should be surrounded with parentheses")
 DIAG(while_condition_not_in_parentheses, error, "While condition should be surrounded with parentheses")
 DIAG(expected_semicolon, error, "Expected semicolon after expression statement")
+DIAG(unexpected_token, error, "Unexpected token")
 
 #undef DIAG

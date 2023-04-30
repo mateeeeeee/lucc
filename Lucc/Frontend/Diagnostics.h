@@ -17,7 +17,7 @@ namespace lucc::diag
 	struct DiagSettings
 	{
 		bool treat_warnings_as_errors = false;
-		bool multithreaded_support = false; //#todo add multithreaded safety
+		bool multithreaded_support = false;
 	};
 
 	void Initialize(DiagSettings const& settings = {});

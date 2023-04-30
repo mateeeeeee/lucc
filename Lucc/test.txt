@@ -1,6 +1,2 @@
-int typedef a,b,c;
-
-void f(int)
-{
-	return;
-}
+3 + 5;
+;
