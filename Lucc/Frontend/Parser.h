@@ -2,14 +2,23 @@
 #include <vector>
 #include <memory>
 #include "Token.h"
+#include "Diagnostics.h"
 
 namespace lucc
 {
+	namespace diag
+	{
+		enum class Code : uint16;
+	}
+	class SymbolTable;
+
+	struct AST;
+	class DeclAST;
 	class ExprAST;
 	class StmtAST;
 	class ExprStmtAST;
+	class CompoundStmtAST;
 	class IntegerLiteralAST;
-	struct AST;
 
 	class Parser
 	{
@@ -26,6 +35,7 @@ namespace lucc
 		TokenPtr current_token;
 		std::unique_ptr<AST> ast;
 
+		std::unique_ptr<SymbolTable> globals_symtable;
 	private:
 		bool Consume(TokenKind k)
 		{
@@ -45,11 +55,25 @@ namespace lucc
 			else return false;
 		}
 		bool Expect(TokenKind k);
+		template<typename... Ts>
+		bool Expect(TokenKind k, Ts... ts)
+		{
+			if (!Consume(k, ts...))
+			{
+				Report(diag::unexpected_token);
+				return false;
+			}
+			return true;
+		}
+		void Report(diag::Code);
 
 		[[nodiscard]] bool ParseTranslationUnit();
 
+		[[nodiscard]] std::unique_ptr<DeclAST> ParseDeclaration();
+
 		[[nodiscard]] std::unique_ptr<StmtAST> ParseStatement();
 		[[nodiscard]] std::unique_ptr<ExprStmtAST> ParseExpressionStatement();
+		[[nodiscard]] std::unique_ptr<CompoundStmtAST> ParseCompoundStatement();
 
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseAdditiveExpression();

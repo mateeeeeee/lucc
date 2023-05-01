@@ -184,6 +184,9 @@ namespace lucc
 		char c = *cur_ptr++;
 		switch (c)
 		{
+		case '=':
+			t.SetKind(TokenKind::equal);
+			break;
 		case '+':
 			t.SetKind(TokenKind::plus);
 			break;

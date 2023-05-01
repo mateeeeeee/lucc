@@ -3,19 +3,18 @@
 
 namespace lucc
 {
-	enum CompilerOpt : uint32 
+	enum CompilerFlag : uint32 
 	{
-		CompilerOpt_None = 0x0,
-		CompilerOpt_UseVM = 0x1,
+		CompilerFlag_None = 0x0,
 	};
-	DEFINE_ENUM_BIT_OPERATORS(CompilerOpt);
-	using CompilerOpts = uint32;
+	DEFINE_ENUM_BIT_OPERATORS(CompilerFlag);
+	using CompilerFlags = uint32;
 
 	struct CompilerInput
 	{
 		std::string_view input;
 		std::string_view output;
-		CompilerOpts	 options;
+		CompilerFlags	 options;
 	};
 
 	bool Compile(CompilerInput&);

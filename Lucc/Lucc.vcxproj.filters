@@ -109,6 +109,9 @@
     <ClInclude Include="Frontend\AST.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
+    <ClInclude Include="Frontend\Symbol.h">
+      <Filter>Frontend\Parser</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="test.txt" />

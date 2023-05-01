@@ -61,6 +61,7 @@
     <ClInclude Include="Frontend\Preprocessor.h" />
     <ClInclude Include="Frontend\SourceBuffer.h" />
     <ClInclude Include="Frontend\SourceLocation.h" />
+    <ClInclude Include="Frontend\Symbol.h" />
     <ClInclude Include="Frontend\Token.h" />
     <ClInclude Include="Frontend\TokenTypes.h" />
     <ClInclude Include="precomp.h" />

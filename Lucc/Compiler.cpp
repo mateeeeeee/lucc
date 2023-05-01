@@ -84,6 +84,14 @@ namespace lucc
 			{
 				std::cout << GetIndentation(depth) << "StmtAST \n";
 			}
+			virtual void Visit(CompoundStmtAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "CompoundStmtAST \n";
+			}
+			virtual void Visit(DeclStmtAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "DeclStmtAST \n";
+			}
 			virtual void Visit(ExprStmtAST const& node, size_t depth) override
 			{
 				std::cout << GetIndentation(depth) << "ExprStmtAST \n";
@@ -91,6 +99,18 @@ namespace lucc
 			virtual void Visit(NullStmtAST const& node, size_t depth) override
 			{
 				std::cout << GetIndentation(depth) << "NullStmtAST \n";
+			}
+			virtual void Visit(DeclAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "DeclAST \n";
+			}
+			virtual void Visit(VarDeclAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "VarDeclAST, name: " << node.GetName() << "\n";
+			}
+			virtual void Visit(FunctionDeclAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "FunctionDeclAST, name: " << node.GetName() << "\n";
 			}
 		};
 	}
