@@ -185,7 +185,36 @@ namespace lucc
 		switch (c)
 		{
 		case '=':
-			t.SetKind(TokenKind::equal);
+			if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::equal_equal);
+			}
+			else t.SetKind(TokenKind::equal);
+			break;
+		case '!':
+			if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::not_equal);
+			}
+			else t.SetKind(TokenKind::question);
+			break;
+		case '>':
+			if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::greater_equal);
+			}
+			else t.SetKind(TokenKind::greater);
+			break;
+		case '<':
+			if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::less_equal);
+			}
+			else t.SetKind(TokenKind::less);
 			break;
 		case '+':
 			t.SetKind(TokenKind::plus);

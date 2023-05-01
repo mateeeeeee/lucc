@@ -17,6 +17,7 @@ namespace lucc
 	class DeclStmtAST;
 	class ExprStmtAST;
 	class NullStmtAST;
+	class IfStmtAST;
 
 	class DeclAST;
 	class VarDeclAST;
@@ -36,6 +37,7 @@ namespace lucc
 		virtual void Visit(DeclStmtAST const& node, size_t depth) = 0;
 		virtual void Visit(ExprStmtAST const& node, size_t depth) = 0;
 		virtual void Visit(NullStmtAST const& node, size_t depth) = 0;
+		virtual void Visit(IfStmtAST const& node, size_t depth) = 0;
 		virtual void Visit(DeclAST const& node, size_t depth) = 0;
 		virtual void Visit(VarDeclAST const& node, size_t depth) = 0;
 		virtual void Visit(FunctionDeclAST const& node, size_t depth) = 0;
@@ -149,7 +151,33 @@ namespace lucc
 		NullStmtAST() : ExprStmtAST(nullptr) {}
 		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
 	};
+	class IfStmtAST final : public StmtAST
+	{
+	public:
+		IfStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& then_stmt) 
+			: condition(std::move(condition)), then_stmt(std::move(then_stmt)),
+			  else_stmt(std::move(else_stmt))
+		{}
 
+		void AddElseStatement(std::unique_ptr<StmtAST>&& _else_stmt)
+		{
+			else_stmt = std::move(_else_stmt);
+		}
+
+		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+
+	private:
+		std::unique_ptr<ExprAST> condition;
+		std::unique_ptr<StmtAST> then_stmt;
+		std::unique_ptr<StmtAST> else_stmt;
+	};
+
+	enum class BinaryExprKind : uint8
+	{
+		Add, Subtract, Multiply, Divide,
+		Assign,
+		Invalid
+	};
 	class ExprAST : public NodeAST
 	{
 	public:
@@ -157,12 +185,6 @@ namespace lucc
 
 	protected:
 		ExprAST() = default;
-	};
-	enum class BinaryExprKind : uint8
-	{
-		Add, Subtract, Multiply, Divide, 
-		Assign,
-		Invalid
 	};
 	class BinaryExprAST : public ExprAST
 	{

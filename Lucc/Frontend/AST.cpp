@@ -76,4 +76,12 @@ namespace lucc
 		if (decl) decl->Accept(visitor, depth + 1);
 	}
 
+	void IfStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+		if (condition) condition->Accept(visitor, depth + 1);
+		if (then_stmt) then_stmt->Accept(visitor, depth + 1);
+		if (else_stmt) else_stmt->Accept(visitor, depth + 1);
+	}
+
 }

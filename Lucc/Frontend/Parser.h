@@ -18,6 +18,7 @@ namespace lucc
 	class StmtAST;
 	class ExprStmtAST;
 	class CompoundStmtAST;
+	class IfStmtAST;
 	class IntegerLiteralAST;
 
 	class Parser
@@ -74,6 +75,7 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<StmtAST> ParseStatement();
 		[[nodiscard]] std::unique_ptr<ExprStmtAST> ParseExpressionStatement();
 		[[nodiscard]] std::unique_ptr<CompoundStmtAST> ParseCompoundStatement();
+		[[nodiscard]] std::unique_ptr<IfStmtAST> ParseIfStatement();
 
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseAdditiveExpression();

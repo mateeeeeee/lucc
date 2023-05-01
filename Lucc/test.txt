@@ -3,4 +3,12 @@
 void main()
 {
 	int k;
+	if(3)
+	{
+		int a;
+	}
+	else 
+	{
+		int b;
+	}
 }
