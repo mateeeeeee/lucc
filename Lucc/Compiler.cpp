@@ -76,6 +76,10 @@ namespace lucc
 			{
 				std::cout << GetIndentation(depth) << "BinaryExprAST, Op:" << BinaryExprKindToString(node.GetOp()) << "\n";
 			}
+			virtual void Visit(TernaryExprAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "TernaryExprAST \n";
+			}
 			virtual void Visit(IntegerLiteralAST const& node, size_t depth) override
 			{
 				std::cout << GetIndentation(depth) << "IntegerLiteralAST, Value:" << std::to_string(node.GetValue()) << "\n";

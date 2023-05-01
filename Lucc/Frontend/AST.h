@@ -10,6 +10,7 @@ namespace lucc
 	
 	class ExprAST;
 	class BinaryExprAST;
+	class TernaryExprAST;
 	class IntegerLiteralAST;
 	
 	class StmtAST;
@@ -31,6 +32,7 @@ namespace lucc
 		virtual void Visit(TranslationUnitAST const& node, size_t depth) = 0;
 		virtual void Visit(ExprAST const& node, size_t depth) = 0;
 		virtual void Visit(BinaryExprAST const& node, size_t depth) = 0;
+		virtual void Visit(TernaryExprAST const& node, size_t depth) = 0;
 		virtual void Visit(IntegerLiteralAST const& node, size_t depth) = 0;
 		virtual void Visit(StmtAST const& node, size_t depth) = 0;
 		virtual void Visit(CompoundStmtAST const& node, size_t depth) = 0;
@@ -172,10 +174,26 @@ namespace lucc
 		std::unique_ptr<StmtAST> else_stmt;
 	};
 
+	enum class UnaryExprKind : uint8
+	{
+		PreIncrement, PreDecrement,
+		PostIncrement, PostDecrement,
+		Plus, Minus, BitNot,
+		LogicalNot,
+		Dereference, AddressOf,
+		Cast
+	};
 	enum class BinaryExprKind : uint8
 	{
-		Add, Subtract, Multiply, Divide,
+		Add, Subtract, Multiply, Divide, Modulo,
+		ShiftLeft, ShiftRight, BitAnd, BitOr, BitXor,
 		Assign,
+		Comma,
+		LogicalAnd, LogicalOr,
+		// Comparison
+		Equal, NotEqual,
+		Less, Greater,
+		LessEqual, GreaterEqual,
 		Invalid
 	};
 	class ExprAST : public NodeAST
@@ -185,6 +203,19 @@ namespace lucc
 
 	protected:
 		ExprAST() = default;
+	};
+	class UnaryExprAST : public ExprAST
+	{
+	public:
+		explicit UnaryExprAST(UnaryExprKind op) : op(op) {}
+		void SetOperand(std::unique_ptr<ExprAST>&& _operand) { operand = std::move(_operand); }
+		UnaryExprKind GetOp() const { return op; }
+
+		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+
+	private:
+		std::unique_ptr<ExprAST> operand;
+		UnaryExprKind op;
 	};
 	class BinaryExprAST : public ExprAST
 	{
@@ -200,6 +231,29 @@ namespace lucc
 	private:
 		std::unique_ptr<ExprAST> lhs, rhs;
 		BinaryExprKind op;
+	};
+	class TernaryExprAST : public ExprAST 
+	{
+	public:
+		TernaryExprAST(std::unique_ptr<ExprAST>&& cond_expr, std::unique_ptr<ExprAST>&& true_expr,
+			std::unique_ptr<ExprAST>&& false_expr) :
+			cond_expr(std::move(cond_expr)),
+			true_expr(std::move(true_expr)),
+			false_expr(std::move(false_expr)) {}
+		
+		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+
+	private:
+		std::unique_ptr<ExprAST> cond_expr;
+		std::unique_ptr<ExprAST> true_expr;
+		std::unique_ptr<ExprAST> false_expr;
+	};
+
+	class Identifier : public ExprAST
+	{
+	public:
+
+	private:
 	};
 
 	class IntegerLiteralAST final : public ExprAST

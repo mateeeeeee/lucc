@@ -84,4 +84,18 @@ namespace lucc
 		if (else_stmt) else_stmt->Accept(visitor, depth + 1);
 	}
 
+	void TernaryExprAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+		if (cond_expr) cond_expr->Accept(visitor, depth + 1);
+		if (true_expr) true_expr->Accept(visitor, depth + 1);
+		if (false_expr) false_expr->Accept(visitor, depth + 1);
+	}
+
+	void UnaryExprAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+		operand->Accept(visitor, depth + 1);
+	}
+
 }

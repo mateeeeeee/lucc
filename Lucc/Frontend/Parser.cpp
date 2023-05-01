@@ -154,7 +154,6 @@ namespace lucc
 			return nullptr;
 		}
 		std::unique_ptr<ExprAST> condition = ParseExpression();
-		if (condition == nullptr) return nullptr;
 		if (!Consume(TokenKind::right_round))
 		{
 			Report(diag::if_condition_not_in_parentheses);
@@ -173,57 +172,355 @@ namespace lucc
 		return if_stmt;
 	}
 
-	std::unique_ptr<ExprAST> Parser::ParseExpression()
+	template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
+	std::unique_ptr<ExprAST> Parser::ParseBinaryExpression()
 	{
-		return ParseAdditiveExpression();
+		std::unique_ptr<ExprAST> lhs = (this->*ParseFn)();
+		while (Consume(token_kind)) 
+		{
+			std::unique_ptr<ExprAST> rhs = (this->*ParseFn)();
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			parent->SetLHS(std::move(lhs));
+			parent->SetRHS(std::move(rhs));
+			lhs = std::move(parent);
+		}
+		return lhs;
 	}
 
+	//<expression> ::=  <assignment - expression>
+	//					| <expression>, <assignment - expression>
+	std::unique_ptr<ExprAST> Parser::ParseExpression()
+	{
+		return ParseBinaryExpression<&Parser::ParseAssignExpression, TokenKind::comma, BinaryExprKind::Comma>();
+	}
+
+	//<assignment - expression> ::= <conditional - expression>
+	//								| <unary - expression> <assignment - operator> <assignment - expression>
+	std::unique_ptr<ExprAST> Parser::ParseAssignExpression()
+	{
+		std::unique_ptr<ExprAST>  lhs = ParseConditionalExpression();
+		BinaryExprKind arith_op_kind = BinaryExprKind::Assign;
+		switch (current_token->GetKind()) 
+		{
+		case TokenKind::equal: break;
+		case TokenKind::star_equal: arith_op_kind = BinaryExprKind::Multiply; break;
+		case TokenKind::slash_equal: arith_op_kind = BinaryExprKind::Divide; break;
+		case TokenKind::modulo_equal: arith_op_kind = BinaryExprKind::Modulo; break;
+		case TokenKind::plus_equal: arith_op_kind = BinaryExprKind::Add; break;
+		case TokenKind::minus_equal: arith_op_kind = BinaryExprKind::Subtract; break;
+		case TokenKind::less_less_equal: arith_op_kind = BinaryExprKind::ShiftLeft; break;
+		case TokenKind::greater_great_equal: arith_op_kind = BinaryExprKind::ShiftRight; break;
+		case TokenKind::amp_equal: arith_op_kind = BinaryExprKind::BitAnd; break;
+		case TokenKind::pipe_equal: arith_op_kind = BinaryExprKind::BitOr; break;
+		case TokenKind::caret_equal: arith_op_kind = BinaryExprKind::BitXor; break;
+		default:
+			return lhs;
+		}
+		++current_token;
+		std::unique_ptr<ExprAST> rhs = ParseAssignExpression();
+		if (arith_op_kind != BinaryExprKind::Assign)
+		{
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(arith_op_kind);
+			parent->SetLHS(std::move(lhs));
+			parent->SetRHS(std::move(rhs));
+			rhs = std::move(parent);
+		}
+
+		std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(BinaryExprKind::Assign);
+		parent->SetLHS(std::move(lhs));
+		parent->SetRHS(std::move(rhs));
+		return parent;
+	}
+
+	//<conditional - expression> ::=  <logical - or -expression>
+	//								| <logical - or -expression> ? <expression> : <conditional - expression>
+	std::unique_ptr<ExprAST> Parser::ParseConditionalExpression()
+	{
+		std::unique_ptr<ExprAST> cond = ParseLogicalOrExpression();
+		if (Consume(TokenKind::question)) 
+		{
+			std::unique_ptr<ExprAST> true_expr = ParseExpression();
+			Expect(TokenKind::colon);
+			std::unique_ptr<ExprAST> false_expr = ParseConditionalExpression();
+			return std::make_unique<TernaryExprAST>(std::move(cond), std::move(true_expr), std::move(false_expr));
+		}
+		return cond;
+	}
+
+	//<logical - or -expression> :: = <logical - and -expression>
+	//								| <logical - or -expression> || <logical - and -expression>
+	std::unique_ptr<ExprAST> Parser::ParseLogicalOrExpression()
+	{
+		return ParseBinaryExpression<&Parser::ParseLogicalAndExpression, TokenKind::pipe_pipe, BinaryExprKind::LogicalOr>();
+	}
+
+	//	<logical - and - expression> :: = <inclusive - or - expression>
+	//									| <logical - and - expression> && <inclusive - or - expression>
+	std::unique_ptr<ExprAST> Parser::ParseLogicalAndExpression()
+	{
+		return ParseBinaryExpression<&Parser::ParseInclusiveOrExpression, TokenKind::amp_amp, BinaryExprKind::LogicalAnd>();
+	}
+
+	//<inclusive - or - expression> :: = <exclusive - or - expression>
+	//								  | <inclusive - or - expression> | <exclusive - or - expression>
+	std::unique_ptr<ExprAST> Parser::ParseInclusiveOrExpression()
+	{
+		return ParseBinaryExpression<&Parser::ParseExclusiveOrExpression, TokenKind::pipe, BinaryExprKind::BitOr>();
+	}
+
+	//<exclusive - or - expression> ::= <and - expression>
+	//								| <exclusive - or - expression> ^ <and - expression>
+	std::unique_ptr<ExprAST> Parser::ParseExclusiveOrExpression()
+	{
+		return ParseBinaryExpression<&Parser::ParseAndExpression, TokenKind::caret, BinaryExprKind::BitXor>();
+	}
+	
+	//<and-expression> :: = <equality - expression>
+	//					  | <and - expression> & <equality - expression>
+	std::unique_ptr<ExprAST> Parser::ParseAndExpression()
+	{
+		return ParseBinaryExpression<&Parser::ParseEqualityExpression, TokenKind::amp, BinaryExprKind::BitAnd>();
+	}
+
+	//<equality - expression> :: = <relational - expression>
+	//							 | <equality - expression> == <relational - expression>
+	//							 | <equality - expression> != <relational - expression>
+	std::unique_ptr<ExprAST> Parser::ParseEqualityExpression()
+	{
+		std::unique_ptr<ExprAST> lhs = ParseRelationalExpression();
+		while (true)
+		{
+			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			switch (current_token->GetKind()) 
+			{
+			case TokenKind::equal:		op_kind = BinaryExprKind::Equal; break;
+			case TokenKind::not_equal:	op_kind = BinaryExprKind::NotEqual; break;
+			default:
+				return lhs;
+			}
+			++current_token;
+			std::unique_ptr<ExprAST> rhs = ParseRelationalExpression();
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			parent->SetLHS(std::move(lhs));
+			parent->SetRHS(std::move(rhs));
+			lhs = std::move(parent);
+		}
+	}
+
+	//<relational - expression> :: = <shift - expression>
+	//							   | <relational - expression> < <shift - expression>
+	//							   | <relational - expression> > <shift - expression>
+	//							   | <relational - expression> <= <shift - expression>
+	//							   | <relational - expression> >= <shift - expression>
+	std::unique_ptr<ExprAST> Parser::ParseRelationalExpression()
+	{
+		std::unique_ptr<ExprAST> lhs = ParseShiftExpression();
+		while (true) 
+		{
+			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			switch (current_token->GetKind())
+			{
+			case TokenKind::less:			op_kind = BinaryExprKind::Less; break;
+			case TokenKind::less_equal:		op_kind = BinaryExprKind::LessEqual; break;
+			case TokenKind::greater:		op_kind = BinaryExprKind::Greater; break;
+			case TokenKind::greater_equal:	op_kind = BinaryExprKind::GreaterEqual; break;
+			default:
+				return lhs;
+			}
+			++current_token;
+			std::unique_ptr<ExprAST> rhs = ParseShiftExpression();
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			parent->SetLHS(std::move(lhs));
+			parent->SetRHS(std::move(rhs));
+			lhs = std::move(parent);
+		}
+	}
+
+	//<shift - expression> :: = <additive - expression>
+	//						| <shift - expression> << <additive - expression>
+	//						| <shift - expression> >> <additive - expression>
+	std::unique_ptr<ExprAST> Parser::ParseShiftExpression()
+	{
+		std::unique_ptr<ExprAST> lhs = ParseAdditiveExpression();
+		while (true)
+		{
+			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			switch (current_token->GetKind())
+			{
+			case TokenKind::less_less:			op_kind = BinaryExprKind::ShiftLeft; break;
+			case TokenKind::greater_greater:	op_kind = BinaryExprKind::ShiftRight; break;
+			default:
+				return lhs;
+			}
+			++current_token;
+			std::unique_ptr<ExprAST> rhs = ParseAdditiveExpression();
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			parent->SetLHS(std::move(lhs));
+			parent->SetRHS(std::move(rhs));
+			lhs = std::move(parent);
+		}
+	}
+
+	//<additive - expression> :: = <multiplicative - expression>
+	//							| <additive - expression> +<multiplicative - expression>
+	//							| <additive - expression> -<multiplicative - expression>
 	std::unique_ptr<ExprAST> Parser::ParseAdditiveExpression()
 	{
 		std::unique_ptr<ExprAST> lhs = ParseMultiplicativeExpression();
-		if (!lhs) return nullptr;
-
-		if (current_token->IsOneOf(TokenKind::eof, TokenKind::semicolon)) return lhs;
-		BinaryExprKind type = TokenKindToBinaryExprType(current_token->GetKind());
-		if (type == BinaryExprKind::Invalid) return nullptr;
-
-		while (true)
+		while (true) 
 		{
+			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			switch (current_token->GetKind())
+			{
+			case TokenKind::plus:			op_kind = BinaryExprKind::Add; break;
+			case TokenKind::minus:			op_kind = BinaryExprKind::Subtract; break;
+			default:
+				return lhs;
+			}
 			++current_token;
 			std::unique_ptr<ExprAST> rhs = ParseMultiplicativeExpression();
-			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(type);
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
 			parent->SetLHS(std::move(lhs));
 			parent->SetRHS(std::move(rhs));
 			lhs = std::move(parent);
-
-			if (current_token->IsOneOf(TokenKind::eof, TokenKind::semicolon)) break;
-			type = TokenKindToBinaryExprType(current_token->GetKind());
-			if (type == BinaryExprKind::Invalid) return nullptr;
 		}
-		return lhs;
 	}
 
+	//<multiplicative - expression>   ::= <cast - expression>
+	//									| <multiplicative - expression> *<cast - expression>
+	//									| <multiplicative - expression> / <cast - expression>
+	//									| <multiplicative - expression> % <cast - expression>
 	std::unique_ptr<ExprAST> Parser::ParseMultiplicativeExpression()
 	{
-		std::unique_ptr<ExprAST> lhs = ParseIntegerLiteral();
-		if (!lhs) return nullptr;
-
-		if (current_token->IsOneOf(TokenKind::eof, TokenKind::semicolon)) return lhs;
-
-		while (current_token->Is(TokenKind::star) || current_token->Is(TokenKind::slash)) 
+		std::unique_ptr<ExprAST> lhs = ParseCastExpression();
+		while (true) 
 		{
-			BinaryExprKind type = TokenKindToBinaryExprType(current_token->GetKind());
-			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(type);
-
+			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			switch (current_token->GetKind())
+			{
+			case TokenKind::star:	op_kind = BinaryExprKind::Multiply; break;
+			case TokenKind::slash:	op_kind = BinaryExprKind::Divide; break;
+			case TokenKind::modulo: op_kind = BinaryExprKind::Modulo; break;
+			default:
+				return lhs;
+			}
 			++current_token;
-			std::unique_ptr<ExprAST> rhs = ParseIntegerLiteral();
-
+			std::unique_ptr<ExprAST> rhs = ParseCastExpression();
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
 			parent->SetLHS(std::move(lhs));
 			parent->SetRHS(std::move(rhs));
 			lhs = std::move(parent);
-			if (current_token->IsOneOf(TokenKind::eof, TokenKind::semicolon)) return lhs;
 		}
-		return lhs;
+	}
+
+	//<cast - expression> :: = <unary - expression>
+	//					   | (<type - name>) < cast - expression >
+	std::unique_ptr<ExprAST> Parser::ParseCastExpression()
+	{
+		if (current_token->Is(TokenKind::left_round) && (current_token + 1)->IsDeclSpec())
+		{
+			//#todo
+			return nullptr;
+		}
+		else return ParseUnaryExpression();
+	}
+
+
+	//<unary - expression> :: = <postfix - expression>
+	//						| ++ <unary - expression>
+	//						| -- <unary - expression>
+	//						| <unary - operator> <cast - expression>
+	//						| sizeof <unary - expression>
+	//						| sizeof <type - name>
+
+	std::unique_ptr<ExprAST> Parser::ParseUnaryExpression()
+	{
+		std::unique_ptr<UnaryExprAST> unary_expr;
+		switch (current_token->GetKind()) 
+		{
+		case TokenKind::plus_plus:
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PreIncrement);
+			break;
+		case TokenKind::minus_minus: 
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PreDecrement);
+			break;
+		case TokenKind::amp: 
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::AddressOf);
+			break;
+		case TokenKind::star: 
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference);
+			break;
+		case TokenKind::plus:
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Plus);
+			break;
+		case TokenKind::minus:
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Minus);
+			break;
+		case TokenKind::tilde:
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::BitNot);
+			break;
+		case TokenKind::exclaim:
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::LogicalNot);
+			break;
+		case TokenKind::KW_sizeof: return ParseSizeofExpression();
+		case TokenKind::KW__Alignas: return ParseAlignofExpression();
+		default:
+			return ParsePostFixExpression();
+		}
+		++current_token;
+		unary_expr->SetOperand(ParseUnaryExpression());
+		return unary_expr;
+	}
+
+	//<postfix - expression> :: = <primary - expression>
+	//							| <postfix - expression>[<expression>]
+	//							| <postfix - expression> ({ <assignment - expression> }*)
+	//							| <postfix - expression> . <identifier>
+	//							| <postfix - expression> -> <identifier>
+	//							| <postfix - expression> ++
+	//							| <postfix - expression> --
+	std::unique_ptr<ExprAST> Parser::ParsePostFixExpression()
+	{
+		//std::unique_ptr<ExprAST> expr;
+		//if (current_token->Is(TokenKind::left_round) && (current_token + 1)->IsDeclSpec())
+		//{
+		//	//expr = ParseCompoundLiteral();
+		//}
+		//else expr = ParsePrimaryExpression();
+		//return ParsePostfixExprTail(expr);
+		return ParsePrimaryExpression();
+	}
+
+	std::unique_ptr<ExprAST> Parser::ParseSizeofExpression()
+	{
+		//#todo
+		return nullptr;
+	}
+
+	std::unique_ptr<ExprAST> Parser::ParseAlignofExpression()
+	{
+		//#todo
+		return nullptr;
+	}
+
+	//<primary - expression> :: = <identifier>
+	//							| <constant>
+	//							| <string>
+	//							| (<expression>)
+	std::unique_ptr<ExprAST> Parser::ParsePrimaryExpression()
+	{
+		std::unique_ptr<ExprAST> expr = ParseIntegerLiteral();
+		//switch (current_token->GetKind())
+		//{
+		//case TokenKind::left_round: return ParseParenExpression();
+		//case TokenKind::identifier: expr = ParseIdentifier(); break;
+		//case TokenKind::number: expr = ParseNumber(); break;
+		//case TokenKind::string_literal: expr = ParseStrLiterals(); break;
+		//default:
+		//	Report(diag::unexpected_token);
+		//}
+		//++current_token;
+		return expr;
 	}
 
 	std::unique_ptr<IntegerLiteralAST> Parser::ParseIntegerLiteral()

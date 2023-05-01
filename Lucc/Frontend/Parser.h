@@ -10,6 +10,7 @@ namespace lucc
 	{
 		enum class Code : uint16;
 	}
+	enum class BinaryExprKind : uint8;
 	class SymbolTable;
 
 	struct AST;
@@ -20,6 +21,9 @@ namespace lucc
 	class CompoundStmtAST;
 	class IfStmtAST;
 	class IntegerLiteralAST;
+	class Parser;
+
+	using ExprParseFn = std::unique_ptr<ExprAST>(Parser::*)();
 
 	class Parser
 	{
@@ -78,8 +82,31 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<IfStmtAST> ParseIfStatement();
 
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseAssignExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseConditionalExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseLogicalOrExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseLogicalAndExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseInclusiveOrExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseExclusiveOrExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseAndExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseEqualityExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseRelationalExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseShiftExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseAdditiveExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseMultiplicativeExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseCastExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseUnaryExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParsePostFixExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseSizeofExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseAlignofExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParsePrimaryExpression();
+
+
 		[[nodiscard]] std::unique_ptr<IntegerLiteralAST> ParseIntegerLiteral();
+
+		template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
+		std::unique_ptr<ExprAST> ParseBinaryExpression();
 	};
+	
+
 }
