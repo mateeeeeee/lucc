@@ -17,6 +17,7 @@ namespace lucc
 	struct AST;
 	class DeclAST;
 	class TypedefDeclAST;
+	class FunctionDeclAST;
 	class ExprAST;
 	class StmtAST;
 	class ExprStmtAST;
@@ -83,6 +84,7 @@ namespace lucc
 
 		[[nodiscard]] std::vector<std::unique_ptr<DeclAST>> ParseDeclaration();
 		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclSpecInfo const& decl_spec);
+		[[nodiscard]] std::unique_ptr<FunctionDeclAST> ParseFunctionDeclaration(DeclarationInfo const& decl_spec);
 
 		[[nodiscard]] std::unique_ptr<StmtAST> ParseStatement();
 		[[nodiscard]] std::unique_ptr<ExprStmtAST> ParseExpressionStatement();

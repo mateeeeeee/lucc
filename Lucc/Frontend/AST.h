@@ -112,15 +112,22 @@ namespace lucc
 		FunctionDeclAST(std::string_view name) : name(name) {}
 
 		std::string_view GetName() const { return name; }
+
+		void AddParamDeclaration(std::unique_ptr<VarDeclAST>&& param)
+		{
+			param_decls.push_back(std::move(param));
+		}
 		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
 		{
 			body = std::move(_body);
 		}
+		bool IsDefinition() const { return body != nullptr; }
 
 		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
-
+		
 	private:
 		std::string name;
+		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
 		std::unique_ptr<CompoundStmtAST> body;
 	};
 	class TypedefDeclAST final : public DeclAST

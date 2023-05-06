@@ -188,7 +188,7 @@ namespace lucc
 			}
 			virtual void Visit(FunctionDeclAST const& node, size_t depth) override
 			{
-				std::cout << GetIndentation(depth) << "FunctionDeclAST, name: " << node.GetName() << "\n";
+				std::cout << GetIndentation(depth) << "FunctionDeclAST, type: " << node.GetName() << "\n";
 			}
 			virtual void Visit(TypedefDeclAST const& node, size_t depth) override
 			{

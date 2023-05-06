@@ -114,6 +114,7 @@ namespace lucc
 			Report(diag::declarator_specifier_error);
 			return decls;
 		}
+
 		if (decl_spec.storage == Storage::Typedef)
 		{
 			auto typedef_decls = ParseTypedefDeclaration(decl_spec);
@@ -123,22 +124,18 @@ namespace lucc
 
 		do 
 		{
-			if (current_token->IsNot(TokenKind::identifier)) Report(diag::missing_name);
-			std::string_view name = current_token->GetIdentifier();
-			++current_token;
+			DeclaratorInfo declarator_info{};
+			ParseDeclarator(decl_spec, declarator_info);
+			LU_ASSERT(declarator_info.qtype.HasRawType());
+			DeclarationInfo declaration_info(decl_spec, declarator_info);
 
-			//function declaration
-			if (Consume(TokenKind::left_round))
+			if (declarator_info.qtype->Is(PrimitiveTypeKind::Function))
 			{
-				std::unique_ptr<FunctionDeclAST> func = std::make_unique<FunctionDeclAST>(name);
-				Expect(TokenKind::right_round);
-				if (current_token->Is(TokenKind::left_brace))
+				std::unique_ptr<FunctionDeclAST> func = ParseFunctionDeclaration(declaration_info);
+				if (func->IsDefinition())
 				{
-					std::unique_ptr<CompoundStmtAST> body = ParseCompoundStatement();
-					func->SetFunctionBody(std::move(body));
-
 					LU_ASSERT(decls.empty());
-					//Report(diag::function_definition_blabla);
+					//#todo Report
 					decls.push_back(std::move(func));
 					return decls;
 				}
@@ -146,6 +143,7 @@ namespace lucc
 			}
 			else
 			{
+				std::string_view name = declarator_info.name;
 				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
 				if (Consume(TokenKind::equal))
 				{
@@ -179,6 +177,34 @@ namespace lucc
 			typedefs.push_back(std::make_unique<TypedefDeclAST>(typedef_info.name));
 		}
 		return typedefs;
+	}
+
+	std::unique_ptr<FunctionDeclAST> Parser::ParseFunctionDeclaration(DeclarationInfo const& decl_info)
+	{
+		std::string_view func_name = decl_info.name;
+		if (func_name.empty())
+		{
+			Report(diag::missing_name);
+			return nullptr;
+		}
+
+		FuncType const& func_type = TypeCast<FuncType const&>(decl_info.qtype);
+		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_name);
+		for (auto&& func_param : func_type.GetParamTypes())
+		{
+			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name);
+			func_decl->AddParamDeclaration(std::move(param_decl));
+		}
+		func_type.EncounterPrototype();
+		if (current_token->Is(TokenKind::left_brace))
+		{
+			func_type.EncounteredDefinition();
+
+			std::unique_ptr<CompoundStmtAST> compound_stmt = ParseCompoundStatement();
+			func_decl->SetFunctionBody(std::move(compound_stmt));
+			
+		}
+		return func_decl;
 	}
 
 	std::unique_ptr<StmtAST> Parser::ParseStatement()
