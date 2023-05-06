@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include "Type.h"
 
 namespace lucc
 {
@@ -155,11 +156,11 @@ namespace lucc
 	class DeclStmtAST : public StmtAST
 	{
 	public:
-		DeclStmtAST(std::unique_ptr<DeclAST>&& decl) : decl(std::move(decl)) {}
+		DeclStmtAST(std::vector<std::unique_ptr<DeclAST>>&& decls) : decls(std::move(decls)) {}
 		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
-		std::unique_ptr<DeclAST> decl;
+		std::vector<std::unique_ptr<DeclAST>> decls;
 	};
 	class NullStmtAST final : public ExprStmtAST
 	{

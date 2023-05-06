@@ -43,8 +43,6 @@ namespace lucc
 		std::vector<Token> tokens;
 		TokenPtr current_token;
 		std::unique_ptr<AST> ast;
-
-		std::unique_ptr<SymbolTable> globals_symtable;
 	private:
 		bool Consume(TokenKind k)
 		{
@@ -78,7 +76,7 @@ namespace lucc
 
 		[[nodiscard]] bool ParseTranslationUnit();
 
-		[[nodiscard]] std::unique_ptr<DeclAST> ParseDeclaration();
+		[[nodiscard]] std::vector<std::unique_ptr<DeclAST>> ParseDeclaration();
 
 		[[nodiscard]] std::unique_ptr<StmtAST> ParseStatement();
 		[[nodiscard]] std::unique_ptr<ExprStmtAST> ParseExpressionStatement();

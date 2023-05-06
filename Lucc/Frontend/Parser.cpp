@@ -28,7 +28,6 @@ namespace lucc
 	bool Parser::Parse()
 	{
 		ast = std::make_unique<AST>();
-		globals_symtable = std::make_unique<SymbolTable>(Scope_Global);
 		return ParseTranslationUnit();
 	}
 	bool Parser::Expect(TokenKind k)
@@ -51,48 +50,56 @@ namespace lucc
 	{
 		while (current_token->IsNot(TokenKind::eof))
 		{
-			std::unique_ptr<DeclAST> decl = ParseDeclaration();
-			if (!decl) return false;
-			ast->translation_unit->AddDeclarations(std::move(decl));
+			auto decls = ParseDeclaration();
+			for(auto&& decl : decls) ast->translation_unit->AddDeclarations(std::move(decl));
 		}
 		return true;
 	}
 
-	std::unique_ptr<DeclAST> Parser::ParseDeclaration()
+	std::vector<std::unique_ptr<DeclAST>> Parser::ParseDeclaration()
 	{
 		while (Consume(TokenKind::semicolon)) Report(diag::empty_statement);
 		while (current_token->IsDeclSpec()) ++current_token;
 
 		//#todo parse declaration specifier
 
-		if (current_token->IsNot(TokenKind::identifier)) Report(diag::missing_name);
-		std::string_view name = current_token->GetIdentifier();
-		++current_token;
-
-		//function declaration
-		if (Consume(TokenKind::left_round))
+		std::vector<std::unique_ptr<DeclAST>> decls;
+		do 
 		{
-			std::unique_ptr<FunctionDeclAST> func = std::make_unique<FunctionDeclAST>(name);
-			Expect(TokenKind::right_round);
-			if (current_token->Is(TokenKind::left_brace))
-			{
-				std::unique_ptr<CompoundStmtAST> body = ParseCompoundStatement();
-				func->SetFunctionBody(std::move(body));
-			}
-			return func;
-		}
-		else
-		{
-			std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
-			if (Consume(TokenKind::equal))
-			{
-				std::unique_ptr<ExprAST> init_expr = ParseExpression();
-				var_decl->SetInitExpression(std::move(init_expr));
-			}
-			if (Consume(TokenKind::semicolon)) return var_decl; //if comma, continue adding var decls
-		}
+			if (current_token->IsNot(TokenKind::identifier)) Report(diag::missing_name);
+			std::string_view name = current_token->GetIdentifier();
+			++current_token;
 
-		return nullptr;
+			//function declaration
+			if (Consume(TokenKind::left_round))
+			{
+				std::unique_ptr<FunctionDeclAST> func = std::make_unique<FunctionDeclAST>(name);
+				Expect(TokenKind::right_round);
+				if (current_token->Is(TokenKind::left_brace))
+				{
+					std::unique_ptr<CompoundStmtAST> body = ParseCompoundStatement();
+					func->SetFunctionBody(std::move(body));
+
+					LU_ASSERT(decls.empty());
+					//Report(diag::function_definition_blabla);
+					decls.push_back(std::move(func));
+					return decls;
+				}
+				decls.push_back(std::move(func));
+			}
+			else
+			{
+				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
+				if (Consume(TokenKind::equal))
+				{
+					std::unique_ptr<ExprAST> init_expr = ParseExpression();
+					var_decl->SetInitExpression(std::move(init_expr));
+				}
+				decls.push_back(std::move(var_decl));
+			}
+		} while (Consume(TokenKind::comma));
+		Expect(TokenKind::semicolon);
+		return decls;
 	}
 
 	std::unique_ptr<StmtAST> Parser::ParseStatement()
@@ -132,7 +139,7 @@ namespace lucc
 		{
 			if (current_token->IsDeclSpec())
 			{
-				std::unique_ptr<DeclAST> decl = ParseDeclaration();
+				std::vector<std::unique_ptr<DeclAST>> decl = ParseDeclaration();
 				compound_stmt->AddStatement(std::make_unique<DeclStmtAST>(std::move(decl)));
 			}
 			else
@@ -180,7 +187,7 @@ namespace lucc
 		std::unique_ptr<StmtAST> init = nullptr;
 		if (current_token->IsDeclSpec())
 		{
-			std::unique_ptr<DeclAST> decl = ParseDeclaration();
+			std::vector<std::unique_ptr<DeclAST>> decl = ParseDeclaration();
 			init = std::make_unique<DeclStmtAST>(std::move(decl));
 		}
 		else init = ParseExpressionStatement();

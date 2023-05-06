@@ -68,9 +68,8 @@ namespace lucc
 
 	void DeclStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
 	{
-		LU_ASSERT(decl);
 		visitor.Visit(*this, depth);
-		decl->Accept(visitor, depth + 1);
+		for(auto&& decl : decls) decl->Accept(visitor, depth + 1);
 	}
 
 	void IfStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const

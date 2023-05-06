@@ -2,8 +2,5 @@
 
 void main()
 {
-	for(;;)
-	{
-		k = 5;
-	}
+	int k, a = 3;
 }

@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "SourceLocation.h"
+#include "Type.h"
 
 namespace lucc
 {
@@ -36,46 +36,85 @@ namespace lucc
 	struct Symbol
 	{
 		std::string name = "";
+		QualifiedType qtype;
+	};
+
+	class ScopeTable
+	{
+	public:
+		explicit ScopeTable(uint32 scope_id) : scope_id(scope_id) {}
+		uint32 GetScope() const { return scope_id; }
+
+		bool Insert(Symbol const& symbol)
+		{
+			if (scope_sym_table.contains(symbol.name)) return false;
+			scope_sym_table[symbol.name] = symbol;
+			return true;
+		}
+		template<typename... Args> requires std::is_constructible_v<Symbol,Args...>
+		bool Insert(Args&&... args)
+		{
+			return Insert(Symbol(std::forward<Args>(args...)));
+		}
+
+		bool Delete(std::string const& sym_name)
+		{
+			return scope_sym_table.erase(sym_name) > 0;
+		}
+
+		Symbol* LookUp(std::string const& sym_name)
+		{
+			if (scope_sym_table.contains(sym_name)) return &scope_sym_table[sym_name];
+			else return nullptr;
+		}
+
+	private:
+		uint32 const scope_id;
+		std::unordered_map<std::string, Symbol> scope_sym_table;
 	};
 
 	class SymbolTable
 	{
-		using CurrentScopeSymbolTable = std::unordered_map<std::string, Symbol>;
 	public:
-		explicit SymbolTable(ScopeKind scope) : current_scope(scope){ symtable.emplace_back(); }
-
+		SymbolTable()
+		{
+			scopes.emplace_back(Scope_Global);
+		}
 		void EnterScope()
 		{
-			++current_scope;
-			symtable.emplace_back();
+			scopes.emplace_back(scopes.back().GetScope() + 1);
 		}
 		void ExitScope()
 		{
-			symtable.pop_back();
-			--current_scope;
+			scopes.pop_back();
 		}
 
-		int32 GetCurrentScope() const { return current_scope; }
-		int32 AddSymbol(std::string const& name, Symbol const& symbol)
+		bool Insert(Symbol const& symbol)
 		{
-			if (symtable.back().contains(name)) return Scope_Invalid;
-			symtable.back()[name] = symbol;
-			return current_scope;
+			return scopes.back().Insert(symbol);
 		}
-		int32 Exists(std::string const& name)
+		template<typename... Args> requires std::is_constructible_v<Symbol, Args...>
+		bool Insert(Args&&... args)
 		{
-			int32 scope = current_scope;
-			for (auto symtable_ptr = symtable.crbegin(); symtable_ptr != symtable.crend(); ++symtable_ptr)
+			return scopes.back().Insert(std:forward<Args>(args...));
+		}
+
+		bool Delete(std::string const& sym_name)
+		{
+			return scopes.back().Delete(sym_name);
+		}
+
+		Symbol* LookUp(std::string const& sym_name)
+		{
+			for (auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope)
 			{
-				if (symtable_ptr->contains(name)) return scope;
-				--scope;
+				if (Symbol* sym = scope->LookUp(sym_name)) return sym;
 			}
-			return Scope_Invalid;
+			return nullptr;
 		}
 
 	private:
-		std::vector<CurrentScopeSymbolTable> symtable;
-		uint32 current_scope;
+		std::vector<ScopeTable> scopes;
 	};
 
 	//extern Table constants;

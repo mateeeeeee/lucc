@@ -1,8 +1,8 @@
 #pragma once
-#pragma once
-#include "Core/Enums.h"
 #include <memory>
 #include <span>
+#include "SourceLocation.h"
+#include "Core/Enums.h"
 
 namespace lucc
 {
@@ -64,6 +64,8 @@ namespace lucc
 	public:
 		friend class Type;
 
+		QualifiedType() = default;
+
 		explicit QualifiedType(Qualifiers qualifiers = QualifierNone) : qualifiers(qualifiers) {}
 
 		template<std::derived_from<Type> DType>
@@ -102,4 +104,172 @@ namespace lucc
 		std::shared_ptr<Type> type = nullptr;
 		Qualifiers qualifiers;
 	};
+
+	class VoidType : public Type
+	{
+	public:
+		constexpr VoidType() : Type{ PrimitiveTypeKind::Void, false } {}
+	};
+
+	class PointerType : public Type
+	{
+	public:
+		PointerType(QualifiedType const& pointee_qtype)
+			: Type{ PrimitiveTypeKind::Pointer, true, 8, 8 },
+			pointee_qtype{ pointee_qtype } {}
+
+		QualifiedType PointeeQualfiedType() const { return pointee_qtype; }
+
+	private:
+		QualifiedType pointee_qtype;
+	};
+
+	class ArrayType : public Type
+	{
+	public:
+		explicit ArrayType(QualifiedType const& base_qtype)
+			: Type(PrimitiveTypeKind::Array, false, 0, (*base_qtype).GetAlign()),
+			base_qtype(base_qtype) {}
+
+		ArrayType(QualifiedType const& base_qtype, size_t arr_size)
+			: Type(PrimitiveTypeKind::Array, true, (*base_qtype).GetSize()* arr_size, (*base_qtype).GetAlign()),
+			base_qtype(base_qtype), arr_size(arr_size) {}
+
+		QualifiedType BaseQualifiedType() const { return base_qtype; }
+		size_t ArrSize() const { return arr_size; }
+		void SetArrSize(size_t _arr_size)
+		{
+			arr_size = _arr_size;
+			SetSize(arr_size * (*base_qtype).GetSize());
+			SetComplete();
+		}
+
+	private:
+		QualifiedType base_qtype;
+		size_t arr_size = 0;
+	};
+
+	class ArithmeticType : public Type
+	{
+		static constexpr size_t CHAR_SIZE = 1;
+		static constexpr size_t SHORT_SIZE = 2;
+		static constexpr size_t INT_SIZE = 4;
+		static constexpr size_t LONG_LONG_SIZE = 8;
+		static constexpr size_t LONG_DOUBLE_SIZE = 16;
+	public:
+		enum ArithmeticFlag : uint32
+		{
+			Bool = 1 << 0,
+			Char = 1 << 1,
+			Short = 1 << 2,
+			Int = 1 << 3,
+			Long = 1 << 4,
+			LongLong = 1 << 5,
+			Float = 1 << 6,
+			Double = 1 << 7
+		};
+		using ArithmeticFlags = uint32;
+
+	public:
+		constexpr explicit ArithmeticType(ArithmeticFlags flags, bool is_unsigned = false)
+			: Type(PrimitiveTypeKind::Arithmetic, true), flags(flags)
+		{
+
+			if ((flags & Short) || (flags & Long) || (flags & LongLong)) flags &= ~Int;
+			switch (flags)
+			{
+			case Bool:
+			case Char:
+				SetSize(CHAR_SIZE); break;
+			case Short:
+				SetSize(SHORT_SIZE); break;
+			case Int:
+			case Float:
+			case Long:
+				SetSize(INT_SIZE); break;
+			case Double:
+			case LongLong:
+				SetSize(LONG_LONG_SIZE); break;
+			case Double | Long:
+				SetSize(LONG_DOUBLE_SIZE); break;
+			}
+			SetAlign(GetSize());
+		}
+		ArithmeticFlags GetFlags() const { return flags; }
+		bool IsUnsigned() const { return is_unsigned; }
+		uint32 ConversionRank() const
+		{
+			int rank = 0;
+			switch (flags)
+			{
+			case Bool: rank = 1; break;
+			case Char: rank = 2; break;
+			case Short: rank = 4; break;
+			case Int: rank = 6; break;
+			case Long: rank = 8; break;
+			case LongLong: rank = 10; break;
+			case Float: rank = 12; break;
+			case Double: rank = 13; break;
+			case Double | Long: rank = 14; break;
+			}
+			if (is_unsigned) ++rank;
+			return rank;
+		}
+	private:
+		ArithmeticFlags flags;
+		bool is_unsigned = false;
+
+	private:
+	};
+	using EnumType = ArithmeticType;
+
+	struct FunctionParameter
+	{
+		std::string name = "";
+		QualifiedType qtype{};
+	};
+	enum class FunctionSpecifier : bool
+	{
+		None,
+		Inline
+	};
+	class FuncType : public Type
+	{
+	public:
+
+		FuncType(QualifiedType const& return_qtype, std::span<FunctionParameter> param_types = {}, bool is_variadic = false)
+			: Type(PrimitiveTypeKind::Function, false),
+			return_qtype(return_qtype), param_types(param_types.begin(), param_types.end()), is_variadic(is_variadic), has_prototype(false) {}
+
+		bool IsInline() const { return specifier == FunctionSpecifier::Inline; }
+		void SetInline() { specifier = FunctionSpecifier::Inline; }
+
+		QualifiedType GetReturnType() const { return return_qtype; }
+		std::span<FunctionParameter const> GetParamTypes() const { return param_types; }
+
+		void UpdateParamTypes(std::span<FunctionParameter> _param_types) { param_types.assign(_param_types.begin(), _param_types.end()); }
+
+		void EncounteredDefinition() const { SetComplete(); }
+		bool HasDefinition() const { return IsComplete(); }
+		void EncounterPrototype() const { has_prototype = true; }
+		bool HasPrototype() const { return has_prototype; }
+
+	private:
+		QualifiedType return_qtype;
+		std::vector<FunctionParameter> param_types;
+		bool is_variadic = false;
+		mutable bool has_prototype = false;
+		FunctionSpecifier specifier = FunctionSpecifier::None;
+	};
+
+	template<typename T>
+	T& TypeCast(Type& t)
+	{
+		return static_cast<T&>(t);
+	}
+	template<typename T>
+	T const& TypeCast(Type const& t)
+	{
+		return static_cast<T const&>(t);
+	}
 }
