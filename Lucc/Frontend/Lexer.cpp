@@ -217,13 +217,31 @@ namespace lucc
 			else t.SetKind(TokenKind::less);
 			break;
 		case '+':
-			t.SetKind(TokenKind::plus);
+			if (*cur_ptr == '+')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::plus_plus);
+			}
+			else t.SetKind(TokenKind::plus);
 			break;
 		case '-':
-			t.SetKind(TokenKind::minus);
+			if (*cur_ptr == '-')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::minus_minus);
+			}
+			else t.SetKind(TokenKind::minus);
 			break;
 		case '*':
 			t.SetKind(TokenKind::star);
+			break;
+		case '&':
+			if (*cur_ptr == '&')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::amp_amp);
+			}
+			else t.SetKind(TokenKind::amp);
 			break;
 		case '/':
 			t.SetKind(TokenKind::slash);

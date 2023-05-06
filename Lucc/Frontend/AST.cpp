@@ -1,4 +1,5 @@
 #include "AST.h"
+#include "Core/Defines.h"
 
 namespace lucc
 {
@@ -24,11 +25,6 @@ namespace lucc
 		visitor.Visit(*this, depth);
 		lhs->Accept(visitor, depth + 1);
 		rhs->Accept(visitor, depth + 1);
-	}
-
-	void IntegerLiteralAST::Accept(NodeVisitorAST& visitor, size_t depth) const
-	{
-		visitor.Visit(*this, depth);
 	}
 
 	void NullStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
@@ -72,24 +68,46 @@ namespace lucc
 
 	void DeclStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
 	{
+		LU_ASSERT(decl);
 		visitor.Visit(*this, depth);
-		if (decl) decl->Accept(visitor, depth + 1);
+		decl->Accept(visitor, depth + 1);
 	}
 
 	void IfStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
 	{
+		LU_ASSERT(condition && then_stmt);
 		visitor.Visit(*this, depth);
-		if (condition) condition->Accept(visitor, depth + 1);
-		if (then_stmt) then_stmt->Accept(visitor, depth + 1);
+		condition->Accept(visitor, depth + 1);
+		then_stmt->Accept(visitor, depth + 1);
 		if (else_stmt) else_stmt->Accept(visitor, depth + 1);
+	}
+
+
+	void WhileStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		LU_ASSERT(condition && body_stmt);
+		visitor.Visit(*this, depth);
+		condition->Accept(visitor, depth + 1);
+		body_stmt->Accept(visitor, depth + 1);
+	}
+
+	void ForStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		LU_ASSERT(body_stmt);
+		visitor.Visit(*this, depth);
+		if (init_stmt) init_stmt->Accept(visitor, depth + 1);
+		if (cond_expr) cond_expr->Accept(visitor, depth + 1);
+		if (iter_expr) iter_expr->Accept(visitor, depth + 1);
+		body_stmt->Accept(visitor, depth + 1);
 	}
 
 	void TernaryExprAST::Accept(NodeVisitorAST& visitor, size_t depth) const
 	{
+		LU_ASSERT(cond_expr && true_expr && false_expr);
 		visitor.Visit(*this, depth);
-		if (cond_expr) cond_expr->Accept(visitor, depth + 1);
-		if (true_expr) true_expr->Accept(visitor, depth + 1);
-		if (false_expr) false_expr->Accept(visitor, depth + 1);
+		cond_expr->Accept(visitor, depth + 1);
+		true_expr->Accept(visitor, depth + 1);
+		false_expr->Accept(visitor, depth + 1);
 	}
 
 	void UnaryExprAST::Accept(NodeVisitorAST& visitor, size_t depth) const
@@ -98,4 +116,20 @@ namespace lucc
 		operand->Accept(visitor, depth + 1);
 	}
 
+	void IntegerLiteralAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+
+	void StringLiteralAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+
+	void IdentifierAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+
 }
+

@@ -20,7 +20,11 @@ namespace lucc
 	class ExprStmtAST;
 	class CompoundStmtAST;
 	class IfStmtAST;
+	class WhileStmtAST;
+	class ForStmtAST;
 	class IntegerLiteralAST;
+	class StringLiteralAST;
+	class IdentifierAST;
 	class Parser;
 
 	using ExprParseFn = std::unique_ptr<ExprAST>(Parser::*)();
@@ -80,8 +84,11 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<ExprStmtAST> ParseExpressionStatement();
 		[[nodiscard]] std::unique_ptr<CompoundStmtAST> ParseCompoundStatement();
 		[[nodiscard]] std::unique_ptr<IfStmtAST> ParseIfStatement();
+		[[nodiscard]] std::unique_ptr<WhileStmtAST> ParseWhileStatement();
+		[[nodiscard]] std::unique_ptr<ForStmtAST> ParseForStatement();
 
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseParenthesizedExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseAssignExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseConditionalExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseLogicalOrExpression();
@@ -101,8 +108,9 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseAlignofExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParsePrimaryExpression();
 
-
 		[[nodiscard]] std::unique_ptr<IntegerLiteralAST> ParseIntegerLiteral();
+		[[nodiscard]] std::unique_ptr<StringLiteralAST> ParseStringLiteral();
+		[[nodiscard]] std::unique_ptr<IdentifierAST> ParseIdentifier();
 
 		template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
 		std::unique_ptr<ExprAST> ParseBinaryExpression();

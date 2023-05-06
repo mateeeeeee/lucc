@@ -2,13 +2,8 @@
 
 void main()
 {
-	int k;
-	if(3)
+	for(int k; k < 3; ++k)
 	{
-		int a;
-	}
-	else 
-	{
-		int b;
+		k = 5;
 	}
 }

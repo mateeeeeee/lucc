@@ -50,7 +50,69 @@ namespace lucc
 					return "*";
 				case BinaryExprKind::Divide:
 					return "/";
+				case BinaryExprKind::Modulo:
+					return "%";
+				case BinaryExprKind::ShiftLeft:
+					return "<<";
+				case BinaryExprKind::ShiftRight:
+					return ">>";
+				case BinaryExprKind::BitAnd:
+					return "&";
+				case BinaryExprKind::BitOr:
+					return "|";
+				case BinaryExprKind::BitXor:
+					return "^";
+				case BinaryExprKind::Assign:
+					return "=";
+				case BinaryExprKind::Comma:
+					return ",";
+				case BinaryExprKind::LogicalAnd:
+					return "&&";
+				case BinaryExprKind::LogicalOr:
+					return "||";
+				case BinaryExprKind::Equal:
+					return "==";
+				case BinaryExprKind::NotEqual:
+					return "!=";
+				case BinaryExprKind::Less:
+					return "<";
+				case BinaryExprKind::Greater:
+					return ">";
+				case BinaryExprKind::LessEqual:
+					return "<=";
+				case BinaryExprKind::GreaterEqual:
+					return ">=";
 				case BinaryExprKind::Invalid:
+				default:
+					return "invalid";
+				}
+			}
+			static constexpr std::string UnaryExprKindToString(UnaryExprKind kind)
+			{
+				switch (kind)
+				{
+				case UnaryExprKind::PreIncrement:
+					return "++";
+				case UnaryExprKind::PreDecrement:
+					return "--";
+				case UnaryExprKind::PostIncrement:
+					return "++";
+				case UnaryExprKind::PostDecrement:
+					return "--";
+				case UnaryExprKind::Plus:
+					return "+";
+				case UnaryExprKind::Minus:
+					return "-";
+				case UnaryExprKind::BitNot:
+					return "~";
+				case UnaryExprKind::LogicalNot:
+					return "!";
+				case UnaryExprKind::Dereference:
+					return "*";
+				case UnaryExprKind::AddressOf:
+					return "&";
+				case UnaryExprKind::Cast:
+					return "cast ()";
 				default:
 					return "invalid";
 				}
@@ -72,6 +134,10 @@ namespace lucc
 			{
 				std::cout << GetIndentation(depth) << "ExprAST \n";
 			}
+			virtual void Visit(UnaryExprAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "UnaryExprAST, Op:" << UnaryExprKindToString(node.GetOp()) << "\n";
+			}
 			virtual void Visit(BinaryExprAST const& node, size_t depth) override
 			{
 				std::cout << GetIndentation(depth) << "BinaryExprAST, Op:" << BinaryExprKindToString(node.GetOp()) << "\n";
@@ -83,6 +149,14 @@ namespace lucc
 			virtual void Visit(IntegerLiteralAST const& node, size_t depth) override
 			{
 				std::cout << GetIndentation(depth) << "IntegerLiteralAST, Value:" << std::to_string(node.GetValue()) << "\n";
+			}
+			virtual void Visit(StringLiteralAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "StringLiteralAST, Value:" << node.GetString() << "\n";
+			}
+			virtual void Visit(IdentifierAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "IdentifierAST, Name:" << node.GetName() << "\n";
 			}
 			virtual void Visit(StmtAST const& node, size_t depth) override
 			{
@@ -119,6 +193,14 @@ namespace lucc
 			virtual void Visit(IfStmtAST const& node, size_t depth) override
 			{
 				std::cout << GetIndentation(depth) << "IfStmtAST \n";
+			}
+			virtual void Visit(WhileStmtAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "WhileStmtAST \n";
+			}
+			virtual void Visit(ForStmtAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "ForStmtAST \n";
 			}
 		};
 	}
