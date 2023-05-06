@@ -64,6 +64,7 @@
     <ClInclude Include="Frontend\Symbol.h" />
     <ClInclude Include="Frontend\Token.h" />
     <ClInclude Include="Frontend\TokenTypes.h" />
+    <ClInclude Include="Frontend\Type.h" />
     <ClInclude Include="precomp.h" />
   </ItemGroup>
   <ItemGroup>

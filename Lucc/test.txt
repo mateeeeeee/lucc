@@ -2,7 +2,7 @@
 
 void main()
 {
-	for(int k; k < 3; ++k)
+	for(;;)
 	{
 		k = 5;
 	}

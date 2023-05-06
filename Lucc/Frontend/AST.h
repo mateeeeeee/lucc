@@ -250,13 +250,29 @@ namespace lucc
 		LessEqual, GreaterEqual,
 		Invalid
 	};
+	enum class ExprValueCategory : bool
+	{
+		LValue,
+		RValue
+	};
 	class ExprAST : public NodeAST
 	{
 	public:
 		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
 
+		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
+		void SetValueCategory(ExprValueCategory _value_category) { value_category = _value_category; }
+		//void SetQType(const QualType& qtype) { qtype_ = qtype; }
+
+		SourceLocation const& GetLocation() const { return loc; }
+		bool IsLValue() const { return value_category == ExprValueCategory::LValue; }
+
+	protected:
+		SourceLocation loc;
+		ExprValueCategory value_category = ExprValueCategory::LValue;
 	protected:
 		ExprAST() = default;
+
 	};
 	class UnaryExprAST : public ExprAST
 	{
