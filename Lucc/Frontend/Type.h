@@ -64,8 +64,6 @@ namespace lucc
 	public:
 		friend class Type;
 
-		QualifiedType() = default;
-
 		explicit QualifiedType(Qualifiers qualifiers = QualifierNone) : qualifiers(qualifiers) {}
 
 		template<std::derived_from<Type> DType>
@@ -226,7 +224,7 @@ namespace lucc
 	struct FunctionParameter
 	{
 		std::string name = "";
-		QualifiedType qtype{};
+		QualifiedType qtype;
 	};
 	enum class FunctionSpecifier : bool
 	{

@@ -190,6 +190,10 @@ namespace lucc
 			{
 				std::cout << GetIndentation(depth) << "FunctionDeclAST, name: " << node.GetName() << "\n";
 			}
+			virtual void Visit(TypedefDeclAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "TypedefDeclAST, name: " << node.GetName() << "\n";
+			}
 			virtual void Visit(IfStmtAST const& node, size_t depth) override
 			{
 				std::cout << GetIndentation(depth) << "IfStmtAST \n";

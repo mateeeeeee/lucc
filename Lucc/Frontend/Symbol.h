@@ -54,7 +54,7 @@ namespace lucc
 		template<typename... Args> requires std::is_constructible_v<Symbol,Args...>
 		bool Insert(Args&&... args)
 		{
-			return Insert(Symbol(std::forward<Args>(args...)));
+			return Insert(Symbol(std::forward<Args>(args)...));
 		}
 
 		bool Delete(std::string const& sym_name)
@@ -93,10 +93,11 @@ namespace lucc
 		{
 			return scopes.back().Insert(symbol);
 		}
-		template<typename... Args> requires std::is_constructible_v<Symbol, Args...>
+
+		template <typename... Args> 
 		bool Insert(Args&&... args)
 		{
-			return scopes.back().Insert(std:forward<Args>(args...));
+			return scopes.back().Insert(std::forward<Args>(args)...);
 		}
 
 		bool Delete(std::string const& sym_name)

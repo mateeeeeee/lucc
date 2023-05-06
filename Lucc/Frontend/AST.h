@@ -29,6 +29,7 @@ namespace lucc
 	class DeclAST;
 	class VarDeclAST;
 	class FunctionDeclAST;
+	class TypedefDeclAST;
 
 	class NodeVisitorAST
 	{
@@ -54,6 +55,7 @@ namespace lucc
 		virtual void Visit(DeclAST const& node, size_t depth) = 0;
 		virtual void Visit(VarDeclAST const& node, size_t depth) = 0;
 		virtual void Visit(FunctionDeclAST const& node, size_t depth) = 0;
+		virtual void Visit(TypedefDeclAST const& node, size_t depth) = 0;
 	};
 
 	class NodeAST
@@ -121,6 +123,16 @@ namespace lucc
 		std::string name;
 		std::unique_ptr<CompoundStmtAST> body;
 	};
+	class TypedefDeclAST final : public DeclAST
+	{
+	public:
+		TypedefDeclAST(std::string_view typedef_name) : typedef_name(typedef_name) {}
+		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+
+		std::string_view GetName() const { return typedef_name; }
+	private:
+		std::string typedef_name;
+	};
 
 	class StmtAST : public NodeAST
 	{
@@ -187,7 +199,6 @@ namespace lucc
 		std::unique_ptr<StmtAST> then_stmt;
 		std::unique_ptr<StmtAST> else_stmt;
 	};
-
 	class WhileStmtAST final : public StmtAST
 	{
 	public:
@@ -200,7 +211,6 @@ namespace lucc
 		std::unique_ptr<ExprAST> condition;
 		std::unique_ptr<StmtAST> body_stmt;
 	};
-
 	class ForStmtAST final : public StmtAST
 	{
 	public:
@@ -271,6 +281,7 @@ namespace lucc
 	protected:
 		SourceLocation loc;
 		ExprValueCategory value_category = ExprValueCategory::LValue;
+
 	protected:
 		ExprAST() = default;
 

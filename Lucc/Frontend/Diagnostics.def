@@ -20,6 +20,7 @@ DIAG(array_brackets_not_closed, error, "Array brackets not closed")
 DIAG(function_params_missing_coma, error, "Missing coma in function parameters declaration")
 DIAG(variadic_params_not_last, error, "Variadic parameters have to be last parameter")
 DIAG(storage_specifier_forbidden_context, error, "Storage specifier in a forbidden context")
+DIAG(multiple_storage_specifiers, error, "At most one storage specifier is allowed")
 DIAG(missing_name, error, "Variable/Function name is missing")
 DIAG(redeclared_but_different_type, error, "Symbol is redeclared but with a different type")
 DIAG(redefinition_of_function, error, "Function is being redefined")
@@ -32,5 +33,7 @@ DIAG(while_condition_not_in_parentheses, error, "While condition should be surro
 DIAG(expected_semicolon, error, "Expected semicolon after expression statement")
 DIAG(unexpected_token, error, "Unexpected token")
 DIAG(empty_statement, warning, "Empty statement")
+DIAG(typedef_name_empty, error, "Typedef name not specified")
+DIAG(declarator_specifier_error, error, "Declarator specifier error")
 
 #undef DIAG

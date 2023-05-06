@@ -12,9 +12,11 @@ namespace lucc
 	}
 	enum class BinaryExprKind : uint8;
 	class SymbolTable;
+	class QualifiedType;
 
 	struct AST;
 	class DeclAST;
+	class TypedefDeclAST;
 	class ExprAST;
 	class StmtAST;
 	class ExprStmtAST;
@@ -31,6 +33,9 @@ namespace lucc
 
 	class Parser
 	{
+		struct DeclSpecInfo;
+		struct DeclaratorInfo;
+		struct DeclarationInfo;
 		using TokenPtr = std::vector<Token>::iterator;
 	public:
 
@@ -77,6 +82,7 @@ namespace lucc
 		[[nodiscard]] bool ParseTranslationUnit();
 
 		[[nodiscard]] std::vector<std::unique_ptr<DeclAST>> ParseDeclaration();
+		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclSpecInfo const& decl_spec);
 
 		[[nodiscard]] std::unique_ptr<StmtAST> ParseStatement();
 		[[nodiscard]] std::unique_ptr<ExprStmtAST> ParseExpressionStatement();
@@ -112,6 +118,12 @@ namespace lucc
 
 		template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
 		std::unique_ptr<ExprAST> ParseBinaryExpression();
+
+		bool ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
+		bool ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
+
+		bool ParsePointers(QualifiedType& type);
+		bool ParseTypeSuffix(QualifiedType& type);
 	};
 	
 
