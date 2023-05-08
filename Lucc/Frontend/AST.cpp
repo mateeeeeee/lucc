@@ -135,6 +135,12 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
+	void ReturnStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+		if (ret_expr) ret_expr->Accept(visitor, depth + 1);
+	}
+
 }
 
 

@@ -6,15 +6,6 @@
 
 namespace lucc
 {
-	enum ScopeKind : uint32
-	{
-		Scope_Invalid,
-		Scope_Constants, 
-		Scope_Labels, 
-		Scope_Global, 
-		Scope_Param, 
-		Scope_Local
-	};
 	enum class Storage : uint8
 	{
 		None,
@@ -37,6 +28,7 @@ namespace lucc
 	{
 		std::string name = "";
 		QualifiedType qtype;
+		Storage storage;
 	};
 
 	class ScopeTable
@@ -45,7 +37,7 @@ namespace lucc
 		explicit ScopeTable(uint32 scope_id) : scope_id(scope_id) {}
 		uint32 GetScope() const { return scope_id; }
 
-		bool Insert(Symbol const& symbol)
+		bool InsertSymbol(Symbol const& symbol)
 		{
 			if (scope_sym_table.contains(symbol.name)) return false;
 			scope_sym_table[symbol.name] = symbol;
@@ -54,7 +46,7 @@ namespace lucc
 		template<typename... Args> requires std::is_constructible_v<Symbol,Args...>
 		bool Insert(Args&&... args)
 		{
-			return Insert(Symbol(std::forward<Args>(args)...));
+			return InsertSymbol(Symbol(std::forward<Args>(args)...));
 		}
 
 		bool Delete(std::string const& sym_name)
@@ -78,15 +70,16 @@ namespace lucc
 	public:
 		SymbolTable()
 		{
-			scopes.emplace_back(Scope_Global);
+			scopes.emplace_back(scope_id++);
 		}
 		void EnterScope()
 		{
-			scopes.emplace_back(scopes.back().GetScope() + 1);
+			scopes.emplace_back(scope_id++);
 		}
 		void ExitScope()
 		{
 			scopes.pop_back();
+			--scope_id;
 		}
 
 		bool Insert(Symbol const& symbol)
@@ -114,8 +107,11 @@ namespace lucc
 			return nullptr;
 		}
 
+		bool IsGlobal() const { return scopes.size() == 1; }
+
 	private:
 		std::vector<ScopeTable> scopes;
+		uint32 scope_id = 0;
 	};
 
 	//extern Table constants;

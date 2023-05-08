@@ -13,9 +13,6 @@
     <Filter Include="Core">
       <UniqueIdentifier>{70ccf384-3d3c-4577-81f1-9fcfc0fcac00}</UniqueIdentifier>
     </Filter>
-    <Filter Include="deprecated">
-      <UniqueIdentifier>{36d8fca1-683d-497a-8764-d63b6c197947}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Frontend\Lexer">
       <UniqueIdentifier>{183427ba-5584-4bfb-b2ff-dd2cd709e429}</UniqueIdentifier>
     </Filter>
@@ -38,12 +35,6 @@
     </ClCompile>
     <ClCompile Include="Frontend\Preprocessor.cpp">
       <Filter>Frontend\Preprocessor</Filter>
-    </ClCompile>
-    <ClCompile Include="..\deprecated\Old_AST.cpp">
-      <Filter>deprecated</Filter>
-    </ClCompile>
-    <ClCompile Include="..\deprecated\Old_Parser.cpp">
-      <Filter>deprecated</Filter>
     </ClCompile>
     <ClCompile Include="Frontend\Lexer.cpp">
       <Filter>Frontend\Lexer</Filter>
@@ -87,18 +78,6 @@
     </ClInclude>
     <ClInclude Include="Frontend\Preprocessor.h">
       <Filter>Frontend\Preprocessor</Filter>
-    </ClInclude>
-    <ClInclude Include="..\deprecated\Old_AST.h">
-      <Filter>deprecated</Filter>
-    </ClInclude>
-    <ClInclude Include="..\deprecated\Old_Parser.h">
-      <Filter>deprecated</Filter>
-    </ClInclude>
-    <ClInclude Include="..\deprecated\Old_SymbolTableStack.h">
-      <Filter>deprecated</Filter>
-    </ClInclude>
-    <ClInclude Include="..\deprecated\Old_Type.h">
-      <Filter>deprecated</Filter>
     </ClInclude>
     <ClInclude Include="Frontend\Lexer.h">
       <Filter>Frontend\Lexer</Filter>

@@ -74,6 +74,7 @@ namespace lucc
 	bool Parser::Parse()
 	{
 		ast = std::make_unique<AST>();
+		ctx.identifier_sym_table = std::make_unique<SymbolTable>();
 		return ParseTranslationUnit();
 	}
 	bool Parser::Expect(TokenKind k)
@@ -135,7 +136,7 @@ namespace lucc
 				if (func->IsDefinition())
 				{
 					LU_ASSERT(decls.empty());
-					//#todo Report
+					
 					decls.push_back(std::move(func));
 					return decls;
 				}
@@ -151,6 +152,8 @@ namespace lucc
 					var_decl->SetInitExpression(std::move(init_expr));
 				}
 				decls.push_back(std::move(var_decl));
+
+				ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage);
 			}
 		} while (Consume(TokenKind::comma));
 		Expect(TokenKind::semicolon);
@@ -175,12 +178,16 @@ namespace lucc
 				return {};
 			}
 			typedefs.push_back(std::make_unique<TypedefDeclAST>(typedef_info.name));
+			ctx.identifier_sym_table->Insert(typedef_info.name, typedef_info.qtype, Storage::Typedef);
 		}
 		return typedefs;
 	}
 
 	std::unique_ptr<FunctionDeclAST> Parser::ParseFunctionDeclaration(DeclarationInfo const& decl_info)
 	{
+		LU_ASSERT(ctx.identifier_sym_table->IsGlobal());
+		ctx.identifier_sym_table->EnterScope();
+
 		std::string_view func_name = decl_info.name;
 		if (func_name.empty())
 		{
@@ -196,14 +203,19 @@ namespace lucc
 			func_decl->AddParamDeclaration(std::move(param_decl));
 		}
 		func_type.EncounterPrototype();
+		ctx.identifier_sym_table->Insert(std::string(func_name), decl_info.qtype, decl_info.storage);
 		if (current_token->Is(TokenKind::left_brace))
 		{
+			ctx.identifier_sym_table->EnterScope();
+			ctx.current_func_type = &func_type;
 			func_type.EncounteredDefinition();
 
 			std::unique_ptr<CompoundStmtAST> compound_stmt = ParseCompoundStatement();
 			func_decl->SetFunctionBody(std::move(compound_stmt));
-			
+			ctx.current_func_type = nullptr;
+			ctx.identifier_sym_table->ExitScope();
 		}
+		ctx.identifier_sym_table->ExitScope();
 		return func_decl;
 	}
 
@@ -219,7 +231,7 @@ namespace lucc
 		//case TokenKind::KW_switch: return ParseSwitchStmt();
 		//case TokenKind::KW_continue: return ParseContinueStmt();
 		//case TokenKind::KW_break: return ParseBreakStmt();
-		//case TokenKind::KW_return: return ParseReturnStatement();
+		case TokenKind::KW_return: return ParseReturnStatement();
 		//case TokenKind::KW_case: return ParseCaseStmt();
 		//case TokenKind::KW_default: return ParseCaseStmt();
 		default:
@@ -316,6 +328,12 @@ namespace lucc
 		return for_stmt;
 	}
 
+	std::unique_ptr<ReturnStmtAST> Parser::ParseReturnStatement()
+	{
+		std::unique_ptr<ExprStmtAST> ret_expr = ParseExpressionStatement();
+		return std::make_unique<ReturnStmtAST>(std::move(ret_expr));
+	}
+
 	template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
 	std::unique_ptr<ExprAST> Parser::ParseBinaryExpression()
 	{
@@ -338,6 +356,7 @@ namespace lucc
 		return ParseBinaryExpression<&Parser::ParseAssignExpression, TokenKind::comma, BinaryExprKind::Comma>();
 	}
 
+	//<parenthesized - expression> :: = (<expression>)
 	std::unique_ptr<ExprAST> Parser::ParseParenthesizedExpression()
 	{
 		Expect(TokenKind::left_round);
@@ -576,7 +595,6 @@ namespace lucc
 		}
 		else return ParseUnaryExpression();
 	}
-
 
 	//<unary - expression> :: = <postfix - expression>
 	//						| ++ <unary - expression>
@@ -884,9 +902,11 @@ namespace lucc
 
 		if (Consume(TokenKind::left_round))
 		{
-			if (!ParseDeclarator(decl_spec, declarator)) return false;
-			Expect(TokenKind::right_round);
-			return true;
+			//DeclaratorInfo stub{};
+			//ParseDeclarator(decl_spec, stub);
+			//Expect(TokenKind::right_round);
+			//return true;
+			return false;
 		}
 
 		if (current_token->Is(TokenKind::identifier))
@@ -899,10 +919,7 @@ namespace lucc
 	}
 
 	//<pointer> :: = * { <type - qualifier> }* {<pointer>} ?
-	//<type - qualifier> :: = const
-	//   				  | volatile
-
-	//pointers = ("*" ("const" | "volatile" | "restrict")*)*
+	//<type - qualifier> :: = const | volatile
 	bool Parser::ParsePointers(QualifiedType& type)
 	{
 		while (Consume(TokenKind::star))

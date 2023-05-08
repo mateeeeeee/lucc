@@ -19,12 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\deprecated\Old_AST.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\deprecated\Old_Parser.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Frontend\AST.cpp" />
     <ClCompile Include="Frontend\Diagnostics.cpp" />
@@ -37,18 +31,6 @@
     <ClCompile Include="precomp.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\deprecated\Old_AST.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\deprecated\Old_Parser.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\deprecated\Old_SymbolTableStack.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\deprecated\Old_Type.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="Compiler.h" />
     <ClInclude Include="Core\CLIParser.h" />
     <ClInclude Include="Core\CoreTypes.h" />

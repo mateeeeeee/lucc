@@ -25,6 +25,7 @@ namespace lucc
 	class IfStmtAST;
 	class WhileStmtAST;
 	class ForStmtAST;
+	class ReturnStmtAST;
 
 	class DeclAST;
 	class VarDeclAST;
@@ -52,6 +53,7 @@ namespace lucc
 		virtual void Visit(IfStmtAST const& node, size_t depth) = 0;
 		virtual void Visit(WhileStmtAST const& node, size_t depth) = 0;
 		virtual void Visit(ForStmtAST const& node, size_t depth) = 0;
+		virtual void Visit(ReturnStmtAST const& node, size_t depth) = 0;
 		virtual void Visit(DeclAST const& node, size_t depth) = 0;
 		virtual void Visit(VarDeclAST const& node, size_t depth) = 0;
 		virtual void Visit(FunctionDeclAST const& node, size_t depth) = 0;
@@ -245,6 +247,17 @@ namespace lucc
 		std::unique_ptr<ExprAST> iter_expr;
 		std::unique_ptr<StmtAST> body_stmt;
 	};
+	class ReturnStmtAST final : public StmtAST
+	{
+	public:
+		explicit ReturnStmtAST(std::unique_ptr<ExprStmtAST>&& ret_expr)
+			: ret_expr(std::move(ret_expr)) {}
+
+		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+
+	private:
+		std::unique_ptr <ExprStmtAST> ret_expr;
+	};
 
 	enum class UnaryExprKind : uint8
 	{
@@ -338,6 +351,35 @@ namespace lucc
 		std::unique_ptr<ExprAST> false_expr;
 	};
 
+	enum class CastKind : bool
+	{
+		Implicit,
+		Explicit
+	};
+	class CastExprAST : public ExprAST
+	{
+	public:
+		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override
+		{
+
+		}
+
+		bool Implicit() const { return kind == CastKind::Implicit; }
+
+	private:
+		CastKind kind;
+
+	protected:
+		CastExprAST(CastKind kind) : kind(kind) {}
+	};
+	class ImplicitCastExprAST : public CastExprAST
+	{
+	public:
+		ImplicitCastExprAST() : CastExprAST(CastKind::Implicit) {}
+
+	private:
+	};
+
 	class IntegerLiteralAST final : public ExprAST
 	{
 	public:
@@ -372,6 +414,7 @@ namespace lucc
 	private:
 		std::string name;
 	};
+
 
 	struct AST
 	{

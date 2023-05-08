@@ -206,6 +206,10 @@ namespace lucc
 			{
 				std::cout << GetIndentation(depth) << "ForStmtAST \n";
 			}
+			virtual void Visit(ReturnStmtAST const& node, size_t depth) override
+			{
+				std::cout << GetIndentation(depth) << "ReturnStmtAST \n";
+			}
 		};
 	}
 

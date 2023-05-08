@@ -13,6 +13,7 @@ namespace lucc
 	enum class BinaryExprKind : uint8;
 	class SymbolTable;
 	class QualifiedType;
+	class FuncType;
 
 	struct AST;
 	class DeclAST;
@@ -25,6 +26,7 @@ namespace lucc
 	class IfStmtAST;
 	class WhileStmtAST;
 	class ForStmtAST;
+	class ReturnStmtAST;
 	class IntegerLiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
@@ -38,6 +40,13 @@ namespace lucc
 		struct DeclaratorInfo;
 		struct DeclarationInfo;
 		using TokenPtr = std::vector<Token>::iterator;
+
+		struct Context
+		{
+			std::unique_ptr<SymbolTable> identifier_sym_table;
+			FuncType const* current_func_type = nullptr;
+		};
+
 	public:
 
 		explicit Parser(std::vector<Token> const& tokens);
@@ -49,6 +58,8 @@ namespace lucc
 		std::vector<Token> tokens;
 		TokenPtr current_token;
 		std::unique_ptr<AST> ast;
+		Context ctx;
+
 	private:
 		bool Consume(TokenKind k)
 		{
@@ -92,6 +103,7 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<IfStmtAST> ParseIfStatement();
 		[[nodiscard]] std::unique_ptr<WhileStmtAST> ParseWhileStatement();
 		[[nodiscard]] std::unique_ptr<ForStmtAST> ParseForStatement();
+		[[nodiscard]] std::unique_ptr<ReturnStmtAST> ParseReturnStatement();
 
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseParenthesizedExpression();
