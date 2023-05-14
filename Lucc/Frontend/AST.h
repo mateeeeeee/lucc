@@ -35,42 +35,42 @@ namespace lucc
 	class FunctionDeclAST;
 	class TypedefDeclAST;
 
-	class NodeVisitorAST
+	class INodeVisitorAST
 	{
 	public:
-		virtual ~NodeVisitorAST() = default;
-		virtual void Visit(NodeAST const& node, size_t depth) = 0;
-		virtual void Visit(TranslationUnitAST const& node, size_t depth) = 0;
-		virtual void Visit(ExprAST const& node, size_t depth) = 0;
-		virtual void Visit(UnaryExprAST const& node, size_t depth) = 0;
-		virtual void Visit(BinaryExprAST const& node, size_t depth) = 0;
-		virtual void Visit(TernaryExprAST const& node, size_t depth) = 0;
-		virtual void Visit(ImplicitCastExprAST const& node, size_t depth) = 0;
-		virtual void Visit(IntegerLiteralAST const& node, size_t depth) = 0;
-		virtual void Visit(StringLiteralAST const& node, size_t depth) = 0;
-		virtual void Visit(IdentifierAST const& node, size_t depth) = 0;
-		virtual void Visit(StmtAST const& node, size_t depth) = 0;
-		virtual void Visit(CompoundStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(DeclStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(ExprStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(NullStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(IfStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(WhileStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(ForStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(ReturnStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(GotoStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(LabelStmtAST const& node, size_t depth) = 0;
-		virtual void Visit(DeclAST const& node, size_t depth) = 0;
-		virtual void Visit(VarDeclAST const& node, size_t depth) = 0;
-		virtual void Visit(FunctionDeclAST const& node, size_t depth) = 0;
-		virtual void Visit(TypedefDeclAST const& node, size_t depth) = 0;
+		virtual ~INodeVisitorAST() = default;
+		virtual void Visit(NodeAST const& node, size_t depth) {}
+		virtual void Visit(TranslationUnitAST const& node, size_t depth) {}
+		virtual void Visit(ExprAST const& node, size_t depth) {}
+		virtual void Visit(UnaryExprAST const& node, size_t depth) {}
+		virtual void Visit(BinaryExprAST const& node, size_t depth) {}
+		virtual void Visit(TernaryExprAST const& node, size_t depth) {}
+		virtual void Visit(ImplicitCastExprAST const& node, size_t depth) {}
+		virtual void Visit(IntegerLiteralAST const& node, size_t depth) {}
+		virtual void Visit(StringLiteralAST const& node, size_t depth) {}
+		virtual void Visit(IdentifierAST const& node, size_t depth) {}
+		virtual void Visit(StmtAST const& node, size_t depth) {}
+		virtual void Visit(CompoundStmtAST const& node, size_t depth) {}
+		virtual void Visit(DeclStmtAST const& node, size_t depth) {}
+		virtual void Visit(ExprStmtAST const& node, size_t depth) {}
+		virtual void Visit(NullStmtAST const& node, size_t depth) {}
+		virtual void Visit(IfStmtAST const& node, size_t depth) {}
+		virtual void Visit(WhileStmtAST const& node, size_t depth) {}
+		virtual void Visit(ForStmtAST const& node, size_t depth) {}
+		virtual void Visit(ReturnStmtAST const& node, size_t depth) {}
+		virtual void Visit(GotoStmtAST const& node, size_t depth) {}
+		virtual void Visit(LabelStmtAST const& node, size_t depth) {}
+		virtual void Visit(DeclAST const& node, size_t depth) {}
+		virtual void Visit(VarDeclAST const& node, size_t depth) {}
+		virtual void Visit(FunctionDeclAST const& node, size_t depth) {}
+		virtual void Visit(TypedefDeclAST const& node, size_t depth) {}
 	};
 
 	class NodeAST
 	{
 	public:
 		virtual ~NodeAST() = default;
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const = 0;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const = 0;
 
 	protected:
 		NodeAST() = default;
@@ -83,7 +83,7 @@ namespace lucc
 		{
 			declarations.push_back(std::move(stmt));
 		}
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::vector<std::unique_ptr<DeclAST>> declarations;
@@ -92,7 +92,7 @@ namespace lucc
 	class DeclAST : public NodeAST
 	{
 	public:
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 	
 	protected:
 		DeclAST() = default;
@@ -108,7 +108,7 @@ namespace lucc
 		}
 		std::string_view GetName() const { return name; }
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 	
 	private:
 		std::string name;
@@ -131,7 +131,7 @@ namespace lucc
 		}
 		bool IsDefinition() const { return body != nullptr; }
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		
 	private:
 		std::string name;
@@ -142,7 +142,7 @@ namespace lucc
 	{
 	public:
 		TypedefDeclAST(std::string_view typedef_name) : typedef_name(typedef_name) {}
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetName() const { return typedef_name; }
 	private:
@@ -152,7 +152,7 @@ namespace lucc
 	class StmtAST : public NodeAST
 	{
 	public:
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	protected:
 		StmtAST() = default;
@@ -162,7 +162,7 @@ namespace lucc
 	public:
 		CompoundStmtAST() = default;
 		void AddStatement(std::unique_ptr<StmtAST>&& stmt);
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::vector<std::unique_ptr<StmtAST>> statements;
@@ -171,7 +171,7 @@ namespace lucc
 	{
 	public:
 		ExprStmtAST(std::unique_ptr<ExprAST>&& expr) : expr(std::move(expr)) {}
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		operator std::unique_ptr<ExprAST>&&()
 		{
@@ -184,7 +184,7 @@ namespace lucc
 	{
 	public:
 		DeclStmtAST(std::vector<std::unique_ptr<DeclAST>>&& decls) : decls(std::move(decls)) {}
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::vector<std::unique_ptr<DeclAST>> decls;
@@ -193,7 +193,7 @@ namespace lucc
 	{
 	public:
 		NullStmtAST() : ExprStmtAST(nullptr) {}
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 	};
 	class IfStmtAST final : public StmtAST
 	{
@@ -207,7 +207,7 @@ namespace lucc
 			else_stmt = std::move(_else_stmt);
 		}
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::unique_ptr<ExprAST> condition;
@@ -220,7 +220,7 @@ namespace lucc
 		WhileStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& body_stmt)
 			: condition(std::move(condition)), body_stmt(std::move(body_stmt)) {}
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::unique_ptr<ExprAST> condition;
@@ -245,7 +245,7 @@ namespace lucc
 			iter_expr = std::move(_iter_expr);
 		}
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::unique_ptr<StmtAST> init_stmt;
@@ -259,7 +259,7 @@ namespace lucc
 		explicit ReturnStmtAST(std::unique_ptr<ExprStmtAST>&& ret_expr)
 			: ret_expr(std::move(ret_expr)) {}
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::unique_ptr <ExprStmtAST> ret_expr;
@@ -269,7 +269,7 @@ namespace lucc
 	public:
 		GotoStmtAST(std::string_view label) : goto_label(label) {}
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetName() const { return goto_label; }
 
@@ -281,7 +281,7 @@ namespace lucc
 	public:
 		LabelStmtAST(std::string_view label) : label_name(label) {}
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetName() const { return label_name; }
 
@@ -319,7 +319,7 @@ namespace lucc
 	class ExprAST : public NodeAST
 	{
 	public:
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
 		void SetType(QualifiedType const& _type) { type = _type; }
@@ -344,7 +344,7 @@ namespace lucc
 		void SetOperand(std::unique_ptr<ExprAST>&& _operand) { operand = std::move(_operand); }
 		UnaryExprKind GetOp() const { return op; }
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::unique_ptr<ExprAST> operand;
@@ -359,7 +359,7 @@ namespace lucc
 		void SetRHS(std::unique_ptr<ExprAST>&& _rhs) { rhs = std::move(_rhs); }
 		BinaryExprKind GetOp() const { return op; }
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::unique_ptr<ExprAST> lhs, rhs;
@@ -374,7 +374,7 @@ namespace lucc
 			true_expr(std::move(true_expr)),
 			false_expr(std::move(false_expr)) {}
 		
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		std::unique_ptr<ExprAST> cond_expr;
@@ -395,7 +395,7 @@ namespace lucc
 		ImplicitCastExprAST(std::unique_ptr<ExprAST>&& expr, CastKind kind)
 		: operand(std::move(expr)), kind(kind) {}
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		CastKind GetKind() const { return kind; }
 	private:
@@ -409,7 +409,7 @@ namespace lucc
 		IntegerLiteralAST(int64 value) : ExprAST(), value(value) {}
 		int64 GetValue() const { return value; }
 
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
 		int64 value;
@@ -418,7 +418,7 @@ namespace lucc
 	{
 	public:
 		StringLiteralAST(std::string_view str) : ExprAST(), str(str) {}
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetString() const { return str; }
 
@@ -430,7 +430,7 @@ namespace lucc
 	{
 	public:
 		explicit IdentifierAST(std::string_view name) : ExprAST(), name(name) {}
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetName() const { return name; }
 

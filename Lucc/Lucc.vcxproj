@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Backend\x86CodeGenerator.cpp" />
+    <ClCompile Include="Backend\x86NodeVisitorAST.cpp" />
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="DebugUtil.cpp" />
     <ClCompile Include="Frontend\AST.cpp" />
@@ -35,6 +36,7 @@
   <ItemGroup>
     <ClInclude Include="Backend\ICodeGenerator.h" />
     <ClInclude Include="Backend\x86CodeGenerator.h" />
+    <ClInclude Include="Backend\x86NodeVisitorAST.h" />
     <ClInclude Include="Compiler.h" />
     <ClInclude Include="Core\CLIParser.h" />
     <ClInclude Include="Core\CoreTypes.h" />

@@ -52,6 +52,9 @@
       <Filter>Backend</Filter>
     </ClCompile>
     <ClCompile Include="DebugUtil.cpp" />
+    <ClCompile Include="Backend\x86NodeVisitorAST.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Compiler.h" />
@@ -108,6 +111,9 @@
       <Filter>Backend</Filter>
     </ClInclude>
     <ClInclude Include="DebugUtil.h" />
+    <ClInclude Include="Backend\x86NodeVisitorAST.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="test.txt" />

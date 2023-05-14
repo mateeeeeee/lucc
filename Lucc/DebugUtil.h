@@ -8,7 +8,7 @@ namespace lucc
 	namespace debug
 	{
 		void PrintTokens(char const* name, std::vector<Token> const& tokens);
-		class DebugNodeVisitorAST : public NodeVisitorAST
+		class DebugNodeVisitorAST : public INodeVisitorAST
 		{
 			static constexpr std::string GetIndentation(size_t indent)
 			{
@@ -112,7 +112,7 @@ namespace lucc
 			}
 		public:
 
-			DebugNodeVisitorAST(AST* ast);
+			explicit DebugNodeVisitorAST(AST* ast);
 
 			virtual void Visit(TranslationUnitAST const& node, size_t depth) override;
 			virtual void Visit(NodeAST const& node, size_t depth) override;
