@@ -1,6 +1,6 @@
 typedef int MyInt;
 
-int k, f(int), m;
+MyInt k, f(int), m;
 
 void main()
 {

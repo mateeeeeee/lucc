@@ -106,6 +106,7 @@ namespace lucc
 	std::vector<std::unique_ptr<DeclAST>> Parser::ParseDeclaration()
 	{
 		while (Consume(TokenKind::semicolon)) Report(diag::empty_statement);
+		bool is_global = ctx.identifier_sym_table->IsGlobal();
 
 		std::vector<std::unique_ptr<DeclAST>> decls;
 
@@ -136,7 +137,6 @@ namespace lucc
 				if (func->IsDefinition())
 				{
 					LU_ASSERT(decls.empty());
-					
 					decls.push_back(std::move(func));
 					return decls;
 				}
@@ -144,6 +144,9 @@ namespace lucc
 			}
 			else
 			{
+				if (declaration_info.qtype->Is(PrimitiveTypeKind::Void)) Report(diag::void_not_expected);
+				bool local_static = declaration_info.storage == Storage::Static && !is_global;
+
 				std::string_view name = declarator_info.name;
 				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
 				if (Consume(TokenKind::equal))
@@ -254,7 +257,7 @@ namespace lucc
 		std::unique_ptr<CompoundStmtAST> compound_stmt = std::make_unique<CompoundStmtAST>();
 		while (current_token->IsNot(TokenKind::right_brace))
 		{
-			if (current_token->IsDeclSpec())
+			if (IsType())
 			{
 				std::vector<std::unique_ptr<DeclAST>> decl = ParseDeclaration();
 				compound_stmt->AddStatement(std::make_unique<DeclStmtAST>(std::move(decl)));
@@ -302,7 +305,7 @@ namespace lucc
 		Expect(TokenKind::left_round);
 
 		std::unique_ptr<StmtAST> init = nullptr;
-		if (current_token->IsDeclSpec())
+		if (IsType())
 		{
 			std::vector<std::unique_ptr<DeclAST>> decl = ParseDeclaration();
 			init = std::make_unique<DeclStmtAST>(std::move(decl));
@@ -588,7 +591,7 @@ namespace lucc
 	//					   | (<type - name>) < cast - expression >
 	std::unique_ptr<ExprAST> Parser::ParseCastExpression()
 	{
-		if (current_token->Is(TokenKind::left_round) && (current_token + 1)->IsDeclSpec())
+		if (current_token->Is(TokenKind::left_round) && IsType(1))
 		{
 			//#todo
 			return nullptr;
@@ -721,6 +724,8 @@ namespace lucc
 	//							 | <type - qualifier>
 	bool Parser::ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs /*= false*/)
 	{
+		using enum TokenKind;
+			;
 		decl_spec = DeclSpecInfo{};
 		decl_spec.qtype = builtin_types::Int;
 
@@ -739,7 +744,7 @@ namespace lucc
 			UNSIGNED = 1 << 18,
 		};
 		uint32 counter = 0;
-		while (current_token->IsDeclSpec())
+		while (IsType())
 		{
 			if (current_token->IsStorageSpecifier())
 			{
@@ -759,19 +764,19 @@ namespace lucc
 
 				switch (kind)
 				{
-				case TokenKind::KW_static:
+				case KW_static:
 					decl_spec.storage = Storage::Static;
 					break;
-				case TokenKind::KW_register:
+				case KW_register:
 					decl_spec.storage = Storage::Register;
 					break;
-				case TokenKind::KW_typedef:
+				case KW_typedef:
 					decl_spec.storage = Storage::Typedef;
 					break;
-				case TokenKind::KW__Thread_local:
+				case KW__Thread_local:
 					decl_spec.storage = Storage::ThreadLocal;
 					break;
-				case TokenKind::KW_extern:
+				case KW_extern:
 					decl_spec.storage = Storage::Extern;
 					break;
 				default:
@@ -781,23 +786,45 @@ namespace lucc
 
 			//ignore for now, later add support: atomic, tls, alignas
 			if (Consume(
-				TokenKind::KW_auto, TokenKind::KW_register, TokenKind::KW__Atomic,
-				TokenKind::KW__Alignas, TokenKind::KW__Thread_local))
+				KW_auto, KW_register, KW__Atomic,
+				KW__Alignas, KW__Thread_local))
 				continue;
 
-			if (Consume(TokenKind::KW_const))
+			if (Consume(KW_const))
 			{
 				decl_spec.qtype.AddConst();
 				continue;
 			}
-			if (Consume(TokenKind::KW_volatile))
+			if (Consume(KW_volatile))
 			{
 				decl_spec.qtype.AddVolatile();
 				continue;
 			}
 
-			if (!current_token->IsDeclSpec()) break;
+			if (!IsType()) break;
 
+			// Handle user-defined types.
+			QualifiedType* typedef_type = nullptr;
+			if(current_token->Is(identifier))
+			{
+				Symbol* sym = ctx.identifier_sym_table->LookUp(current_token->GetIdentifier());
+				LU_ASSERT(sym);
+				typedef_type = &sym->qtype;
+			}
+
+			if (current_token->IsOneOf(KW_struct, KW_union, KW_enum) || typedef_type)
+			{
+				if (counter) break;
+				if (typedef_type)
+				{
+					decl_spec.qtype = *typedef_type;
+					++current_token;
+				}
+				counter += OTHER;
+				continue;
+			}
+
+			
 			TokenKind kind = current_token->GetKind();
 			//#todo Add support for user-defined types
 
@@ -814,6 +841,7 @@ namespace lucc
 			case TokenKind::KW_double: counter += DOUBLE; break;
 			case TokenKind::KW_signed: counter += SIGNED; break;
 			case TokenKind::KW_unsigned: counter += UNSIGNED; break;
+			break;
 			default: LU_UNREACHABLE();
 			}
 			++current_token;
@@ -1033,6 +1061,16 @@ namespace lucc
 			}
 		}
 		return true;
+	}
+
+	bool Parser::IsType(uint32 offset) const
+	{
+		if ((current_token + offset)->Is(TokenKind::identifier))
+		{
+			Symbol* sym = ctx.identifier_sym_table->LookUp((current_token + offset)->GetIdentifier());
+			return sym ? sym->storage == Storage::Typedef : false;
+		}
+		return (current_token + offset)->IsDeclSpec();
 	}
 
 }

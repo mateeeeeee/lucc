@@ -107,6 +107,11 @@ namespace lucc
 			return nullptr;
 		}
 
+		Symbol* LookUp(std::string_view sym_name)
+		{
+			return LookUp(std::string(sym_name));
+		}
+
 		bool IsGlobal() const { return scopes.size() == 1; }
 
 	private:

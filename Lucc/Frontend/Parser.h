@@ -138,6 +138,8 @@ namespace lucc
 
 		bool ParsePointers(QualifiedType& type);
 		bool ParseTypeSuffix(QualifiedType& type);
+
+		bool IsType(uint32 offset = 0) const;
 	};
 	
 
