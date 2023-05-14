@@ -131,8 +131,12 @@ namespace lucc
 			LU_ASSERT(declarator_info.qtype.HasRawType());
 			DeclarationInfo declaration_info(decl_spec, declarator_info);
 
+			ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage);
+
 			if (declarator_info.qtype->Is(PrimitiveTypeKind::Function))
 			{
+				if (!is_global) Report(diag::local_functions_not_allowed);
+
 				std::unique_ptr<FunctionDeclAST> func = ParseFunctionDeclaration(declaration_info);
 				if (func->IsDefinition())
 				{
@@ -152,11 +156,10 @@ namespace lucc
 				if (Consume(TokenKind::equal))
 				{
 					std::unique_ptr<ExprAST> init_expr = ParseExpression();
+
 					var_decl->SetInitExpression(std::move(init_expr));
 				}
 				decls.push_back(std::move(var_decl));
-
-				ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage);
 			}
 		} while (Consume(TokenKind::comma));
 		Expect(TokenKind::semicolon);
@@ -190,6 +193,8 @@ namespace lucc
 	{
 		LU_ASSERT(ctx.identifier_sym_table->IsGlobal());
 		ctx.identifier_sym_table->EnterScope();
+		ctx.gotos.clear();
+		ctx.labels.clear();
 
 		std::string_view func_name = decl_info.name;
 		if (func_name.empty())
@@ -335,6 +340,17 @@ namespace lucc
 	{
 		std::unique_ptr<ExprStmtAST> ret_expr = ParseExpressionStatement();
 		return std::make_unique<ReturnStmtAST>(std::move(ret_expr));
+		//check compatibility with function return type
+	}
+
+	std::unique_ptr<LabelStmtAST> Parser::ParseLabelStatement()
+	{
+		return nullptr;
+	}
+
+	std::unique_ptr<GotoStmtAST> Parser::ParseGotoStatement()
+	{
+		return nullptr;
 	}
 
 	template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
@@ -719,13 +735,34 @@ namespace lucc
 		return std::make_unique<IdentifierAST>(name);
 	}
 
+	std::unique_ptr<ExprAST> Parser::ConvertExpression(std::unique_ptr<ExprAST>& expr)
+	{
+		if (!expr) return nullptr;
+		auto const& type = expr->GetType();
+		switch (type->GetKind())
+		{
+		case PrimitiveTypeKind::Array:
+		{
+			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::ArrayToPointer);
+		}
+		case PrimitiveTypeKind::Function:
+		{
+			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::FunctionToPointer);
+		}
+		case PrimitiveTypeKind::Arithmetic: 
+		{
+			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::IntegerPromotion);
+		}
+		}
+		return std::move(expr);
+	}
+
 	//<declaration - specifier> :: = <storage - class - specifier>
 	//							 | <type - specifier>
 	//							 | <type - qualifier>
 	bool Parser::ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs /*= false*/)
 	{
 		using enum TokenKind;
-			;
 		decl_spec = DeclSpecInfo{};
 		decl_spec.qtype = builtin_types::Int;
 
@@ -824,23 +861,21 @@ namespace lucc
 				continue;
 			}
 
-			
 			TokenKind kind = current_token->GetKind();
-			//#todo Add support for user-defined types
 
 			//builtin types
 			switch (kind)
 			{
-			case TokenKind::KW_void: counter += VOID; break;
-			case TokenKind::KW_bool: counter += BOOL; break;
-			case TokenKind::KW_char: counter += CHAR; break;
-			case TokenKind::KW_short: counter += SHORT; break;
-			case TokenKind::KW_int: counter += INT; break;
-			case TokenKind::KW_long: counter += LONG; break;
-			case TokenKind::KW_float: counter += FLOAT; break;
-			case TokenKind::KW_double: counter += DOUBLE; break;
-			case TokenKind::KW_signed: counter += SIGNED; break;
-			case TokenKind::KW_unsigned: counter += UNSIGNED; break;
+			case KW_void: counter += VOID; break;
+			case KW_bool: counter += BOOL; break;
+			case KW_char: counter += CHAR; break;
+			case KW_short: counter += SHORT; break;
+			case KW_int: counter += INT; break;
+			case KW_long: counter += LONG; break;
+			case KW_float: counter += FLOAT; break;
+			case KW_double: counter += DOUBLE; break;
+			case KW_signed: counter += SIGNED; break;
+			case KW_unsigned: counter += UNSIGNED; break;
 			break;
 			default: LU_UNREACHABLE();
 			}

@@ -141,6 +141,22 @@ namespace lucc
 		if (ret_expr) ret_expr->Accept(visitor, depth + 1);
 	}
 
+	void ImplicitCastExprAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+		operand->Accept(visitor, depth + 1);
+	}
+
+	void GotoStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+
+	void LabelStmtAST::Accept(NodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+
 }
 
 

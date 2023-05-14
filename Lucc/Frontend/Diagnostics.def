@@ -36,5 +36,6 @@ DIAG(empty_statement, warning, "Empty statement")
 DIAG(typedef_name_empty, error, "Typedef name not specified")
 DIAG(declarator_specifier_error, error, "Declarator specifier error")
 DIAG(void_not_expected, error, "Void not expected")
+DIAG(local_functions_not_allowed, error, "Local functions not allowed")
 
 #undef DIAG

@@ -19,6 +19,9 @@
     <Filter Include="Frontend\Parser">
       <UniqueIdentifier>{561a5b64-d52c-4a1a-9119-e052e29c9891}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Backend">
+      <UniqueIdentifier>{df52d063-1d91-4ee8-985c-97e985589efb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Compiler.cpp" />
@@ -45,6 +48,10 @@
     <ClCompile Include="Frontend\AST.cpp">
       <Filter>Frontend\Parser</Filter>
     </ClCompile>
+    <ClCompile Include="Backend\x86CodeGenerator.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Compiler.h" />
@@ -94,6 +101,13 @@
     <ClInclude Include="Frontend\Type.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
+    <ClInclude Include="Backend\x86CodeGenerator.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="Backend\ICodeGenerator.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="test.txt" />

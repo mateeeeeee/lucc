@@ -13,6 +13,7 @@ namespace lucc
 	class UnaryExprAST;
 	class BinaryExprAST;
 	class TernaryExprAST;
+	class ImplicitCastExprAST;
 	class IntegerLiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
@@ -26,6 +27,8 @@ namespace lucc
 	class WhileStmtAST;
 	class ForStmtAST;
 	class ReturnStmtAST;
+	class GotoStmtAST;
+	class LabelStmtAST;
 
 	class DeclAST;
 	class VarDeclAST;
@@ -42,6 +45,7 @@ namespace lucc
 		virtual void Visit(UnaryExprAST const& node, size_t depth) = 0;
 		virtual void Visit(BinaryExprAST const& node, size_t depth) = 0;
 		virtual void Visit(TernaryExprAST const& node, size_t depth) = 0;
+		virtual void Visit(ImplicitCastExprAST const& node, size_t depth) = 0;
 		virtual void Visit(IntegerLiteralAST const& node, size_t depth) = 0;
 		virtual void Visit(StringLiteralAST const& node, size_t depth) = 0;
 		virtual void Visit(IdentifierAST const& node, size_t depth) = 0;
@@ -54,6 +58,8 @@ namespace lucc
 		virtual void Visit(WhileStmtAST const& node, size_t depth) = 0;
 		virtual void Visit(ForStmtAST const& node, size_t depth) = 0;
 		virtual void Visit(ReturnStmtAST const& node, size_t depth) = 0;
+		virtual void Visit(GotoStmtAST const& node, size_t depth) = 0;
+		virtual void Visit(LabelStmtAST const& node, size_t depth) = 0;
 		virtual void Visit(DeclAST const& node, size_t depth) = 0;
 		virtual void Visit(VarDeclAST const& node, size_t depth) = 0;
 		virtual void Visit(FunctionDeclAST const& node, size_t depth) = 0;
@@ -258,6 +264,30 @@ namespace lucc
 	private:
 		std::unique_ptr <ExprStmtAST> ret_expr;
 	};
+	class GotoStmtAST final : public StmtAST
+	{
+	public:
+		GotoStmtAST(std::string_view label) : goto_label(label) {}
+
+		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+
+		std::string_view GetName() const { return goto_label; }
+
+	private:
+		std::string goto_label;
+	};
+	class LabelStmtAST final : public StmtAST
+	{
+	public:
+		LabelStmtAST(std::string_view label) : label_name(label) {}
+
+		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
+
+		std::string_view GetName() const { return label_name; }
+
+	private:
+		std::string label_name;
+	};
 
 	enum class UnaryExprKind : uint8
 	{
@@ -292,16 +322,17 @@ namespace lucc
 		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
 
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
+		void SetType(QualifiedType const& _type) { type = _type; }
 		void SetValueCategory(ExprValueCategory _value_category) { value_category = _value_category; }
-		//void SetQType(const QualType& qtype) { qtype_ = qtype; }
 
 		SourceLocation const& GetLocation() const { return loc; }
+		QualifiedType const& GetType() const { return type; }
 		bool IsLValue() const { return value_category == ExprValueCategory::LValue; }
 
 	protected:
 		SourceLocation loc;
 		ExprValueCategory value_category = ExprValueCategory::LValue;
-
+		QualifiedType type;
 	protected:
 		ExprAST() = default;
 
@@ -351,33 +382,25 @@ namespace lucc
 		std::unique_ptr<ExprAST> false_expr;
 	};
 
-	enum class CastKind : bool
+	enum class CastKind 
 	{
-		Implicit,
-		Explicit
+		ArrayToPointer,
+		FunctionToPointer,
+		IntegerPromotion
 	};
-	class CastExprAST : public ExprAST
+	
+	class ImplicitCastExprAST : public ExprAST
 	{
 	public:
-		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override
-		{
+		ImplicitCastExprAST(std::unique_ptr<ExprAST>&& expr, CastKind kind)
+		: operand(std::move(expr)), kind(kind) {}
 
-		}
+		virtual void Accept(NodeVisitorAST& visitor, size_t depth) const override;
 
-		bool Implicit() const { return kind == CastKind::Implicit; }
-
+		CastKind GetKind() const { return kind; }
 	private:
+		std::unique_ptr<ExprAST> operand;
 		CastKind kind;
-
-	protected:
-		CastExprAST(CastKind kind) : kind(kind) {}
-	};
-	class ImplicitCastExprAST : public CastExprAST
-	{
-	public:
-		ImplicitCastExprAST() : CastExprAST(CastKind::Implicit) {}
-
-	private:
 	};
 
 	class IntegerLiteralAST final : public ExprAST

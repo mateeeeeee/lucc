@@ -27,6 +27,8 @@ namespace lucc
 	class WhileStmtAST;
 	class ForStmtAST;
 	class ReturnStmtAST;
+	class GotoStmtAST;
+	class LabelStmtAST;
 	class IntegerLiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
@@ -45,6 +47,8 @@ namespace lucc
 		{
 			std::unique_ptr<SymbolTable> identifier_sym_table;
 			FuncType const* current_func_type = nullptr;
+			std::vector<std::string> gotos{};
+			std::vector<std::string> labels{};
 		};
 
 	public:
@@ -104,6 +108,8 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<WhileStmtAST> ParseWhileStatement();
 		[[nodiscard]] std::unique_ptr<ForStmtAST> ParseForStatement();
 		[[nodiscard]] std::unique_ptr<ReturnStmtAST> ParseReturnStatement();
+		[[nodiscard]] std::unique_ptr<LabelStmtAST> ParseLabelStatement();
+		[[nodiscard]] std::unique_ptr<GotoStmtAST> ParseGotoStatement();
 
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseParenthesizedExpression();
@@ -125,10 +131,10 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseSizeofExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseAlignofExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParsePrimaryExpression();
-
 		[[nodiscard]] std::unique_ptr<IntegerLiteralAST> ParseIntegerLiteral();
 		[[nodiscard]] std::unique_ptr<StringLiteralAST> ParseStringLiteral();
 		[[nodiscard]] std::unique_ptr<IdentifierAST> ParseIdentifier();
+		[[nodiscard]] std::unique_ptr<ExprAST> ConvertExpression(std::unique_ptr<ExprAST>&);
 
 		template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
 		std::unique_ptr<ExprAST> ParseBinaryExpression();
