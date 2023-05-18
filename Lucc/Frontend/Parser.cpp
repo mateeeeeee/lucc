@@ -153,10 +153,11 @@ namespace lucc
 
 				std::string_view name = declarator_info.name;
 				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
+				var_decl->SetLocation(current_token->GetLocation());
+				var_decl->SetType(declaration_info.qtype);
 				if (Consume(TokenKind::equal))
 				{
 					std::unique_ptr<ExprAST> init_expr = ParseExpression();
-
 					var_decl->SetInitExpression(std::move(init_expr));
 				}
 				decls.push_back(std::move(var_decl));

@@ -4,6 +4,7 @@
 
 namespace lucc
 {
+	class VarDeclAST;
 	struct AST;
 
 	class x86CodeGenerator : public ICodeGenerator
@@ -18,7 +19,7 @@ namespace lucc
 		AST* ast;
 		std::string output_file;
 		std::string output_buffer;
-
-	private:
 	};
+
+
 }

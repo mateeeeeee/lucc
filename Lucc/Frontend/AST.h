@@ -83,6 +83,8 @@ namespace lucc
 		{
 			declarations.push_back(std::move(stmt));
 		}
+		std::vector<std::unique_ptr<DeclAST>> const& GetDeclarations() const { return declarations; }
+		
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
@@ -92,8 +94,18 @@ namespace lucc
 	class DeclAST : public NodeAST
 	{
 	public:
+
+		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
+		void SetType(QualifiedType const& _type) { type = _type; }
+		SourceLocation const& GetLocation() const { return loc; }
+		QualifiedType const& GetType() const { return type; }
+
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 	
+	protected:
+		SourceLocation loc;
+		QualifiedType type;
+
 	protected:
 		DeclAST() = default;
 	};
@@ -109,7 +121,7 @@ namespace lucc
 		std::string_view GetName() const { return name; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-	
+		
 	private:
 		std::string name;
 		std::unique_ptr<ExprAST> init_expr;
@@ -145,6 +157,7 @@ namespace lucc
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetName() const { return typedef_name; }
+
 	private:
 		std::string typedef_name;
 	};
@@ -333,6 +346,7 @@ namespace lucc
 		SourceLocation loc;
 		ExprValueCategory value_category = ExprValueCategory::LValue;
 		QualifiedType type;
+
 	protected:
 		ExprAST() = default;
 
