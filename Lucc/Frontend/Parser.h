@@ -29,7 +29,7 @@ namespace lucc
 	class ReturnStmtAST;
 	class GotoStmtAST;
 	class LabelStmtAST;
-	class IntegerLiteralAST;
+	class Int64LiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
 	class Parser;
@@ -131,7 +131,7 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseSizeofExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseAlignofExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParsePrimaryExpression();
-		[[nodiscard]] std::unique_ptr<IntegerLiteralAST> ParseIntegerLiteral();
+		[[nodiscard]] std::unique_ptr<Int64LiteralAST> ParseIntegerLiteral();
 		[[nodiscard]] std::unique_ptr<StringLiteralAST> ParseStringLiteral();
 		[[nodiscard]] std::unique_ptr<IdentifierAST> ParseIdentifier();
 		[[nodiscard]] std::unique_ptr<ExprAST> ConvertExpression(std::unique_ptr<ExprAST>&);

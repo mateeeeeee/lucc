@@ -711,13 +711,13 @@ namespace lucc
 		return nullptr;
 	}
 
-	std::unique_ptr<IntegerLiteralAST> Parser::ParseIntegerLiteral()
+	std::unique_ptr<Int64LiteralAST> Parser::ParseIntegerLiteral()
 	{
 		LU_ASSERT(current_token->Is(TokenKind::number));
 		std::string_view string_number = current_token->GetIdentifier();
 		int64 value = std::stoll(current_token->GetIdentifier().data(), nullptr, 0);
 		++current_token;
-		return std::make_unique<IntegerLiteralAST>(value);
+		return std::make_unique<Int64LiteralAST>(value);
 	}
 
 	std::unique_ptr<StringLiteralAST> Parser::ParseStringLiteral()

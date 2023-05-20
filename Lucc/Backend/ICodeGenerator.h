@@ -8,4 +8,12 @@ namespace lucc
 		virtual ~ICodeGenerator() = default;
 		virtual void Generate() = 0;
 	};
+
+	class ICodegenContext
+	{
+	public:
+		virtual ~ICodegenContext() = default;
+		
+		
+	};
 }

@@ -12,6 +12,7 @@ int main(int argc, char** argv)
 
 	lucc::CompilerInput compiler_input{};
 	compiler_input.input = "test.txt";
+	compiler_input.output = "test2.txt";
 	compiler_input.options = lucc::CompilerFlag_None;
 	bool result = Compile(compiler_input);
 }

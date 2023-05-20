@@ -61,7 +61,7 @@ void lucc::debug::DebugNodeVisitorAST::Visit(ImplicitCastExprAST const& node, si
 	std::cout << GetIndentation(depth) << "ImplicitCastExprAST: " << ImplicitCastKindToString(node.GetKind()) << "\n";
 }
 
-void lucc::debug::DebugNodeVisitorAST::Visit(IntegerLiteralAST const& node, size_t depth)
+void lucc::debug::DebugNodeVisitorAST::Visit(Int64LiteralAST const& node, size_t depth)
 {
 	std::cout << GetIndentation(depth) << "IntegerLiteralAST, Value:" << std::to_string(node.GetValue()) << "\n";
 }

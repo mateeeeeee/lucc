@@ -120,7 +120,7 @@ namespace lucc
 		operand->Accept(visitor, depth + 1);
 	}
 
-	void IntegerLiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void Int64LiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
@@ -153,6 +153,16 @@ namespace lucc
 	}
 
 	void LabelStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+
+	void Float32LiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+
+	void Float64LiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 	}

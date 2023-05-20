@@ -5,6 +5,7 @@
 #include "Frontend/Preprocessor.h"
 #include "Frontend/Lexer.h"
 #include "Frontend/Parser.h"
+#include "Backend/x86CodeGenerator.h"
 
 
 namespace lucc
@@ -40,8 +41,9 @@ namespace lucc
 		AST* ast = parser.GetAST();
 		debug::DebugNodeVisitorAST visitor(ast);
 
-		//do optimizations
 		//do codegen
+		x86CodeGenerator x86(input.output, ast);
+		x86.Generate();
 
 		return true;
 	}

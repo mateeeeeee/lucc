@@ -14,7 +14,7 @@ namespace lucc
 	class BinaryExprAST;
 	class TernaryExprAST;
 	class ImplicitCastExprAST;
-	class IntegerLiteralAST;
+	class Int64LiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
 	
@@ -46,7 +46,7 @@ namespace lucc
 		virtual void Visit(BinaryExprAST const& node, size_t depth) {}
 		virtual void Visit(TernaryExprAST const& node, size_t depth) {}
 		virtual void Visit(ImplicitCastExprAST const& node, size_t depth) {}
-		virtual void Visit(IntegerLiteralAST const& node, size_t depth) {}
+		virtual void Visit(Int64LiteralAST const& node, size_t depth) {}
 		virtual void Visit(StringLiteralAST const& node, size_t depth) {}
 		virtual void Visit(IdentifierAST const& node, size_t depth) {}
 		virtual void Visit(StmtAST const& node, size_t depth) {}
@@ -66,11 +66,13 @@ namespace lucc
 		virtual void Visit(TypedefDeclAST const& node, size_t depth) {}
 	};
 
+	class ICodegenContext;
 	class NodeAST
 	{
 	public:
 		virtual ~NodeAST() = default;
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const = 0;
+		virtual void Codegen(ICodegenContext&) const {}
 
 	protected:
 		NodeAST() = default;
@@ -121,7 +123,10 @@ namespace lucc
 		std::string_view GetName() const { return name; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		
+		virtual void Codegen(ICodegenContext& ctx) const override
+		{
+
+		}
 	private:
 		std::string name;
 		std::unique_ptr<ExprAST> init_expr;
@@ -417,10 +422,32 @@ namespace lucc
 		CastKind kind;
 	};
 
-	class IntegerLiteralAST final : public ExprAST
+	class Float32LiteralAST final : public ExprAST
 	{
 	public:
-		IntegerLiteralAST(int64 value) : ExprAST(), value(value) {}
+		Float32LiteralAST(float value) : ExprAST(), value(value) {}
+		float GetValue() const { return value; }
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+
+	private:
+		float value;
+	};
+	class Float64LiteralAST final : public ExprAST
+	{
+	public:
+		Float64LiteralAST(double value) : ExprAST(), value(value) {}
+		double GetValue() const { return value; }
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+
+	private:
+		double value;
+	};
+	class Int64LiteralAST final : public ExprAST
+	{
+	public:
+		Int64LiteralAST(int64 value) : ExprAST(), value(value) {}
 		int64 GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -439,7 +466,6 @@ namespace lucc
 	private:
 		std::string str;
 	};
-
 	class IdentifierAST : public ExprAST
 	{
 	public:
@@ -451,7 +477,6 @@ namespace lucc
 	private:
 		std::string name;
 	};
-
 
 	struct AST
 	{
