@@ -318,9 +318,13 @@ namespace lucc
 		}
 		else init = ParseExpressionStatement();
 
-		std::unique_ptr<ExprStmtAST> cond_expr_stmt = ParseExpressionStatement();
-		std::unique_ptr<ExprAST> cond_expr = *cond_expr_stmt;
-
+		std::unique_ptr<ExprAST> cond_expr = nullptr;
+		if (!Consume(TokenKind::semicolon))
+		{
+			cond_expr = ParseExpression();
+			Expect(TokenKind::semicolon);
+		}
+		
 		std::unique_ptr<ExprAST> iter_expr = nullptr;
 		if (!Consume(TokenKind::right_round))
 		{
@@ -484,8 +488,8 @@ namespace lucc
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
 			switch (current_token->GetKind()) 
 			{
-			case TokenKind::equal:		op_kind = BinaryExprKind::Equal; break;
-			case TokenKind::not_equal:	op_kind = BinaryExprKind::NotEqual; break;
+			case TokenKind::equal_equal: op_kind = BinaryExprKind::Equal; break;
+			case TokenKind::not_equal:	 op_kind = BinaryExprKind::NotEqual; break;
 			default:
 				return lhs;
 			}
@@ -950,7 +954,7 @@ namespace lucc
 				return false;
 			}
 		}
-		return true;
+		return counter != 0;
 	}
 
 	//<declarator> :: = { <pointer> } ? <direct - declarator>

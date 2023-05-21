@@ -86,7 +86,6 @@ namespace lucc
 			declarations.push_back(std::move(stmt));
 		}
 		std::vector<std::unique_ptr<DeclAST>> const& GetDeclarations() const { return declarations; }
-		
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	private:
@@ -123,10 +122,7 @@ namespace lucc
 		std::string_view GetName() const { return name; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx) const override
-		{
-
-		}
+		virtual void Codegen(ICodegenContext& ctx) const override;
 	private:
 		std::string name;
 		std::unique_ptr<ExprAST> init_expr;
@@ -135,7 +131,6 @@ namespace lucc
 	{
 	public:
 		FunctionDeclAST(std::string_view name) : name(name) {}
-
 		std::string_view GetName() const { return name; }
 
 		void AddParamDeclaration(std::unique_ptr<VarDeclAST>&& param)
@@ -149,7 +144,8 @@ namespace lucc
 		bool IsDefinition() const { return body != nullptr; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		
+		virtual void Codegen(ICodegenContext& ctx) const override;
+
 	private:
 		std::string name;
 		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
@@ -166,7 +162,6 @@ namespace lucc
 	private:
 		std::string typedef_name;
 	};
-
 	class StmtAST : public NodeAST
 	{
 	public:
@@ -180,7 +175,9 @@ namespace lucc
 	public:
 		CompoundStmtAST() = default;
 		void AddStatement(std::unique_ptr<StmtAST>&& stmt);
+
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx) const override;
 
 	private:
 		std::vector<std::unique_ptr<StmtAST>> statements;
@@ -190,11 +187,8 @@ namespace lucc
 	public:
 		ExprStmtAST(std::unique_ptr<ExprAST>&& expr) : expr(std::move(expr)) {}
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx) const override;
 
-		operator std::unique_ptr<ExprAST>&&()
-		{
-			return std::move(expr);
-		}
 	private:
 		std::unique_ptr<ExprAST> expr;
 	};
@@ -323,7 +317,6 @@ namespace lucc
 		Assign,
 		Comma,
 		LogicalAnd, LogicalOr,
-		// Comparison
 		Equal, NotEqual,
 		Less, Greater,
 		LessEqual, GreaterEqual,
@@ -379,6 +372,7 @@ namespace lucc
 		BinaryExprKind GetOp() const { return op; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx) const override;
 
 	private:
 		std::unique_ptr<ExprAST> lhs, rhs;
@@ -451,6 +445,7 @@ namespace lucc
 		int64 GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext&) const override;
 
 	private:
 		int64 value;
@@ -470,9 +465,10 @@ namespace lucc
 	{
 	public:
 		explicit IdentifierAST(std::string_view name) : ExprAST(), name(name) {}
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-
 		std::string_view GetName() const { return name; }
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx) const override;
 
 	private:
 		std::string name;

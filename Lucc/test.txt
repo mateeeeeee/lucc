@@ -1,8 +1,7 @@
-typedef int MyInt;
 
-MyInt k, f(int), m;
+int k;
 
 void main()
 {
-	int k, a = 3;
+	k = 5;
 }

@@ -1,8 +1,10 @@
 #include "AST.h"
+#include "Backend/ICodeGenerator.h"
 #include "Core/Defines.h"
 
 namespace lucc
 {
+	/// Accept
 
 	void TranslationUnitAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
@@ -86,7 +88,6 @@ namespace lucc
 		if (else_stmt) else_stmt->Accept(visitor, depth + 1);
 	}
 
-
 	void WhileStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
@@ -165,6 +166,54 @@ namespace lucc
 	void Float64LiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
+	}
+
+	/// Codegen
+
+	void VarDeclAST::Codegen(ICodegenContext& ctx) const
+	{
+		ctx.EmitGlobal(name.c_str(), false);
+	}
+
+
+	void FunctionDeclAST::Codegen(ICodegenContext& ctx) const
+	{
+		body->Codegen(ctx);
+	}
+
+	void BinaryExprAST::Codegen(ICodegenContext& ctx) const
+	{
+		switch (op)
+		{
+		case BinaryExprKind::Assign: //Assign
+		{
+			lhs->Codegen(ctx);
+			ctx.Push();
+			rhs->Codegen(ctx);
+			ctx.Store(8);
+			return;
+		}
+		}
+	}
+
+	void IdentifierAST::Codegen(ICodegenContext& ctx) const
+	{
+		ctx.GenerateAddress(name.c_str());
+	}
+
+	void Int64LiteralAST::Codegen(ICodegenContext& ctx) const
+	{
+		ctx.GenerateInt64Literal(value);
+	}
+
+	void ExprStmtAST::Codegen(ICodegenContext& ctx) const
+	{
+		expr->Codegen(ctx);
+	}
+
+	void CompoundStmtAST::Codegen(ICodegenContext& ctx) const
+	{
+		for (auto& stmt : statements) stmt->Codegen(ctx);
 	}
 
 }

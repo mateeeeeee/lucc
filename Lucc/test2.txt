@@ -1,0 +1,13 @@
+	.globl k
+	.bss
+	.align 8
+k:
+	.zero 8
+	lea k(%%rip), %%rax
+	push %%rax
+	mov $5, %%rax
+	mov %%rax, (%%rdi)
+	lea k(%%rip), %%rax
+	push %%rax
+	mov $5, %%rax
+	mov %%rax, (%%rdi)

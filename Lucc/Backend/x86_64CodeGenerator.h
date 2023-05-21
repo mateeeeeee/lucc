@@ -6,13 +6,13 @@
 namespace lucc
 {
 
-	class x86CodeGenerator : public ICodeGenerator, public INodeVisitorAST
+	class x86_64CodeGenerator : public ICodeGenerator, public INodeVisitorAST
 	{
-		class x86Context;
+		class Context;
 
 	public:
-		x86CodeGenerator(std::string_view output_file, AST* ast);
-		~x86CodeGenerator();
+		x86_64CodeGenerator(std::string_view output_file, AST* ast);
+		~x86_64CodeGenerator();
 
 		virtual void Generate() override;
 
@@ -21,7 +21,7 @@ namespace lucc
 		std::string output_file;
 		std::string output_buffer;
 
-		std::unique_ptr<x86Context> ctx;
+		std::unique_ptr<Context> ctx;
 
 	private:
 		virtual void Visit(VarDeclAST const& node, size_t depth) override;
