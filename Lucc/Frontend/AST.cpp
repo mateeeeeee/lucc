@@ -170,50 +170,70 @@ namespace lucc
 
 	/// Codegen
 
-	void VarDeclAST::Codegen(ICodegenContext& ctx) const
+	size_t VarDeclAST::Codegen(ICodegenContext& ctx) const
 	{
-		ctx.EmitGlobal(name.c_str(), false);
+		ctx.DeclareGlobalSymbol(name.c_str()); 
+		return INVALID_REG;
 	}
 
 
-	void FunctionDeclAST::Codegen(ICodegenContext& ctx) const
+	size_t FunctionDeclAST::Codegen(ICodegenContext& ctx) const
 	{
-		body->Codegen(ctx);
+		return -1;
 	}
 
-	void BinaryExprAST::Codegen(ICodegenContext& ctx) const
+	size_t BinaryExprAST::Codegen(ICodegenContext& ctx) const
 	{
 		switch (op)
 		{
 		case BinaryExprKind::Assign: //Assign
 		{
-			lhs->Codegen(ctx);
-			ctx.Push();
-			rhs->Codegen(ctx);
-			ctx.Store(8);
-			return;
+			size_t rhs_reg = rhs->Codegen(ctx); 
+			size_t var_reg = INVALID_REG;
+			if (IdentifierAST* var_decl = AstCast<IdentifierAST>(lhs.get()))
+			{
+				ctx.Store(var_decl->GetName().data(), rhs_reg);
+				var_reg = ctx.AllocateRegister();
+				ctx.Load(var_decl->GetName().data(), var_reg);
+			}
+			ctx.FreeRegister(rhs_reg);
+		}
+		break;
+		case BinaryExprKind::Add:
+		{
+			size_t rhs_reg = rhs->Codegen(ctx);
+			size_t lhs_reg = lhs->Codegen(ctx);
+			ctx.Add(lhs_reg, rhs_reg);
+			ctx.FreeRegister(rhs_reg);
+			return lhs_reg;
 		}
 		}
+
+		return -1;
 	}
 
-	void IdentifierAST::Codegen(ICodegenContext& ctx) const
+	size_t IdentifierAST::Codegen(ICodegenContext& ctx) const
 	{
-		ctx.GenerateAddress(name.c_str());
+		size_t r = ctx.AllocateRegister();
+		ctx.Load(name.c_str(), r);
+		return r;
 	}
 
-	void Int64LiteralAST::Codegen(ICodegenContext& ctx) const
+	size_t Int64LiteralAST::Codegen(ICodegenContext& ctx) const
 	{
-		ctx.GenerateInt64Literal(value);
+		size_t r = ctx.AllocateRegister();
+		ctx.Movq(value, r);
+		return r;
 	}
 
-	void ExprStmtAST::Codegen(ICodegenContext& ctx) const
+	size_t ExprStmtAST::Codegen(ICodegenContext& ctx) const
 	{
-		expr->Codegen(ctx);
+		return INVALID_REG;
 	}
 
-	void CompoundStmtAST::Codegen(ICodegenContext& ctx) const
+	size_t CompoundStmtAST::Codegen(ICodegenContext& ctx) const
 	{
-		for (auto& stmt : statements) stmt->Codegen(ctx);
+		return INVALID_REG;
 	}
 
 }

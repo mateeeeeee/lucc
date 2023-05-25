@@ -11,48 +11,56 @@ namespace lucc
 	class x86_64CodeGenerator::Context : public ICodegenContext
 	{
 		static constexpr size_t REG_COUNT = 4;
-		static constexpr char const* registers[REG_COUNT] = { "%r8", "%r9", "%r10", "%r11" };
+		static constexpr char const* registers[REG_COUNT]	   = { "%r8", "%r9", "%r10", "%r11" };
+		static constexpr char const* byte_registers[REG_COUNT] = { "%r8b", "%r9b", "%r10b", "%r11b" };
 
 	public:
 		explicit Context(std::string& output_buffer) : output_buffer(output_buffer) {}
 
-		virtual void EmitGlobal(char const* name, bool is_static) override
+		virtual size_t AllocateRegister() override
 		{
-			if (is_static) Emit("\t.local {}", name);
-			else Emit("\t.globl {}", name);
-
-			Emit("\t.bss");
-			Emit("\t.align {}", 8);
-			Emit("{}:", name);
-			Emit("\t.zero {}", 8);
+			for (size_t i = 0; i < REG_COUNT; ++i)
+			{
+				if (free_registers[i]) return i;
+			}
+			return INVALID_REG;
+		}
+		virtual void FreeRegister(size_t i) override
+		{
+			free_registers[i] = true;
+		}
+		virtual void FreeAllRegisters() override
+		{
+			free_registers.fill(true);
 		}
 
-		virtual void GenerateAddress(char const* name) override
+
+		virtual void Movq(int64 v, size_t reg) override
 		{
-			Emit("\tlea {}(%%rip), %%rax", name);
+			Emit("\tmovq\t ${} {}", v, registers[reg]);
 		}
-		virtual void GenerateInt64Literal(int64 value) override
+		virtual void Add(size_t reg1, size_t reg2) override
 		{
-			Emit("\tmov ${}, %%rax", value);
+			Emit("\taddq\t{}, {}\n", registers[reg1], registers[reg2]);
 		}
 
-		virtual void Store(size_t type_size) override
+		virtual void Store(char const* sym_name, size_t reg) override
 		{
-			if (type_size == 1) Emit("\tmov %%al, (%%rdi)");
-			else if (type_size == 2) Emit("\tmov %%ax, (%%rdi)");
-			else if (type_size == 4) Emit("\tmov %%eax, (%%rdi)");
-			else Emit("\tmov %%rax, (%%rdi)");
+			Emit("\tmovq\t{}, {}(%%rip)\n", registers[reg], sym_name);
 		}
-		virtual void Push() override
+		virtual void Load(char const* sym_name, size_t reg) override
 		{
-			Emit("\tpush %%rax");
-			depth++;
+			Emit("\tmovq\t{}(%%rip), {}\n", sym_name, registers[reg]);
+		}
+
+		virtual void DeclareGlobalSymbol(char const* sym_name) override
+		{
+			Emit("{}:\n\t.long 0\n", sym_name);
 		}
 
 	private:
 		std::string& output_buffer;
-		bool free[REG_COUNT] = { true, true, true, true };
-		size_t depth = 0;
+		std::array<bool, REG_COUNT> free_registers = { true, true, true, true };
 
 	private:
 		template<typename... Ts>
@@ -62,22 +70,6 @@ namespace lucc
 			output_buffer += "\n";
 		}
 
-		void FreeAllRegisters()
-		{
-			for (size_t i = 0; i < REG_COUNT; ++i) free[i] = true;
-		}
-		size_t AllocateRegister()
-		{
-			for (size_t i = 0; i < REG_COUNT; ++i)
-			{
-				if (free[i]) return i;
-			}
-			return -1;
-		}
-		void FreeRegister(size_t i)
-		{
-			free[i] = true;
-		}
 	};
 
 	x86_64CodeGenerator::x86_64CodeGenerator(std::string_view output_file, AST* ast) : output_file(output_file), ast(ast) 

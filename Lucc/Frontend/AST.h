@@ -72,7 +72,7 @@ namespace lucc
 	public:
 		virtual ~NodeAST() = default;
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const = 0;
-		virtual void Codegen(ICodegenContext&) const {}
+		virtual size_t Codegen(ICodegenContext&) const { return -1; }
 
 	protected:
 		NodeAST() = default;
@@ -122,7 +122,7 @@ namespace lucc
 		std::string_view GetName() const { return name; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx) const override;
+		virtual size_t Codegen(ICodegenContext& ctx) const override;
 	private:
 		std::string name;
 		std::unique_ptr<ExprAST> init_expr;
@@ -144,7 +144,7 @@ namespace lucc
 		bool IsDefinition() const { return body != nullptr; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx) const override;
+		virtual size_t Codegen(ICodegenContext& ctx) const override;
 
 	private:
 		std::string name;
@@ -177,7 +177,7 @@ namespace lucc
 		void AddStatement(std::unique_ptr<StmtAST>&& stmt);
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx) const override;
+		virtual size_t Codegen(ICodegenContext& ctx) const override;
 
 	private:
 		std::vector<std::unique_ptr<StmtAST>> statements;
@@ -187,7 +187,7 @@ namespace lucc
 	public:
 		ExprStmtAST(std::unique_ptr<ExprAST>&& expr) : expr(std::move(expr)) {}
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx) const override;
+		virtual size_t Codegen(ICodegenContext& ctx) const override;
 
 	private:
 		std::unique_ptr<ExprAST> expr;
@@ -372,7 +372,7 @@ namespace lucc
 		BinaryExprKind GetOp() const { return op; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx) const override;
+		virtual size_t Codegen(ICodegenContext& ctx) const override;
 
 	private:
 		std::unique_ptr<ExprAST> lhs, rhs;
@@ -445,7 +445,7 @@ namespace lucc
 		int64 GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext&) const override;
+		virtual size_t Codegen(ICodegenContext&) const override;
 
 	private:
 		int64 value;
@@ -468,7 +468,7 @@ namespace lucc
 		std::string_view GetName() const { return name; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx) const override;
+		virtual size_t Codegen(ICodegenContext& ctx) const override;
 
 	private:
 		std::string name;
@@ -479,4 +479,11 @@ namespace lucc
 		AST() { translation_unit = std::make_unique<TranslationUnitAST>(); }
 		std::unique_ptr<TranslationUnitAST> translation_unit;
 	};
+
+	template<typename To, typename From> 
+	requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
+	To* AstCast(From* from)
+	{
+		return dynamic_cast<To*>(from);
+	}
 }
