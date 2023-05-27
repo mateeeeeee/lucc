@@ -37,25 +37,25 @@ namespace lucc
 
 		virtual void Movq(int64 v, size_t reg) override
 		{
-			Emit("\tmovq\t ${} {}", v, registers[reg]);
+			Emit("\tmov\t {} {}", registers[reg], v);
 		}
 		virtual void Add(size_t reg1, size_t reg2) override
 		{
-			Emit("\taddq\t{}, {}\n", registers[reg1], registers[reg2]);
+			Emit("\tadd\t{}, {}\n", registers[reg1], registers[reg2]);
 		}
 
 		virtual void Store(char const* sym_name, size_t reg) override
 		{
-			Emit("\tmovq\t{}, {}(%%rip)\n", registers[reg], sym_name);
+			Emit("\tmov\t{}, {}(%%rip)\n", registers[reg], sym_name);
 		}
 		virtual void Load(char const* sym_name, size_t reg) override
 		{
-			Emit("\tmovq\t{}(%%rip), {}\n", sym_name, registers[reg]);
+			Emit("\tmov\t{}(%%rip), {}\n", sym_name, registers[reg]);
 		}
 
 		virtual void DeclareGlobalSymbol(char const* sym_name) override
 		{
-			Emit("{}:\n\t.long 0\n", sym_name);
+			Emit("{}:\n\t.dq 0\n", sym_name);
 		}
 
 	private:
