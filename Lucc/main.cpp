@@ -10,9 +10,9 @@ int main(int argc, char** argv)
 	CLIArg& opt = parser.AddArg(false, "-opt");
 	parser.Parse(argc, argv);
 
-	lucc::CompilerInput compiler_input{};
+	CompilerInput compiler_input{};
 	compiler_input.input = "test.txt";
 	compiler_input.output = "test2.txt";
-	compiler_input.options = lucc::CompilerFlag_None;
+	compiler_input.options = CompilerFlag_None;
 	bool result = Compile(compiler_input);
 }

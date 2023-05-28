@@ -1,8 +1,7 @@
-k:
-	.long 0
 
-	movq	 $5 %r8
-	movq	%r8, k(%%rip)
+.data
 
-	movq	k(%%rip), %r8
+
+.code
+
 

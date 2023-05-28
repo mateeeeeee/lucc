@@ -1,14 +1,23 @@
 #pragma once
 #include <string>
+#include <iosfwd>
 #include "ICodeGenerator.h"
-#include "Frontend/AST.h"
 
 namespace lucc
 {
+	struct AST;
 
-	class x86_64CodeGenerator : public ICodeGenerator, public INodeVisitorAST
+	class x86_64CodeGenerator : public ICodeGenerator
 	{
 		class Context;
+
+		struct OutputBuffer
+		{
+			std::string preamble;
+			std::string data_segment;
+			std::string text_segment;
+		};
+		friend void operator<<(std::ostream& os, OutputBuffer const& buff);
 
 	public:
 		x86_64CodeGenerator(std::string_view output_file, AST* ast);
@@ -19,15 +28,9 @@ namespace lucc
 	private:
 		AST* ast;
 		std::string output_file;
-		std::string output_buffer;
+		OutputBuffer output_buffer;
 
 		std::unique_ptr<Context> ctx;
-
-	private:
-		virtual void Visit(VarDeclAST const& node, size_t depth) override;
-		virtual void Visit(FunctionDeclAST const& node, size_t depth) override;
-		virtual void Visit(BinaryExprAST const& node, size_t depth) override;
-
 	};
 
 }

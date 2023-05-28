@@ -1,8 +1,10 @@
 #include <stdio.h>
 
-extern int factorial(int);
+extern int f();
+extern int number;
 
 int main(void)
 {
-	printf("factorial of 5: %d", factorial(5));
+	f();
+	printf("Result: %d", number);
 }

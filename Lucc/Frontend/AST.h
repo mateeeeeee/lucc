@@ -1,8 +1,10 @@
 #pragma once
 #include <vector>
+#include <optional>
 #include <memory>
 #include <string>
 #include "Type.h"
+#include "Backend/ICodeGenerator.h"
 
 namespace lucc
 {
@@ -72,7 +74,7 @@ namespace lucc
 	public:
 		virtual ~NodeAST() = default;
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const = 0;
-		virtual size_t Codegen(ICodegenContext&) const { return -1; }
+		virtual bool Codegen(ICodegenContext&, std::optional<register_t> return_reg = std::nullopt) const { return false; }
 
 	protected:
 		NodeAST() = default;
@@ -86,7 +88,9 @@ namespace lucc
 			declarations.push_back(std::move(stmt));
 		}
 		std::vector<std::unique_ptr<DeclAST>> const& GetDeclarations() const { return declarations; }
+
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual bool Codegen(ICodegenContext&, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::vector<std::unique_ptr<DeclAST>> declarations;
@@ -122,7 +126,7 @@ namespace lucc
 		std::string_view GetName() const { return name; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual size_t Codegen(ICodegenContext& ctx) const override;
+		virtual bool Codegen(ICodegenContext&, std::optional<register_t> return_reg = std::nullopt) const override;
 	private:
 		std::string name;
 		std::unique_ptr<ExprAST> init_expr;
@@ -144,7 +148,7 @@ namespace lucc
 		bool IsDefinition() const { return body != nullptr; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual size_t Codegen(ICodegenContext& ctx) const override;
+		virtual bool Codegen(ICodegenContext&, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::string name;
@@ -177,7 +181,7 @@ namespace lucc
 		void AddStatement(std::unique_ptr<StmtAST>&& stmt);
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual size_t Codegen(ICodegenContext& ctx) const override;
+		virtual bool Codegen(ICodegenContext&, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::vector<std::unique_ptr<StmtAST>> statements;
@@ -187,7 +191,7 @@ namespace lucc
 	public:
 		ExprStmtAST(std::unique_ptr<ExprAST>&& expr) : expr(std::move(expr)) {}
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual size_t Codegen(ICodegenContext& ctx) const override;
+		virtual bool Codegen(ICodegenContext&, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::unique_ptr<ExprAST> expr;
@@ -372,7 +376,7 @@ namespace lucc
 		BinaryExprKind GetOp() const { return op; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual size_t Codegen(ICodegenContext& ctx) const override;
+		virtual bool Codegen(ICodegenContext&, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::unique_ptr<ExprAST> lhs, rhs;
@@ -445,7 +449,7 @@ namespace lucc
 		int64 GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual size_t Codegen(ICodegenContext&) const override;
+		virtual bool Codegen(ICodegenContext&, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		int64 value;
@@ -468,7 +472,7 @@ namespace lucc
 		std::string_view GetName() const { return name; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual size_t Codegen(ICodegenContext& ctx) const override;
+		virtual bool Codegen(ICodegenContext&, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::string name;
