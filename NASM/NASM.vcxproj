@@ -135,7 +135,7 @@
     <MASM Include="hello.asm">
       <FileType>Document</FileType>
     </MASM>
-    <MASM Include="test.asm" />
+    <MASM Include="main.asm" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />

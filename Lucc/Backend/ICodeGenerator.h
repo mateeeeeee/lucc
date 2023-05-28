@@ -24,9 +24,10 @@ namespace lucc
 		virtual void Mov(int64 v, register_t reg) = 0;
 		virtual void Add(register_t reg1, register_t reg2) = 0;
 		
-		virtual void Store(char const* sym_name, register_t reg) = 0;
-		virtual void Load(char const* sym_name, register_t reg) = 0;
-		
+		virtual void StoreReg(char const* sym_name, register_t reg) = 0;
+		virtual void LoadReg(char const* sym_name, register_t reg) = 0;
+		virtual void StoreImm(char const* sym_name, int64 val) = 0;
+
 		virtual void DeclareStaticVariable(char const* sym_name) = 0;
 		virtual void DeclareGlobalVariable(char const* sym_name) = 0;
 

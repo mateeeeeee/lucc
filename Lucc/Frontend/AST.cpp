@@ -169,87 +169,76 @@ namespace lucc
 	}
 
 	/// Codegen
-	bool TranslationUnitAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void TranslationUnitAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		return true;
+		for (auto const& decl : declarations) decl->Codegen(ctx);
 	}
 	
-	bool VarDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void VarDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		ctx.DeclareStaticVariable(name.c_str()); 
-		return true;
+		ctx.DeclareGlobalVariable(name.c_str()); 
 	}
 
-	bool FunctionDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void FunctionDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		if (!body) return INVALID_REG;
+		if (!body) return;
 		ctx.DeclareGlobalFunction(name.c_str());
 		body->Codegen(ctx);
 		ctx.ReturnFromFunction(name.c_str());
-		return true;
+		return;
 	}
 
-	bool BinaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void BinaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		switch (op)
 		{
 		case BinaryExprKind::Assign: 
 		{
-			register_t rhs_reg = ctx.AllocateRegister();
-			rhs->Codegen(ctx, rhs_reg);
 			if (IdentifierAST* var_decl = AstCast<IdentifierAST>(lhs.get()))
 			{
-				ctx.Store(var_decl->GetName().data(), rhs_reg);
-			}
-			ctx.FreeRegister(rhs_reg);
+				char const* var_name = var_decl->GetName().data();
+				Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get());
 
-			if (return_reg)
-			{
-				return_reg = ctx.AllocateRegister();
-				//ctx.Load(var_decl->GetName().data(), var_reg);
-				
+				if (int_literal) ctx.StoreImm(var_name, int_literal->GetValue());
+				else
+				{
+					register_t rhs_reg = return_reg ? *return_reg : ctx.AllocateRegister();
+					rhs->Codegen(ctx, rhs_reg);
+					ctx.StoreReg(var_name, rhs_reg);
+					if(!return_reg) ctx.FreeRegister(rhs_reg);
+				}
 			}
-			return false;
 		}
 		break;
-		case BinaryExprKind::Add:
-		{
+		//case BinaryExprKind::Add:
+		//{
 			//size_t rhs_reg = rhs->Codegen(ctx);
 			//size_t lhs_reg = lhs->Codegen(ctx);
 			//ctx.Add(lhs_reg, rhs_reg);
 			//ctx.FreeRegister(rhs_reg);
 			//return lhs_reg;
+		//}
 		}
-		}
-		return true;
 	}
 
-	bool IdentifierAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void IdentifierAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		if (return_reg) ctx.Load(name.c_str(), *return_reg);
-		return true;
+		if (return_reg) ctx.LoadReg(name.c_str(), *return_reg);
 	}
 
-	bool Int64LiteralAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void Int64LiteralAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		if (return_reg) ctx.Mov(value, *return_reg);
-		return true;
 	}
 
-	bool ExprStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void ExprStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		expr->Codegen(ctx);
-		return true;
 	}
 
-	bool CompoundStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void CompoundStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		for (auto& stmt : statements)
-		{
-			bool stop = !stmt->Codegen(ctx);
-			if (stop) break;
-		}
-		return true;
+		for (auto& stmt : statements) stmt->Codegen(ctx);
 	}
 
 }

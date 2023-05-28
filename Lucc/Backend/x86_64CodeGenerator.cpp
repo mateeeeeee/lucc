@@ -12,7 +12,7 @@ namespace lucc
 	{
 		os << buff.preamble << "\n";
 		os << buff.data_segment << "\n";
-		os << buff.text_segment << "\n";
+		os << buff.text_segment << "\nend\n";
 	}
 
 	class x86_64CodeGenerator::Context : public ICodegenContext
@@ -31,8 +31,8 @@ namespace lucc
 	public:
 		explicit Context(OutputBuffer& output_buffer) : output_buffer(output_buffer) 
 		{
-			Emit<SegmentType::Data>(".data\n");
-			Emit<SegmentType::Text>(".code\n");
+			Emit<Data>(".data");
+			Emit<Text>(".code");
 		}
 
 		virtual register_t AllocateRegister() override
@@ -58,36 +58,40 @@ namespace lucc
 		}
 		virtual void Add(register_t reg1, register_t reg2) override
 		{
-			Emit<Text>("add\t{}, {}\n", registers[reg1], registers[reg2]);
+			Emit<Text>("add\t{}, {}", registers[reg1], registers[reg2]);
 		}
 
-		virtual void Store(char const* sym_name, register_t reg) override
+		virtual void StoreReg(char const* sym_name, register_t reg) override
 		{
-			Emit<Text>("mov\t{}, {}\n", sym_name, registers[reg]);
+			Emit<Text>("mov\t{}, {}", sym_name, registers[reg]);
 		}
-		virtual void Load(char const* sym_name, register_t reg) override
+		virtual void LoadReg(char const* sym_name, register_t reg) override
 		{
-			Emit<Text>("mov\t{}, {}\n", registers[reg], sym_name);
+			Emit<Text>("mov\t{}, {}", registers[reg], sym_name);
+		}
+		virtual void StoreImm(char const* sym_name, int64 val) override
+		{
+			Emit<Text>("mov\t{}, {}", sym_name, val);
 		}
 
 		virtual void DeclareStaticVariable(char const* sym_name) override
 		{
-			Emit<Data>("{}\tdword ?\n", sym_name);
+			Emit<Data>("{}\tdword ?", sym_name);
 		}
 		virtual void DeclareGlobalVariable(char const* sym_name) override
 		{
-			Emit<Preamble>("public {}\n", sym_name);
-			Emit<Data>("{}\tdword ?\n", sym_name);
+			Emit<Preamble>("public {}", sym_name);
+			Emit<Data>("{}\tdword ?", sym_name);
 		}
 
 		virtual void DeclareStaticFunction(char const* sym_name) override
 		{
-			Emit<Text>("{} proc", sym_name);
+			Emit<Text>("\n{} proc", sym_name);
 		}
 		virtual void DeclareGlobalFunction(char const* sym_name) override
 		{
-			Emit<Preamble>("public {}\n", sym_name);
-			Emit<Text>("{} proc", sym_name);
+			Emit<Preamble>("public {}", sym_name);
+			Emit<Text>("\n{} proc", sym_name);
 		}
 		virtual void ReturnFromFunction(char const* sym_name) override
 		{
