@@ -84,6 +84,7 @@ namespace lucc
 	public:
 		explicit Context(OutputBuffer& output_buffer) : output_buffer(output_buffer) 
 		{
+			free_registers.fill(true);
 			Emit<Data>(".data");
 			Emit<Text>(".code");
 		}
@@ -239,7 +240,7 @@ namespace lucc
 	private:
 		OutputBuffer& output_buffer;
 		size_t label_id;
-		std::array<bool, REG_COUNT> free_registers = { true, true, true, true };
+		std::array<bool, REG_COUNT> free_registers;
 
 	private:
 		template<SegmentType segment, typename... Ts>

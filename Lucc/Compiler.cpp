@@ -45,6 +45,8 @@ namespace lucc
 		x86_64CodeGenerator x86(input.output, ast);
 		x86.Generate();
 
+		system("ml64.exe test.asm /link /subsystem:console /defaultlib:kernel32.lib /entry:main");
+
 		return true;
 	}
 

@@ -11,5 +11,5 @@ void main()
 	{
 		k = 3 + 3;
 	}
-	//return k;
+	return k;
 }

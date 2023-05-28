@@ -298,7 +298,7 @@ namespace lucc
 
 	void ExprStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		expr->Codegen(ctx);
+		expr->Codegen(ctx, return_reg);
 	}
 
 	void CompoundStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
