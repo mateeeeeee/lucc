@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 
 	CompilerInput compiler_input{};
 	compiler_input.input = "test.txt";
-	compiler_input.output = "test2.asm";
+	compiler_input.output = "test.asm";
 	compiler_input.options = CompilerFlag_None;
 	bool result = Compile(compiler_input);
 }

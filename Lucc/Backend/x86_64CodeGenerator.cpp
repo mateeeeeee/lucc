@@ -39,7 +39,11 @@ namespace lucc
 		{
 			for (size_t i = 0; i < REG_COUNT; ++i)
 			{
-				if (free_registers[i]) return i;
+				if (free_registers[i])
+				{
+					free_registers[i] = false;
+					return i;
+				}
 			}
 			return INVALID_REG;
 		}

@@ -7,7 +7,10 @@ k	dword ?
 .code
 
 main proc
-mov	k, 5
+mov	r9, 3
+mov	r8, 5
+add	r8, r9
+mov	k, r8
 ret
 main endp
 

@@ -210,14 +210,17 @@ namespace lucc
 			}
 		}
 		break;
-		//case BinaryExprKind::Add:
-		//{
-			//size_t rhs_reg = rhs->Codegen(ctx);
-			//size_t lhs_reg = lhs->Codegen(ctx);
-			//ctx.Add(lhs_reg, rhs_reg);
-			//ctx.FreeRegister(rhs_reg);
-			//return lhs_reg;
-		//}
+		case BinaryExprKind::Add:
+		{
+			if (return_reg)
+			{
+				register_t tmp_reg = ctx.AllocateRegister();
+				rhs->Codegen(ctx, tmp_reg);
+				lhs->Codegen(ctx, *return_reg);
+				ctx.Add(*return_reg, tmp_reg);
+				ctx.FreeRegister(tmp_reg);
+			}
+		}
 		}
 	}
 

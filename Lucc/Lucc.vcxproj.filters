@@ -111,7 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="test.txt" />
-    <Text Include="test2.asm" />
+    <Text Include="test.asm" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Frontend\Tokens.def">

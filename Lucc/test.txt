@@ -3,5 +3,5 @@ int k;
 
 void main()
 {
-	k = 5;
+	k = 5 + 3;
 }

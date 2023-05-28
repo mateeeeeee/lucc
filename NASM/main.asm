@@ -9,7 +9,8 @@ k	dword ?
 main proc
 mov	r8d, 5
 mov	k, r8d
-xor eax, eax
+;xor eax, eax
+mov eax, k
 ret
 main endp
 

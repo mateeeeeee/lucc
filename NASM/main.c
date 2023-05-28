@@ -1,7 +1,7 @@
 #if 0
 #include <stdio.h>
 
-extern int f();
+extern int hello();
 extern int number;
 
 int main(void)
