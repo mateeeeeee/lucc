@@ -6,17 +6,18 @@ k	dword ?
 .code
 
 main proc
+mov	r8d, 2
+cmp	r8d, 4
+setg	r8b
 cmp	r8d, 0
-jz	L_else1
-mov	r10d, 3
+je	L_else1
 mov	r9d, 5
-add	r9d, r10d
+add	r9d, 3
 mov	k, r9d
 jmp	L_end1
 L_else1: 
-mov	r10d, 3
 mov	r9d, 3
-add	r9d, r10d
+add	r9d, 3
 mov	k, r9d
 L_end1:  
 mov eax, r9d

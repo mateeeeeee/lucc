@@ -169,6 +169,7 @@ namespace lucc
 	}
 
 	/// Codegen
+
 	void TranslationUnitAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		for (auto const& decl : declarations) decl->Codegen(ctx);
@@ -190,6 +191,62 @@ namespace lucc
 
 	void BinaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
+		auto CommonArithmeticCodegen = [&](BinaryExprKind kind)
+		{
+			if (!return_reg) return;
+
+			Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get());
+			if (int_literal)
+			{
+				lhs->Codegen(ctx, *return_reg);
+				switch (kind)
+				{
+				case BinaryExprKind::Add:		ctx.AddImm(*return_reg, int_literal->GetValue()); break;
+				case BinaryExprKind::Subtract:  ctx.SubImm(*return_reg, int_literal->GetValue()); break;
+				}
+			}
+			else
+			{
+				register_t tmp_reg = ctx.AllocateRegister();
+				rhs->Codegen(ctx, tmp_reg);
+				lhs->Codegen(ctx, *return_reg);
+				switch (kind)
+				{
+				case BinaryExprKind::Add:		ctx.Add(*return_reg, tmp_reg); break;
+				case BinaryExprKind::Subtract:  ctx.Sub(*return_reg, tmp_reg); break;
+				}
+				ctx.FreeRegister(tmp_reg);
+			}
+		};
+		auto CommonComparisonCodegen = [&](BinaryExprKind kind)
+		{
+			if (!return_reg) return;
+
+			Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get());
+			if (int_literal)
+			{
+				lhs->Codegen(ctx, *return_reg);
+				ctx.Compare(*return_reg, int_literal->GetValue());
+			}
+			else
+			{
+				register_t tmp_reg = ctx.AllocateRegister();
+				rhs->Codegen(ctx, tmp_reg);
+				lhs->Codegen(ctx, *return_reg);
+				ctx.Compare(*return_reg, tmp_reg);
+				ctx.FreeRegister(tmp_reg);
+			}
+			switch (kind)
+			{
+			case BinaryExprKind::Less:			ctx.Set(*return_reg, Condition::Less); break;
+			case BinaryExprKind::LessEqual:		ctx.Set(*return_reg, Condition::LessEqual); break;
+			case BinaryExprKind::Greater:		ctx.Set(*return_reg, Condition::Greater); break;
+			case BinaryExprKind::GreaterEqual:	ctx.Set(*return_reg, Condition::GreaterEqual); break;
+			case BinaryExprKind::Equal:			ctx.Set(*return_reg, Condition::Equal); break;
+			case BinaryExprKind::NotEqual:		ctx.Set(*return_reg, Condition::NotEqual); break;
+			}
+		};
+
 		switch (op)
 		{
 		case BinaryExprKind::Assign: 
@@ -211,20 +268,19 @@ namespace lucc
 		}
 		break;
 		case BinaryExprKind::Add:
+		case BinaryExprKind::Subtract:
 		{
-			if (return_reg)
-			{
-				register_t tmp_reg = ctx.AllocateRegister();
-				rhs->Codegen(ctx, tmp_reg);
-				lhs->Codegen(ctx, *return_reg);
-				ctx.Add(*return_reg, tmp_reg);
-				ctx.FreeRegister(tmp_reg);
-			}
+			CommonArithmeticCodegen(op);
 		}
 		break;
+		case BinaryExprKind::Less:
+		case BinaryExprKind::LessEqual:
 		case BinaryExprKind::Greater:
+		case BinaryExprKind::GreaterEqual:
+		case BinaryExprKind::Equal:
+		case BinaryExprKind::NotEqual:
 		{
-
+			CommonComparisonCodegen(op);
 		}
 		break;
 		}
@@ -250,13 +306,13 @@ namespace lucc
 		for (auto& stmt : statements) stmt->Codegen(ctx);
 	}
 
-	void IfStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	void IfStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		register_t cond_reg = ctx.AllocateRegister();
 		ctx.GenerateLabelId();
 		condition->Codegen(ctx, cond_reg);
 		ctx.Compare(cond_reg);
-		ctx.JumpZero("L_else");
+		ctx.Jump("L_else", Condition::Equal);
 		then_stmt->Codegen(ctx);
 		ctx.Jump("L_end");
 		ctx.Label("L_else");
@@ -264,6 +320,11 @@ namespace lucc
 		ctx.Label("L_end");
 	}
 
+	void ReturnStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	{
+		register_t reg = ctx.AllocateRegisterForReturn();
+		ret_expr->Codegen(ctx, reg);
+	}
 }
 
 

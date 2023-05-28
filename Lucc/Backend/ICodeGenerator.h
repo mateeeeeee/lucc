@@ -9,8 +9,22 @@ namespace lucc
 		virtual void Generate() = 0;
 	};
 
-	using register_t = size_t;
-	inline constexpr register_t INVALID_REG = -1;
+	struct register_t
+	{
+		size_t id;
+	};
+	inline constexpr register_t INVALID_REG = register_t{ .id = size_t(-1) };
+
+	enum class Condition
+	{
+		Unconditional,
+		Equal,
+		NotEqual,
+		Greater,
+		GreaterEqual,
+		Less,
+		LessEqual
+	};
 
 	class ICodegenContext
 	{
@@ -19,17 +33,23 @@ namespace lucc
 
 		virtual void		FreeAllRegisters() = 0;
 		virtual register_t	AllocateRegister() = 0;
+		virtual register_t	AllocateRegisterForReturn() = 0;
+		virtual register_t	AllocateRegisterForFunctionArg(size_t arg_index) = 0;
 		virtual void		FreeRegister(register_t reg) = 0;
 		
 		virtual void Mov(register_t reg, int64 v) = 0;
 		virtual void Add(register_t reg1, register_t reg2) = 0;
+		virtual void AddImm(register_t reg1, int64 v) = 0;
+		virtual void Sub(register_t reg1, register_t reg2) = 0;
+		virtual void SubImm(register_t reg1, int64 v) = 0;
 
 		virtual void GenerateLabelId() = 0;
 		virtual void Label(char const* label) = 0;
 		virtual void Compare(register_t reg, int64 value = 0) = 0;
-		virtual void Jump(char const* label) = 0;
-		virtual void JumpZero(char const* label) = 0;
-		
+		virtual void Compare(register_t reg1, register_t reg2) = 0;
+		virtual void Set(register_t reg, Condition cond) = 0;
+		virtual void Jump(char const* label, Condition cond = Condition::Unconditional) = 0;
+
 		virtual void StoreReg(char const* sym_name, register_t reg) = 0;
 		virtual void LoadReg(char const* sym_name, register_t reg) = 0;
 		virtual void StoreImm(char const* sym_name, int64 val) = 0;
@@ -41,7 +61,6 @@ namespace lucc
 		virtual void DeclareGlobalFunction(char const* sym_name) = 0;
 		virtual void ReturnFromFunction(char const* sym_name) = 0;
 	};
-
 	
 
 }
