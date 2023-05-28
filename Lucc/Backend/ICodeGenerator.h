@@ -20,9 +20,15 @@ namespace lucc
 		virtual void		FreeAllRegisters() = 0;
 		virtual register_t	AllocateRegister() = 0;
 		virtual void		FreeRegister(register_t reg) = 0;
-
-		virtual void Mov(int64 v, register_t reg) = 0;
+		
+		virtual void Mov(register_t reg, int64 v) = 0;
 		virtual void Add(register_t reg1, register_t reg2) = 0;
+
+		virtual void GenerateLabelId() = 0;
+		virtual void Label(char const* label) = 0;
+		virtual void Compare(register_t reg, int64 value = 0) = 0;
+		virtual void Jump(char const* label) = 0;
+		virtual void JumpZero(char const* label) = 0;
 		
 		virtual void StoreReg(char const* sym_name, register_t reg) = 0;
 		virtual void LoadReg(char const* sym_name, register_t reg) = 0;

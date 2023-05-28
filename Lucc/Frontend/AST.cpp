@@ -221,6 +221,12 @@ namespace lucc
 				ctx.FreeRegister(tmp_reg);
 			}
 		}
+		break;
+		case BinaryExprKind::Greater:
+		{
+
+		}
+		break;
 		}
 	}
 
@@ -231,7 +237,7 @@ namespace lucc
 
 	void Int64LiteralAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		if (return_reg) ctx.Mov(value, *return_reg);
+		if (return_reg) ctx.Mov(*return_reg, value);
 	}
 
 	void ExprStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
@@ -242,6 +248,20 @@ namespace lucc
 	void CompoundStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		for (auto& stmt : statements) stmt->Codegen(ctx);
+	}
+
+	void IfStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		register_t cond_reg = ctx.AllocateRegister();
+		ctx.GenerateLabelId();
+		condition->Codegen(ctx, cond_reg);
+		ctx.Compare(cond_reg);
+		ctx.JumpZero("L_else");
+		then_stmt->Codegen(ctx);
+		ctx.Jump("L_end");
+		ctx.Label("L_else");
+		if (else_stmt) else_stmt->Codegen(ctx);
+		ctx.Label("L_end");
 	}
 
 }
