@@ -1,4 +1,4 @@
-#include "Compiler.h"
+#include "Compiler/Compiler.h"
 #include "Core/CLIParser.h"
 #include <iostream>
 
@@ -11,8 +11,10 @@ int main(int argc, char** argv)
 	parser.Parse(argc, argv);
 
 	CompilerInput compiler_input{};
-	compiler_input.input = "test.txt";
-	compiler_input.output = "test.asm";
-	compiler_input.options = CompilerFlag_None;
+	compiler_input.source = "test.txt";
+	compiler_input.assembly = "test.asm";
+	compiler_input.object = "test.obj";
+	compiler_input.executable = "test.exe";
+	compiler_input.flags = CompilerFlag_OutputDebugInfo;
 	bool result = Compile(compiler_input);
 }

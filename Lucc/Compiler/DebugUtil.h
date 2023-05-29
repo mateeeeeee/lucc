@@ -7,6 +7,7 @@ namespace lucc
 {
 	namespace debug
 	{
+		void PrintOutput(char const* str);
 		void PrintTokens(char const* name, std::vector<Token> const& tokens);
 		class DebugNodeVisitorAST : public INodeVisitorAST
 		{

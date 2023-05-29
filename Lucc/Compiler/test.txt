@@ -1,0 +1,15 @@
+
+int k;
+int l;
+
+void main()
+{
+	k = 2;
+	l = 0;
+	while(k > 0)
+	{
+		k--;
+		l++;
+	}
+	return -l;	
+}

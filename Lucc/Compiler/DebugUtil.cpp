@@ -1,6 +1,11 @@
 #include <iostream>
 #include "DebugUtil.h"
 
+void lucc::debug::PrintOutput(char const* str)
+{
+	std::cout << str << "\n";
+}
+
 void lucc::debug::PrintTokens(char const* name, std::vector<Token> const& tokens)
 {
 	std::cout << name << "\n";

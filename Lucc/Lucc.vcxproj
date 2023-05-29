@@ -20,8 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Backend\x86_64CodeGenerator.cpp" />
-    <ClCompile Include="Compiler.cpp" />
-    <ClCompile Include="DebugUtil.cpp" />
+    <ClCompile Include="Backend\x86_64Context.cpp" />
+    <ClCompile Include="Compiler\Compiler.cpp" />
+    <ClCompile Include="Compiler\DebugUtil.cpp" />
     <ClCompile Include="Frontend\AST.cpp" />
     <ClCompile Include="Frontend\Diagnostics.cpp" />
     <ClCompile Include="Frontend\Lexer.cpp" />
@@ -35,12 +36,13 @@
   <ItemGroup>
     <ClInclude Include="Backend\ICodeGenerator.h" />
     <ClInclude Include="Backend\x86_64CodeGenerator.h" />
-    <ClInclude Include="Compiler.h" />
+    <ClInclude Include="Backend\x86_64Context.h" />
+    <ClInclude Include="Compiler\Compiler.h" />
+    <ClInclude Include="Compiler\DebugUtil.h" />
     <ClInclude Include="Core\CLIParser.h" />
     <ClInclude Include="Core\CoreTypes.h" />
     <ClInclude Include="Core\Defines.h" />
     <ClInclude Include="Core\Enums.h" />
-    <ClInclude Include="DebugUtil.h" />
     <ClInclude Include="Frontend\AST.h" />
     <ClInclude Include="Frontend\Diagnostics.h" />
     <ClInclude Include="Frontend\Lexer.h" />
@@ -55,12 +57,12 @@
     <ClInclude Include="precomp.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="test.txt" />
-    <Text Include="test.asm" />
-  </ItemGroup>
-  <ItemGroup>
+    <None Include="Compiler\test.asm" />
     <None Include="Frontend\Diagnostics.def" />
     <None Include="Frontend\Tokens.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Compiler\test.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

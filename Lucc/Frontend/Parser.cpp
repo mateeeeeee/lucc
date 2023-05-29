@@ -675,14 +675,31 @@ namespace lucc
 	//							| <postfix - expression> --
 	std::unique_ptr<ExprAST> Parser::ParsePostFixExpression()
 	{
-		//std::unique_ptr<ExprAST> expr;
+		std::unique_ptr<ExprAST> expr;
 		//if (current_token->Is(TokenKind::left_round) && (current_token + 1)->IsDeclSpec())
 		//{
 		//	//expr = ParseCompoundLiteral();
 		//}
-		//else expr = ParsePrimaryExpression();
-		//return ParsePostfixExprTail(expr);
-		return ParsePrimaryExpression();
+		//else 
+		expr = ParsePrimaryExpression();
+		switch (current_token->GetKind())
+		{
+		case TokenKind::plus_plus:
+		{
+			++current_token;
+			std::unique_ptr<UnaryExprAST> post_inc_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostIncrement);
+			post_inc_expr->SetOperand(std::move(expr));
+			return post_inc_expr;
+		}
+		case TokenKind::minus_minus:
+		{
+			++current_token;
+			std::unique_ptr<UnaryExprAST> post_dec_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostDecrement);
+			post_dec_expr->SetOperand(std::move(expr));
+			return post_dec_expr;
+		}
+		}
+		return expr;
 	}
 
 	std::unique_ptr<ExprAST> Parser::ParseSizeofExpression()

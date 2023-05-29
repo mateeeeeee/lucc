@@ -21,8 +21,7 @@ namespace lucc
 			if (!tokens.empty())
 			{
 				auto const& prev_token = tokens.back();
-				if (prev_token.Is(TokenKind::newline))
-					current_token.SetFlag(TokenFlag_BeginningOfLine);
+				if (prev_token.Is(TokenKind::newline)) current_token.SetFlag(TokenFlag_BeginningOfLine);
 				if (prev_token.Is(TokenKind::hash) && prev_token.HasFlag(TokenFlag_BeginningOfLine))
 				{
 					std::string_view identifier = current_token.GetIdentifier();

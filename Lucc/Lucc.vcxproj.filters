@@ -22,9 +22,14 @@
     <Filter Include="Backend">
       <UniqueIdentifier>{df52d063-1d91-4ee8-985c-97e985589efb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Compiler">
+      <UniqueIdentifier>{8cc26ad8-26fe-4b22-8b77-fa36af835f2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Backend\x86-64">
+      <UniqueIdentifier>{13032ed4-01a1-483b-ae25-2669dae4f389}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="precomp.cpp" />
     <ClCompile Include="Frontend\SourceBuffer.cpp">
@@ -48,13 +53,20 @@
     <ClCompile Include="Frontend\AST.cpp">
       <Filter>Frontend\Parser</Filter>
     </ClCompile>
-    <ClCompile Include="Backend\x86_64CodeGenerator.cpp">
-      <Filter>Backend</Filter>
+    <ClCompile Include="Compiler\Compiler.cpp">
+      <Filter>Compiler</Filter>
     </ClCompile>
-    <ClCompile Include="DebugUtil.cpp" />
+    <ClCompile Include="Compiler\DebugUtil.cpp">
+      <Filter>Compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="Backend\x86_64Context.cpp">
+      <Filter>Backend\x86-64</Filter>
+    </ClCompile>
+    <ClCompile Include="Backend\x86_64CodeGenerator.cpp">
+      <Filter>Backend\x86-64</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Compiler.h" />
     <ClInclude Include="precomp.h" />
     <ClInclude Include="Frontend\SourceBuffer.h">
       <Filter>Frontend</Filter>
@@ -101,17 +113,21 @@
     <ClInclude Include="Frontend\Type.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
-    <ClInclude Include="Backend\x86_64CodeGenerator.h">
-      <Filter>Backend</Filter>
-    </ClInclude>
     <ClInclude Include="Backend\ICodeGenerator.h">
       <Filter>Backend</Filter>
     </ClInclude>
-    <ClInclude Include="DebugUtil.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="test.txt" />
-    <Text Include="test.asm" />
+    <ClInclude Include="Compiler\Compiler.h">
+      <Filter>Compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Compiler\DebugUtil.h">
+      <Filter>Compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Backend\x86_64Context.h">
+      <Filter>Backend\x86-64</Filter>
+    </ClInclude>
+    <ClInclude Include="Backend\x86_64CodeGenerator.h">
+      <Filter>Backend\x86-64</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Frontend\Tokens.def">
@@ -120,5 +136,13 @@
     <None Include="Frontend\Diagnostics.def">
       <Filter>Frontend\Diagnostics</Filter>
     </None>
+    <None Include="Compiler\test.asm">
+      <Filter>Compiler</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Compiler\test.txt">
+      <Filter>Compiler</Filter>
+    </Text>
   </ItemGroup>
 </Project>

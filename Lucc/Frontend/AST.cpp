@@ -189,6 +189,63 @@ namespace lucc
 		return;
 	}
 
+	void UnaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		switch (op)
+		{
+		case UnaryExprKind::PreIncrement:
+		case UnaryExprKind::PreDecrement:
+		{
+			if (IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get()))
+			{
+				char const* name = identifier->GetName().data();
+				if (op == UnaryExprKind::PreIncrement) ctx.Inc(name);
+				else ctx.Dec(name);
+				if (return_reg) ctx.Move(*return_reg, name);
+			}
+		}
+		return;
+		case UnaryExprKind::PostIncrement:
+		case UnaryExprKind::PostDecrement:
+		{
+			if (IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get()))
+			{
+				char const* name = identifier->GetName().data();
+				if (return_reg) ctx.Move(*return_reg, name);
+				if (op == UnaryExprKind::PostIncrement) ctx.Inc(name);
+				else ctx.Dec(name);
+			}
+		}
+		return;
+		case UnaryExprKind::Plus:
+		case UnaryExprKind::Minus:
+		{
+			if (return_reg)
+			{
+				if (Int64LiteralAST* literal = AstCast<Int64LiteralAST>(operand.get()))
+				{
+					ctx.Move(*return_reg, literal->GetValue());
+					if(op == UnaryExprKind::Minus) ctx.Neg(*return_reg);
+				}
+				else if (IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get()))
+				{
+					char const* name = identifier->GetName().data();
+					ctx.Move(*return_reg, name);
+					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg);
+				}
+			}
+		}
+		return;
+		case UnaryExprKind::BitNot:
+		case UnaryExprKind::LogicalNot:
+		case UnaryExprKind::Dereference:
+		case UnaryExprKind::AddressOf:
+		case UnaryExprKind::Cast:
+		default:
+			LU_ASSERT_MSG(false, "Not implemented yet");
+		}
+	}
+
 	void BinaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		auto CommonArithmeticCodegen = [&](BinaryExprKind kind)
@@ -256,12 +313,12 @@ namespace lucc
 				char const* var_name = var_decl->GetName().data();
 				Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get());
 
-				if (int_literal) ctx.StoreImm(var_name, int_literal->GetValue());
+				if (int_literal) ctx.Move(var_name, int_literal->GetValue());
 				else
 				{
 					register_t rhs_reg = return_reg ? *return_reg : ctx.AllocateRegister();
 					rhs->Codegen(ctx, rhs_reg);
-					ctx.StoreReg(var_name, rhs_reg);
+					ctx.Move(var_name, rhs_reg);
 					if(!return_reg) ctx.FreeRegister(rhs_reg);
 				}
 			}
@@ -288,12 +345,12 @@ namespace lucc
 
 	void IdentifierAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		if (return_reg) ctx.LoadReg(name.c_str(), *return_reg);
+		if (return_reg) ctx.Move(*return_reg, name.c_str());
 	}
 
 	void Int64LiteralAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		if (return_reg) ctx.Mov(*return_reg, value);
+		if (return_reg) ctx.Move(*return_reg, value);
 	}
 
 	void ExprStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
@@ -324,6 +381,19 @@ namespace lucc
 	{
 		register_t reg = ctx.AllocateRegisterForReturn();
 		ret_expr->Codegen(ctx, reg);
+	}
+
+	void WhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		register_t cond_reg = ctx.AllocateRegister();
+		ctx.GenerateLabelId();
+		ctx.Label("L_start");
+		condition->Codegen(ctx, cond_reg);
+		ctx.Compare(cond_reg);
+		ctx.Jump("L_end", Condition::Equal);
+		body_stmt->Codegen(ctx);
+		ctx.Jump("L_start");
+		ctx.Label("L_end");
 	}
 }
 

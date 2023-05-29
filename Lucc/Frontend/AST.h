@@ -238,6 +238,7 @@ namespace lucc
 			: condition(std::move(condition)), body_stmt(std::move(body_stmt)) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::unique_ptr<ExprAST> condition;
@@ -363,6 +364,7 @@ namespace lucc
 		UnaryExprKind GetOp() const { return op; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::unique_ptr<ExprAST> operand;

@@ -36,12 +36,22 @@ namespace lucc
 		virtual register_t	AllocateRegisterForReturn() = 0;
 		virtual register_t	AllocateRegisterForFunctionArg(size_t arg_index) = 0;
 		virtual void		FreeRegister(register_t reg) = 0;
-		
-		virtual void Mov(register_t reg, int64 v) = 0;
+
+		virtual void Move(char const* sym_name, register_t reg) = 0;
+		virtual void Move(register_t reg, char const* sym_name) = 0;
+		virtual void Move(char const* sym_name, int64 val) = 0;
+		virtual void Move(register_t reg, int64 v) = 0;
+
+		virtual void Inc(register_t reg) = 0;
+		virtual void Inc(char const* sym_name) = 0;
+		virtual void Dec(register_t reg) = 0;
+		virtual void Dec(char const* sym_name) = 0;
+
 		virtual void Add(register_t reg1, register_t reg2) = 0;
 		virtual void AddImm(register_t reg1, int64 v) = 0;
 		virtual void Sub(register_t reg1, register_t reg2) = 0;
 		virtual void SubImm(register_t reg1, int64 v) = 0;
+		virtual void Neg(register_t reg) = 0;
 
 		virtual void GenerateLabelId() = 0;
 		virtual void Label(char const* label) = 0;
@@ -50,10 +60,6 @@ namespace lucc
 		virtual void Set(register_t reg, Condition cond) = 0;
 		virtual void Jump(char const* label, Condition cond = Condition::Unconditional) = 0;
 
-		virtual void StoreReg(char const* sym_name, register_t reg) = 0;
-		virtual void LoadReg(char const* sym_name, register_t reg) = 0;
-		virtual void StoreImm(char const* sym_name, int64 val) = 0;
-
 		virtual void DeclareStaticVariable(char const* sym_name) = 0;
 		virtual void DeclareGlobalVariable(char const* sym_name) = 0;
 
@@ -61,6 +67,6 @@ namespace lucc
 		virtual void DeclareGlobalFunction(char const* sym_name) = 0;
 		virtual void ReturnFromFunction(char const* sym_name) = 0;
 	};
-	
+
 
 }
