@@ -36,6 +36,15 @@ namespace lucc
 			else return Is(t1) || IsOneOf(ts...);
 		}
 
+		bool operator==(Type const& t)
+		{
+			return kind == t.kind && size == t.size && align == t.align && is_complete == t.is_complete;
+		}
+		bool operator!=(Type const& t)
+		{
+			return !(*this == t);
+		}
+
 	private:
 		PrimitiveTypeKind kind;
 		size_t size;
@@ -97,6 +106,15 @@ namespace lucc
 		}
 		Type const& operator*() const { return RawType(); }
 		operator Type const& () const { return RawType(); }
+
+		bool operator==(QualifiedType const& qt)
+		{
+			return *type == *(qt.type) && qualifiers == qt.qualifiers;
+		}
+		bool operator!=(QualifiedType const& qt)
+		{
+			return !(*this == qt);
+		}
 
 	private:
 		std::shared_ptr<Type> type = nullptr;

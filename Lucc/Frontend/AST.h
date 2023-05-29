@@ -190,6 +190,8 @@ namespace lucc
 	{
 	public:
 		ExprStmtAST(std::unique_ptr<ExprAST>&& expr) : expr(std::move(expr)) {}
+		ExprAST* GetExpr() const { return expr.get(); }
+
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 

@@ -2,7 +2,7 @@
 int k;
 int l;
 
-void main()
+int main()
 {
 	k = 2;
 	l = 0;

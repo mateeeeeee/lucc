@@ -344,9 +344,14 @@ namespace lucc
 	std::unique_ptr<ReturnStmtAST> Parser::ParseReturnStatement()
 	{
 		Expect(TokenKind::KW_return);
-		std::unique_ptr<ExprStmtAST> ret_expr = ParseExpressionStatement();
-		return std::make_unique<ReturnStmtAST>(std::move(ret_expr));
-		//check compatibility with function return type
+		std::unique_ptr<ExprStmtAST> ret_expr_stmt = ParseExpressionStatement();
+		//ExprAST* ret_expr = ret_expr_stmt->GetExpr();
+		//if (ret_expr->GetType() != ctx.current_func_type->GetReturnType()) //add is compatible to types
+		//{
+		//	Report(diag::return_type_mismatch);
+		//	return nullptr;
+		//}
+		return std::make_unique<ReturnStmtAST>(std::move(ret_expr_stmt));
 	}
 
 	std::unique_ptr<LabelStmtAST> Parser::ParseLabelStatement()
