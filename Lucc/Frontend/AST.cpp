@@ -22,6 +22,13 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
+	bool ExprAST::IsAssignable() const
+	{
+		if (!IsLValue()) return false;
+		if (!type->IsComplete() || type.IsConst() || type->Is(PrimitiveTypeKind::Array)) return false;
+		return true;
+	}
+
 	void BinaryExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -233,6 +240,11 @@ namespace lucc
 					ctx.Move(*return_reg, name);
 					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg);
 				}
+				else
+				{
+					operand->Codegen(ctx, *return_reg);
+					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg);
+				}
 			}
 		}
 		return;
@@ -395,6 +407,7 @@ namespace lucc
 		ctx.Jump("L_start");
 		ctx.Label("L_end");
 	}
+
 }
 
 

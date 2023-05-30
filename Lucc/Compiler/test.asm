@@ -22,7 +22,6 @@ inc	l
 jmp	L_start1
 L_end1: 
 mov	eax, l
-neg	eax
 ret
 main endp
 

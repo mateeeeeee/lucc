@@ -6,24 +6,6 @@
 
 namespace lucc
 {
-	namespace builtin_types
-	{
-		static constexpr Type Void = VoidType();
-		static constexpr ArithmeticType Bool = ArithmeticType(ArithmeticType::Bool);
-		static constexpr ArithmeticType Char = ArithmeticType(ArithmeticType::Char);
-		static constexpr ArithmeticType UnsignedChar = ArithmeticType(ArithmeticType::Char, true);
-		static constexpr ArithmeticType Short = ArithmeticType(ArithmeticType::Short);
-		static constexpr ArithmeticType UnsignedShort = ArithmeticType(ArithmeticType::Short, true);
-		static constexpr ArithmeticType Int = ArithmeticType(ArithmeticType::Int);
-		static constexpr ArithmeticType UnsignedInt = ArithmeticType(ArithmeticType::Int, true);
-		static constexpr ArithmeticType Long = ArithmeticType(ArithmeticType::Long);
-		static constexpr ArithmeticType UnsignedLong = ArithmeticType(ArithmeticType::Long, true);
-		static constexpr ArithmeticType LongLong = ArithmeticType(ArithmeticType::LongLong);
-		static constexpr ArithmeticType UnsignedLongLong = ArithmeticType(ArithmeticType::LongLong, true);
-		static constexpr ArithmeticType Float = ArithmeticType(ArithmeticType::Float);
-		static constexpr ArithmeticType Double = ArithmeticType(ArithmeticType::Double);
-		static constexpr ArithmeticType LongDouble = ArithmeticType(ArithmeticType::Double | ArithmeticType::Long);
-	}
 	namespace
 	{
 		constexpr BinaryExprKind TokenKindToBinaryExprType(TokenKind t)
@@ -345,12 +327,19 @@ namespace lucc
 	{
 		Expect(TokenKind::KW_return);
 		std::unique_ptr<ExprStmtAST> ret_expr_stmt = ParseExpressionStatement();
-		//ExprAST* ret_expr = ret_expr_stmt->GetExpr();
-		//if (ret_expr->GetType() != ctx.current_func_type->GetReturnType()) //add is compatible to types
-		//{
-		//	Report(diag::return_type_mismatch);
-		//	return nullptr;
-		//}
+		ExprAST* ret_expr = ret_expr_stmt->GetExpr();
+		QualifiedType ret_type = ctx.current_func_type->GetReturnType();
+
+		if (!ret_expr && ret_type->IsNot(PrimitiveTypeKind::Void))
+		{
+			Report(diag::return_type_mismatch);
+			return nullptr;
+		}
+		if (ret_expr && ret_type->Is(PrimitiveTypeKind::Void))
+		{
+			Report(diag::return_type_mismatch);
+			return nullptr;
+		}
 		return std::make_unique<ReturnStmtAST>(std::move(ret_expr_stmt));
 	}
 
@@ -370,8 +359,9 @@ namespace lucc
 		std::unique_ptr<ExprAST> lhs = (this->*ParseFn)();
 		while (Consume(token_kind)) 
 		{
+			SourceLocation loc = current_token->GetLocation();
 			std::unique_ptr<ExprAST> rhs = (this->*ParseFn)();
-			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind, loc);
 			parent->SetLHS(std::move(lhs));
 			parent->SetRHS(std::move(rhs));
 			lhs = std::move(parent);
@@ -401,6 +391,7 @@ namespace lucc
 	{
 		std::unique_ptr<ExprAST> lhs = ParseConditionalExpression();
 		BinaryExprKind arith_op_kind = BinaryExprKind::Assign;
+		SourceLocation loc = current_token->GetLocation();
 		switch (current_token->GetKind()) 
 		{
 		case TokenKind::equal: arith_op_kind = BinaryExprKind::Assign; break;
@@ -419,15 +410,13 @@ namespace lucc
 		}
 		++current_token;
 		std::unique_ptr<ExprAST> rhs = ParseAssignExpression();
-		//if (arith_op_kind != BinaryExprKind::Assign)
-		//{
-		//	std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(arith_op_kind);
-		//	parent->SetLHS(std::move(lhs));
-		//	parent->SetRHS(std::move(rhs));
-		//	rhs = std::move(parent);
-		//}
 
-		std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(BinaryExprKind::Assign);
+		if (!lhs->IsAssignable())
+		{
+			Report(diag::lhs_not_assignable);
+			return nullptr;
+		}
+		std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(BinaryExprKind::Assign, loc);
 		parent->SetLHS(std::move(lhs));
 		parent->SetRHS(std::move(rhs));
 		return parent;
@@ -443,7 +432,8 @@ namespace lucc
 			std::unique_ptr<ExprAST> true_expr = ParseExpression();
 			Expect(TokenKind::colon);
 			std::unique_ptr<ExprAST> false_expr = ParseConditionalExpression();
-			return std::make_unique<TernaryExprAST>(std::move(cond), std::move(true_expr), std::move(false_expr));
+			SourceLocation loc = current_token->GetLocation();
+			return std::make_unique<TernaryExprAST>(std::move(cond), std::move(true_expr), std::move(false_expr), loc);
 		}
 		return cond;
 	}
@@ -492,6 +482,7 @@ namespace lucc
 		while (true)
 		{
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			SourceLocation loc = current_token->GetLocation();
 			switch (current_token->GetKind()) 
 			{
 			case TokenKind::equal_equal: op_kind = BinaryExprKind::Equal; break;
@@ -501,7 +492,7 @@ namespace lucc
 			}
 			++current_token;
 			std::unique_ptr<ExprAST> rhs = ParseRelationalExpression();
-			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind, loc);
 			parent->SetLHS(std::move(lhs));
 			parent->SetRHS(std::move(rhs));
 			lhs = std::move(parent);
@@ -519,6 +510,7 @@ namespace lucc
 		while (true) 
 		{
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			SourceLocation loc = current_token->GetLocation();
 			switch (current_token->GetKind())
 			{
 			case TokenKind::less:			op_kind = BinaryExprKind::Less; break;
@@ -530,7 +522,7 @@ namespace lucc
 			}
 			++current_token;
 			std::unique_ptr<ExprAST> rhs = ParseShiftExpression();
-			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind, loc);
 			parent->SetLHS(std::move(lhs));
 			parent->SetRHS(std::move(rhs));
 			lhs = std::move(parent);
@@ -546,6 +538,7 @@ namespace lucc
 		while (true)
 		{
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			SourceLocation loc = current_token->GetLocation();
 			switch (current_token->GetKind())
 			{
 			case TokenKind::less_less:			op_kind = BinaryExprKind::ShiftLeft; break;
@@ -555,7 +548,7 @@ namespace lucc
 			}
 			++current_token;
 			std::unique_ptr<ExprAST> rhs = ParseAdditiveExpression();
-			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind, loc);
 			parent->SetLHS(std::move(lhs));
 			parent->SetRHS(std::move(rhs));
 			lhs = std::move(parent);
@@ -571,6 +564,7 @@ namespace lucc
 		while (true) 
 		{
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			SourceLocation loc = current_token->GetLocation();
 			switch (current_token->GetKind())
 			{
 			case TokenKind::plus:			op_kind = BinaryExprKind::Add; break;
@@ -580,7 +574,7 @@ namespace lucc
 			}
 			++current_token;
 			std::unique_ptr<ExprAST> rhs = ParseMultiplicativeExpression();
-			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind, loc);
 			parent->SetLHS(std::move(lhs));
 			parent->SetRHS(std::move(rhs));
 			lhs = std::move(parent);
@@ -597,6 +591,7 @@ namespace lucc
 		while (true) 
 		{
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
+			SourceLocation loc = current_token->GetLocation();
 			switch (current_token->GetKind())
 			{
 			case TokenKind::star:	op_kind = BinaryExprKind::Multiply; break;
@@ -607,7 +602,7 @@ namespace lucc
 			}
 			++current_token;
 			std::unique_ptr<ExprAST> rhs = ParseCastExpression();
-			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind);
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(op_kind, loc);
 			parent->SetLHS(std::move(lhs));
 			parent->SetRHS(std::move(rhs));
 			lhs = std::move(parent);
@@ -635,31 +630,32 @@ namespace lucc
 	std::unique_ptr<ExprAST> Parser::ParseUnaryExpression()
 	{
 		std::unique_ptr<UnaryExprAST> unary_expr;
+		SourceLocation loc = current_token->GetLocation();
 		switch (current_token->GetKind()) 
 		{
 		case TokenKind::plus_plus:
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PreIncrement);
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PreIncrement, loc);
 			break;
 		case TokenKind::minus_minus: 
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PreDecrement);
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PreDecrement, loc);
 			break;
 		case TokenKind::amp: 
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::AddressOf);
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::AddressOf, loc);
 			break;
 		case TokenKind::star: 
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference);
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
 			break;
 		case TokenKind::plus:
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Plus);
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Plus, loc);
 			break;
 		case TokenKind::minus:
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Minus);
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Minus, loc);
 			break;
 		case TokenKind::tilde:
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::BitNot);
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::BitNot, loc);
 			break;
 		case TokenKind::exclaim:
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::LogicalNot);
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::LogicalNot, loc);
 			break;
 		case TokenKind::KW_sizeof: return ParseSizeofExpression();
 		case TokenKind::KW__Alignas: return ParseAlignofExpression();
@@ -687,19 +683,20 @@ namespace lucc
 		//}
 		//else 
 		expr = ParsePrimaryExpression();
+		SourceLocation loc = current_token->GetLocation();
 		switch (current_token->GetKind())
 		{
 		case TokenKind::plus_plus:
 		{
 			++current_token;
-			std::unique_ptr<UnaryExprAST> post_inc_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostIncrement);
+			std::unique_ptr<UnaryExprAST> post_inc_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostIncrement, loc);
 			post_inc_expr->SetOperand(std::move(expr));
 			return post_inc_expr;
 		}
 		case TokenKind::minus_minus:
 		{
 			++current_token;
-			std::unique_ptr<UnaryExprAST> post_dec_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostDecrement);
+			std::unique_ptr<UnaryExprAST> post_dec_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostDecrement, loc);
 			post_dec_expr->SetOperand(std::move(expr));
 			return post_dec_expr;
 		}
@@ -743,43 +740,55 @@ namespace lucc
 		LU_ASSERT(current_token->Is(TokenKind::number));
 		std::string_view string_number = current_token->GetIdentifier();
 		int64 value = std::stoll(current_token->GetIdentifier().data(), nullptr, 0);
+		SourceLocation loc = current_token->GetLocation();
 		++current_token;
-		return std::make_unique<Int64LiteralAST>(value);
+		return std::make_unique<Int64LiteralAST>(value, loc);
 	}
 
 	std::unique_ptr<StringLiteralAST> Parser::ParseStringLiteral()
 	{
 		LU_ASSERT(current_token->Is(TokenKind::string_literal));
 		std::string_view str = current_token->GetIdentifier();
+		SourceLocation loc = current_token->GetLocation();
 		++current_token;
-		return std::make_unique<StringLiteralAST>(str);
+		return std::make_unique<StringLiteralAST>(str, loc);
 	}
 
 	std::unique_ptr<IdentifierAST> Parser::ParseIdentifier()
 	{
 		LU_ASSERT(current_token->Is(TokenKind::identifier));
 		std::string_view name = current_token->GetIdentifier();
-		++current_token;
-		return std::make_unique<IdentifierAST>(name);
+		if (Symbol* sym = ctx.identifier_sym_table->LookUp(name))
+		{
+			SourceLocation loc = current_token->GetLocation();
+			++current_token;
+			return std::make_unique<IdentifierAST>(name, loc, sym->qtype);
+		}
+		else
+		{
+			Report(diag::variable_not_declared);
+			return nullptr;
+		}
 	}
 
 	std::unique_ptr<ExprAST> Parser::ConvertExpression(std::unique_ptr<ExprAST>& expr)
 	{
 		if (!expr) return nullptr;
 		auto const& type = expr->GetType();
+		SourceLocation loc = current_token->GetLocation();
 		switch (type->GetKind())
 		{
 		case PrimitiveTypeKind::Array:
 		{
-			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::ArrayToPointer);
+			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::ArrayToPointer, loc);
 		}
 		case PrimitiveTypeKind::Function:
 		{
-			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::FunctionToPointer);
+			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::FunctionToPointer, loc);
 		}
 		case PrimitiveTypeKind::Arithmetic: 
 		{
-			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::IntegerPromotion);
+			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::IntegerPromotion, loc);
 		}
 		}
 		return std::move(expr);
@@ -1135,5 +1144,4 @@ namespace lucc
 		}
 		return (current_token + offset)->IsDeclSpec();
 	}
-
 }

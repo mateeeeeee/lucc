@@ -288,4 +288,23 @@ namespace lucc
 	{
 		return static_cast<T const&>(t);
 	}
+
+	namespace builtin_types
+	{
+		static constexpr Type Void = VoidType();
+		static constexpr ArithmeticType Bool = ArithmeticType(ArithmeticType::Bool);
+		static constexpr ArithmeticType Char = ArithmeticType(ArithmeticType::Char);
+		static constexpr ArithmeticType UnsignedChar = ArithmeticType(ArithmeticType::Char, true);
+		static constexpr ArithmeticType Short = ArithmeticType(ArithmeticType::Short);
+		static constexpr ArithmeticType UnsignedShort = ArithmeticType(ArithmeticType::Short, true);
+		static constexpr ArithmeticType Int = ArithmeticType(ArithmeticType::Int);
+		static constexpr ArithmeticType UnsignedInt = ArithmeticType(ArithmeticType::Int, true);
+		static constexpr ArithmeticType Long = ArithmeticType(ArithmeticType::Long);
+		static constexpr ArithmeticType UnsignedLong = ArithmeticType(ArithmeticType::Long, true);
+		static constexpr ArithmeticType LongLong = ArithmeticType(ArithmeticType::LongLong);
+		static constexpr ArithmeticType UnsignedLongLong = ArithmeticType(ArithmeticType::LongLong, true);
+		static constexpr ArithmeticType Float = ArithmeticType(ArithmeticType::Float);
+		static constexpr ArithmeticType Double = ArithmeticType(ArithmeticType::Double);
+		static constexpr ArithmeticType LongDouble = ArithmeticType(ArithmeticType::Double | ArithmeticType::Long);
+	}
 }

@@ -4,6 +4,7 @@ int l;
 
 int main()
 {
+	
 	k = 2;
 	l = 0;
 	while(k > 0)
@@ -11,5 +12,5 @@ int main()
 		k--;
 		l++;
 	}
-	return -l;	
+	return +(+l);	
 }

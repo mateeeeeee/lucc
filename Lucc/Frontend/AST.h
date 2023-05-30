@@ -340,28 +340,26 @@ namespace lucc
 	{
 	public:
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-
-		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
-		void SetType(QualifiedType const& _type) { type = _type; }
-		void SetValueCategory(ExprValueCategory _value_category) { value_category = _value_category; }
-
 		SourceLocation const& GetLocation() const { return loc; }
 		QualifiedType const& GetType() const { return type; }
 		bool IsLValue() const { return value_category == ExprValueCategory::LValue; }
+		bool IsAssignable() const;
 
 	protected:
 		SourceLocation loc;
-		ExprValueCategory value_category = ExprValueCategory::LValue;
 		QualifiedType type;
+		ExprValueCategory value_category = ExprValueCategory::RValue;
 
 	protected:
-		ExprAST() = default;
-
+		explicit ExprAST(SourceLocation const& loc, QualifiedType const& type = builtin_types::Int) : loc(loc), type(type) {}
+		void SetValueCategory(ExprValueCategory _value_category) { value_category = _value_category; }
+		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
+		void SetType(QualifiedType const& _type) { type = _type; }
 	};
 	class UnaryExprAST : public ExprAST
 	{
 	public:
-		explicit UnaryExprAST(UnaryExprKind op) : op(op) {}
+		UnaryExprAST(UnaryExprKind op, SourceLocation const& loc) : ExprAST(loc), op(op) {}
 		void SetOperand(std::unique_ptr<ExprAST>&& _operand) { operand = std::move(_operand); }
 		UnaryExprKind GetOp() const { return op; }
 
@@ -375,8 +373,16 @@ namespace lucc
 	class BinaryExprAST : public ExprAST
 	{
 	public:
-		explicit BinaryExprAST(BinaryExprKind op) 
-			: op(op) {}
+		BinaryExprAST(BinaryExprKind op, SourceLocation const& loc) : ExprAST(loc), op(op)
+		{
+			switch (op) 
+			{
+			case BinaryExprKind::Assign:
+			{
+				
+			}
+			}
+		}
 		void SetLHS(std::unique_ptr<ExprAST>&& _lhs) { lhs = std::move(_lhs); }
 		void SetRHS(std::unique_ptr<ExprAST>&& _rhs) { rhs = std::move(_rhs); }
 		BinaryExprKind GetOp() const { return op; }
@@ -392,7 +398,7 @@ namespace lucc
 	{
 	public:
 		TernaryExprAST(std::unique_ptr<ExprAST>&& cond_expr, std::unique_ptr<ExprAST>&& true_expr,
-			std::unique_ptr<ExprAST>&& false_expr) :
+			std::unique_ptr<ExprAST>&& false_expr, SourceLocation const& loc) : ExprAST(loc),
 			cond_expr(std::move(cond_expr)),
 			true_expr(std::move(true_expr)),
 			false_expr(std::move(false_expr)) {}
@@ -415,8 +421,8 @@ namespace lucc
 	class ImplicitCastExprAST : public ExprAST
 	{
 	public:
-		ImplicitCastExprAST(std::unique_ptr<ExprAST>&& expr, CastKind kind)
-		: operand(std::move(expr)), kind(kind) {}
+		ImplicitCastExprAST(std::unique_ptr<ExprAST>&& expr, CastKind kind, SourceLocation const& loc) 
+			: ExprAST(loc), operand(std::move(expr)), kind(kind) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
@@ -429,7 +435,7 @@ namespace lucc
 	class Float32LiteralAST final : public ExprAST
 	{
 	public:
-		Float32LiteralAST(float value) : ExprAST(), value(value) {}
+		Float32LiteralAST(float value, SourceLocation const& loc) : ExprAST(loc, builtin_types::Float), value(value) {}
 		float GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -440,7 +446,7 @@ namespace lucc
 	class Float64LiteralAST final : public ExprAST
 	{
 	public:
-		Float64LiteralAST(double value) : ExprAST(), value(value) {}
+		Float64LiteralAST(double value, SourceLocation const& loc) : ExprAST(loc, builtin_types::Double), value(value) {}
 		double GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -451,7 +457,7 @@ namespace lucc
 	class Int64LiteralAST final : public ExprAST
 	{
 	public:
-		Int64LiteralAST(int64 value) : ExprAST(), value(value) {}
+		Int64LiteralAST(int64 value, SourceLocation const& loc) : ExprAST(loc, builtin_types::LongLong), value(value) {}
 		int64 GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -463,7 +469,7 @@ namespace lucc
 	class StringLiteralAST final : public ExprAST
 	{
 	public:
-		StringLiteralAST(std::string_view str) : ExprAST(), str(str) {}
+		StringLiteralAST(std::string_view str, SourceLocation const& loc) : ExprAST(loc, QualifiedType(ArrayType(builtin_types::Char, str.size()))), str(str) {}
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetString() const { return str; }
@@ -474,7 +480,10 @@ namespace lucc
 	class IdentifierAST : public ExprAST
 	{
 	public:
-		explicit IdentifierAST(std::string_view name) : ExprAST(), name(name) {}
+		explicit IdentifierAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(loc, type), name(name)
+		{
+			SetValueCategory(ExprValueCategory::LValue);
+		}
 		std::string_view GetName() const { return name; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
