@@ -4,13 +4,8 @@ int l;
 
 int main()
 {
-	
-	k = 2;
 	l = 0;
-	while(k > 0)
-	{
-		k--;
-		l++;
-	}
-	return +(+l);	
+	k = 2;
+	for(; l < k; ++l) ++k;
+	return k;	
 }

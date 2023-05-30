@@ -36,15 +36,6 @@ namespace lucc
 			else return Is(t1) || IsOneOf(ts...);
 		}
 
-		bool operator==(Type const& t)
-		{
-			return kind == t.kind && size == t.size && align == t.align && is_complete == t.is_complete;
-		}
-		bool operator!=(Type const& t)
-		{
-			return !(*this == t);
-		}
-
 	private:
 		PrimitiveTypeKind kind;
 		size_t size;
@@ -87,8 +78,8 @@ namespace lucc
 		void AddConst() { qualifiers |= QualifierConst; }
 		void AddVolatile() { qualifiers |= QualifierVolatile; }
 
-		void RmConst() { qualifiers &= ~QualifierConst; }
-		void RmVolatile() { qualifiers &= ~QualifierVolatile; }
+		void RemoveConst() { qualifiers &= ~QualifierConst; }
+		void RemoveVolatile() { qualifiers &= ~QualifierVolatile; }
 		void RemoveQualifiers() { qualifiers = QualifierNone; }
 
 		bool HasRawType() const { return type != nullptr; }
@@ -106,15 +97,6 @@ namespace lucc
 		}
 		Type const& operator*() const { return RawType(); }
 		operator Type const& () const { return RawType(); }
-
-		bool operator==(QualifiedType const& qt)
-		{
-			return *type == *(qt.type) && qualifiers == qt.qualifiers;
-		}
-		bool operator!=(QualifiedType const& qt)
-		{
-			return !(*this == qt);
-		}
 
 	private:
 		std::shared_ptr<Type> type = nullptr;
@@ -144,24 +126,24 @@ namespace lucc
 	{
 	public:
 		explicit ArrayType(QualifiedType const& base_qtype)
-			: Type(PrimitiveTypeKind::Array, false, 0, (*base_qtype).GetAlign()),
-			base_qtype(base_qtype) {}
+			: Type(PrimitiveTypeKind::Array, false, 0, base_qtype->GetAlign()),
+			elem_type(base_qtype) {}
 
 		ArrayType(QualifiedType const& base_qtype, size_t arr_size)
-			: Type(PrimitiveTypeKind::Array, true, (*base_qtype).GetSize()* arr_size, (*base_qtype).GetAlign()),
-			base_qtype(base_qtype), arr_size(arr_size) {}
+			: Type(PrimitiveTypeKind::Array, true, base_qtype->GetSize() * arr_size, base_qtype->GetAlign()),
+			elem_type(base_qtype), arr_size(arr_size) {}
 
-		QualifiedType BaseQualifiedType() const { return base_qtype; }
-		size_t ArrSize() const { return arr_size; }
-		void SetArrSize(size_t _arr_size)
+		QualifiedType GetElementType() const { return elem_type; }
+		size_t ArraySize() const { return arr_size; }
+		void SetArraySize(size_t _arr_size)
 		{
 			arr_size = _arr_size;
-			SetSize(arr_size * (*base_qtype).GetSize());
+			SetSize(arr_size * (*elem_type).GetSize());
 			SetComplete();
 		}
 
 	private:
-		QualifiedType base_qtype;
+		QualifiedType elem_type;
 		size_t arr_size = 0;
 	};
 

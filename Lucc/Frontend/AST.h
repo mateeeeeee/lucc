@@ -96,20 +96,20 @@ namespace lucc
 		std::vector<std::unique_ptr<DeclAST>> declarations;
 	};
 
+	struct Symbol;
 	class DeclAST : public NodeAST
 	{
 	public:
-
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
-		void SetType(QualifiedType const& _type) { type = _type; }
+		void SetSymbol(Symbol* _sym) { sym = _sym; }
 		SourceLocation const& GetLocation() const { return loc; }
-		QualifiedType const& GetType() const { return type; }
+		Symbol const* GetSymbol() const { return sym; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 	
 	protected:
 		SourceLocation loc;
-		QualifiedType type;
+		Symbol* sym = nullptr;
 
 	protected:
 		DeclAST() = default;
@@ -202,7 +202,9 @@ namespace lucc
 	{
 	public:
 		DeclStmtAST(std::vector<std::unique_ptr<DeclAST>>&& decls) : decls(std::move(decls)) {}
+		
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::vector<std::unique_ptr<DeclAST>> decls;
@@ -266,6 +268,7 @@ namespace lucc
 		}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::unique_ptr<StmtAST> init_stmt;

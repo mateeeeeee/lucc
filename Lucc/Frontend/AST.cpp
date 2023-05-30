@@ -367,7 +367,7 @@ namespace lucc
 
 	void ExprStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		expr->Codegen(ctx, return_reg);
+		if(expr) expr->Codegen(ctx, return_reg);
 	}
 
 	void CompoundStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
@@ -395,7 +395,7 @@ namespace lucc
 		ret_expr->Codegen(ctx, reg);
 	}
 
-	void WhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	void WhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		register_t cond_reg = ctx.AllocateRegister();
 		ctx.GenerateLabelId();
@@ -406,6 +406,28 @@ namespace lucc
 		body_stmt->Codegen(ctx);
 		ctx.Jump("L_start");
 		ctx.Label("L_end");
+		ctx.FreeRegister(cond_reg);
+	}
+
+	void DeclStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		for (auto const& decl : decls) decl->Codegen(ctx);
+	}
+
+	void ForStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	{
+		init_stmt->Codegen(ctx);
+		register_t cond_reg = ctx.AllocateRegister();
+		ctx.GenerateLabelId();
+		ctx.Label("L_start");
+		cond_expr->Codegen(ctx, cond_reg);
+		ctx.Compare(cond_reg);
+		ctx.Jump("L_end", Condition::Equal);
+		body_stmt->Codegen(ctx);
+		iter_expr->Codegen(ctx);
+		ctx.Jump("L_start");
+		ctx.Label("L_end");
+		ctx.FreeRegister(cond_reg);
 	}
 
 }

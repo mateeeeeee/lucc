@@ -9,20 +9,20 @@ l	dword ?
 .code
 
 main proc
-mov	k, 2
 mov	l, 0
+mov	k, 2
 L_start1: 
-mov	r10d, k
-cmp	r10d, 0
-setg	r10b
+mov	r11d, k
+mov	r10d, l
+cmp	r10d, r11d
+setl	r10b
 cmp	r10d, 0
 je	L_end1
-dec	k
+inc	k
 inc	l
 jmp	L_start1
 L_end1: 
-mov	eax, l
-neg	eax
+mov	eax, k
 ret
 main endp
 

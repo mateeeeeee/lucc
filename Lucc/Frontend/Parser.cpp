@@ -112,21 +112,22 @@ namespace lucc
 			ParseDeclarator(decl_spec, declarator_info);
 			LU_ASSERT(declarator_info.qtype.HasRawType());
 			DeclarationInfo declaration_info(decl_spec, declarator_info);
-
 			ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage);
 
 			if (declarator_info.qtype->Is(PrimitiveTypeKind::Function))
 			{
 				if (!is_global) Report(diag::local_functions_not_allowed);
 
-				std::unique_ptr<FunctionDeclAST> func = ParseFunctionDeclaration(declaration_info);
-				if (func->IsDefinition())
+				std::unique_ptr<FunctionDeclAST> func_decl = ParseFunctionDeclaration(declaration_info);
+				func_decl->SetLocation(current_token->GetLocation());
+				func_decl->SetSymbol(ctx.identifier_sym_table->LookUp(declaration_info.name));
+				if (func_decl->IsDefinition())
 				{
 					LU_ASSERT(decls.empty());
-					decls.push_back(std::move(func));
+					decls.push_back(std::move(func_decl));
 					return decls;
 				}
-				decls.push_back(std::move(func));
+				decls.push_back(std::move(func_decl));
 			}
 			else
 			{
@@ -136,7 +137,7 @@ namespace lucc
 				std::string_view name = declarator_info.name;
 				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
 				var_decl->SetLocation(current_token->GetLocation());
-				var_decl->SetType(declaration_info.qtype);
+				var_decl->SetSymbol(ctx.identifier_sym_table->LookUp(name));
 				if (Consume(TokenKind::equal))
 				{
 					std::unique_ptr<ExprAST> init_expr = ParseExpression();
@@ -323,8 +324,10 @@ namespace lucc
 		return for_stmt;
 	}
 
+	//<return - statement> ::= return {<expression>}? ;
 	std::unique_ptr<ReturnStmtAST> Parser::ParseReturnStatement()
 	{
+		LU_ASSERT(ctx.current_func_type != nullptr);
 		Expect(TokenKind::KW_return);
 		std::unique_ptr<ExprStmtAST> ret_expr_stmt = ParseExpressionStatement();
 		ExprAST* ret_expr = ret_expr_stmt->GetExpr();
@@ -621,7 +624,7 @@ namespace lucc
 		else return ParseUnaryExpression();
 	}
 
-	//<unary - expression> :: = <postfix - expression>
+	//<unary - expression>  ::= <postfix - expression>
 	//						| ++ <unary - expression>
 	//						| -- <unary - expression>
 	//						| <unary - operator> <cast - expression>
@@ -667,7 +670,7 @@ namespace lucc
 		return unary_expr;
 	}
 
-	//<postfix - expression> :: = <primary - expression>
+	//<postfix - expression>    ::= <primary - expression>
 	//							| <postfix - expression>[<expression>]
 	//							| <postfix - expression> ({ <assignment - expression> }*)
 	//							| <postfix - expression> . <identifier>
@@ -1092,7 +1095,7 @@ namespace lucc
 					else if (qtype->Is(PrimitiveTypeKind::Array))
 					{
 						ArrayType const& array_type = TypeCast<ArrayType const&>(*qtype);
-						QualifiedType base_type = array_type.BaseQualifiedType();
+						QualifiedType base_type = array_type.GetElementType();
 						PointerType decayed_param_type(base_type);
 						qtype = QualifiedType(decayed_param_type);
 					}
