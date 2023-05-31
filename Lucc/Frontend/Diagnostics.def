@@ -28,6 +28,7 @@ DIAG(storage_specifier_mismatch, error, "Storage specifier doesn't match the pre
 DIAG(expected_function_definition, error, "Expected function definition")
 DIAG(return_in_file_scope, error, "Return statement can only appear inside function definition")
 DIAG(return_type_mismatch, error, "return statement type is not compatible with function return type")
+DIAG(return_not_found, error, "return statement not found in a non-void function")
 DIAG(if_condition_not_in_parentheses, error, "If condition should be surrounded with parentheses")
 DIAG(while_condition_not_in_parentheses, error, "While condition should be surrounded with parentheses")
 DIAG(expected_semicolon, error, "Expected semicolon after expression statement")
@@ -39,5 +40,6 @@ DIAG(void_not_expected, error, "Void not expected")
 DIAG(local_functions_not_allowed, error, "Local functions not allowed")
 DIAG(lhs_not_assignable, error, "Left hand side of the assignment is not assignable!")
 DIAG(variable_not_declared, error, "Variable not declared!")
+DIAG(invalid_function_call, error, "Invalid function call!")
 
 #undef DIAG

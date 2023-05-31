@@ -155,6 +155,11 @@ namespace lucc
 		label_id = GenerateUniqueInteger();
 	}
 
+
+	void x86_64CodeGenerator::Context::CallFunction(char const* sym_name)
+	{
+		Emit<Text>("call {}", sym_name);
+	}
 	void x86_64CodeGenerator::Context::ReturnFromFunction(char const* sym_name)
 	{
 		Emit<Text>("ret");
@@ -194,7 +199,5 @@ namespace lucc
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Data)	 output_buffer.data_segment += output;
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Text)	 output_buffer.text_segment += output;
 	}
-
-
 }
 

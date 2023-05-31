@@ -15,6 +15,7 @@ namespace lucc
 	class UnaryExprAST;
 	class BinaryExprAST;
 	class TernaryExprAST;
+	class FunctionCallAST;
 	class ImplicitCastExprAST;
 	class Int64LiteralAST;
 	class StringLiteralAST;
@@ -47,6 +48,7 @@ namespace lucc
 		virtual void Visit(UnaryExprAST const& node, size_t depth) {}
 		virtual void Visit(BinaryExprAST const& node, size_t depth) {}
 		virtual void Visit(TernaryExprAST const& node, size_t depth) {}
+		virtual void Visit(FunctionCallAST const& node, size_t depth) {}
 		virtual void Visit(ImplicitCastExprAST const& node, size_t depth) {}
 		virtual void Visit(Int64LiteralAST const& node, size_t depth) {}
 		virtual void Visit(StringLiteralAST const& node, size_t depth) {}
@@ -412,6 +414,27 @@ namespace lucc
 		std::unique_ptr<ExprAST> cond_expr;
 		std::unique_ptr<ExprAST> true_expr;
 		std::unique_ptr<ExprAST> false_expr;
+	};
+
+	class FunctionCallAST : public ExprAST
+	{
+	public:
+		FunctionCallAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
+			: ExprAST(loc), func_expr(std::move(func)) {}
+		void AddArgument(std::unique_ptr<ExprAST>&& arg)
+		{
+			func_args.push_back(std::move(arg));
+		}
+		
+		ExprAST* GetFunction() const { return func_expr.get(); }
+		std::vector<std::unique_ptr<ExprAST>> const& GetFunctionArgs() const { return func_args; }
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+	private:
+		std::unique_ptr<ExprAST> func_expr;
+		std::vector<std::unique_ptr<ExprAST>> func_args;
 	};
 
 	enum class CastKind 

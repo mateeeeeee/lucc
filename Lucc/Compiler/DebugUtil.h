@@ -121,6 +121,7 @@ namespace lucc
 			virtual void Visit(UnaryExprAST const& node, size_t depth) override;
 			virtual void Visit(BinaryExprAST const& node, size_t depth) override;
 			virtual void Visit(TernaryExprAST const& node, size_t depth) override;
+			virtual void Visit(FunctionCallAST const& node, size_t depth) override;
 			virtual void Visit(ImplicitCastExprAST const& node, size_t depth) override;
 			virtual void Visit(Int64LiteralAST const& node, size_t depth) override;
 			virtual void Visit(StringLiteralAST const& node, size_t depth) override;

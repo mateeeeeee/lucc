@@ -53,6 +53,7 @@ namespace lucc
 		virtual void SubImm(register_t reg1, int64 v) = 0;
 		virtual void Neg(register_t reg) = 0;
 
+
 		virtual void GenerateLabelId() = 0;
 		virtual void Label(char const* label) = 0;
 		virtual void Compare(register_t reg, int64 value = 0) = 0;
@@ -65,6 +66,7 @@ namespace lucc
 
 		virtual void DeclareStaticFunction(char const* sym_name) = 0;
 		virtual void DeclareGlobalFunction(char const* sym_name) = 0;
+		virtual void CallFunction(char const* func_name) = 0;
 		virtual void ReturnFromFunction(char const* sym_name) = 0;
 	};
 

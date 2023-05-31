@@ -187,7 +187,7 @@ namespace lucc
 			return nullptr;
 		}
 
-		FuncType const& func_type = TypeCast<FuncType const&>(decl_info.qtype);
+		FuncType const& func_type = TypeCast<FuncType>(decl_info.qtype);
 		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_name);
 		for (auto&& func_param : func_type.GetParamTypes())
 		{
@@ -204,6 +204,13 @@ namespace lucc
 
 			std::unique_ptr<CompoundStmtAST> compound_stmt = ParseCompoundStatement();
 			func_decl->SetFunctionBody(std::move(compound_stmt));
+
+			if (ctx.current_func_type->GetReturnType()->IsNot(PrimitiveTypeKind::Void) && !ctx.return_stmt_if_required)
+			{
+				Report(diag::return_not_found);
+				return nullptr;
+			}
+
 			ctx.current_func_type = nullptr;
 			ctx.identifier_sym_table->ExitScope();
 		}
@@ -333,16 +340,12 @@ namespace lucc
 		ExprAST* ret_expr = ret_expr_stmt->GetExpr();
 		QualifiedType ret_type = ctx.current_func_type->GetReturnType();
 
-		if (!ret_expr && ret_type->IsNot(PrimitiveTypeKind::Void))
+		if (!ret_type->IsCompatible(ret_expr->GetType()))
 		{
 			Report(diag::return_type_mismatch);
 			return nullptr;
 		}
-		if (ret_expr && ret_type->Is(PrimitiveTypeKind::Void))
-		{
-			Report(diag::return_type_mismatch);
-			return nullptr;
-		}
+		ctx.return_stmt_if_required = true;
 		return std::make_unique<ReturnStmtAST>(std::move(ret_expr_stmt));
 	}
 
@@ -686,9 +689,32 @@ namespace lucc
 		//}
 		//else 
 		expr = ParsePrimaryExpression();
+
 		SourceLocation loc = current_token->GetLocation();
 		switch (current_token->GetKind())
 		{
+		case TokenKind::left_round: 
+		{
+			if (expr->GetType()->IsNot(PrimitiveTypeKind::Function))
+			{
+				Report(diag::invalid_function_call);
+				return nullptr;
+			}
+
+			std::unique_ptr<FunctionCallAST> func_call_expr = std::make_unique<FunctionCallAST>(std::move(expr), current_token->GetLocation());
+			++current_token;
+
+			if (!Consume(TokenKind::right_round))
+			{
+				while (true)
+				{
+					func_call_expr->AddArgument(ParseAssignExpression());
+					if (Consume(TokenKind::right_round)) break;
+					Expect(TokenKind::comma);
+				}
+			}
+			return func_call_expr;
+		}
 		case TokenKind::plus_plus:
 		{
 			++current_token;
@@ -1094,14 +1120,14 @@ namespace lucc
 					if (qtype->Is(PrimitiveTypeKind::Void)) return false;
 					else if (qtype->Is(PrimitiveTypeKind::Array))
 					{
-						ArrayType const& array_type = TypeCast<ArrayType const&>(*qtype);
+						ArrayType const& array_type = TypeCast<ArrayType>(*qtype);
 						QualifiedType base_type = array_type.GetElementType();
 						PointerType decayed_param_type(base_type);
 						qtype = QualifiedType(decayed_param_type);
 					}
 					else if (qtype->Is(PrimitiveTypeKind::Function))
 					{
-						FuncType const& function_type = TypeCast<FuncType const&>(*qtype);
+						FuncType const& function_type = TypeCast<FuncType>(*qtype);
 						PointerType decayed_param_type(function_type);
 						qtype = QualifiedType(decayed_param_type);
 					}

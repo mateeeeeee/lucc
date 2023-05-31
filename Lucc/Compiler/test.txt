@@ -1,11 +1,17 @@
+typedef int MyInt;
 
-int k;
-int l;
+MyInt k;
+MyInt l;
 
-int main()
+void f()
 {
-	l = 0;
+
+}
+
+MyInt main()
+{
 	k = 2;
-	for(; l < k; ++l) ++k;
-	return k;	
+	l = 3;
+	f();
+	return l - k - 1;
 }

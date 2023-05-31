@@ -122,6 +122,26 @@ namespace lucc
 		false_expr->Accept(visitor, depth + 1);
 	}
 
+	void FunctionCallAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+		func_expr->Accept(visitor, depth + 1);
+		for (auto const& arg : func_args) arg->Accept(visitor, depth + 1);
+	}
+
+	void FunctionCallAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		for (size_t i = 0; i < func_args.size(); ++i)
+		{
+			register_t arg_reg = ctx.AllocateRegisterForFunctionArg(i);
+			func_args[i]->Codegen(ctx, arg_reg);
+		}
+		if (IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get()))
+		{
+			ctx.CallFunction(func_id->GetName().data());
+		}
+	}
+
 	void UnaryExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -294,16 +314,20 @@ namespace lucc
 			Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get());
 			if (int_literal)
 			{
-				lhs->Codegen(ctx, *return_reg);
-				ctx.Compare(*return_reg, int_literal->GetValue());
+				register_t reg = ctx.AllocateRegister();
+				lhs->Codegen(ctx, reg);
+				ctx.Compare(reg, int_literal->GetValue());
+				ctx.FreeRegister(reg);
 			}
 			else
 			{
-				register_t tmp_reg = ctx.AllocateRegister();
-				rhs->Codegen(ctx, tmp_reg);
-				lhs->Codegen(ctx, *return_reg);
-				ctx.Compare(*return_reg, tmp_reg);
-				ctx.FreeRegister(tmp_reg);
+				register_t reg1 = ctx.AllocateRegister();
+				register_t reg2 = ctx.AllocateRegister();
+				rhs->Codegen(ctx, reg2);
+				lhs->Codegen(ctx, reg1);
+				ctx.Compare(reg1, reg2);
+				ctx.FreeRegister(reg2);
+				ctx.FreeRegister(reg1);
 			}
 			switch (kind)
 			{

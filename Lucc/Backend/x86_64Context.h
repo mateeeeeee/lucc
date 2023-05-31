@@ -62,6 +62,7 @@ namespace lucc
 
 		virtual void DeclareStaticFunction(char const* sym_name) override;
 		virtual void DeclareGlobalFunction(char const* sym_name) override;
+		virtual void CallFunction(char const* sym_name) override;
 		virtual void ReturnFromFunction(char const* sym_name) override;
 
 	private:

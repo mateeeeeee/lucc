@@ -34,23 +34,6 @@ namespace lucc
 			remove(tmpname);
 			return result;
 		}
-
-		//std::string ssystem(const char* command) {
-		//	char tmpname[L_tmpnam];
-		//	std::tmpnam(tmpname);
-		//	std::string scommand = command;
-		//	std::string cmd = scommand + " >> " + tmpname;
-		//	std::system(cmd.c_str());
-		//	std::ifstream file(tmpname, std::ios::in | std::ios::binary);
-		//	std::string result;
-		//	if (file) {
-		//		while (!file.eof()) result.push_back(file.get())
-		//			;
-		//		file.close();
-		//	}
-		//	remove(tmpname);
-		//	return result;
-		//}
 	}
 
 	bool Compile(CompilerInput const& input)

@@ -3,6 +3,7 @@
 #include <span>
 #include "SourceLocation.h"
 #include "Core/Enums.h"
+#include "Core/Defines.h"
 
 namespace lucc
 {
@@ -36,6 +37,8 @@ namespace lucc
 			else return Is(t1) || IsOneOf(ts...);
 		}
 
+		virtual bool IsCompatible(Type const& other) const { return true; }
+
 	private:
 		PrimitiveTypeKind kind;
 		size_t size;
@@ -49,6 +52,17 @@ namespace lucc
 		constexpr void SetComplete() const { is_complete = true; }
 		constexpr void SetSize(size_t _size) { size = _size; }
 	};
+
+	template<typename T> requires std::derived_from<T, Type>
+	T& TypeCast(Type& t)
+	{
+		return static_cast<T&>(t);
+	}
+	template<typename T> requires std::derived_from<T, Type>
+	T const& TypeCast(Type const& t)
+	{
+		return static_cast<T const&>(t);
+	}
 
 	enum QualifierFlag : uint8
 	{
@@ -103,10 +117,16 @@ namespace lucc
 		Qualifiers qualifiers;
 	};
 
+	//C11 6.2.5p19: The void type comprises an empty set of values;
+	//it is an incomplete object type that cannot be completed.
 	class VoidType : public Type
 	{
 	public:
 		constexpr VoidType() : Type{ PrimitiveTypeKind::Void, false } {}
+		virtual bool IsCompatible(Type const& other) const override
+		{
+			return other.Is(PrimitiveTypeKind::Void);
+		}
 	};
 
 	class PointerType : public Type
@@ -116,7 +136,13 @@ namespace lucc
 			: Type{ PrimitiveTypeKind::Pointer, true, 8, 8 },
 			pointee_qtype{ pointee_qtype } {}
 
-		QualifiedType PointeeQualfiedType() const { return pointee_qtype; }
+		QualifiedType PointeeQualifiedType() const { return pointee_qtype; }
+		virtual bool IsCompatible(Type const& other) const override
+		{
+			if (other.IsNot(PrimitiveTypeKind::Pointer)) return false;
+			auto const& other_ptr = TypeCast<PointerType>(other);
+			return pointee_qtype->IsCompatible(other_ptr.pointee_qtype);
+		}
 
 	private:
 		QualifiedType pointee_qtype;
@@ -130,7 +156,7 @@ namespace lucc
 			elem_type(base_qtype) {}
 
 		ArrayType(QualifiedType const& base_qtype, size_t arr_size)
-			: Type(PrimitiveTypeKind::Array, true, base_qtype->GetSize() * arr_size, base_qtype->GetAlign()),
+			: Type(PrimitiveTypeKind::Array, true, base_qtype->GetSize()* arr_size, base_qtype->GetAlign()),
 			elem_type(base_qtype), arr_size(arr_size) {}
 
 		QualifiedType GetElementType() const { return elem_type; }
@@ -140,6 +166,14 @@ namespace lucc
 			arr_size = _arr_size;
 			SetSize(arr_size * (*elem_type).GetSize());
 			SetComplete();
+		}
+
+		virtual bool IsCompatible(Type const& other) const override
+		{
+			if (other.IsNot(PrimitiveTypeKind::Array)) return false;
+			auto const& other_arr = TypeCast<ArrayType>(other);
+			return (elem_type->IsCompatible(other_arr.elem_type) &&
+				(IsComplete() != elem_type->IsComplete() || arr_size == other_arr.arr_size));
 		}
 
 	private:
@@ -172,7 +206,6 @@ namespace lucc
 		constexpr explicit ArithmeticType(ArithmeticFlags flags, bool is_unsigned = false)
 			: Type(PrimitiveTypeKind::Arithmetic, true), flags(flags)
 		{
-
 			if ((flags & Short) || (flags & Long) || (flags & LongLong)) flags &= ~Int;
 			switch (flags)
 			{
@@ -252,6 +285,11 @@ namespace lucc
 		void EncounterPrototype() const { has_prototype = true; }
 		bool HasPrototype() const { return has_prototype; }
 
+		virtual bool IsCompatible(Type const& other) const override
+		{
+			return true;
+		}
+
 	private:
 		QualifiedType return_qtype;
 		std::vector<FunctionParameter> param_types;
@@ -260,15 +298,76 @@ namespace lucc
 		FunctionSpecifier specifier = FunctionSpecifier::None;
 	};
 
-	template<typename T>
-	T& TypeCast(Type& t)
+	inline bool IsScalarType(Type const& type)
 	{
-		return static_cast<T&>(t);
+		return type.IsOneOf(PrimitiveTypeKind::Arithmetic, PrimitiveTypeKind::Pointer);
 	}
-	template<typename T>
-	T const& TypeCast(Type const& t)
+	inline bool IsBoolType(ArithmeticType const& arithmetic_type)
 	{
-		return static_cast<T const&>(t);
+		return arithmetic_type.GetFlags() & ArithmeticType::Bool;
+	}
+	inline bool IsBoolType(Type const& type)
+	{
+		return type.Is(PrimitiveTypeKind::Arithmetic) ? IsBoolType(TypeCast<ArithmeticType>(type)) : false;
+	}
+	inline bool IsFloatingType(ArithmeticType const& arithmetic_type)
+	{
+		return	(arithmetic_type.GetFlags() & ArithmeticType::Float) ||
+			(arithmetic_type.GetFlags() & ArithmeticType::Double);
+	}
+	inline bool IsFloatingType(Type const& type)
+	{
+		return type.Is(PrimitiveTypeKind::Arithmetic) ? IsFloatingType(TypeCast<ArithmeticType>(type)) : false;
+	}
+	inline bool IsIntegerType(ArithmeticType const& arithmetic_type)
+	{
+		return !IsFloatingType(arithmetic_type);
+	}
+	inline bool IsIntegerType(Type const& type) {
+		return type.Is(PrimitiveTypeKind::Arithmetic) && !IsFloatingType(type);
+	}
+	inline bool IsSignedType(ArithmeticType const& arithmetic_type)
+	{
+		return !arithmetic_type.IsUnsigned();
+	}
+	inline bool IsSignedType(Type const& type)
+	{
+		return type.Is(PrimitiveTypeKind::Arithmetic) ? IsSignedType(TypeCast<ArithmeticType>(type)) : false;
+	}
+	inline bool IsUnsignedType(ArithmeticType const& arithmetic_type)
+	{
+		return !arithmetic_type.IsUnsigned();
+	}
+	inline bool IsUnsignedType(Type const& type)
+	{
+		return !IsSignedType(type);
+	}
+	inline bool IsObjectType(Type const& type)
+	{
+		return type.Is(PrimitiveTypeKind::Function);
+	}
+	inline bool IsFuncPtrType(Type const& type)
+	{
+		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeQualifiedType()->Is(PrimitiveTypeKind::Function);;
+	}
+	inline bool IsObjPtrType(Type const& type)
+	{
+		return !IsFuncPtrType(type);
+	}
+	inline bool IsVoidPtrType(Type const& type)
+	{
+		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeQualifiedType()->Is(PrimitiveTypeKind::Void);
+	}
+	inline bool IsCharArrayType(Type const& type)
+	{
+		if (type.IsNot(PrimitiveTypeKind::Array)) return false;
+		auto elem_type = TypeCast<ArrayType>(type).GetElementType();
+		if (elem_type->IsNot(PrimitiveTypeKind::Arithmetic)) return false;
+		ArithmeticType const& elem_arithmetic_type = TypeCast<ArithmeticType>(elem_type);
+		auto elem_arithmetic_flags = elem_arithmetic_type.GetFlags();
+		return (elem_arithmetic_flags & ArithmeticType::Char) ||
+			(elem_arithmetic_flags == ArithmeticType::Short && elem_arithmetic_type.IsUnsigned()) ||
+			(elem_arithmetic_flags == ArithmeticType::Int && elem_arithmetic_type.IsUnsigned());
 	}
 
 	namespace builtin_types
@@ -289,4 +388,99 @@ namespace lucc
 		static constexpr ArithmeticType Double = ArithmeticType(ArithmeticType::Double);
 		static constexpr ArithmeticType LongDouble = ArithmeticType(ArithmeticType::Double | ArithmeticType::Long);
 	}
+
+
+	inline QualifiedType RemoveQualifiers(QualifiedType const& qtype)
+	{
+		QualifiedType unqualified_type(qtype);
+		unqualified_type.RemoveQualifiers();
+		return unqualified_type;
+	}
+	// C11 6.3.1.1p2: If an int can represent all values of the original type (as
+	// restricted by the width, for a bit-field), the value is converted to an int;
+	// otherwise, it is converted to an unsigned int. These are called the integer
+	// promotions. All other types are unchanged by the integer promotions.
+	inline QualifiedType IntegerPromotion(QualifiedType const& qtype)
+	{
+		LU_ASSERT(IsIntegerType(qtype));
+		auto const& arithmetic_type = TypeCast<ArithmeticType>(qtype);
+		if (arithmetic_type.ConversionRank() < builtin_types::Int.ConversionRank()) return builtin_types::Int;
+		else return builtin_types::UnsignedInt;
+	}
+
+	//Value transformations
+	//1. Lvalue conversion
+	/*Lvalue conversion
+	Any lvalue expression of any non - array type, when used in any context other than
+
+	as the operand of the address - of operator (if allowed)
+	as the operand of the pre / post increment and decrement operators.
+	as the left - hand operand of the member access(dot) operator.
+	as the left - hand operand of the assignment and compound assignment operators.
+	as the operand of sizeof
+	undergoes lvalue conversion : the type remains the same, but loses const / volatile / restrict - qualifiers and atomic properties, if any.The value remains the same, but loses its lvalue properties(the address may no longer be taken).
+
+	If the lvalue has incomplete type, the behavior is undefined.
+
+	If the lvalue designates an object of automatic storage duration whose address was never takenand if that object was uninitialized(not declared with an initializer and no assignment to it has been performed prior to use), the behavior is undefined.
+
+	This conversion models the memory load of the value of the object from its location.
+	*/
+	//2. Array to pointer conversion
+	/* Array to pointer conversion
+	Array to pointer conversion
+	Any lvalue expression of array type, when used in any context other than
+
+	as the operand of the address-of operator
+	as the operand of sizeof
+	as the string literal used for array initialization
+	undergoes a conversion to the non-lvalue pointer to its first element.
+
+	If the array was declared register, the behavior is undefined.
+	*/
+	//3. Function to pointer conversion
+	/* Function to pointer conversion
+	Any function designator expression, when used in any context other than
+
+	as the operand of the address-of operator
+	as the operand of sizeof
+	undergoes a conversion to the non-lvalue pointer to the function designated by the expression.
+	*/
+	inline QualifiedType ValueTransformation(QualifiedType const& qtype)
+	{
+		if (qtype->Is(PrimitiveTypeKind::Array))
+		{
+			auto const& arr_type = TypeCast<ArrayType>(qtype);
+			return PointerType(arr_type.GetElementType());
+		}
+		else if (qtype->Is(PrimitiveTypeKind::Function))
+		{
+			return PointerType(qtype);
+		}
+		else return RemoveQualifiers(qtype);
+	}
+
+	/*6.5.16.1 Simple assignment
+	Constraints
+	1 One of the following shall hold :
+	— the left operand has qualified or unqualified arithmetic type and the right has
+		arithmetic type;
+	— the left operand has a qualified or unqualified version of a structure or union type
+		compatible with the type of the right;
+	— both operands are pointers to qualified or unqualified versions of compatible types,
+		and the type pointed to by the left has all the qualifiers of the type pointed to by the
+		right;
+	— one operand is a pointer to an object or incomplete type and the other is a pointer to a
+		qualified or unqualified version of void, and the type pointed to by the left has all
+		the qualifiers of the type pointed to by the right;
+	— the left operand is a pointerand the right is a null pointer constant; or
+		— the left operand has type _Booland the right is a pointer.
+		Semantics
+	2 In simple assignment(=), the value of the right operand is converted to the type of the
+	  assignment expression and replaces the value stored in the object designated by the left
+	  operand.
+	3 If the value being stored in an object is read from another object that overlaps in any way
+	  the storage of the first object, then the overlap shall be exact and the two objects shall
+	  have qualified or unqualified versions of a compatible type; otherwise, the behavior is
+	  undefined. */
 }
