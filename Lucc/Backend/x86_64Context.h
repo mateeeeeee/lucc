@@ -57,17 +57,17 @@ namespace lucc
 		virtual void Set(register_t reg, Condition cond) override;
 		virtual void Jump(char const* label, Condition cond) override;
 
-		virtual void DeclareStaticVariable(char const* sym_name) override;
-		virtual void DeclareGlobalVariable(char const* sym_name) override;
+		virtual void DeclareVariable(char const* sym_name, bool is_static) override;
+		virtual void DeclareFunction(char const* sym_name, bool is_static) override;
 
-		virtual void DeclareStaticFunction(char const* sym_name) override;
-		virtual void DeclareGlobalFunction(char const* sym_name) override;
 		virtual void CallFunction(char const* sym_name) override;
-		virtual void ReturnFromFunction(char const* sym_name) override;
+		virtual void JumpToFunctionEnd() override;
+		virtual void ReturnFromFunction() override;
 
 	private:
 		OutputBuffer& output_buffer;
 		size_t label_id;
+		char const* current_func_name;
 		std::array<bool, REG_COUNT> free_registers;
 
 	private:

@@ -5,6 +5,5 @@
   </ItemGroup>
   <ItemGroup>
     <MASM Include="hello.asm" />
-    <MASM Include="main.asm" />
   </ItemGroup>
 </Project>

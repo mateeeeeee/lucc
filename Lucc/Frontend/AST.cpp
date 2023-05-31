@@ -129,19 +129,6 @@ namespace lucc
 		for (auto const& arg : func_args) arg->Accept(visitor, depth + 1);
 	}
 
-	void FunctionCallAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
-	{
-		for (size_t i = 0; i < func_args.size(); ++i)
-		{
-			register_t arg_reg = ctx.AllocateRegisterForFunctionArg(i);
-			func_args[i]->Codegen(ctx, arg_reg);
-		}
-		if (IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get()))
-		{
-			ctx.CallFunction(func_id->GetName().data());
-		}
-	}
-
 	void UnaryExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -204,15 +191,15 @@ namespace lucc
 	
 	void VarDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		ctx.DeclareGlobalVariable(name.c_str()); 
+		ctx.DeclareVariable(name.c_str(), sym.storage == Storage::Static); 
 	}
 
 	void FunctionDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		if (!body) return;
-		ctx.DeclareGlobalFunction(name.c_str());
+		ctx.DeclareFunction(name.c_str(), sym.storage == Storage::Static); //should be linkage
 		body->Codegen(ctx);
-		ctx.ReturnFromFunction(name.c_str());
+		ctx.ReturnFromFunction();
 		return;
 	}
 
@@ -417,6 +404,8 @@ namespace lucc
 	{
 		register_t reg = ctx.AllocateRegisterForReturn();
 		ret_expr->Codegen(ctx, reg);
+		ctx.JumpToFunctionEnd();
+		ctx.FreeRegister(reg);
 	}
 
 	void WhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
@@ -454,6 +443,19 @@ namespace lucc
 		ctx.FreeRegister(cond_reg);
 	}
 
+	void FunctionCallAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		for (size_t i = 0; i < func_args.size(); ++i)
+		{
+			register_t arg_reg = ctx.AllocateRegisterForFunctionArg(i);
+			func_args[i]->Codegen(ctx, arg_reg);
+		}
+		if (IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get()))
+		{
+			ctx.CallFunction(func_id->GetName().data());
+		}
+		else LU_ASSERT(false);
+	}
 }
 
 

@@ -1,9 +1,9 @@
 typedef int MyInt;
 
-MyInt k;
+static MyInt k;
 MyInt l;
 
-void f()
+static void f()
 {
 
 }
@@ -11,6 +11,7 @@ void f()
 MyInt main()
 {
 	k = 2;
+	return 5;
 	l = 3;
 	f();
 	return l - k - 1;

@@ -61,13 +61,12 @@ namespace lucc
 		virtual void Set(register_t reg, Condition cond) = 0;
 		virtual void Jump(char const* label, Condition cond = Condition::Unconditional) = 0;
 
-		virtual void DeclareStaticVariable(char const* sym_name) = 0;
-		virtual void DeclareGlobalVariable(char const* sym_name) = 0;
+		virtual void DeclareVariable(char const* sym_name, bool is_static) = 0;
+		virtual void DeclareFunction(char const* sym_name, bool is_static) = 0;
 
-		virtual void DeclareStaticFunction(char const* sym_name) = 0;
-		virtual void DeclareGlobalFunction(char const* sym_name) = 0;
 		virtual void CallFunction(char const* func_name) = 0;
-		virtual void ReturnFromFunction(char const* sym_name) = 0;
+		virtual void JumpToFunctionEnd() = 0;
+		virtual void ReturnFromFunction() = 0;
 	};
 
 

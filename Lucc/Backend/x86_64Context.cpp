@@ -155,33 +155,30 @@ namespace lucc
 		label_id = GenerateUniqueInteger();
 	}
 
+	void x86_64CodeGenerator::Context::DeclareFunction(char const* sym_name, bool is_static)
+	{
+		current_func_name = sym_name;
+		Emit<Text>("\n{} proc {}", sym_name, is_static ? "private" : "");
+	}
+	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static)
+	{
+		if (!is_static) Emit<None>("public {}", sym_name);
+		Emit<Data>("{}\tdword ?", sym_name);
+	}
 
 	void x86_64CodeGenerator::Context::CallFunction(char const* sym_name)
 	{
 		Emit<Text>("call {}", sym_name);
 	}
-	void x86_64CodeGenerator::Context::ReturnFromFunction(char const* sym_name)
+	void x86_64CodeGenerator::Context::JumpToFunctionEnd()
 	{
+		Emit<Text>("jmp {}_end", current_func_name);
+	}
+	void x86_64CodeGenerator::Context::ReturnFromFunction()
+	{
+		Emit<Text>("{}_end:", current_func_name);
 		Emit<Text>("ret");
-		Emit<Text>("{} endp", sym_name);
-	}
-	void x86_64CodeGenerator::Context::DeclareGlobalFunction(char const* sym_name)
-	{
-		Emit<None>("public {}", sym_name);
-		Emit<Text>("\n{} proc", sym_name);
-	}
-	void x86_64CodeGenerator::Context::DeclareStaticFunction(char const* sym_name)
-	{
-		Emit<Text>("\n{} proc", sym_name);
-	}
-	void x86_64CodeGenerator::Context::DeclareGlobalVariable(char const* sym_name)
-	{
-		Emit<None>("public {}", sym_name);
-		Emit<Data>("{}\tdword ?", sym_name);
-	}
-	void x86_64CodeGenerator::Context::DeclareStaticVariable(char const* sym_name)
-	{
-		Emit<Data>("{}\tdword ?", sym_name);
+		Emit<Text>("{} endp", current_func_name);
 	}
 
 	size_t x86_64CodeGenerator::Context::GenerateUniqueInteger()
@@ -199,5 +196,6 @@ namespace lucc
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Data)	 output_buffer.data_segment += output;
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Text)	 output_buffer.text_segment += output;
 	}
+
 }
 

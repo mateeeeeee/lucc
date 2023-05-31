@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include "Type.h"
+#include "Symbol.h"
 #include "Backend/ICodeGenerator.h"
 
 namespace lucc
@@ -103,15 +104,15 @@ namespace lucc
 	{
 	public:
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
-		void SetSymbol(Symbol* _sym) { sym = _sym; }
+		void SetSymbol(Symbol* _sym) { sym = *_sym; }
 		SourceLocation const& GetLocation() const { return loc; }
-		Symbol const* GetSymbol() const { return sym; }
+		Symbol const* GetSymbol() const { return &sym; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 	
 	protected:
 		SourceLocation loc;
-		Symbol* sym = nullptr;
+		Symbol sym;
 
 	protected:
 		DeclAST() = default;
