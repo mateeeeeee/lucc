@@ -155,15 +155,23 @@ namespace lucc
 		label_id = GenerateUniqueInteger();
 	}
 
+	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static)
+	{
+		if (!is_static) Emit<None>("public {}", sym_name);
+		Emit<Data>("{}\tdword ?", sym_name);
+	}
+	void x86_64CodeGenerator::Context::DeclareExternVariable(char const* sym_name)
+	{
+		Emit<None>("extern {} : dword", sym_name);
+	}
 	void x86_64CodeGenerator::Context::DeclareFunction(char const* sym_name, bool is_static)
 	{
 		current_func_name = sym_name;
 		Emit<Text>("\n{} proc {}", sym_name, is_static ? "private" : "");
 	}
-	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static)
+	void x86_64CodeGenerator::Context::DeclareExternFunction(char const* sym_name)
 	{
-		if (!is_static) Emit<None>("public {}", sym_name);
-		Emit<Data>("{}\tdword ?", sym_name);
+		Emit<None>("extern {} : proc", sym_name);
 	}
 
 	void x86_64CodeGenerator::Context::CallFunction(char const* sym_name)
@@ -196,6 +204,5 @@ namespace lucc
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Data)	 output_buffer.data_segment += output;
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Text)	 output_buffer.text_segment += output;
 	}
-
 }
 

@@ -1,5 +1,4 @@
 public l
-public main
 
 .data
 k	dword ?
@@ -7,17 +6,17 @@ l	dword ?
 
 .code
 
-f proc
+f proc 
+mov	eax, 5
+jmp f_end
 f_end:
 ret
 f endp
 
-main proc
-mov	k, 2
-mov	eax, 5
-jmp main_end
-mov	l, 3
+main proc 
 call f
+mov	k, eax
+mov	l, 3
 mov	r10d, k
 mov	eax, l
 sub	eax, r10d

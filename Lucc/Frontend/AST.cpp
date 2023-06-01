@@ -191,13 +191,19 @@ namespace lucc
 	
 	void VarDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		ctx.DeclareVariable(name.c_str(), sym.storage == Storage::Static); 
+		if (sym.storage == Storage::Extern) ctx.DeclareExternVariable(name.c_str());
+		else ctx.DeclareVariable(name.c_str(), sym.storage == Storage::Static); 
 	}
 
 	void FunctionDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		if (!body) return;
-		ctx.DeclareFunction(name.c_str(), sym.storage == Storage::Static); //should be linkage
+		//just a declaration but could be extern 
+		if (!body)
+		{
+			if(sym.storage == Storage::Extern) ctx.DeclareExternFunction(name.c_str());
+			return;
+		}
+		ctx.DeclareFunction(name.c_str(), sym.storage == Storage::Static); //#todo: should be linkage
 		body->Codegen(ctx);
 		ctx.ReturnFromFunction();
 		return;
@@ -271,8 +277,7 @@ namespace lucc
 		{
 			if (!return_reg) return;
 
-			Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get());
-			if (int_literal)
+			if (Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get()))
 			{
 				lhs->Codegen(ctx, *return_reg);
 				switch (kind)
@@ -334,9 +339,17 @@ namespace lucc
 			if (IdentifierAST* var_decl = AstCast<IdentifierAST>(lhs.get()))
 			{
 				char const* var_name = var_decl->GetName().data();
-				Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get());
-
-				if (int_literal) ctx.Move(var_name, int_literal->GetValue());
+				if (Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get()))
+				{
+					ctx.Move(var_name, int_literal->GetValue());
+				}
+				else if (FunctionCallAST* func_call = AstCast<FunctionCallAST>(rhs.get()))
+				{
+					register_t ret_reg = ctx.AllocateRegisterForReturn();
+					func_call->Codegen(ctx);
+					ctx.Move(var_name, ret_reg);
+					ctx.FreeRegister(ret_reg);
+				}
 				else
 				{
 					register_t rhs_reg = return_reg ? *return_reg : ctx.AllocateRegister();

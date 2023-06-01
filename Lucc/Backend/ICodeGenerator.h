@@ -62,7 +62,9 @@ namespace lucc
 		virtual void Jump(char const* label, Condition cond = Condition::Unconditional) = 0;
 
 		virtual void DeclareVariable(char const* sym_name, bool is_static) = 0;
+		virtual void DeclareExternVariable(char const* sym_name) = 0;
 		virtual void DeclareFunction(char const* sym_name, bool is_static) = 0;
+		virtual void DeclareExternFunction(char const* sym_name) = 0;
 
 		virtual void CallFunction(char const* func_name) = 0;
 		virtual void JumpToFunctionEnd() = 0;

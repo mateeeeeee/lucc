@@ -72,14 +72,12 @@ namespace lucc
 		x86_64.Generate();
 
 		std::string masm_cmd = std::format("ml64.exe /Fo {} /c {}", input.object, input.assembly);
-		std::string link_cmd = std::format("link.exe /out:{} {} /subsystem:console /defaultlib:kernel32.lib /entry:main", input.executable, input.object);
+		std::string link_cmd = std::format("link.exe /out:{} {} /subsystem:console /entry:main", input.executable, input.object);
 		std::string exe_cmd  = std::format("{}", input.executable);
 
 		system(masm_cmd.c_str());
 		system(link_cmd.c_str());
 		system(exe_cmd.c_str());
-		//debug::PrintOutput(ExecuteSystemCmd(exe_cmd).c_str());
-		//system("pause");
 		return true;
 	}
 

@@ -58,7 +58,9 @@ namespace lucc
 		virtual void Jump(char const* label, Condition cond) override;
 
 		virtual void DeclareVariable(char const* sym_name, bool is_static) override;
+		virtual void DeclareExternVariable(char const* sym_name) override;
 		virtual void DeclareFunction(char const* sym_name, bool is_static) override;
+		virtual void DeclareExternFunction(char const* sym_name) override;
 
 		virtual void CallFunction(char const* sym_name) override;
 		virtual void JumpToFunctionEnd() override;

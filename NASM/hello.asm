@@ -1,32 +1,32 @@
-includelib msvcrt.lib
-includelib kernel32.lib
-includelib legacy_stdio_definitions.lib
-includelib legacy_stdio_wide_specifiers.lib
 includelib libucrt.lib
+includelib kernel32.lib
 
-public number
-
-extern printf		: proc
+extern puts :proc
+extern printf :proc
+extern ExitProcess :proc
 
 .data
 
-number  dword 3 
-msg		db "Hello world!", 0Dh, 0Ah, 0
-
+string_title_x64_printf db "title x64 printf",0
+string_color_0F db "color 0F",0
+string_pause db "pause",0
+string db "string",0
+string_pd_newline db "%d",10,0
 
 .code
 
-hello proc
-mov eax, number
-inc eax
-mov number, eax
-ret
-hello endp
+main proc 
 
-print proc
-sub		 rsp, 40
-lea      rcx, msg
-call     printf
-print endp
+   lea rcx, string
+   call puts
+
+   lea rcx, string_pd_newline
+   mov rdx, 3
+   call printf
+
+   mov rcx, 0
+   call ExitProcess
+   ret
+main endp
 
 end
