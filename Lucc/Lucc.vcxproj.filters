@@ -136,7 +136,7 @@
     <None Include="Frontend\Diagnostics.def">
       <Filter>Frontend\Diagnostics</Filter>
     </None>
-    <None Include="Compiler\test.asm">
+    <None Include="Compiler\Assembler\test.asm">
       <Filter>Compiler</Filter>
     </None>
   </ItemGroup>

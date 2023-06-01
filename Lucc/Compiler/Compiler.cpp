@@ -17,25 +17,9 @@ namespace lucc
 	namespace
 	{
 		static constexpr char const* _compiler_path = "Compiler/";
-		static constexpr char const* _assembler_path = "Compiler/Assembler/";
-		static constexpr char const* _linker_path = "Compiler/Linker/";
+		static constexpr char const* _executables_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Preview\\VC\\Tools\\MSVC\\14.34.31823\\bin\\Hostx64\\x64";
+		static constexpr char const* _lib_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Preview\\VC\\Tools\\MSVC\\14.34.31823\\lib\\x64";
 
-		std::string ExecuteSystemCmd(std::string const& _cmd)
-		{
-			char tmpname[L_tmpnam];
-			tmpnam_s(tmpname);
-			std::string cmd = _cmd + " >> " + tmpname;
-			std::system(cmd.c_str());
-			std::ifstream file(tmpname, std::ios::in | std::ios::binary);
-			std::string result;
-			if (file) 
-			{
-				while (!file.eof()) result.push_back(file.get());
-				file.close();
-			}
-			remove(tmpname);
-			return result;
-		}
 	}
 
 	bool Compile(CompilerInput const& input)
@@ -43,8 +27,6 @@ namespace lucc
 		diag::Initialize();
 
 		fs::path compiler_path = fs::current_path() /= _compiler_path;
-		fs::path assembler_path = fs::current_path() /= _assembler_path;
-		fs::path linker_path = fs::current_path() /= _linker_path;
 		fs::current_path(compiler_path);
 
 		SourceBuffer src(input.source);
@@ -76,22 +58,11 @@ namespace lucc
 		
 		x86_64CodeGenerator x86_64(input.assembly, ast);
 		x86_64.Generate();
-		fs::rename(compiler_path/input.assembly, assembler_path/input.assembly);
 
-		fs::current_path(assembler_path);
-		std::string masm_cmd = std::format("ml64.exe /Fo {} /c {}", input.object, input.assembly);
+		std::string masm_cmd = std::format("\"{}/ml64.exe\" /Fo {} /c {}", _executables_path, input.object, input.assembly);
 		system(masm_cmd.c_str());
-		fs::current_path(compiler_path);
-		fs::rename(assembler_path/input.object, linker_path/input.object);
-
-		fs::current_path(linker_path);
-		std::string link_cmd = std::format("link.exe /out:{} {} /subsystem:console "
-			//libucrt.lib kernel32.lib 
-			//"/libpath:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.19041.0\\um\\x64"
-			//"/libpath:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.19041.0\\ucrt\\x64"
-			" /entry:main", input.executable, input.object);
+		std::string link_cmd = std::format("\"{}/link.exe\" /out:{} {} /subsystem:console /entry:main", _executables_path, input.executable, input.object);
 		system(link_cmd.c_str());
-
 		std::string exe_cmd = std::format("{}", input.executable);
 		system(exe_cmd.c_str());
 

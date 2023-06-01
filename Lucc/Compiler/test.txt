@@ -1,6 +1,6 @@
 typedef int MyInt;
 
-//extern void puts();
+//extern int puts( const char *str );
 
 static MyInt k;
 MyInt l;
