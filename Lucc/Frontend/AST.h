@@ -18,7 +18,7 @@ namespace lucc
 	class TernaryExprAST;
 	class FunctionCallAST;
 	class ImplicitCastExprAST;
-	class Int64LiteralAST;
+	class IntLiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
 	
@@ -51,7 +51,7 @@ namespace lucc
 		virtual void Visit(TernaryExprAST const& node, size_t depth) {}
 		virtual void Visit(FunctionCallAST const& node, size_t depth) {}
 		virtual void Visit(ImplicitCastExprAST const& node, size_t depth) {}
-		virtual void Visit(Int64LiteralAST const& node, size_t depth) {}
+		virtual void Visit(IntLiteralAST const& node, size_t depth) {}
 		virtual void Visit(StringLiteralAST const& node, size_t depth) {}
 		virtual void Visit(IdentifierAST const& node, size_t depth) {}
 		virtual void Visit(StmtAST const& node, size_t depth) {}
@@ -99,7 +99,12 @@ namespace lucc
 		std::vector<std::unique_ptr<DeclAST>> declarations;
 	};
 
-	struct Symbol;
+	enum class DeclKind
+	{
+		Var,
+		Func, 
+		Typedef
+	};
 	class DeclAST : public NodeAST
 	{
 	public:
@@ -107,20 +112,22 @@ namespace lucc
 		void SetSymbol(Symbol* _sym) { sym = *_sym; }
 		SourceLocation const& GetLocation() const { return loc; }
 		Symbol const* GetSymbol() const { return &sym; }
+		DeclKind GetDeclKind() const { return kind; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 	
 	protected:
 		SourceLocation loc;
 		Symbol sym;
+		DeclKind kind; 
 
 	protected:
-		DeclAST() = default;
+		explicit DeclAST(DeclKind kind) : kind(kind) {}
 	};
 	class VarDeclAST : public DeclAST
 	{
 	public:
-		VarDeclAST(std::string_view name) : name(name) {}
+		VarDeclAST(std::string_view name) : DeclAST(DeclKind::Var), name(name) {}
 
 		void SetInitExpression(std::unique_ptr<ExprAST>&& expr)
 		{
@@ -137,7 +144,7 @@ namespace lucc
 	class FunctionDeclAST : public DeclAST
 	{
 	public:
-		FunctionDeclAST(std::string_view name) : name(name) {}
+		FunctionDeclAST(std::string_view name) : DeclAST(DeclKind::Func), name(name) {}
 		std::string_view GetName() const { return name; }
 
 		void AddParamDeclaration(std::unique_ptr<VarDeclAST>&& param)
@@ -161,7 +168,7 @@ namespace lucc
 	class TypedefDeclAST final : public DeclAST
 	{
 	public:
-		TypedefDeclAST(std::string_view typedef_name) : typedef_name(typedef_name) {}
+		TypedefDeclAST(std::string_view typedef_name) : DeclAST(DeclKind::Typedef), typedef_name(typedef_name) {}
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetName() const { return typedef_name; }
@@ -169,18 +176,37 @@ namespace lucc
 	private:
 		std::string typedef_name;
 	};
+
+	enum class StmtKind
+	{
+		Compound,
+		Expr,
+		Decl,
+		Null,
+		If,
+		While,
+		For,
+		Return,
+		Goto, 
+		Label
+	};
 	class StmtAST : public NodeAST
 	{
 	public:
+		StmtKind GetStmtKind() const { return kind; }
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	protected:
-		StmtAST() = default;
+		StmtKind kind;
+
+	protected:
+		explicit StmtAST(StmtKind kind) : kind(kind) {}
 	};
+
 	class CompoundStmtAST : public StmtAST
 	{
 	public:
-		CompoundStmtAST() = default;
+		CompoundStmtAST() : StmtAST(StmtKind::Compound) {}
 		void AddStatement(std::unique_ptr<StmtAST>&& stmt);
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -192,7 +218,7 @@ namespace lucc
 	class ExprStmtAST : public StmtAST
 	{
 	public:
-		ExprStmtAST(std::unique_ptr<ExprAST>&& expr) : expr(std::move(expr)) {}
+		ExprStmtAST(std::unique_ptr<ExprAST>&& expr) : StmtAST(expr ? StmtKind::Expr : StmtKind::Null), expr(std::move(expr)) {}
 		ExprAST* GetExpr() const { return expr.get(); }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -204,7 +230,7 @@ namespace lucc
 	class DeclStmtAST : public StmtAST
 	{
 	public:
-		DeclStmtAST(std::vector<std::unique_ptr<DeclAST>>&& decls) : decls(std::move(decls)) {}
+		DeclStmtAST(std::vector<std::unique_ptr<DeclAST>>&& decls) : StmtAST(StmtKind::Decl), decls(std::move(decls)) {}
 		
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -222,7 +248,7 @@ namespace lucc
 	{
 	public:
 		IfStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& then_stmt) 
-			: condition(std::move(condition)), then_stmt(std::move(then_stmt))
+			: StmtAST(StmtKind::If), condition(std::move(condition)), then_stmt(std::move(then_stmt))
 		{}
 
 		void AddElseStatement(std::unique_ptr<StmtAST>&& _else_stmt)
@@ -242,7 +268,7 @@ namespace lucc
 	{
 	public:
 		WhileStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& body_stmt)
-			: condition(std::move(condition)), body_stmt(std::move(body_stmt)) {}
+			: StmtAST(StmtKind::While), condition(std::move(condition)), body_stmt(std::move(body_stmt)) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -255,7 +281,7 @@ namespace lucc
 	{
 	public:
 		explicit ForStmtAST(std::unique_ptr<StmtAST>&& body_stmt)
-			: body_stmt(std::move(body_stmt)) {}
+			: StmtAST(StmtKind::For), body_stmt(std::move(body_stmt)) {}
 
 		void SetInit(std::unique_ptr<StmtAST>&& _init)
 		{
@@ -283,7 +309,7 @@ namespace lucc
 	{
 	public:
 		explicit ReturnStmtAST(std::unique_ptr<ExprStmtAST>&& ret_expr)
-			: ret_expr(std::move(ret_expr)) {}
+			: StmtAST(StmtKind::Return), ret_expr(std::move(ret_expr)) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -294,7 +320,7 @@ namespace lucc
 	class GotoStmtAST final : public StmtAST
 	{
 	public:
-		GotoStmtAST(std::string_view label) : goto_label(label) {}
+		GotoStmtAST(std::string_view label) : StmtAST(StmtKind::Goto), goto_label(label) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
@@ -306,7 +332,7 @@ namespace lucc
 	class LabelStmtAST final : public StmtAST
 	{
 	public:
-		LabelStmtAST(std::string_view label) : label_name(label) {}
+		LabelStmtAST(std::string_view label) : StmtAST(StmtKind::Label), label_name(label) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
@@ -316,6 +342,19 @@ namespace lucc
 		std::string label_name;
 	};
 
+	enum class ExprKind
+	{
+		Unary,
+		Binary,
+		Ternary,
+		FunctionCall,
+		ImplicitCast,
+		FloatLiteral,
+		DoubleLiteral,
+		IntLiteral,
+		StringLiteral,
+		Identifier
+	};
 	enum class UnaryExprKind : uint8
 	{
 		PreIncrement, PreDecrement,
@@ -346,18 +385,21 @@ namespace lucc
 	{
 	public:
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+
 		SourceLocation const& GetLocation() const { return loc; }
 		QualifiedType const& GetType() const { return type; }
+		ExprKind GetExprKind() const { return kind; }
 		bool IsLValue() const { return value_category == ExprValueCategory::LValue; }
 		bool IsAssignable() const;
 
 	protected:
+		ExprKind kind;
 		SourceLocation loc;
 		QualifiedType type;
 		ExprValueCategory value_category = ExprValueCategory::RValue;
 
 	protected:
-		explicit ExprAST(SourceLocation const& loc, QualifiedType const& type = builtin_types::Int) : loc(loc), type(type) {}
+		ExprAST(ExprKind kind, SourceLocation const& loc, QualifiedType const& type = builtin_types::Int) : kind(kind), loc(loc), type(type) {}
 		void SetValueCategory(ExprValueCategory _value_category) { value_category = _value_category; }
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
 		void SetType(QualifiedType const& _type) { type = _type; }
@@ -365,33 +407,48 @@ namespace lucc
 	class UnaryExprAST : public ExprAST
 	{
 	public:
-		UnaryExprAST(UnaryExprKind op, SourceLocation const& loc) : ExprAST(loc), op(op) {}
-		void SetOperand(std::unique_ptr<ExprAST>&& _operand) { operand = std::move(_operand); }
-		UnaryExprKind GetOp() const { return op; }
+		UnaryExprAST(UnaryExprKind op, SourceLocation const& loc) : ExprAST(ExprKind::Unary, loc), op(op), operand(nullptr) {}
+		void SetOperand(std::unique_ptr<ExprAST>&& _operand) 
+		{ 
+			operand = std::move(_operand);
+		}
+		UnaryExprKind GetUnaryKind() const { return op; }
+		ExprAST* GetOperand() const { return operand.get(); }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
-		std::unique_ptr<ExprAST> operand;
 		UnaryExprKind op;
+		std::unique_ptr<ExprAST> operand;
+
+	private:
+		void SetExpressionType()
+		{
+			switch (op)
+			{
+			case UnaryExprKind::AddressOf: SetAddressOfType(); break;
+			}
+		}
+
+		void SetAddressOfType()
+		{
+			
+		}
+
 	};
 	class BinaryExprAST : public ExprAST
 	{
 	public:
-		BinaryExprAST(BinaryExprKind op, SourceLocation const& loc) : ExprAST(loc), op(op)
-		{
-			switch (op) 
-			{
-			case BinaryExprKind::Assign:
-			{
-				
-			}
-			}
-		}
+		BinaryExprAST(BinaryExprKind op, SourceLocation const& loc) : ExprAST(ExprKind::Binary, loc), op(op) {}
 		void SetLHS(std::unique_ptr<ExprAST>&& _lhs) { lhs = std::move(_lhs); }
-		void SetRHS(std::unique_ptr<ExprAST>&& _rhs) { rhs = std::move(_rhs); }
-		BinaryExprKind GetOp() const { return op; }
+		void SetRHS(std::unique_ptr<ExprAST>&& _rhs) {
+			rhs = std::move(_rhs); SetExpressionType();
+		}
+
+		BinaryExprKind GetBinaryKind() const { return op; }
+		ExprAST* GetLHS() const { return lhs.get(); }
+		ExprAST* GetRHS() const { return rhs.get(); }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -399,17 +456,31 @@ namespace lucc
 	private:
 		std::unique_ptr<ExprAST> lhs, rhs;
 		BinaryExprKind op;
+
+	private:
+		void SetExpressionType()
+		{
+			switch (op)
+			{
+			case BinaryExprKind::Assign: SetType(AsIfByAssignment(rhs->GetType(), lhs->GetType())); break;
+			}
+		}
+
 	};
 	class TernaryExprAST : public ExprAST 
 	{
 	public:
 		TernaryExprAST(std::unique_ptr<ExprAST>&& cond_expr, std::unique_ptr<ExprAST>&& true_expr,
-			std::unique_ptr<ExprAST>&& false_expr, SourceLocation const& loc) : ExprAST(loc),
+			std::unique_ptr<ExprAST>&& false_expr, SourceLocation const& loc) : ExprAST(ExprKind::Ternary, loc),
 			cond_expr(std::move(cond_expr)),
 			true_expr(std::move(true_expr)),
 			false_expr(std::move(false_expr)) {}
 		
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+
+		ExprAST* GetConditionExpr() const	{ return cond_expr.get(); }
+		ExprAST* GetTrueExpr() const		{ return true_expr.get(); }
+		ExprAST* GetFalseExpr() const		{ return false_expr.get(); }
 
 	private:
 		std::unique_ptr<ExprAST> cond_expr;
@@ -421,7 +492,7 @@ namespace lucc
 	{
 	public:
 		FunctionCallAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
-			: ExprAST(loc), func_expr(std::move(func)) {}
+			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func)) {}
 		void AddArgument(std::unique_ptr<ExprAST>&& arg)
 		{
 			func_args.push_back(std::move(arg));
@@ -444,12 +515,11 @@ namespace lucc
 		FunctionToPointer,
 		IntegerPromotion
 	};
-	
 	class ImplicitCastExprAST : public ExprAST
 	{
 	public:
 		ImplicitCastExprAST(std::unique_ptr<ExprAST>&& expr, CastKind kind, SourceLocation const& loc) 
-			: ExprAST(loc), operand(std::move(expr)), kind(kind) {}
+			: ExprAST(ExprKind::ImplicitCast, loc), operand(std::move(expr)), kind(kind) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
@@ -459,10 +529,10 @@ namespace lucc
 		CastKind kind;
 	};
 
-	class Float32LiteralAST final : public ExprAST
+	class FloatLiteralAST final : public ExprAST
 	{
 	public:
-		Float32LiteralAST(float value, SourceLocation const& loc) : ExprAST(loc, builtin_types::Float), value(value) {}
+		FloatLiteralAST(float value, SourceLocation const& loc) : ExprAST(ExprKind::FloatLiteral, loc, builtin_types::Float), value(value) {}
 		float GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -470,10 +540,10 @@ namespace lucc
 	private:
 		float value;
 	};
-	class Float64LiteralAST final : public ExprAST
+	class DoubleLiteralAST final : public ExprAST
 	{
 	public:
-		Float64LiteralAST(double value, SourceLocation const& loc) : ExprAST(loc, builtin_types::Double), value(value) {}
+		DoubleLiteralAST(double value, SourceLocation const& loc) : ExprAST(ExprKind::DoubleLiteral, loc, builtin_types::Double), value(value) {}
 		double GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -481,10 +551,10 @@ namespace lucc
 	private:
 		double value;
 	};
-	class Int64LiteralAST final : public ExprAST
+	class IntLiteralAST final : public ExprAST
 	{
 	public:
-		Int64LiteralAST(int64 value, SourceLocation const& loc) : ExprAST(loc, builtin_types::LongLong), value(value) {}
+		IntLiteralAST(int64 value, SourceLocation const& loc) : ExprAST(ExprKind::IntLiteral, loc, builtin_types::LongLong), value(value) {}
 		int64 GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -496,7 +566,7 @@ namespace lucc
 	class StringLiteralAST final : public ExprAST
 	{
 	public:
-		StringLiteralAST(std::string_view str, SourceLocation const& loc) : ExprAST(loc, QualifiedType(ArrayType(builtin_types::Char, str.size()))), str(str) {}
+		StringLiteralAST(std::string_view str, SourceLocation const& loc) : ExprAST(ExprKind::StringLiteral, loc, QualifiedType(ArrayType(builtin_types::Char, str.size()))), str(str) {}
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetString() const { return str; }
@@ -507,7 +577,7 @@ namespace lucc
 	class IdentifierAST : public ExprAST
 	{
 	public:
-		explicit IdentifierAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(loc, type), name(name)
+		explicit IdentifierAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(ExprKind::Identifier, loc, type), name(name)
 		{
 			SetValueCategory(ExprValueCategory::LValue);
 		}
@@ -528,8 +598,20 @@ namespace lucc
 
 	template<typename To, typename From> 
 	requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
-	To* AstCast(From* from)
+	To* DynamicAstCast(From* from)
 	{
 		return dynamic_cast<To*>(from);
+	}
+	template<typename To, typename From>
+	requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+	To* AstCast(From* from)
+	{
+		return static_cast<To*>(from);
+	}
+	template<typename To, typename From>
+	requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+	To const* AstCast(From const* from)
+	{
+		return static_cast<To const*>(from);
 	}
 }

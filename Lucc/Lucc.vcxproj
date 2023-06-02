@@ -57,7 +57,8 @@
     <ClInclude Include="precomp.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Compiler\Assembler\test.asm" />
+    <None Include="Compiler\test.asm" />
+    <None Include="Compiler\test2.asm" />
     <None Include="Frontend\Diagnostics.def" />
     <None Include="Frontend\Tokens.def" />
   </ItemGroup>

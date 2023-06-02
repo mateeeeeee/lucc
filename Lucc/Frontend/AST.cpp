@@ -135,7 +135,7 @@ namespace lucc
 		operand->Accept(visitor, depth + 1);
 	}
 
-	void Int64LiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void IntLiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
@@ -172,12 +172,12 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
-	void Float32LiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void FloatLiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void Float64LiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void DoubleLiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
@@ -198,7 +198,7 @@ namespace lucc
 	void FunctionDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		//just a declaration but could be extern 
-		if (!body)
+		if (!IsDefinition())
 		{
 			if(sym.storage == Storage::Extern) ctx.DeclareExternFunction(name.c_str());
 			return;
@@ -216,8 +216,9 @@ namespace lucc
 		case UnaryExprKind::PreIncrement:
 		case UnaryExprKind::PreDecrement:
 		{
-			if (IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get()))
+			if (operand->GetExprKind() == ExprKind::Identifier) 
 			{
+				IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 				char const* name = identifier->GetName().data();
 				if (op == UnaryExprKind::PreIncrement) ctx.Inc(name);
 				else ctx.Dec(name);
@@ -228,8 +229,9 @@ namespace lucc
 		case UnaryExprKind::PostIncrement:
 		case UnaryExprKind::PostDecrement:
 		{
-			if (IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get()))
+			if (operand->GetExprKind() == ExprKind::Identifier)
 			{
+				IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 				char const* name = identifier->GetName().data();
 				if (return_reg) ctx.Move(*return_reg, name);
 				if (op == UnaryExprKind::PostIncrement) ctx.Inc(name);
@@ -242,13 +244,15 @@ namespace lucc
 		{
 			if (return_reg)
 			{
-				if (Int64LiteralAST* literal = AstCast<Int64LiteralAST>(operand.get()))
+				if (operand->GetExprKind() == ExprKind::IntLiteral)
 				{
+					IntLiteralAST* literal = AstCast<IntLiteralAST>(operand.get());
 					ctx.Move(*return_reg, literal->GetValue());
 					if(op == UnaryExprKind::Minus) ctx.Neg(*return_reg);
 				}
-				else if (IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get()))
+				else if (operand->GetExprKind() == ExprKind::Identifier)
 				{
+					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
 					ctx.Move(*return_reg, name);
 					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg);
@@ -261,10 +265,24 @@ namespace lucc
 			}
 		}
 		return;
+		case UnaryExprKind::Dereference:
+		{
+			if (return_reg)
+			{
+				
+			}
+		}
+		return;
+		case UnaryExprKind::AddressOf:
+		{
+			if (return_reg)
+			{
+
+			}
+		}
+		return;
 		case UnaryExprKind::BitNot:
 		case UnaryExprKind::LogicalNot:
-		case UnaryExprKind::Dereference:
-		case UnaryExprKind::AddressOf:
 		case UnaryExprKind::Cast:
 		default:
 			LU_ASSERT_MSG(false, "Not implemented yet");
@@ -277,8 +295,9 @@ namespace lucc
 		{
 			if (!return_reg) return;
 
-			if (Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get()))
+			if (rhs->GetExprKind() == ExprKind::IntLiteral)
 			{
+				IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
 				lhs->Codegen(ctx, *return_reg);
 				switch (kind)
 				{
@@ -303,9 +322,9 @@ namespace lucc
 		{
 			if (!return_reg) return;
 
-			Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get());
-			if (int_literal)
+			if (rhs->GetExprKind() == ExprKind::IntLiteral)
 			{
+				IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
 				register_t reg = ctx.AllocateRegister();
 				lhs->Codegen(ctx, reg);
 				ctx.Compare(reg, int_literal->GetValue());
@@ -336,15 +355,19 @@ namespace lucc
 		{
 		case BinaryExprKind::Assign: 
 		{
-			if (IdentifierAST* var_decl = AstCast<IdentifierAST>(lhs.get()))
+			if (lhs->GetExprKind() == ExprKind::Identifier)
 			{
+				IdentifierAST* var_decl = AstCast<IdentifierAST>(lhs.get());
 				char const* var_name = var_decl->GetName().data();
-				if (Int64LiteralAST* int_literal = AstCast<Int64LiteralAST>(rhs.get()))
+				
+				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
+					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
 					ctx.Move(var_name, int_literal->GetValue());
 				}
-				else if (FunctionCallAST* func_call = AstCast<FunctionCallAST>(rhs.get()))
+				else if (rhs->GetExprKind() == ExprKind::FunctionCall)
 				{
+					FunctionCallAST* func_call = AstCast<FunctionCallAST>(rhs.get());
 					register_t ret_reg = ctx.AllocateRegisterForReturn();
 					func_call->Codegen(ctx);
 					ctx.Move(var_name, ret_reg);
@@ -355,7 +378,7 @@ namespace lucc
 					register_t rhs_reg = return_reg ? *return_reg : ctx.AllocateRegister();
 					rhs->Codegen(ctx, rhs_reg);
 					ctx.Move(var_name, rhs_reg);
-					if(!return_reg) ctx.FreeRegister(rhs_reg);
+					if (!return_reg) ctx.FreeRegister(rhs_reg);
 				}
 			}
 		}
@@ -384,7 +407,7 @@ namespace lucc
 		if (return_reg) ctx.Move(*return_reg, name.c_str());
 	}
 
-	void Int64LiteralAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void IntLiteralAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		if (return_reg) ctx.Move(*return_reg, value);
 	}
@@ -463,7 +486,7 @@ namespace lucc
 			register_t arg_reg = ctx.AllocateRegisterForFunctionArg(i);
 			func_args[i]->Codegen(ctx, arg_reg);
 		}
-		if (IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get()))
+		if (IdentifierAST* func_id = DynamicAstCast<IdentifierAST>(func_expr.get()))
 		{
 			ctx.CallFunction(func_id->GetName().data());
 		}

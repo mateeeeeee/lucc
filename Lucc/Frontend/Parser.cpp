@@ -639,17 +639,41 @@ namespace lucc
 		SourceLocation loc = current_token->GetLocation();
 		switch (current_token->GetKind()) 
 		{
+		// C11 6.5.3.2p1: The operand of the unary & operator shall be either a function
+		// designator, the result of a [] or unary * operator, or an lvalue that
+		// designates an object that is not a bit-field and is not declared with the
+		// register storage-class specifier.
+		case TokenKind::amp:
+		{
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::AddressOf, loc);
+			++current_token;
+			std::unique_ptr<ExprAST> op_expr = ParseUnaryExpression();
+			if (!op_expr->IsLValue() && !IsFunctionType(op_expr->GetType()))
+			{
+				Report(diag::address_of_rvalue_error);
+				return nullptr;
+			}
+			unary_expr->SetOperand(std::move(op_expr));
+			return unary_expr;
+		}
+		case TokenKind::star: 
+		{
+			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
+			++current_token;
+			std::unique_ptr<ExprAST> op_expr = ParseUnaryExpression();
+			if (!IsPointerType(op_expr->GetType()))
+			{
+				Report(diag::dereferencing_non_pointer_type);
+				return nullptr;
+			}
+			unary_expr->SetOperand(std::move(op_expr));
+			return unary_expr;
+		}
 		case TokenKind::plus_plus:
 			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PreIncrement, loc);
 			break;
-		case TokenKind::minus_minus: 
+		case TokenKind::minus_minus:
 			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PreDecrement, loc);
-			break;
-		case TokenKind::amp: 
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::AddressOf, loc);
-			break;
-		case TokenKind::star: 
-			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
 			break;
 		case TokenKind::plus:
 			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Plus, loc);
@@ -764,14 +788,14 @@ namespace lucc
 		return nullptr;
 	}
 
-	std::unique_ptr<Int64LiteralAST> Parser::ParseIntegerLiteral()
+	std::unique_ptr<IntLiteralAST> Parser::ParseIntegerLiteral()
 	{
 		LU_ASSERT(current_token->Is(TokenKind::number));
 		std::string_view string_number = current_token->GetIdentifier();
 		int64 value = std::stoll(current_token->GetIdentifier().data(), nullptr, 0);
 		SourceLocation loc = current_token->GetLocation();
 		++current_token;
-		return std::make_unique<Int64LiteralAST>(value, loc);
+		return std::make_unique<IntLiteralAST>(value, loc);
 	}
 
 	std::unique_ptr<StringLiteralAST> Parser::ParseStringLiteral()

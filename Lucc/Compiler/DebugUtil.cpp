@@ -53,12 +53,12 @@ void lucc::debug::DebugNodeVisitorAST::Visit(ExprAST const& node, size_t depth)
 
 void lucc::debug::DebugNodeVisitorAST::Visit(UnaryExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "UnaryExprAST, Op:" << UnaryExprKindToString(node.GetOp()) << "\n";
+	std::cout << GetIndentation(depth) << "UnaryExprAST, Op:" << UnaryExprKindToString(node.GetUnaryKind()) << "\n";
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(BinaryExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "BinaryExprAST, Op:" << BinaryExprKindToString(node.GetOp()) << "\n";
+	std::cout << GetIndentation(depth) << "BinaryExprAST, Op:" << BinaryExprKindToString(node.GetBinaryKind()) << "\n";
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(TernaryExprAST const& node, size_t depth)
@@ -71,7 +71,7 @@ void lucc::debug::DebugNodeVisitorAST::Visit(ImplicitCastExprAST const& node, si
 	std::cout << GetIndentation(depth) << "ImplicitCastExprAST: " << ImplicitCastKindToString(node.GetKind()) << "\n";
 }
 
-void lucc::debug::DebugNodeVisitorAST::Visit(Int64LiteralAST const& node, size_t depth)
+void lucc::debug::DebugNodeVisitorAST::Visit(IntLiteralAST const& node, size_t depth)
 {
 	std::cout << GetIndentation(depth) << "IntegerLiteralAST, Value:" << std::to_string(node.GetValue()) << "\n";
 }

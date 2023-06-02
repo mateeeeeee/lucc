@@ -20,7 +20,7 @@ namespace lucc
 		constexpr char const* _executables_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Preview\\VC\\Tools\\MSVC\\14.34.31823\\bin\\Hostx64\\x64";
 		constexpr char const* _lib_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Preview\\VC\\Tools\\MSVC\\14.34.31823\\lib\\x64";
 
-		bool CompileSingleFile(std::string_view source_file, std::string_view assembly_file, bool output_debug)
+		bool CompileTranslationUnit(std::string_view source_file, std::string_view assembly_file, bool output_debug)
 		{
 			SourceBuffer src(source_file);
 			Lexer lex(src);
@@ -50,6 +50,8 @@ namespace lucc
 
 			x86_64CodeGenerator x86_64(assembly_file);
 			x86_64.Generate(ast);
+
+			return true;
 		}
 	}
 
@@ -69,7 +71,7 @@ namespace lucc
 			fs::path assembly_file = file_name;  assembly_file += ".asm";
 			fs::path object_file   = file_name; object_file += ".obj";
 
-			if (!CompileSingleFile(input.sources[i], assembly_file.string(), output_debug)) return false;
+			if (!CompileTranslationUnit(input.sources[i], assembly_file.string(), output_debug)) return false;
 
 			masm_cmd += std::format(" /Fo {} /c {} ", object_file.string(), assembly_file.string());
 			object_files[i] = object_file;

@@ -41,5 +41,7 @@ DIAG(local_functions_not_allowed, error, "Local functions not allowed")
 DIAG(lhs_not_assignable, error, "Left hand side of the assignment is not assignable!")
 DIAG(variable_not_declared, error, "Variable not declared!")
 DIAG(invalid_function_call, error, "Invalid function call!")
+DIAG(address_of_rvalue_error, error, "The address of an rvalue can't be taken!")
+DIAG(dereferencing_non_pointer_type, error, "Cannot dereference non-pointer type!")
 
 #undef DIAG
