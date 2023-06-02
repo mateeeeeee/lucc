@@ -1,4 +1,5 @@
 #include "AST.h"
+#include "Diagnostics.h"
 #include "Backend/ICodeGenerator.h"
 #include "Core/Defines.h"
 
@@ -269,7 +270,10 @@ namespace lucc
 		{
 			if (return_reg)
 			{
-				
+				register_t ptr_reg = ctx.AllocateRegister();
+				operand->Codegen(ctx, ptr_reg);
+				ctx.MoveIndirect(*return_reg, ptr_reg);
+				ctx.FreeRegister(ptr_reg);
 			}
 		}
 		return;
@@ -277,7 +281,16 @@ namespace lucc
 		{
 			if (return_reg)
 			{
-
+				if (operand->GetExprKind() == ExprKind::Identifier)
+				{
+					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
+					char const* name = identifier->GetName().data();
+					ctx.LoadEffectiveAddress(*return_reg, name);
+				}
+				else 
+				{
+					LU_ASSERT_MSG(false, "Not implemented yet");
+				}
 			}
 		}
 		return;
@@ -486,8 +499,9 @@ namespace lucc
 			register_t arg_reg = ctx.AllocateRegisterForFunctionArg(i);
 			func_args[i]->Codegen(ctx, arg_reg);
 		}
-		if (IdentifierAST* func_id = DynamicAstCast<IdentifierAST>(func_expr.get()))
+		if (func_expr->GetExprKind() == ExprKind::Identifier)
 		{
+			IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get());
 			ctx.CallFunction(func_id->GetName().data());
 		}
 		else LU_ASSERT(false);

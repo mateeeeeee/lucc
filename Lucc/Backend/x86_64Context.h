@@ -36,8 +36,16 @@ namespace lucc
 
 		virtual void Move(char const* sym_name, register_t reg) override;
 		virtual void Move(register_t reg, char const* sym_name) override;
+		virtual void Move(register_t reg, char const* sym_name, size_t offset) override;
 		virtual void Move(char const* sym_name, int64 val) override;
 		virtual void Move(register_t reg, int64 val) override;
+
+		virtual void MoveIndirect(register_t dst, register_t src);
+		virtual void MoveIndirect(register_t dst, IndirectArgs const& src_indirect_args);
+		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, register_t src) override;
+		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, IndirectArgs const& src_indirect_args);
+
+		virtual void LoadEffectiveAddress(register_t reg, char const* sym_name) override;
 
 		virtual void Inc(register_t reg) override;
 		virtual void Inc(char const* sym_name) override;
@@ -49,6 +57,7 @@ namespace lucc
 		virtual void Sub(register_t reg1, register_t reg2) override;
 		virtual void SubImm(register_t reg1, int64 val) override;
 		virtual void Neg(register_t reg) override;
+		virtual void Neg(char const* sym_name) override;
 
 		virtual void GenerateLabelId() override;
 		virtual void Label(char const* label) override;

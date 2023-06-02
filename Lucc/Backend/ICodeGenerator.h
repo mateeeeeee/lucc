@@ -28,6 +28,23 @@ namespace lucc
 		LessEqual
 	};
 
+
+	struct IndirectArgs
+	{
+		enum Scale
+		{
+			Scale_None = 0x0,
+			Scale_x1   = 0x1,
+			Scale_x2   = 0x2,
+			Scale_x4   = 0x4,
+			Scale_x8   = 0x8,
+		};
+		register_t base_reg = INVALID_REG;
+		register_t index_reg = INVALID_REG;
+		Scale scale = Scale_None;
+		size_t displacement = 0;
+	};
+
 	class ICodegenContext
 	{
 	public:
@@ -39,10 +56,18 @@ namespace lucc
 		virtual register_t	AllocateRegisterForFunctionArg(size_t arg_index) = 0;
 		virtual void		FreeRegister(register_t reg) = 0;
 
-		virtual void Move(char const* sym_name, register_t reg) = 0;
-		virtual void Move(register_t reg, char const* sym_name) = 0;
-		virtual void Move(char const* sym_name, int64 val) = 0;
-		virtual void Move(register_t reg, int64 v) = 0;
+		virtual void Move(char const* sym, register_t src) = 0;
+		virtual void Move(register_t  dst, char const* sym) = 0;
+		virtual void Move(register_t  dst, char const* sym, size_t offset) = 0;
+		virtual void Move(char const* sym, int64 val) = 0;
+		virtual void Move(register_t  dst, int64 val) = 0;
+
+		virtual void MoveIndirect(register_t dst, register_t src) = 0;
+		virtual void MoveIndirect(register_t dst, IndirectArgs const& src_indirect_args) = 0;
+		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, register_t src) = 0;
+		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, IndirectArgs const& src_indirect_args) = 0;
+
+		virtual void LoadEffectiveAddress(register_t reg, char const* sym_name) = 0;
 
 		virtual void Inc(register_t reg) = 0;
 		virtual void Inc(char const* sym_name) = 0;
@@ -54,7 +79,7 @@ namespace lucc
 		virtual void Sub(register_t reg1, register_t reg2) = 0;
 		virtual void SubImm(register_t reg1, int64 v) = 0;
 		virtual void Neg(register_t reg) = 0;
-
+		virtual void Neg(char const* sym_name) = 0;
 
 		virtual void GenerateLabelId() = 0;
 		virtual void Label(char const* label) = 0;

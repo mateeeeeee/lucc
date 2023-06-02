@@ -65,6 +65,9 @@
     <ClCompile Include="Backend\x86_64CodeGenerator.cpp">
       <Filter>Backend\x86-64</Filter>
     </ClCompile>
+    <ClCompile Include="Frontend\Type.cpp">
+      <Filter>Frontend\Parser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />

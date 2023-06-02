@@ -9,5 +9,5 @@ MyInt main()
 {
 	k = f();
 	a = &k;
-	return *a + 1;
+	return *a;
 }

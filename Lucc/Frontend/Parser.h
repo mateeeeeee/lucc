@@ -48,7 +48,7 @@ namespace lucc
 			std::unique_ptr<SymbolTable> identifier_sym_table;
 
 			FuncType const* current_func_type = nullptr;
-			bool return_stmt_if_required = false;
+			bool return_stmt_encountered = false;
 			std::vector<std::string> gotos{};
 			std::vector<std::string> labels{};
 		};

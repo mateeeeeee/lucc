@@ -76,6 +76,10 @@ namespace lucc
 	{
 		Emit<Text>("neg\t{}", dword_registers[reg.id]);
 	}
+	void x86_64CodeGenerator::Context::Neg(char const* sym_name)
+	{
+		Emit<Text>("neg\t{}", sym_name);
+	}
 
 	void x86_64CodeGenerator::Context::Dec(char const* sym_name)
 	{
@@ -109,6 +113,32 @@ namespace lucc
 	void x86_64CodeGenerator::Context::Move(register_t reg, char const* sym_name)
 	{
 		Emit<Text>("mov\t{}, {}", dword_registers[reg.id], sym_name);
+	}
+	void x86_64CodeGenerator::Context::Move(register_t reg, char const* sym_name, size_t offset)
+	{
+		Emit<Text>("mov\t{}, [{} + {}]", dword_registers[reg.id], sym_name, offset);
+	}
+
+	void x86_64CodeGenerator::Context::MoveIndirect(register_t dst, register_t src)
+	{
+		Emit<Text>("mov\t{}, [{}]", dword_registers[dst.id], dword_registers[src.id]);
+	}
+	void x86_64CodeGenerator::Context::MoveIndirect(register_t dst, IndirectArgs const& src_indirect_args)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::MoveIndirect(IndirectArgs const& dst_indirect_args, register_t src)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::MoveIndirect(IndirectArgs const& dst_indirect_args, IndirectArgs const& src_indirect_args)
+	{
+
+	}
+
+	void x86_64CodeGenerator::Context::LoadEffectiveAddress(register_t reg, char const* sym_name)
+	{
+		Emit<Text>("lea\t{}, {}", qword_registers[reg.id], sym_name);
 	}
 
 	void x86_64CodeGenerator::Context::Jump(char const* label, Condition cond)
@@ -204,5 +234,6 @@ namespace lucc
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Data)	 output_buffer.data_segment += output;
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Text)	 output_buffer.text_segment += output;
 	}
+
 }
 

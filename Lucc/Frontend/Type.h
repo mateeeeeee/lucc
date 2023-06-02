@@ -497,42 +497,5 @@ namespace lucc
 	  the storage of the first object, then the overlap shall be exact and the two objects shall
 	  have qualified or unqualified versions of a compatible type; otherwise, the behavior is
 	  undefined. */
-	static QualifiedType AsIfByAssignment(QualifiedType const& src_type, QualifiedType const& dst_type)
-	{
-		QualifiedType expr_type = ValueTransformation(src_type);
-		
-		LU_ASSERT(!IsArrayType(dst_type) && !IsFunctionType(dst_type));
-		QualifiedType ret_type = RemoveQualifiers(dst_type);
-		if (expr_type->IsCompatible(dst_type)) return ret_type;
-		
-		if (IsIntegerType(expr_type) && IsPointerType(dst_type) && !IsBoolType(expr_type)) 
-		{
-			LU_ASSERT_MSG(false, "incompatible integer to pointer conversion"); //add diag later
-		}
-		else if (IsIntegerType(dst_type) && IsPointerType(expr_type) && !IsBoolType(dst_type)) 
-		{
-			LU_ASSERT_MSG(false, "incompatible integer to pointer conversion");
-		}
-		else if (IsPointerType(expr_type) && IsPointerType(dst_type)) 
-		{
-			QualifiedType expr_pte_qty = TypeCast<PointerType>(expr_type).PointeeQualifiedType();
-			QualifiedType dst_pte_qty  = TypeCast<PointerType>(dst_type).PointeeQualifiedType();
-			if ((IsVoidType(expr_pte_qty) && IsObjectType(dst_pte_qty)) ||
-				(IsVoidType(dst_pte_qty) && IsObjectType(expr_pte_qty)) ||
-				expr_pte_qty->IsCompatible(dst_pte_qty)) 
-			{
-				if ((!dst_pte_qty.IsConst() && expr_pte_qty.IsConst()) ||
-					(!dst_pte_qty.IsVolatile() && expr_pte_qty.IsVolatile())) 
-				{
-					LU_ASSERT_MSG(false, "incompatible pointer types conversion discards qualifiers");
-				}
-			}
-			else if ((IsObjectType(expr_pte_qty) && IsObjectType(dst_pte_qty)) ||
-					 (IsFunctionType(expr_pte_qty) && IsFunctionType(dst_pte_qty)))
-			{
-				LU_ASSERT_MSG(false, "incompatible pointer types conversion");
-			}
-		}
-		return ret_type;
-	}
+	QualifiedType AsIfByAssignment(QualifiedType const& src_type, QualifiedType const& dst_type);
 }

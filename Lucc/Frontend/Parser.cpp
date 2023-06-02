@@ -205,7 +205,7 @@ namespace lucc
 			std::unique_ptr<CompoundStmtAST> compound_stmt = ParseCompoundStatement();
 			func_decl->SetFunctionBody(std::move(compound_stmt));
 
-			if (ctx.current_func_type->GetReturnType()->IsNot(PrimitiveTypeKind::Void) && !ctx.return_stmt_if_required)
+			if (ctx.current_func_type->GetReturnType()->IsNot(PrimitiveTypeKind::Void) && !ctx.return_stmt_encountered)
 			{
 				Report(diag::return_not_found);
 				return nullptr;
@@ -345,7 +345,7 @@ namespace lucc
 			Report(diag::return_type_mismatch);
 			return nullptr;
 		}
-		ctx.return_stmt_if_required = true;
+		ctx.return_stmt_encountered = true;
 		return std::make_unique<ReturnStmtAST>(std::move(ret_expr_stmt));
 	}
 

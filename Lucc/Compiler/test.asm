@@ -10,8 +10,10 @@ a	dword ?
 main proc 
 call f
 mov	k, eax
+lea	r10, k
 mov	a, r10d
-add	eax, 1
+mov	r10d, a
+mov	eax, [r10d]
 jmp main_end
 main_end:
 ret

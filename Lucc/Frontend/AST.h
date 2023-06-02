@@ -430,11 +430,7 @@ namespace lucc
 			case UnaryExprKind::AddressOf: SetAddressOfType(); break;
 			}
 		}
-
-		void SetAddressOfType()
-		{
-			
-		}
+		void SetAddressOfType() {}
 
 	};
 	class BinaryExprAST : public ExprAST

@@ -30,6 +30,7 @@
     <ClCompile Include="Frontend\Preprocessor.cpp" />
     <ClCompile Include="Frontend\SourceBuffer.cpp" />
     <ClCompile Include="Frontend\TokenTypes.cpp" />
+    <ClCompile Include="Frontend\Type.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="precomp.cpp" />
   </ItemGroup>
