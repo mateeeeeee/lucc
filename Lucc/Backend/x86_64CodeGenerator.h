@@ -5,7 +5,6 @@
 
 namespace lucc
 {
-	struct AST;
 
 	class x86_64CodeGenerator : public ICodeGenerator
 	{
@@ -20,13 +19,12 @@ namespace lucc
 		friend void operator<<(std::ostream& os, OutputBuffer const& buff);
 
 	public:
-		x86_64CodeGenerator(std::string_view output_file, AST* ast);
+		explicit x86_64CodeGenerator(std::string_view output_file);
 		~x86_64CodeGenerator();
 
-		virtual void Generate() override;
+		virtual void Generate(AST* ast) override;
 
 	private:
-		AST* ast;
 		std::string output_file;
 		OutputBuffer output_buffer;
 

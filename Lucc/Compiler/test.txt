@@ -1,20 +1,13 @@
 typedef int MyInt;
 
-//extern int puts( const char *str );
-
 static MyInt k;
 MyInt l;
 
-
-
-int f()
-{
-	return 5;
-}
+extern int f();
 
 MyInt main()
 {
 	k = f();
 	l = 3;
-	return l - k - 1;
+	return k - l - 5;
 }

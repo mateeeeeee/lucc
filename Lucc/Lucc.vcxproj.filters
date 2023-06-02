@@ -144,5 +144,8 @@
     <Text Include="Compiler\test.txt">
       <Filter>Compiler</Filter>
     </Text>
+    <Text Include="Compiler\test2.txt">
+      <Filter>Compiler</Filter>
+    </Text>
   </ItemGroup>
 </Project>

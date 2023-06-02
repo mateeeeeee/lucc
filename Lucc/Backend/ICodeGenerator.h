@@ -2,11 +2,13 @@
 
 namespace lucc
 {
+	struct AST;
+
 	class ICodeGenerator
 	{
 	public:
 		virtual ~ICodeGenerator() = default;
-		virtual void Generate() = 0;
+		virtual void Generate(AST*) = 0;
 	};
 
 	struct register_t

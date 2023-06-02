@@ -11,10 +11,8 @@ int main(int argc, char** argv)
 	parser.Parse(argc, argv);
 
 	CompilerInput compiler_input{};
-	compiler_input.source = "test.txt";
-	compiler_input.assembly = "test.asm";
-	compiler_input.object = "test.obj";
-	compiler_input.executable = "test.exe";
+	compiler_input.sources = { "test.txt", "test2.txt" };
+	compiler_input.exe_file = "test.exe";
 	compiler_input.flags = CompilerFlag_OutputDebugInfo;
 	bool result = Compile(compiler_input);
 }

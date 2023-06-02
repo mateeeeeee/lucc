@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Compiler\test.txt" />
+    <Text Include="Compiler\test2.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

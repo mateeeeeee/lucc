@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include "Core/Enums.h"
 
 namespace lucc
@@ -13,10 +14,8 @@ namespace lucc
 
 	struct CompilerInput
 	{
-		std::string_view source;
-		std::string_view assembly;
-		std::string_view object;
-		std::string_view executable;
+		std::vector<std::string_view> sources;
+		std::string_view exe_file;
 		CompilerFlags	 flags;
 	};
 
