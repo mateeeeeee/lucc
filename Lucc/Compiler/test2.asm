@@ -4,7 +4,7 @@
 .code
 
 f proc 
-mov	eax, 10
+mov	rax, 10
 jmp f_end
 f_end:
 ret

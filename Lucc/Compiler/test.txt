@@ -1,13 +1,12 @@
-typedef int MyInt;
 
-static MyInt k;
+static int k;
 int* a;
 
 extern int f();
 
-MyInt main()
+int main()
 {
 	k = f();
 	a = &k;
-	return *a;
+	return *a + 1;
 }

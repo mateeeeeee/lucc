@@ -58,23 +58,23 @@ namespace lucc
 
 	void x86_64CodeGenerator::Context::SubImm(register_t reg1, int64 val)
 	{
-		Emit<Text>("sub\t{}, {}", dword_registers[reg1.id], val);
+		Emit<Text>("sub\t{}, {}", qword_registers[reg1.id], val);
 	}
 	void x86_64CodeGenerator::Context::Sub(register_t reg1, register_t reg2)
 	{
-		Emit<Text>("sub\t{}, {}", dword_registers[reg1.id], dword_registers[reg2.id]);
+		Emit<Text>("sub\t{}, {}", qword_registers[reg1.id], qword_registers[reg2.id]);
 	}
 	void x86_64CodeGenerator::Context::AddImm(register_t reg1, int64 val)
 	{
-		Emit<Text>("add\t{}, {}", dword_registers[reg1.id], val);
+		Emit<Text>("add\t{}, {}", qword_registers[reg1.id], val);
 	}
 	void x86_64CodeGenerator::Context::Add(register_t reg1, register_t reg2)
 	{
-		Emit<Text>("add\t{}, {}", dword_registers[reg1.id], dword_registers[reg2.id]);
+		Emit<Text>("add\t{}, {}", qword_registers[reg1.id], qword_registers[reg2.id]);
 	}
 	void x86_64CodeGenerator::Context::Neg(register_t reg)
 	{
-		Emit<Text>("neg\t{}", dword_registers[reg.id]);
+		Emit<Text>("neg\t{}", qword_registers[reg.id]);
 	}
 	void x86_64CodeGenerator::Context::Neg(char const* sym_name)
 	{
@@ -87,7 +87,7 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Dec(register_t reg)
 	{
-		Emit<Text>("dec\t{}", dword_registers[reg.id]);
+		Emit<Text>("dec\t{}", qword_registers[reg.id]);
 	}
 	void x86_64CodeGenerator::Context::Inc(char const* sym_name)
 	{
@@ -95,12 +95,12 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Inc(register_t reg)
 	{
-		Emit<Text>("inc\t{}", dword_registers[reg.id]);
+		Emit<Text>("inc\t{}", qword_registers[reg.id]);
 	}
 
 	void x86_64CodeGenerator::Context::Move(register_t reg, int64 val)
 	{
-		Emit<Text>("mov\t{}, {}", dword_registers[reg.id], val);
+		Emit<Text>("mov\t{}, {}", qword_registers[reg.id], val);
 	}
 	void x86_64CodeGenerator::Context::Move(char const* sym_name, int64 val)
 	{
@@ -108,20 +108,20 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Move(char const* sym_name, register_t reg)
 	{
-		Emit<Text>("mov\t{}, {}", sym_name, dword_registers[reg.id]);
+		Emit<Text>("mov\t{}, {}", sym_name, qword_registers[reg.id]);
 	}
 	void x86_64CodeGenerator::Context::Move(register_t reg, char const* sym_name)
 	{
-		Emit<Text>("mov\t{}, {}", dword_registers[reg.id], sym_name);
+		Emit<Text>("mov\t{}, {}", qword_registers[reg.id], sym_name);
 	}
 	void x86_64CodeGenerator::Context::Move(register_t reg, char const* sym_name, size_t offset)
 	{
-		Emit<Text>("mov\t{}, [{} + {}]", dword_registers[reg.id], sym_name, offset);
+		Emit<Text>("mov\t{}, [{} + {}]", qword_registers[reg.id], sym_name, offset);
 	}
 
 	void x86_64CodeGenerator::Context::MoveIndirect(register_t dst, register_t src)
 	{
-		Emit<Text>("mov\t{}, [{}]", dword_registers[dst.id], dword_registers[src.id]);
+		Emit<Text>("mov\t{}, [{}]", qword_registers[dst.id], qword_registers[src.id]);
 	}
 	void x86_64CodeGenerator::Context::MoveIndirect(register_t dst, IndirectArgs const& src_indirect_args)
 	{
@@ -170,11 +170,11 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Compare(register_t reg1, register_t reg2)
 	{
-		Emit<Text>("cmp\t{}, {}", dword_registers[reg1.id], dword_registers[reg2.id]);
+		Emit<Text>("cmp\t{}, {}", qword_registers[reg1.id], qword_registers[reg2.id]);
 	}
 	void x86_64CodeGenerator::Context::Compare(register_t reg, int64 val /*= 0*/)
 	{
-		Emit<Text>("cmp\t{}, {}", dword_registers[reg.id], val);
+		Emit<Text>("cmp\t{}, {}", qword_registers[reg.id], val);
 	}
 	void x86_64CodeGenerator::Context::Label(char const* label)
 	{
@@ -188,11 +188,11 @@ namespace lucc
 	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static)
 	{
 		if (!is_static) Emit<None>("public {}", sym_name);
-		Emit<Data>("{}\tdword ?", sym_name);
+		Emit<Data>("{}\tqword ?", sym_name);
 	}
 	void x86_64CodeGenerator::Context::DeclareExternVariable(char const* sym_name)
 	{
-		Emit<None>("extern {} : dword", sym_name);
+		Emit<None>("extern {} : qword", sym_name);
 	}
 	void x86_64CodeGenerator::Context::DeclareFunction(char const* sym_name, bool is_static)
 	{
