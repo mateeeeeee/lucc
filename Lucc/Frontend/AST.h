@@ -407,7 +407,10 @@ namespace lucc
 	class UnaryExprAST : public ExprAST
 	{
 	public:
-		UnaryExprAST(UnaryExprKind op, SourceLocation const& loc) : ExprAST(ExprKind::Unary, loc), op(op), operand(nullptr) {}
+		UnaryExprAST(UnaryExprKind op, SourceLocation const& loc) : ExprAST(ExprKind::Unary, loc), op(op), operand(nullptr) 
+		{
+			if (op == UnaryExprKind::Dereference) SetValueCategory(ExprValueCategory::LValue);
+		}
 		void SetOperand(std::unique_ptr<ExprAST>&& _operand) 
 		{ 
 			operand = std::move(_operand);

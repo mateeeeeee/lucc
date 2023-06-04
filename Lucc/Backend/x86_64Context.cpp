@@ -3,7 +3,6 @@
 
 namespace lucc
 {
-
 	x86_64CodeGenerator::Context::Context(OutputBuffer& output_buffer) : output_buffer(output_buffer)
 	{
 		free_registers.fill(true);
@@ -125,15 +124,15 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::MoveIndirect(register_t dst, IndirectArgs const& src_indirect_args)
 	{
-
+		Emit<Text>("mov\t{}, {}", qword_registers[dst.id], ConvertIndirectArgs(src_indirect_args));
 	}
 	void x86_64CodeGenerator::Context::MoveIndirect(IndirectArgs const& dst_indirect_args, register_t src)
 	{
-
+		Emit<Text>("mov\t{}, {}", ConvertIndirectArgs(dst_indirect_args), qword_registers[src.id]);
 	}
-	void x86_64CodeGenerator::Context::MoveIndirect(IndirectArgs const& dst_indirect_args, IndirectArgs const& src_indirect_args)
+	void x86_64CodeGenerator::Context::MoveIndirect(IndirectArgs const& dst_indirect_args, int64 val)
 	{
-
+		Emit<Text>("mov\t{}, {}", ConvertIndirectArgs(dst_indirect_args), val);
 	}
 
 	void x86_64CodeGenerator::Context::LoadEffectiveAddress(register_t reg, char const* sym_name)
@@ -190,6 +189,12 @@ namespace lucc
 		if (!is_static) Emit<None>("public {}", sym_name);
 		Emit<Data>("{}\tqword ?", sym_name);
 	}
+	void x86_64CodeGenerator::Context::DeclareArray(char const* sym_name, size_t size, bool is_static)
+	{
+		if (!is_static) Emit<None>("public {}", sym_name);
+		Emit<Data>("{}\tqword {} dup (?)", sym_name, size); 
+	}
+
 	void x86_64CodeGenerator::Context::DeclareExternVariable(char const* sym_name)
 	{
 		Emit<None>("extern {} : qword", sym_name);
@@ -219,12 +224,6 @@ namespace lucc
 		Emit<Text>("{} endp", current_func_name);
 	}
 
-	size_t x86_64CodeGenerator::Context::GenerateUniqueInteger()
-	{
-		static size_t i = 0;
-		return ++i;
-	}
-
 	template<x86_64CodeGenerator::Context::SegmentType segment, typename... Ts>
 	void x86_64CodeGenerator::Context::Emit(std::string_view fmt, Ts&&... args)
 	{
@@ -235,5 +234,107 @@ namespace lucc
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Text)	 output_buffer.text_segment += output;
 	}
 
+	size_t x86_64CodeGenerator::Context::GenerateUniqueInteger()
+	{
+		static size_t i = 0;
+		return ++i;
+	}
+	std::string x86_64CodeGenerator::Context::ConvertIndirectArgs(IndirectArgs const& args)
+	{
+		std::string indirect_result = "[";
+		if (args.base_reg != INVALID_REG)
+		{
+			indirect_result += qword_registers[args.base_reg.id];
+		}
+		if (args.index_reg != INVALID_REG)
+		{
+			if (!indirect_result.empty()) indirect_result += "+";
+			indirect_result += qword_registers[args.base_reg.id];
+
+			if (args.scale != IndirectArgs::Scale_None)
+			{
+				indirect_result += "*";
+				switch (args.scale)
+				{
+				case IndirectArgs::Scale_x1: indirect_result += "1"; break;
+				case IndirectArgs::Scale_x2: indirect_result += "2"; break;
+				case IndirectArgs::Scale_x4: indirect_result += "4"; break;
+				case IndirectArgs::Scale_x8: indirect_result += "8"; break;
+				}
+			}
+		}
+		if (args.label_displacement)
+		{
+			if (!indirect_result.empty()) indirect_result += "+";
+			indirect_result += args.label_displacement;
+		}
+		else if (args.displacement)
+		{
+			if (!indirect_result.empty()) indirect_result += "+";
+			indirect_result += std::to_string(args.displacement);
+		}
+		indirect_result += "]";
+		return indirect_result;
+	}
+
 }
+
+
+/*
+Various combinations of the four (including all four) are valid. Here are the valid combinations, in roughly increasing order of complexity:
+Displacement
+Base
+Base + Index
+Base + Displacement
+Base + Index + Displacement
+Base + (Index * Scale)
+(Index * Scale) + Displacement
+Base + (Index * Scale) + Displacement
+----------------------------------------------------------------------------------------------------------------------------------------------
+1. Displacement
+This is arguably the simplest addressing mechanism in the x86 family: the displacement field is treated as an absolute memory address.
+	--------------------------------------------------------------------------------
+	; store the qword at 0x00000000000000ff into rax
+	mov rax, [0xff]
+
+	--------------------------------------------------------------------------------
+	extern long var;				|				f: mov     rax, rdi
+									|----------->      movabs  QWORD PTR [var], rax
+	void f(long x) { var = x; }		|				   ret
+
+2. Base
+Addressing via the base register adds one layer of indirection over absolute addressing: instead of an absolute address encoded into the 
+instruction’s displacement field, an address is loaded from the specified general-purpose register.
+	--------------------------------------------------------------------------------
+	;store the immediate (not displacement) into rbx
+	mov rbx, 0xacabacabacabacab
+	;store the qword at the address stored in rbx into rcx
+	mov rcx, [rbx]
+	--------------------------------------------------------------------------------
+
+3. Base + Index
+This is just like addressing via the base register, except that we also add in the value of the index register.
+	--------------------------------------------------------------------------------
+	; store the qword in rcx into the memory address computed as the sum of the values in rax and rbx
+	mov [rax + rbx], rcx
+
+	--------------------------------------------------------------------------------
+	int foo(char * buf, int index) { return buf[index]; } |-------> movsx   eax, byte ptr [rax + rcx] ; store buf[index] into eax
+
+4. Base + Displacement
+	--------------------------------------------------------------------------------
+	;add 0xcafe to the value stored in rax, then store the qword at the computed address into rbx
+	mov rbx, [rax + 0xcafe]
+
+5. Base + Index + Displacement
+	--------------------------------------------------------------------------------
+	; add 0xcafe to the values stores in rax and rcx, then store the qword at the computer address into rbx
+	mov rbx, [rax + rcx + 0xcafe]
+
+6. Base + (Index * Scale)
+As the name implies, the scale field is used to scale (i.e., multiply) another field. In particular, it always scales the index register — scale cannot be used without index.
+
+	mov     rax, qword ptr [rdi + 8*rsi] ;
+
+*/
 

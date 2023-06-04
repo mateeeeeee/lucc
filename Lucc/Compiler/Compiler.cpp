@@ -83,9 +83,8 @@ namespace lucc
 		link_cmd += "/subsystem:console /entry:main";
 		system(link_cmd.c_str());
 
-		std::string exe_cmd(input.exe_file);
+		std::string exe_cmd = std::format("{}", input.exe_file);
 		system(exe_cmd.c_str());
-
 		return true;
 	}
 

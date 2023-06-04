@@ -16,6 +16,14 @@ namespace lucc
 		size_t id;
 	};
 	inline constexpr register_t INVALID_REG = register_t{ .id = size_t(-1) };
+	inline constexpr bool operator==(register_t r1, register_t r2)
+	{
+		return r1.id == r2.id;
+	}
+	inline constexpr bool operator!=(register_t r1, register_t r2)
+	{
+		return r1.id != r2.id;
+	}
 
 	enum class Condition
 	{
@@ -42,6 +50,7 @@ namespace lucc
 		register_t base_reg = INVALID_REG;
 		register_t index_reg = INVALID_REG;
 		Scale scale = Scale_None;
+		char const* label_displacement;
 		size_t displacement = 0;
 	};
 
@@ -65,7 +74,7 @@ namespace lucc
 		virtual void MoveIndirect(register_t dst, register_t src) = 0;
 		virtual void MoveIndirect(register_t dst, IndirectArgs const& src_indirect_args) = 0;
 		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, register_t src) = 0;
-		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, IndirectArgs const& src_indirect_args) = 0;
+		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, int64 val) = 0;
 
 		virtual void LoadEffectiveAddress(register_t reg, char const* sym_name) = 0;
 
@@ -89,6 +98,7 @@ namespace lucc
 		virtual void Jump(char const* label, Condition cond = Condition::Unconditional) = 0;
 
 		virtual void DeclareVariable(char const* sym_name, bool is_static) = 0;
+		virtual void DeclareArray(char const* sym_name, size_t size, bool is_static) = 0;
 		virtual void DeclareExternVariable(char const* sym_name) = 0;
 		virtual void DeclareFunction(char const* sym_name, bool is_static) = 0;
 		virtual void DeclareExternFunction(char const* sym_name) = 0;

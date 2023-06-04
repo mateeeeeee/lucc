@@ -160,7 +160,7 @@ namespace lucc
 			elem_type(base_qtype), arr_size(arr_size) {}
 
 		QualifiedType GetElementType() const { return elem_type; }
-		size_t ArraySize() const { return arr_size; }
+		size_t GetArraySize() const { return arr_size; }
 		void SetArraySize(size_t _arr_size)
 		{
 			arr_size = _arr_size;
@@ -313,6 +313,10 @@ namespace lucc
 	inline bool (*IsStructType)(Type const& type)		= IsType<PrimitiveTypeKind::Struct>;
 	inline bool (*IsUnionType)(Type const& type)		= IsType<PrimitiveTypeKind::Union>;
 
+	inline bool IsPointerLikeType(Type const& type)
+	{
+		return  IsPointerType(type) || IsArrayType(type);
+	}
 	inline bool IsScalarType(Type const& type)
 	{
 		return type.IsOneOf(PrimitiveTypeKind::Arithmetic, PrimitiveTypeKind::Pointer);

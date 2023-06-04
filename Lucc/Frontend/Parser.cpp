@@ -661,7 +661,7 @@ namespace lucc
 			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
 			++current_token;
 			std::unique_ptr<ExprAST> op_expr = ParseUnaryExpression();
-			if (!IsPointerType(op_expr->GetType()))
+			if (!IsPointerType(op_expr->GetType()) && !IsArrayType(op_expr->GetType()))
 			{
 				Report(diag::dereferencing_non_pointer_type);
 				return nullptr;
@@ -752,6 +752,25 @@ namespace lucc
 			std::unique_ptr<UnaryExprAST> post_dec_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostDecrement, loc);
 			post_dec_expr->SetOperand(std::move(expr));
 			return post_dec_expr;
+		}
+		case TokenKind::left_square:
+		{
+			++current_token;
+			if (!IsArrayType(expr->GetType()) && !IsPointerType(expr->GetType()))
+			{
+				Report(diag::dereferencing_non_pointer_type);
+				return nullptr;
+			}
+
+			std::unique_ptr<ExprAST> bracket_expr = ParseExpression();
+			Expect(TokenKind::right_square);
+
+			std::unique_ptr<UnaryExprAST> dereference_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
+			std::unique_ptr<BinaryExprAST> add_expr = std::make_unique<BinaryExprAST>(BinaryExprKind::Add, loc);
+			add_expr->SetLHS(std::move(expr));
+			add_expr->SetRHS(std::move(bracket_expr));
+			dereference_expr->SetOperand(std::move(add_expr));
+			return dereference_expr;
 		}
 		}
 		return expr;
@@ -1174,12 +1193,12 @@ namespace lucc
 			else if (current_token->Is(TokenKind::number))
 			{
 				size_t array_size = std::stoull(current_token->GetIdentifier().data(), nullptr, 0); //#todo check if the it succeeded
-
 				ArrayType arr_type(type, array_size);
 				type.SetRawType(arr_type);
+				++current_token;
 				if (!Consume(TokenKind::right_square))
 				{
-					Report(diag::function_params_not_closed);
+					Report(diag::array_brackets_not_closed);
 					return false;
 				}
 				else return ParseTypeSuffix(type);

@@ -43,7 +43,7 @@ namespace lucc
 		virtual void MoveIndirect(register_t dst, register_t src);
 		virtual void MoveIndirect(register_t dst, IndirectArgs const& src_indirect_args);
 		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, register_t src) override;
-		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, IndirectArgs const& src_indirect_args);
+		virtual void MoveIndirect(IndirectArgs const& dst_indirect_args, int64 val) override;
 
 		virtual void LoadEffectiveAddress(register_t reg, char const* sym_name) override;
 
@@ -67,6 +67,7 @@ namespace lucc
 		virtual void Jump(char const* label, Condition cond) override;
 
 		virtual void DeclareVariable(char const* sym_name, bool is_static) override;
+		virtual void DeclareArray(char const* sym_name, size_t size, bool is_static) override;
 		virtual void DeclareExternVariable(char const* sym_name) override;
 		virtual void DeclareFunction(char const* sym_name, bool is_static) override;
 		virtual void DeclareExternFunction(char const* sym_name) override;
@@ -86,6 +87,7 @@ namespace lucc
 		void Emit(std::string_view fmt, Ts&&... args);
 
 		static size_t GenerateUniqueInteger();
+		static std::string ConvertIndirectArgs(IndirectArgs const& args);
 	};
 
 }

@@ -29,39 +29,4 @@
 ;;   ret
 ;;main endp
 ;;
-;;end
-
-public a
-
-.data
-k	qword ?
-a	qword ?
-
-.code
-
-f proc 
-mov	eax, 10
-jmp f_end
-f_end:
-ret
-f endp
-
-
-.code
-
-main proc 
-call f
-mov	k, rax
-lea	r10, k
-mov	a, r10
-mov	r10, a
-mov	rax, [r10]
-add	rax, 1
-jmp main_end
-main_end:
-ret
-main endp
-
-end
-
 end

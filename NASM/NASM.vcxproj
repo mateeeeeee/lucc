@@ -134,9 +134,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <MASM Include="hello.asm">
+    <MASM Include="main.asm">
       <FileType>Document</FileType>
     </MASM>
+    <MASM Include="print.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

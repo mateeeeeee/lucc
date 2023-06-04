@@ -192,8 +192,23 @@ namespace lucc
 	
 	void VarDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		if (sym.storage == Storage::Extern) ctx.DeclareExternVariable(name.c_str());
-		else ctx.DeclareVariable(name.c_str(), sym.storage == Storage::Static); 
+		if (sym.storage == Storage::Extern)
+		{
+			ctx.DeclareExternVariable(name.c_str());
+		}
+		else
+		{
+			bool is_static = sym.storage == Storage::Static;
+			if (IsArrayType(sym.qtype))
+			{
+				size_t array_size = TypeCast<ArrayType>(sym.qtype).GetArraySize();
+				ctx.DeclareArray(name.c_str(), array_size, is_static);
+			}
+			else
+			{
+				ctx.DeclareVariable(name.c_str(), is_static);
+			}
+		}
 	}
 
 	void FunctionDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
@@ -308,10 +323,13 @@ namespace lucc
 		{
 			if (!return_reg) return;
 
+			bool is_pointer_arithmetic = IsPointerLikeType(lhs->GetType()) || IsPointerLikeType(rhs->GetType());
+
 			if (rhs->GetExprKind() == ExprKind::IntLiteral)
 			{
 				IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
 				lhs->Codegen(ctx, *return_reg);
+
 				switch (kind)
 				{
 				case BinaryExprKind::Add:		ctx.AddImm(*return_reg, int_literal->GetValue()); break;
@@ -368,6 +386,7 @@ namespace lucc
 		{
 		case BinaryExprKind::Assign: 
 		{
+			LU_ASSERT_MSG(lhs->IsLValue(), "Cannot assign to rvalue!");
 			if (lhs->GetExprKind() == ExprKind::Identifier)
 			{
 				IdentifierAST* var_decl = AstCast<IdentifierAST>(lhs.get());
@@ -393,6 +412,32 @@ namespace lucc
 					ctx.Move(var_name, rhs_reg);
 					if (!return_reg) ctx.FreeRegister(rhs_reg);
 				}
+			}
+			else if (lhs->GetExprKind() == ExprKind::Unary)
+			{
+				UnaryExprAST* unary_expr_lhs = AstCast<UnaryExprAST>(lhs.get());
+				if (unary_expr_lhs->GetUnaryKind() == UnaryExprKind::Dereference)
+				{
+					unary_expr_lhs->GetOperand()->Codegen(ctx);
+					IndirectArgs args{};
+
+					//fill args
+					// rax has offset a
+					//[rax + 8 * index]
+					if (rhs->GetExprKind() == ExprKind::IntLiteral)
+					{
+						IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
+						ctx.MoveIndirect(args, int_literal->GetValue());
+					}
+					else 
+					{
+						register_t rhs_reg = return_reg ? *return_reg : ctx.AllocateRegister();
+						rhs->Codegen(ctx, rhs_reg);
+						ctx.MoveIndirect(args, rhs_reg);
+						if (!return_reg) ctx.FreeRegister(rhs_reg);
+					}
+				}
+
 			}
 		}
 		break;

@@ -1,12 +1,16 @@
 
-static int k;
+int k;
 int* a;
+int arr[10];
 
-extern int f();
+int f()
+{
+    return 10;
+}
 
 int main()
 {
 	k = f();
-	a = &k;
-	return *a + 1;
+	arr[0] = 12;
+	return arr[0];
 }

@@ -1,11 +1,11 @@
+
+
 public k
 public a
-public arr
 
 .data
-k	qword ?
+k	qword 2, 17, 29
 a	qword ?
-arr	qword 10 dup (?)
 
 .code
 
@@ -17,11 +17,11 @@ ret
 f endp
 
 main proc 
-call f
-mov	k, rax
-mov	[], 12
-mov	r10, arr
-add	r10, 0
+;call f
+;mov	k, rax
+;mov	r10, k
+;mov	[k + 4], r10
+lea	r10, [k + 16]
 mov	rax, [r10]
 jmp main_end
 main_end:
@@ -29,3 +29,4 @@ ret
 main endp
 
 end
+
