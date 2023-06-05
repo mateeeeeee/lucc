@@ -10,6 +10,7 @@ namespace lucc
 		Emit<Text>(".code");
 	}
 
+	//registers
 	register_t x86_64CodeGenerator::Context::AllocateRegisterForFunctionArg(size_t arg_index)
 	{
 		LU_ASSERT_MSG(arg_index < FUNC_ARGS_COUNT_IN_REGISTERS, "Maximum of 4 parameters are passed in registers!");
@@ -55,92 +56,178 @@ namespace lucc
 		free_registers[reg.id] = true;
 	}
 
-	void x86_64CodeGenerator::Context::SubImm(register_t reg1, int64 val)
+	//arithmetic
+	void x86_64CodeGenerator::Context::Add(register_t dst, int32 value, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
 	{
-		Emit<Text>("sub\t{}, {}", qword_registers[reg1.id], val);
+		Emit<Text>("add\t{}, {}", registers[dst.id][bitmode], value * is_pointer ?  POINTER_SCALE : 1);
 	}
-	void x86_64CodeGenerator::Context::Sub(register_t reg1, register_t reg2)
+	void x86_64CodeGenerator::Context::Add(register_t dst, register_t src, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("sub\t{}, {}", qword_registers[reg1.id], qword_registers[reg2.id]);
+		Emit<Text>("add\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
 	}
-	void x86_64CodeGenerator::Context::AddImm(register_t reg1, int64 val)
+	void x86_64CodeGenerator::Context::Add(register_t dst, char const* mem, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("add\t{}, {}", qword_registers[reg1.id], val);
+		Emit<Text>("add\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
 	}
-	void x86_64CodeGenerator::Context::Add(register_t reg1, register_t reg2)
+	void x86_64CodeGenerator::Context::Add(char const* mem, register_t src, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("add\t{}, {}", qword_registers[reg1.id], qword_registers[reg2.id]);
+		Emit<Text>("add\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
 	}
-	void x86_64CodeGenerator::Context::Neg(register_t reg)
+	void x86_64CodeGenerator::Context::Add(char const* mem, int64 value, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("neg\t{}", qword_registers[reg.id]);
-	}
-	void x86_64CodeGenerator::Context::Neg(char const* sym_name)
-	{
-		Emit<Text>("neg\t{}", sym_name);
+		Emit<Text>("add\t{}, {}", mem, value);
 	}
 
-	void x86_64CodeGenerator::Context::Dec(char const* sym_name)
+	void x86_64CodeGenerator::Context::Sub(register_t dst, int32 value, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
 	{
-		Emit<Text>("dec\t{}", sym_name);
+		Emit<Text>("sub\t{}, {}", registers[dst.id][bitmode], value * is_pointer ? POINTER_SCALE : 1);
 	}
-	void x86_64CodeGenerator::Context::Dec(register_t reg)
+	void x86_64CodeGenerator::Context::Sub(register_t dst, register_t src, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("dec\t{}", qword_registers[reg.id]);
+		Emit<Text>("sub\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
 	}
-	void x86_64CodeGenerator::Context::Inc(char const* sym_name)
+	void x86_64CodeGenerator::Context::Sub(register_t dst, char const* mem, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("inc\t{}", sym_name);
+		Emit<Text>("sub\t{}, {}", registers[dst.id][bitmode], mem);
 	}
-	void x86_64CodeGenerator::Context::Inc(register_t reg)
+	void x86_64CodeGenerator::Context::Sub(char const* mem, register_t src, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("inc\t{}", qword_registers[reg.id]);
+		Emit<Text>("sub\t{}, {}", mem, registers[src.id][bitmode]);
 	}
-
-	void x86_64CodeGenerator::Context::Move(register_t reg, int64 val)
+	void x86_64CodeGenerator::Context::Sub(char const* mem, int64 value, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("mov\t{}, {}", qword_registers[reg.id], val);
-	}
-	void x86_64CodeGenerator::Context::Move(char const* sym_name, int64 val)
-	{
-		Emit<Text>("mov\t{}, {}", sym_name, val);
-	}
-	void x86_64CodeGenerator::Context::Move(char const* sym_name, register_t reg)
-	{
-		Emit<Text>("mov\t{}, {}", sym_name, qword_registers[reg.id]);
-	}
-	void x86_64CodeGenerator::Context::Move(register_t reg, char const* sym_name)
-	{
-		Emit<Text>("mov\t{}, {}", qword_registers[reg.id], sym_name);
-	}
-	void x86_64CodeGenerator::Context::Move(register_t reg, char const* sym_name, size_t offset)
-	{
-		Emit<Text>("mov\t{}, [{} + {}]", qword_registers[reg.id], sym_name, offset);
+		Emit<Text>("sub\t{}, {}", mem, value);
 	}
 
-	void x86_64CodeGenerator::Context::MoveIndirect(register_t dst, register_t src)
+	void x86_64CodeGenerator::Context::Neg(register_t reg, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("mov\t{}, [{}]", qword_registers[dst.id], qword_registers[src.id]);
+		Emit<Text>("neg\t{}, {}", registers[reg.id][bitmode]);
 	}
-	void x86_64CodeGenerator::Context::MoveIndirect(register_t dst, IndirectArgs const& src_indirect_args)
+	void x86_64CodeGenerator::Context::Neg(char const* mem)
 	{
-		Emit<Text>("mov\t{}, {}", qword_registers[dst.id], ConvertIndirectArgs(src_indirect_args));
+		Emit<Text>("neg\t{}, {}", mem);
 	}
-	void x86_64CodeGenerator::Context::MoveIndirect(IndirectArgs const& dst_indirect_args, register_t src)
+	void x86_64CodeGenerator::Context::Inc(char const* mem, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
 	{
-		Emit<Text>("mov\t{}, {}", ConvertIndirectArgs(dst_indirect_args), qword_registers[src.id]);
+		if (is_pointer) Add(mem, POINTER_SCALE);
+		else Emit<Text>("inc\t{}", mem);
 	}
-	void x86_64CodeGenerator::Context::MoveIndirect(IndirectArgs const& dst_indirect_args, int64 val)
+	void x86_64CodeGenerator::Context::Inc(register_t reg, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
 	{
-		Emit<Text>("mov\t{}, {}", ConvertIndirectArgs(dst_indirect_args), val);
+		if (is_pointer) Add(reg, POINTER_SCALE);
+		else Emit<Text>("inc\t{}", registers[reg.id][bitmode]);
+	}
+	void x86_64CodeGenerator::Context::Dec(char const* mem, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
+	{
+		if (is_pointer) Sub(mem, POINTER_SCALE);
+		else Emit<Text>("dec\t{}", mem);
+	}
+	void x86_64CodeGenerator::Context::Dec(register_t reg, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
+	{
+		if (is_pointer) Sub(reg, POINTER_SCALE);
+		else Emit<Text>("dec\t{}", registers[reg.id][bitmode]);
 	}
 
-	void x86_64CodeGenerator::Context::LoadEffectiveAddress(register_t reg, char const* sym_name)
+	//transfer
+	void x86_64CodeGenerator::Context::Mov(register_t reg, int64 value, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("lea\t{}, {}", qword_registers[reg.id], sym_name);
+		Emit<Text>("mov\t{}, {}", registers[reg.id][bitmode], value);
+	}
+	void x86_64CodeGenerator::Context::Mov(char const* mem, int32 value, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), mem, value);
+	}
+	void x86_64CodeGenerator::Context::Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("mov\t{}, {}", ConvertMemRef(mem_ref, bitmode), value);
+	}
+	void x86_64CodeGenerator::Context::Mov(register_t dst, register_t src, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("mov\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
+	}
+	void x86_64CodeGenerator::Context::Mov(register_t dst, char const* mem, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("mov\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
+	}
+	void x86_64CodeGenerator::Context::Mov(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("mov\t{}, {}", registers[dst.id][bitmode], ConvertMemRef(mem_ref, bitmode));
+	}
+	void x86_64CodeGenerator::Context::Mov(char const* mem, register_t src, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
+	}
+	void x86_64CodeGenerator::Context::Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("mov\t{}, {}", ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
+	}
+	void x86_64CodeGenerator::Context::Lea(register_t reg, char const* mem)
+	{
+		Emit<Text>("lea\t{}, {}", registers[reg.id][BitMode_64], mem);
+	}
+	void x86_64CodeGenerator::Context::Lea(register_t reg, mem_ref_t const& mem_ref)
+	{
+		Emit<Text>("lea\t{}, {}", registers[reg.id][BitMode_64], ConvertMemRef(mem_ref, BitMode_64));
 	}
 
-	void x86_64CodeGenerator::Context::Jump(char const* label, Condition cond)
+	//control
+	void x86_64CodeGenerator::Context::Label(char const* label)
+	{
+		Emit<Text>("{}{}: ", label, label_id);
+	}
+	void x86_64CodeGenerator::Context::GenerateLabelId()
+	{
+		label_id = GenerateUniqueInteger();
+	}
+	void x86_64CodeGenerator::Context::Cmp(register_t reg, int64 value, BitMode bitmode)
+	{
+		Emit<Text>("cmp\t{}, {}", registers[reg.id][bitmode], value);
+	}
+	void x86_64CodeGenerator::Context::Cmp(char const* mem, int64 value, BitMode bitmode)
+	{
+		Emit<Text>("cmp\t{} {}, {}",ConvertToCast(bitmode), mem, value);
+	}
+	void x86_64CodeGenerator::Context::Cmp(register_t reg1, register_t reg2, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Cmp(char const* mem, register_t reg2, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Cmp(register_t reg1, char const* mem, BitMode bitmode)
+	{
+
+	}
+
+	void x86_64CodeGenerator::Context::Set(register_t reg, Condition cond)
+	{
+		char const* reg_name = registers[reg.id][BitMode_8];
+		switch (cond)
+		{
+		case Condition::Unconditional: LU_ASSERT(false); break;
+		case Condition::Equal:		   Emit<Text>("sete\t{}", reg_name);  break;
+		case Condition::NotEqual:	   Emit<Text>("setne\t{}", reg_name);  break;
+		case Condition::Greater:	   Emit<Text>("setg\t{}", reg_name);  break;
+		case Condition::GreaterEqual:  Emit<Text>("setge\t{}", reg_name);  break;
+		case Condition::Less:		   Emit<Text>("setl\t{}", reg_name);  break;
+		case Condition::LessEqual:	   Emit<Text>("setle\t{}", reg_name);  break;
+		}
+	}
+	void x86_64CodeGenerator::Context::Set(char const* mem, Condition cond)
+	{
+		switch (cond)
+		{
+		case Condition::Unconditional: LU_ASSERT(false); break;
+		case Condition::Equal:		   Emit<Text>("sete\t{}", mem);  break;
+		case Condition::NotEqual:	   Emit<Text>("setne\t{}", mem);  break;
+		case Condition::Greater:	   Emit<Text>("setg\t{}", mem);  break;
+		case Condition::GreaterEqual:  Emit<Text>("setge\t{}", mem);  break;
+		case Condition::Less:		   Emit<Text>("setl\t{}", mem);  break;
+		case Condition::LessEqual:	   Emit<Text>("setle\t{}", mem);  break;
+		}
+	}
+	void x86_64CodeGenerator::Context::Jmp(char const* label, Condition cond /*= Condition::Unconditional*/)
 	{
 		switch (cond)
 		{
@@ -153,49 +240,19 @@ namespace lucc
 		case Condition::LessEqual:	   Emit<Text>("jle\t{}{}", label, label_id);  break;
 		}
 	}
-	void x86_64CodeGenerator::Context::Set(register_t reg, Condition cond)
-	{
-		char const* reg_name = byte_registers[reg.id];
-		switch (cond)
-		{
-		case Condition::Unconditional: LU_ASSERT(false); break;
-		case Condition::Equal:		   Emit<Text>("sete\t{}", reg_name);  break;
-		case Condition::NotEqual:	   Emit<Text>("setne\t{}", reg_name);  break;
-		case Condition::Greater:	   Emit<Text>("setg\t{}", reg_name);  break;
-		case Condition::GreaterEqual:  Emit<Text>("setge\t{}", reg_name);  break;
-		case Condition::Less:		   Emit<Text>("setl\t{}", reg_name);  break;
-		case Condition::LessEqual:	   Emit<Text>("setle\t{}", reg_name);  break;
-		}
-	}
-	void x86_64CodeGenerator::Context::Compare(register_t reg1, register_t reg2)
-	{
-		Emit<Text>("cmp\t{}, {}", qword_registers[reg1.id], qword_registers[reg2.id]);
-	}
-	void x86_64CodeGenerator::Context::Compare(register_t reg, int64 val /*= 0*/)
-	{
-		Emit<Text>("cmp\t{}, {}", qword_registers[reg.id], val);
-	}
-	void x86_64CodeGenerator::Context::Label(char const* label)
-	{
-		Emit<Text>("{}{}: ", label, label_id);
-	}
-	void x86_64CodeGenerator::Context::GenerateLabelId()
-	{
-		label_id = GenerateUniqueInteger();
-	}
 
-	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static)
+	//declarations
+	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode)
 	{
 		if (!is_static) Emit<None>("public {}", sym_name);
 		Emit<Data>("{}\tqword ?", sym_name);
 	}
-	void x86_64CodeGenerator::Context::DeclareArray(char const* sym_name, size_t size, bool is_static)
+	void x86_64CodeGenerator::Context::DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode)
 	{
 		if (!is_static) Emit<None>("public {}", sym_name);
 		Emit<Data>("{}\tqword {} dup (?)", sym_name, size); 
 	}
-
-	void x86_64CodeGenerator::Context::DeclareExternVariable(char const* sym_name)
+	void x86_64CodeGenerator::Context::DeclareExternVariable(char const* sym_name, BitMode bitmode)
 	{
 		Emit<None>("extern {} : qword", sym_name);
 	}
@@ -209,6 +266,7 @@ namespace lucc
 		Emit<None>("extern {} : proc", sym_name);
 	}
 
+	//functions
 	void x86_64CodeGenerator::Context::CallFunction(char const* sym_name)
 	{
 		Emit<Text>("call {}", sym_name);
@@ -224,6 +282,7 @@ namespace lucc
 		Emit<Text>("{} endp", current_func_name);
 	}
 
+	//helpers
 	template<x86_64CodeGenerator::Context::SegmentType segment, typename... Ts>
 	void x86_64CodeGenerator::Context::Emit(std::string_view fmt, Ts&&... args)
 	{
@@ -233,42 +292,36 @@ namespace lucc
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Data)	 output_buffer.data_segment += output;
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Text)	 output_buffer.text_segment += output;
 	}
-
 	size_t x86_64CodeGenerator::Context::GenerateUniqueInteger()
 	{
 		static size_t i = 0;
 		return ++i;
 	}
-	std::string x86_64CodeGenerator::Context::ConvertIndirectArgs(IndirectArgs const& args)
+	std::string x86_64CodeGenerator::Context::ConvertMemRef(mem_ref_t const& args, BitMode mode)
 	{
 		std::string indirect_result = "[";
 		if (args.base_reg != INVALID_REG)
 		{
-			indirect_result += qword_registers[args.base_reg.id];
+			indirect_result += registers[args.base_reg.id][mode];
 		}
 		if (args.index_reg != INVALID_REG)
 		{
 			if (!indirect_result.empty()) indirect_result += "+";
-			indirect_result += qword_registers[args.base_reg.id];
+			indirect_result += registers[args.base_reg.id][mode];
 
-			if (args.scale != IndirectArgs::Scale_None)
+			if (args.scale != mem_ref_t::Scale_None)
 			{
 				indirect_result += "*";
 				switch (args.scale)
 				{
-				case IndirectArgs::Scale_x1: indirect_result += "1"; break;
-				case IndirectArgs::Scale_x2: indirect_result += "2"; break;
-				case IndirectArgs::Scale_x4: indirect_result += "4"; break;
-				case IndirectArgs::Scale_x8: indirect_result += "8"; break;
+				case mem_ref_t::Scale_x1: indirect_result += "1"; break;
+				case mem_ref_t::Scale_x2: indirect_result += "2"; break;
+				case mem_ref_t::Scale_x4: indirect_result += "4"; break;
+				case mem_ref_t::Scale_x8: indirect_result += "8"; break;
 				}
 			}
 		}
-		if (args.label_displacement)
-		{
-			if (!indirect_result.empty()) indirect_result += "+";
-			indirect_result += args.label_displacement;
-		}
-		else if (args.displacement)
+		if (args.displacement)
 		{
 			if (!indirect_result.empty()) indirect_result += "+";
 			indirect_result += std::to_string(args.displacement);
@@ -276,9 +329,22 @@ namespace lucc
 		indirect_result += "]";
 		return indirect_result;
 	}
-
+	std::string x86_64CodeGenerator::Context::ConvertToType(BitMode mode)
+	{
+		switch (mode)
+		{
+		case BitMode_8:  return "byte";
+		case BitMode_16: return "word";
+		case BitMode_32: return "dword";
+		case BitMode_64: return "qword";
+		}
+		return "";
+	}
+	std::string x86_64CodeGenerator::Context::ConvertToCast(BitMode mode)
+	{
+		return ConvertToType(mode) + " ptr";
+	}
 }
-
 
 /*
 Various combinations of the four (including all four) are valid. Here are the valid combinations, in roughly increasing order of complexity:

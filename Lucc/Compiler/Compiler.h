@@ -8,6 +8,7 @@ namespace lucc
 	{
 		CompilerFlag_None = 0x0,
 		CompilerFlag_OutputDebugInfo = 0x10,
+		CompilerFlag_DumpAST = 0x20,
 	};
 	DEFINE_ENUM_BIT_OPERATORS(CompilerFlag);
 	using CompilerFlags = uint32;

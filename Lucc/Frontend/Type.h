@@ -156,7 +156,7 @@ namespace lucc
 			elem_type(base_qtype) {}
 
 		ArrayType(QualifiedType const& base_qtype, size_t arr_size)
-			: Type(PrimitiveTypeKind::Array, true, base_qtype->GetSize()* arr_size, base_qtype->GetAlign()),
+			: Type(PrimitiveTypeKind::Array, true, base_qtype->GetSize() * arr_size, base_qtype->GetAlign()),
 			elem_type(base_qtype), arr_size(arr_size) {}
 
 		QualifiedType GetElementType() const { return elem_type; }

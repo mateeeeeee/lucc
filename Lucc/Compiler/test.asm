@@ -18,12 +18,7 @@ f endp
 
 main proc 
 call f
-mov	k, rax
-mov	[], 12
-mov	r10, arr
-add	r10, 0
-mov	rax, [r10]
-jmp main_end
+mov	dword ptr k, eax
 main_end:
 ret
 main endp
