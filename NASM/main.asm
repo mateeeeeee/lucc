@@ -5,22 +5,19 @@ public arr
 .data
 k	qword ?
 a	qword ?
-arr	qword 10 dup (?)
+arr	qword 1,2,3,4,5
 
 .code
 
-f proc 
-mov	rax, 10
-jmp f_end
-f_end:
-ret
-f endp
-
 main proc 
-call f
-mov	dword ptr k, eax
+mov rcx, qword ptr offset arr
+add rcx, 16
+mov rdx, [rcx]
+mov rax, rdx
 main_end:
 ret
 main endp
 
 end
+
+

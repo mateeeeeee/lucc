@@ -553,7 +553,7 @@ namespace lucc
 	class IntLiteralAST final : public ExprAST
 	{
 	public:
-		IntLiteralAST(int64 value, SourceLocation const& loc) : ExprAST(ExprKind::IntLiteral, loc, builtin_types::LongLong), value(value) {}
+		IntLiteralAST(int64 value, SourceLocation const& loc) : ExprAST(ExprKind::IntLiteral, loc, builtin_types::Int), value(value) {}
 		int64 GetValue() const { return value; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;

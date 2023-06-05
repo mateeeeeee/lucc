@@ -43,25 +43,31 @@ namespace lucc
 		virtual void FreeAllRegisters() override;
 
 		//arithmetic
-		virtual void Add(register_t dst, int32 value, BitMode bitmode = BitMode_64, bool is_pointer = false) override;
+		virtual void Add(register_t dst, int32 value, BitMode bitmode = BitMode_64) override;
 		virtual void Add(register_t dst, register_t src, BitMode bitmode = BitMode_64) override;
 		virtual void Add(register_t dst, char const* mem, BitMode bitmode = BitMode_64) override;
 		virtual void Add(char const* mem, register_t src, BitMode bitmode = BitMode_64) override;
 		virtual void Add(char const* mem, int64 value, BitMode bitmode = BitMode_64) override;
 
-		virtual void Sub(register_t dst, int32 value, BitMode bitmode = BitMode_64, bool is_pointer = false) override;
+		virtual void Sub(register_t dst, int32 value, BitMode bitmode = BitMode_64) override;
 		virtual void Sub(register_t dst, register_t src, BitMode  bitmode = BitMode_64) override;
 		virtual void Sub(register_t dst, char const* mem, BitMode bitmode = BitMode_64) override;
 		virtual void Sub(char const* mem, register_t src, BitMode bitmode = BitMode_64) override;
 		virtual void Sub(char const* mem, int64 value, BitMode bitmode = BitMode_64) override;
 
+		virtual void Imul(register_t dst, register_t src, BitMode bitmode = BitMode_64) override;
+		virtual void Imul(register_t dst, char const* mem, BitMode bitmode = BitMode_64) override;
+		virtual void Imul(register_t dst, register_t src, int32 value, BitMode bitmode = BitMode_64) override;
+		virtual void Imul(register_t dst, char const* mem, int32 value, BitMode bitmode = BitMode_64) override;
+
+
 		virtual void Neg(register_t reg, BitMode bitmode = BitMode_64) override;
 		virtual void Neg(char const* mem) override;
 
-		virtual void Inc(char const* mem, BitMode bitmode = BitMode_64, bool is_pointer = false) override;
-		virtual void Inc(register_t reg, BitMode bitmode = BitMode_64, bool is_pointer = false) override;
-		virtual void Dec(char const* mem, BitMode bitmode = BitMode_64, bool is_pointer = false) override;
-		virtual void Dec(register_t reg, BitMode bitmode = BitMode_64, bool is_pointer = false) override;
+		virtual void Inc(char const* mem, BitMode bitmode = BitMode_64) override;
+		virtual void Inc(register_t reg, BitMode bitmode = BitMode_64) override;
+		virtual void Dec(char const* mem, BitMode bitmode = BitMode_64) override;
+		virtual void Dec(register_t reg, BitMode bitmode = BitMode_64) override;
 
 		//control
 		virtual void GenerateLabelId() override;
@@ -82,7 +88,7 @@ namespace lucc
 		virtual void Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode = BitMode_64) override;
 
 		virtual void Mov(register_t dst, register_t src, BitMode bitmode = BitMode_64) override;
-		virtual void Mov(register_t dst, char const* mem, BitMode bitmode = BitMode_64) override;
+		virtual void Mov(register_t dst, char const* mem, BitMode bitmode = BitMode_64, bool address = false) override;
 		virtual void Mov(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode = BitMode_64) override;
 		virtual void Mov(char const* mem, register_t src, BitMode bitmode = BitMode_64) override;
 		virtual void Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode = BitMode_64) override;

@@ -365,13 +365,13 @@ namespace lucc
 	{
 		return type.Is(PrimitiveTypeKind::Function);
 	}
-	inline bool IsFuncPtrType(Type const& type)
+	inline bool IsFunctionPointerType(Type const& type)
 	{
 		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeQualifiedType()->Is(PrimitiveTypeKind::Function);;
 	}
 	inline bool IsObjPtrType(Type const& type)
 	{
-		return !IsFuncPtrType(type);
+		return !IsFunctionPointerType(type);
 	}
 	inline bool IsVoidPtrType(Type const& type)
 	{

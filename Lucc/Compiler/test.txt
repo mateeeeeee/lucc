@@ -11,6 +11,6 @@ int f()
 int main()
 {
 	k = f();
-	//arr[0] = 12;
-	//return arr[0];
+	arr[0] = 12;
+	return arr[0];
 }

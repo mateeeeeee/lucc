@@ -46,5 +46,6 @@ DIAG(dereferencing_non_pointer_type, error, "Cannot dereference non-pointer type
 DIAG(incompatible_integer_to_pointer_conversion, error, "incompatible integer to pointer conversion")
 DIAG(incompatible_pointer_types_conversion_discards_qualifiers, error, "incompatible pointer types conversion discards qualifiers")
 DIAG(incompatible_pointer_types_conversion, error, "incompatible pointer types conversion")
+DIAG(pointer_type_unary_expression_invalid, error, "pointer type is invalid to unary expression")
 
 #undef DIAG

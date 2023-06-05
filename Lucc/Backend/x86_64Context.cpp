@@ -57,9 +57,9 @@ namespace lucc
 	}
 
 	//arithmetic
-	void x86_64CodeGenerator::Context::Add(register_t dst, int32 value, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
+	void x86_64CodeGenerator::Context::Add(register_t dst, int32 value, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("add\t{}, {}", registers[dst.id][bitmode], value * is_pointer ?  POINTER_SCALE : 1);
+		Emit<Text>("add\t{}, {}", registers[dst.id][bitmode], value);
 	}
 	void x86_64CodeGenerator::Context::Add(register_t dst, register_t src, BitMode bitmode /*= BitMode_64*/)
 	{
@@ -78,9 +78,9 @@ namespace lucc
 		Emit<Text>("add\t{}, {}", mem, value);
 	}
 
-	void x86_64CodeGenerator::Context::Sub(register_t dst, int32 value, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
+	void x86_64CodeGenerator::Context::Sub(register_t dst, int32 value, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("sub\t{}, {}", registers[dst.id][bitmode], value * is_pointer ? POINTER_SCALE : 1);
+		Emit<Text>("sub\t{}, {}", registers[dst.id][bitmode], value);
 	}
 	void x86_64CodeGenerator::Context::Sub(register_t dst, register_t src, BitMode bitmode /*= BitMode_64*/)
 	{
@@ -99,6 +99,23 @@ namespace lucc
 		Emit<Text>("sub\t{}, {}", mem, value);
 	}
 
+	void x86_64CodeGenerator::Context::Imul(register_t dst, register_t src, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("imul\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
+	}
+	void x86_64CodeGenerator::Context::Imul(register_t dst, char const* mem, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("imul\t{}, {} {}", registers[dst.id][bitmode],ConvertToCast(bitmode), mem);
+	}
+	void x86_64CodeGenerator::Context::Imul(register_t dst, register_t src, int32 value, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("imul\t{}, {}, {}", registers[dst.id][bitmode], registers[src.id][bitmode], value);
+	}
+	void x86_64CodeGenerator::Context::Imul(register_t dst, char const* mem, int32 value, BitMode bitmode /*= BitMode_64*/)
+	{
+		Emit<Text>("imul\t{}, {} {}, {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem, value);
+	}
+
 	void x86_64CodeGenerator::Context::Neg(register_t reg, BitMode bitmode /*= BitMode_64*/)
 	{
 		Emit<Text>("neg\t{}, {}", registers[reg.id][bitmode]);
@@ -107,25 +124,21 @@ namespace lucc
 	{
 		Emit<Text>("neg\t{}, {}", mem);
 	}
-	void x86_64CodeGenerator::Context::Inc(char const* mem, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
+	void x86_64CodeGenerator::Context::Inc(char const* mem, BitMode bitmode /*= BitMode_64*/)
 	{
-		if (is_pointer) Add(mem, POINTER_SCALE);
-		else Emit<Text>("inc\t{}", mem);
+		Emit<Text>("inc\t{}", mem);
 	}
-	void x86_64CodeGenerator::Context::Inc(register_t reg, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
+	void x86_64CodeGenerator::Context::Inc(register_t reg, BitMode bitmode /*= BitMode_64*/)
 	{
-		if (is_pointer) Add(reg, POINTER_SCALE);
-		else Emit<Text>("inc\t{}", registers[reg.id][bitmode]);
+		Emit<Text>("inc\t{}", registers[reg.id][bitmode]);
 	}
-	void x86_64CodeGenerator::Context::Dec(char const* mem, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
+	void x86_64CodeGenerator::Context::Dec(char const* mem, BitMode bitmode /*= BitMode_64*/)
 	{
-		if (is_pointer) Sub(mem, POINTER_SCALE);
-		else Emit<Text>("dec\t{}", mem);
+		Emit<Text>("dec\t{}", mem);
 	}
-	void x86_64CodeGenerator::Context::Dec(register_t reg, BitMode bitmode /*= BitMode_64*/, bool is_pointer /*= false*/)
+	void x86_64CodeGenerator::Context::Dec(register_t reg, BitMode bitmode /*= BitMode_64*/)
 	{
-		if (is_pointer) Sub(reg, POINTER_SCALE);
-		else Emit<Text>("dec\t{}", registers[reg.id][bitmode]);
+		Emit<Text>("dec\t{}", registers[reg.id][bitmode]);
 	}
 
 	//transfer
@@ -145,9 +158,10 @@ namespace lucc
 	{
 		Emit<Text>("mov\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
 	}
-	void x86_64CodeGenerator::Context::Mov(register_t dst, char const* mem, BitMode bitmode /*= BitMode_64*/)
+	void x86_64CodeGenerator::Context::Mov(register_t dst, char const* mem, BitMode bitmode /*= BitMode_64*/, bool address /*= false*/)
 	{
-		Emit<Text>("mov\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
+		if(address)  Emit<Text>("mov\t{}, offset {}", registers[dst.id][BitMode_64], mem);
+		else		 Emit<Text>("mov\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
 	}
 	void x86_64CodeGenerator::Context::Mov(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode /*= BitMode_64*/)
 	{
@@ -245,16 +259,16 @@ namespace lucc
 	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode)
 	{
 		if (!is_static) Emit<None>("public {}", sym_name);
-		Emit<Data>("{}\tqword ?", sym_name);
+		Emit<Data>("{}\t{} ?", sym_name, ConvertToType(bitmode));
 	}
 	void x86_64CodeGenerator::Context::DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode)
 	{
 		if (!is_static) Emit<None>("public {}", sym_name);
-		Emit<Data>("{}\tqword {} dup (?)", sym_name, size); 
+		Emit<Data>("{}\t{} {} dup (?)", sym_name, ConvertToType(bitmode), size);
 	}
 	void x86_64CodeGenerator::Context::DeclareExternVariable(char const* sym_name, BitMode bitmode)
 	{
-		Emit<None>("extern {} : qword", sym_name);
+		Emit<None>("extern {} : {}", sym_name, ConvertToType(bitmode));
 	}
 	void x86_64CodeGenerator::Context::DeclareFunction(char const* sym_name, bool is_static)
 	{
@@ -344,6 +358,7 @@ namespace lucc
 	{
 		return ConvertToType(mode) + " ptr";
 	}
+
 }
 
 /*

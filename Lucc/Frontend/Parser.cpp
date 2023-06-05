@@ -661,7 +661,7 @@ namespace lucc
 			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
 			++current_token;
 			std::unique_ptr<ExprAST> op_expr = ParseUnaryExpression();
-			if (!IsPointerType(op_expr->GetType()) && !IsArrayType(op_expr->GetType()))
+			if (!IsPointerLikeType(op_expr->GetType()))
 			{
 				Report(diag::dereferencing_non_pointer_type);
 				return nullptr;
@@ -741,6 +741,11 @@ namespace lucc
 		}
 		case TokenKind::plus_plus:
 		{
+			if (IsPointerType(expr->GetType()))
+			{
+				Report(diag::pointer_type_unary_expression_invalid);
+				return nullptr;
+			}
 			++current_token;
 			std::unique_ptr<UnaryExprAST> post_inc_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostIncrement, loc);
 			post_inc_expr->SetOperand(std::move(expr));
@@ -748,6 +753,11 @@ namespace lucc
 		}
 		case TokenKind::minus_minus:
 		{
+			if (IsPointerLikeType(expr->GetType()))
+			{
+				Report(diag::pointer_type_unary_expression_invalid);
+				return nullptr;
+			}
 			++current_token;
 			std::unique_ptr<UnaryExprAST> post_dec_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostDecrement, loc);
 			post_dec_expr->SetOperand(std::move(expr));
