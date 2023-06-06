@@ -313,6 +313,7 @@ namespace lucc
 	}
 	std::string x86_64CodeGenerator::Context::ConvertMemRef(mem_ref_t const& args, BitMode mode)
 	{
+		mode = BitMode_64; //for now
 		std::string indirect_result = "[";
 		if (args.base_reg != INVALID_REG)
 		{
@@ -384,7 +385,7 @@ This is arguably the simplest addressing mechanism in the x86 family: the displa
 	void f(long x) { var = x; }		|				   ret
 
 2. Base
-Addressing via the base register adds one layer of indirection over absolute addressing: instead of an absolute address encoded into the 
+Addressing via the base register adds one layer of indirection over absolute addressing: instead of an absolute address encoded into the
 instruction’s displacement field, an address is loaded from the specified general-purpose register.
 	--------------------------------------------------------------------------------
 	;store the immediate (not displacement) into rbx

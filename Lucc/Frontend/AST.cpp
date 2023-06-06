@@ -516,6 +516,23 @@ namespace lucc
 					if (!return_reg) ctx.FreeRegister(rhs_reg);
 				}
 			}
+			else if (lhs->GetExprKind() == ExprKind::Unary)
+			{
+				UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(lhs.get());
+				if (unary_expr->GetUnaryKind() == UnaryExprKind::Dereference)
+				{
+					register_t rhs_reg = return_reg ? *return_reg : ctx.AllocateRegister();
+					rhs->Codegen(ctx, rhs_reg);
+
+					register_t address_reg = ctx.AllocateRegister();
+					unary_expr->GetOperand()->Codegen(ctx, address_reg);
+					mem_ref_t mem_ref{.base_reg = address_reg };
+					ctx.Mov(mem_ref, rhs_reg, bitmode);
+
+					ctx.FreeRegister(address_reg);
+					if (!return_reg) ctx.FreeRegister(rhs_reg);
+				}
+			}
 		}
 		break;
 		case BinaryExprKind::Add:
