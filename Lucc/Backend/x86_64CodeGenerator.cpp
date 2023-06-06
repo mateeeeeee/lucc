@@ -13,7 +13,7 @@ namespace lucc
 		os << buff.text_segment << "\nend\n";
 	}
 
-	x86_64CodeGenerator::x86_64CodeGenerator(std::string_view output_file) : output_file(output_file) 
+	x86_64CodeGenerator::x86_64CodeGenerator(std::string_view output_file) : output_file(output_file)
 	{
 		ctx = std::make_unique<Context>(output_buffer);
 	}
@@ -32,21 +32,21 @@ namespace lucc
 }
 
 
-//The first four integer arguments are passed in registers. 
-//Integer values are passed in left - to - right order in RCX, RDX, R8, and R9, respectively. 
+//The first four integer arguments are passed in registers.
+//Integer values are passed in left - to - right order in RCX, RDX, R8, and R9, respectively.
 //Arguments five and higher are passed on the stack.
 
-//Any floating - point and double - precision arguments in the first four parameters are passed in XMM0 - XMM3, 
+//Any floating - point and double - precision arguments in the first four parameters are passed in XMM0 - XMM3,
 //depending on position.
 
 //Now that we've sorted our inputs, it's time to do the same for our outputs as well.
 //The Microsoft x64 calling convention, thankfully, has simpler rules when it comes to return values from functions.
 //1. Any scalar return value 64 bits or less in size is returned in rax.
 //2. Any floating - point value is returned in xmm0.
-//3.  If your function is returning a user-defined type (such as a struct), 
-//the same rules apply to it as if it were being passed in a register: 
-//it must be of a size of 1/2/4/8/16/32/64 bits. If it is, it will be returned in the rax register; 
-//if not, a pointer to its memory will be returned instead. 
+//3.  If your function is returning a user-defined type (such as a struct),
+//the same rules apply to it as if it were being passed in a register:
+//it must be of a size of 1/2/4/8/16/32/64 bits. If it is, it will be returned in the rax register;
+//if not, a pointer to its memory will be returned instead.
 //The caller is responsible for allocating this memory and passing the pointer in the appropriate integer register before making the call to the function.
 
 //There are sixteen 64 - bit registers in x86 - 64: % rax, % rbx, % rcx, % rdx, % rdi, % rsi, % rbp,

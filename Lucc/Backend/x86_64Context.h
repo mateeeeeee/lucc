@@ -12,7 +12,6 @@ namespace lucc
 		static constexpr uint64 REG_COUNT = 9;
 		static constexpr uint64 FUNC_ARGS_COUNT_IN_REGISTERS = 4;
 		static constexpr uint64 RETURN_REGISTER_INDEX = REG_COUNT - 1;
-		static constexpr int64  POINTER_SCALE = 8;
 
 		static constexpr char const* registers[REG_COUNT][BitMode_Count] = {
 			{"r10b", "r10w", "r10d", "r10"},
@@ -82,7 +81,6 @@ namespace lucc
 		virtual void Jmp(char const* label, Condition cond = Condition::Unconditional) override;
 
 		//transfer
-		//MOV r64, r/m64, MOV r/m64, r64
 		virtual void Mov(register_t reg, int64 value, BitMode bitmode = BitMode_64) override;
 		virtual void Mov(char const* mem, int32 value, BitMode bitmode = BitMode_64) override;
 		virtual void Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode = BitMode_64) override;

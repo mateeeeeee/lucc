@@ -136,7 +136,7 @@ namespace lucc
 			: Type{ PrimitiveTypeKind::Pointer, true, 8, 8 },
 			pointee_qtype{ pointee_qtype } {}
 
-		QualifiedType PointeeQualifiedType() const { return pointee_qtype; }
+		QualifiedType PointeeType() const { return pointee_qtype; }
 		virtual bool IsCompatible(Type const& other) const override
 		{
 			if (other.IsNot(PrimitiveTypeKind::Pointer)) return false;
@@ -367,15 +367,15 @@ namespace lucc
 	}
 	inline bool IsFunctionPointerType(Type const& type)
 	{
-		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeQualifiedType()->Is(PrimitiveTypeKind::Function);;
+		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(PrimitiveTypeKind::Function);;
 	}
 	inline bool IsObjPtrType(Type const& type)
 	{
 		return !IsFunctionPointerType(type);
 	}
-	inline bool IsVoidPtrType(Type const& type)
+	inline bool IsVoidPointerType(Type const& type)
 	{
-		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeQualifiedType()->Is(PrimitiveTypeKind::Void);
+		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(PrimitiveTypeKind::Void);
 	}
 	inline bool IsCharArrayType(Type const& type)
 	{
@@ -502,4 +502,16 @@ namespace lucc
 	  have qualified or unqualified versions of a compatible type; otherwise, the behavior is
 	  undefined. */
 	QualifiedType AsIfByAssignment(QualifiedType const& src_type, QualifiedType const& dst_type);
+
+
+	// C11 6.3.1.1p2: If an int can represent all values of the original type (as
+	// restricted by the width, for a bit-field), the value is converted to an int;
+	// otherwise, it is converted to an unsigned int. These are called the integer
+	// promotions. All other types are unchanged by the integer promotions.
+	QualifiedType IntPromote(QualifiedType const& type);
+
+	QualifiedType TryIntPromote(QualifiedType const& type);
+
+	// C11 6.3.1.8 Usual arithmetic conversions
+	QualifiedType UsualArithmeticConversion(QualifiedType const& lhs, QualifiedType const& rhs);
 }

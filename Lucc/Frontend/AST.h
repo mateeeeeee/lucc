@@ -11,7 +11,7 @@ namespace lucc
 {
 	class NodeAST;
 	class TranslationUnitAST;
-	
+
 	class ExprAST;
 	class UnaryExprAST;
 	class BinaryExprAST;
@@ -21,7 +21,7 @@ namespace lucc
 	class IntLiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
-	
+
 	class StmtAST;
 	class CompoundStmtAST;
 	class DeclStmtAST;
@@ -102,7 +102,7 @@ namespace lucc
 	enum class DeclKind
 	{
 		Var,
-		Func, 
+		Func,
 		Typedef
 	};
 	class DeclAST : public NodeAST
@@ -115,11 +115,11 @@ namespace lucc
 		DeclKind GetDeclKind() const { return kind; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-	
+
 	protected:
 		SourceLocation loc;
 		Symbol sym;
-		DeclKind kind; 
+		DeclKind kind;
 
 	protected:
 		explicit DeclAST(DeclKind kind) : kind(kind) {}
@@ -187,7 +187,7 @@ namespace lucc
 		While,
 		For,
 		Return,
-		Goto, 
+		Goto,
 		Label
 	};
 	class StmtAST : public NodeAST
@@ -231,7 +231,7 @@ namespace lucc
 	{
 	public:
 		DeclStmtAST(std::vector<std::unique_ptr<DeclAST>>&& decls) : StmtAST(StmtKind::Decl), decls(std::move(decls)) {}
-		
+
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
@@ -247,7 +247,7 @@ namespace lucc
 	class IfStmtAST final : public StmtAST
 	{
 	public:
-		IfStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& then_stmt) 
+		IfStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& then_stmt)
 			: StmtAST(StmtKind::If), condition(std::move(condition)), then_stmt(std::move(then_stmt))
 		{}
 
@@ -407,12 +407,12 @@ namespace lucc
 	class UnaryExprAST : public ExprAST
 	{
 	public:
-		UnaryExprAST(UnaryExprKind op, SourceLocation const& loc) : ExprAST(ExprKind::Unary, loc), op(op), operand(nullptr) 
+		UnaryExprAST(UnaryExprKind op, SourceLocation const& loc) : ExprAST(ExprKind::Unary, loc), op(op), operand(nullptr)
 		{
 			if (op == UnaryExprKind::Dereference) SetValueCategory(ExprValueCategory::LValue);
 		}
-		void SetOperand(std::unique_ptr<ExprAST>&& _operand) 
-		{ 
+		void SetOperand(std::unique_ptr<ExprAST>&& _operand)
+		{
 			operand = std::move(_operand);
 		}
 		UnaryExprKind GetUnaryKind() const { return op; }
@@ -462,11 +462,73 @@ namespace lucc
 			switch (op)
 			{
 			case BinaryExprKind::Assign: SetType(AsIfByAssignment(rhs->GetType(), lhs->GetType())); break;
+			case BinaryExprKind::Add:
+			case BinaryExprKind::Subtract: SetTypeAddOps();  break;
+			}
+		}
+		// C11 6.5.6 Additive operators
+		void SetTypeAddOps()
+		{
+			QualifiedType const& lhs_qtype = ValueTransformation(lhs->GetType());
+			QualifiedType const& rhs_qtype = ValueTransformation(rhs->GetType());
+			if (IsArithmeticType(lhs_qtype) && IsArithmeticType(rhs_qtype)) { SetType(UsualArithmeticConversion(lhs_qtype, rhs_qtype)); }
+			else if (IsPointerType(lhs_qtype) || IsPointerType(rhs_qtype))
+			{
+				auto is_complete_obj_ptr_ty = [this](QualifiedType const& ptr_qtype)
+				{
+					if (!IsVoidPointerType(ptr_qtype) && !IsFunctionPointerType(ptr_qtype) && !TypeCast<PointerType>(ptr_qtype).PointeeType()->IsComplete())
+					{
+						exit(1);
+					}
+					else
+					{
+						if (IsVoidPointerType(ptr_qtype))
+						{
+							exit(1);
+						}
+						else if (IsFunctionPointerType(ptr_qtype))
+						{
+							exit(1);
+						}
+						return true;
+					}
+				};
+
+				if (IsPointerType(lhs_qtype) && IsPointerType(rhs_qtype) && op == BinaryExprKind::Subtract)
+				{
+					QualifiedType lhs_pte_qty = TypeCast<PointerType>(lhs_qtype).PointeeType();
+					QualifiedType rhs_pte_qty = TypeCast<PointerType>(rhs_qtype).PointeeType();
+					if (!lhs_pte_qty->IsCompatible(rhs_pte_qty))
+					{
+						exit(1);
+						//ErrInExpr("arithmetic on pointers to incompatible types");
+					}
+					else if (is_complete_obj_ptr_ty(lhs_qtype))
+					{
+						// C11 6.5.6p9: The size of the result is implementation-defined,
+						// and its type (a signed integer type) is ptrdiff_t defined in
+						// the <stddef.h> header.
+						SetType(builtin_types::LongLong);
+					}
+				}
+				else if (!IsIntegerType(lhs_qtype) && !IsIntegerType(rhs_qtype))
+				{
+					exit(1); //ErrInExpr("invalid operands to additive operators");
+				}
+				else
+				{
+					QualifiedType ptr_qtype = IsIntegerType(lhs_qtype) ? rhs_qtype : lhs_qtype;
+					if (is_complete_obj_ptr_ty(ptr_qtype)) SetType(ptr_qtype);
+				}
+			}
+			else
+			{
+				exit(1);
 			}
 		}
 
 	};
-	class TernaryExprAST : public ExprAST 
+	class TernaryExprAST : public ExprAST
 	{
 	public:
 		TernaryExprAST(std::unique_ptr<ExprAST>&& cond_expr, std::unique_ptr<ExprAST>&& true_expr,
@@ -474,7 +536,7 @@ namespace lucc
 			cond_expr(std::move(cond_expr)),
 			true_expr(std::move(true_expr)),
 			false_expr(std::move(false_expr)) {}
-		
+
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		ExprAST* GetConditionExpr() const	{ return cond_expr.get(); }
@@ -496,7 +558,7 @@ namespace lucc
 		{
 			func_args.push_back(std::move(arg));
 		}
-		
+
 		ExprAST* GetFunction() const { return func_expr.get(); }
 		std::vector<std::unique_ptr<ExprAST>> const& GetFunctionArgs() const { return func_args; }
 
@@ -508,7 +570,7 @@ namespace lucc
 		std::vector<std::unique_ptr<ExprAST>> func_args;
 	};
 
-	enum class CastKind 
+	enum class CastKind
 	{
 		ArrayToPointer,
 		FunctionToPointer,
@@ -517,7 +579,7 @@ namespace lucc
 	class ImplicitCastExprAST : public ExprAST
 	{
 	public:
-		ImplicitCastExprAST(std::unique_ptr<ExprAST>&& expr, CastKind kind, SourceLocation const& loc) 
+		ImplicitCastExprAST(std::unique_ptr<ExprAST>&& expr, CastKind kind, SourceLocation const& loc)
 			: ExprAST(ExprKind::ImplicitCast, loc), operand(std::move(expr)), kind(kind) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -595,7 +657,7 @@ namespace lucc
 		std::unique_ptr<TranslationUnitAST> translation_unit;
 	};
 
-	template<typename To, typename From> 
+	template<typename To, typename From>
 	requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
 	To* DynamicAstCast(From* from)
 	{

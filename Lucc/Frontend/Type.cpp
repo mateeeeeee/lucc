@@ -22,8 +22,8 @@ namespace lucc
 		}
 		else if (IsPointerType(expr_type) && IsPointerType(dst_type))
 		{
-			QualifiedType expr_pte_qty = TypeCast<PointerType>(expr_type).PointeeQualifiedType();
-			QualifiedType dst_pte_qty = TypeCast<PointerType>(dst_type).PointeeQualifiedType();
+			QualifiedType expr_pte_qty = TypeCast<PointerType>(expr_type).PointeeType();
+			QualifiedType dst_pte_qty = TypeCast<PointerType>(dst_type).PointeeType();
 			if ((IsVoidType(expr_pte_qty) && IsObjectType(dst_pte_qty)) ||
 				(IsVoidType(dst_pte_qty) && IsObjectType(expr_pte_qty)) ||
 				expr_pte_qty->IsCompatible(dst_pte_qty))
@@ -41,6 +41,30 @@ namespace lucc
 			}
 		}
 		return ret_type;
+	}
+
+	QualifiedType IntPromote(QualifiedType const& type)
+	{
+		LU_ASSERT(IsIntegerType(type));
+		auto const& arithmetic_type = TypeCast<ArithmeticType>(type);
+		if (arithmetic_type.ConversionRank() < builtin_types::Int.ConversionRank()) return builtin_types::Int;
+		return RemoveQualifiers(type);
+	}
+
+	QualifiedType TryIntPromote(QualifiedType const& type)
+	{
+		if (!IsIntegerType(type)) return ValueTransformation(type);
+		return IntPromote(type);
+	}
+
+	QualifiedType UsualArithmeticConversion(QualifiedType const& lhs, QualifiedType const& rhs)
+	{
+		LU_ASSERT(IsArithmeticType(lhs) && IsArithmeticType(rhs));
+		auto const& lhs_type = TypeCast<ArithmeticType>(lhs);
+		auto const& rhs_type = TypeCast<ArithmeticType>(rhs);
+		QualifiedType common_type = lhs_type.ConversionRank() < rhs_type.ConversionRank() ? rhs : lhs;
+		common_type = TryIntPromote(common_type);
+		return common_type;
 	}
 
 }

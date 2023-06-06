@@ -106,7 +106,7 @@ namespace lucc
 			return decls;
 		}
 
-		do 
+		do
 		{
 			DeclaratorInfo declarator_info{};
 			ParseDeclarator(decl_spec, declarator_info);
@@ -314,7 +314,7 @@ namespace lucc
 			cond_expr = ParseExpression();
 			Expect(TokenKind::semicolon);
 		}
-		
+
 		std::unique_ptr<ExprAST> iter_expr = nullptr;
 		if (!Consume(TokenKind::right_round))
 		{
@@ -327,7 +327,7 @@ namespace lucc
 		for_stmt->SetInit(std::move(init));
 		for_stmt->SetConditionExpression(std::move(cond_expr));
 		for_stmt->SetIterExpression(std::move(iter_expr));
-		
+
 		return for_stmt;
 	}
 
@@ -363,7 +363,7 @@ namespace lucc
 	std::unique_ptr<ExprAST> Parser::ParseBinaryExpression()
 	{
 		std::unique_ptr<ExprAST> lhs = (this->*ParseFn)();
-		while (Consume(token_kind)) 
+		while (Consume(token_kind))
 		{
 			SourceLocation loc = current_token->GetLocation();
 			std::unique_ptr<ExprAST> rhs = (this->*ParseFn)();
@@ -398,7 +398,7 @@ namespace lucc
 		std::unique_ptr<ExprAST> lhs = ParseConditionalExpression();
 		BinaryExprKind arith_op_kind = BinaryExprKind::Assign;
 		SourceLocation loc = current_token->GetLocation();
-		switch (current_token->GetKind()) 
+		switch (current_token->GetKind())
 		{
 		case TokenKind::equal: arith_op_kind = BinaryExprKind::Assign; break;
 		case TokenKind::star_equal: arith_op_kind = BinaryExprKind::Multiply; break;
@@ -433,7 +433,7 @@ namespace lucc
 	std::unique_ptr<ExprAST> Parser::ParseConditionalExpression()
 	{
 		std::unique_ptr<ExprAST> cond = ParseLogicalOrExpression();
-		if (Consume(TokenKind::question)) 
+		if (Consume(TokenKind::question))
 		{
 			std::unique_ptr<ExprAST> true_expr = ParseExpression();
 			Expect(TokenKind::colon);
@@ -471,7 +471,7 @@ namespace lucc
 	{
 		return ParseBinaryExpression<&Parser::ParseAndExpression, TokenKind::caret, BinaryExprKind::BitXor>();
 	}
-	
+
 	//<and-expression> :: = <equality - expression>
 	//					  | <and - expression> & <equality - expression>
 	std::unique_ptr<ExprAST> Parser::ParseAndExpression()
@@ -489,7 +489,7 @@ namespace lucc
 		{
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
 			SourceLocation loc = current_token->GetLocation();
-			switch (current_token->GetKind()) 
+			switch (current_token->GetKind())
 			{
 			case TokenKind::equal_equal: op_kind = BinaryExprKind::Equal; break;
 			case TokenKind::not_equal:	 op_kind = BinaryExprKind::NotEqual; break;
@@ -513,7 +513,7 @@ namespace lucc
 	std::unique_ptr<ExprAST> Parser::ParseRelationalExpression()
 	{
 		std::unique_ptr<ExprAST> lhs = ParseShiftExpression();
-		while (true) 
+		while (true)
 		{
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
 			SourceLocation loc = current_token->GetLocation();
@@ -567,7 +567,7 @@ namespace lucc
 	std::unique_ptr<ExprAST> Parser::ParseAdditiveExpression()
 	{
 		std::unique_ptr<ExprAST> lhs = ParseMultiplicativeExpression();
-		while (true) 
+		while (true)
 		{
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
 			SourceLocation loc = current_token->GetLocation();
@@ -594,7 +594,7 @@ namespace lucc
 	std::unique_ptr<ExprAST> Parser::ParseMultiplicativeExpression()
 	{
 		std::unique_ptr<ExprAST> lhs = ParseCastExpression();
-		while (true) 
+		while (true)
 		{
 			BinaryExprKind op_kind = BinaryExprKind::Invalid;
 			SourceLocation loc = current_token->GetLocation();
@@ -637,7 +637,7 @@ namespace lucc
 	{
 		std::unique_ptr<UnaryExprAST> unary_expr;
 		SourceLocation loc = current_token->GetLocation();
-		switch (current_token->GetKind()) 
+		switch (current_token->GetKind())
 		{
 		// C11 6.5.3.2p1: The operand of the unary & operator shall be either a function
 		// designator, the result of a [] or unary * operator, or an lvalue that
@@ -656,7 +656,7 @@ namespace lucc
 			unary_expr->SetOperand(std::move(op_expr));
 			return unary_expr;
 		}
-		case TokenKind::star: 
+		case TokenKind::star:
 		{
 			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
 			++current_token;
@@ -711,13 +711,13 @@ namespace lucc
 		//{
 		//	//expr = ParseCompoundLiteral();
 		//}
-		//else 
+		//else
 		expr = ParsePrimaryExpression();
 
 		SourceLocation loc = current_token->GetLocation();
 		switch (current_token->GetKind())
 		{
-		case TokenKind::left_round: 
+		case TokenKind::left_round:
 		{
 			if (expr->GetType()->IsNot(PrimitiveTypeKind::Function))
 			{
@@ -868,7 +868,7 @@ namespace lucc
 		{
 			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::FunctionToPointer, loc);
 		}
-		case PrimitiveTypeKind::Arithmetic: 
+		case PrimitiveTypeKind::Arithmetic:
 		{
 			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::IntegerPromotion, loc);
 		}
@@ -1064,7 +1064,7 @@ namespace lucc
 				decl_spec.qtype.SetRawType(builtin_types::LongDouble);
 				break;
 			default:
-				//diag 
+				//diag
 				return false;
 			}
 		}

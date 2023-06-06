@@ -184,11 +184,7 @@ namespace lucc
 	}
 
 	/// Codegen
-	//mov     rcx, qword ptr[rip + i]  |int k = *i; 
-	//mov     eax, dword ptr[rcx]	   |
-	//lea     rdx, [rcx + 4]		   |i += 1;
-	//mov     qword ptr[rip + i], rdx  |
-	
+
 	static BitMode ConvertToBitMode(size_t type_size)
 	{
 		switch (type_size)
@@ -235,13 +231,13 @@ namespace lucc
 
 	void FunctionDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		//just a declaration but could be extern 
+		//just a declaration but could be extern
 		if (!IsDefinition())
 		{
 			if(sym.storage == Storage::Extern) ctx.DeclareExternFunction(name.c_str());
 			return;
 		}
-		ctx.DeclareFunction(name.c_str(), sym.storage == Storage::Static); 
+		ctx.DeclareFunction(name.c_str(), sym.storage == Storage::Static);
 		body->Codegen(ctx);
 		ctx.ReturnFromFunction();
 		return;
@@ -354,7 +350,7 @@ namespace lucc
 		return;
 		case UnaryExprKind::Dereference:
 		{
-			if (return_reg) 
+			if (return_reg)
 			{
 				LU_ASSERT(IsPointerLikeType(operand->GetType()));
 				register_t address_reg = ctx.AllocateRegister();
@@ -375,7 +371,7 @@ namespace lucc
 					char const* name = identifier->GetName().data();
 					ctx.Lea(*return_reg, name);
 				}
-				else 
+				else
 				{
 					LU_ASSERT_MSG(false, "Not implemented yet");
 				}
@@ -410,15 +406,17 @@ namespace lucc
 				register_t tmp_reg = ctx.AllocateRegister();
 				if (lhs_is_pointer)
 				{
+					auto decayed_type = ValueTransformation(lhs->GetType());
 					lhs->Codegen(ctx, *return_reg);
 					rhs->Codegen(ctx, tmp_reg);
-					ctx.Imul(tmp_reg, tmp_reg, (int32)lhs->GetType()->GetSize());
+					ctx.Imul(tmp_reg, tmp_reg, (int32)decayed_type->GetSize());
 				}
 				else
 				{
+					auto decayed_type = ValueTransformation(rhs->GetType());
 					rhs->Codegen(ctx, *return_reg);
 					lhs->Codegen(ctx, tmp_reg);
-					ctx.Imul(tmp_reg, tmp_reg, (int32)rhs->GetType()->GetSize());
+					ctx.Imul(tmp_reg, tmp_reg, (int32)decayed_type->GetSize());
 				}
 
 				switch (kind)
@@ -489,7 +487,7 @@ namespace lucc
 
 		switch (op)
 		{
-		case BinaryExprKind::Assign: 
+		case BinaryExprKind::Assign:
 		{
 			LU_ASSERT_MSG(lhs->IsLValue(), "Cannot assign to rvalue!");
 			if (lhs->GetExprKind() == ExprKind::Identifier)
