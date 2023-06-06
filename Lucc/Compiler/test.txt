@@ -1,16 +1,14 @@
 
-int k;
-int* a;
+int i;
 int arr[10];
-
-int f()
-{
-    return 10;
-}
+int* p;
 
 int main()
 {
-	k = f();
-	arr[0] = 12;
-	return arr[0];
+	i = 0;
+	for(; i < 10; i++) arr[i] = i + 10;
+	p = arr;
+	*p = 100;
+	*(p + 1) = 200;
+	return arr[0] + arr[1];
 }

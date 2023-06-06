@@ -518,6 +518,9 @@ namespace lucc
 			}
 			else if (lhs->GetExprKind() == ExprKind::Unary)
 			{
+				//mov	r10d, 100
+				//mov	r11, (offset) p
+				//mov	[r11], r10d
 				UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(lhs.get());
 				if (unary_expr->GetUnaryKind() == UnaryExprKind::Dereference)
 				{
@@ -526,7 +529,7 @@ namespace lucc
 
 					register_t address_reg = ctx.AllocateRegister();
 					unary_expr->GetOperand()->Codegen(ctx, address_reg);
-					mem_ref_t mem_ref{.base_reg = address_reg };
+					mem_ref_t mem_ref{ .base_reg = address_reg };
 					ctx.Mov(mem_ref, rhs_reg, bitmode);
 
 					ctx.FreeRegister(address_reg);
@@ -557,7 +560,7 @@ namespace lucc
 	void IdentifierAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		LU_ASSERT(!IsFunctionType(GetType()));
-		if (IsPointerLikeType(GetType()))
+		if (IsArrayType(GetType()))
 		{
 			if (return_reg) ctx.Mov(*return_reg, name.c_str(), BitMode_64, true);
 		}
@@ -614,7 +617,7 @@ namespace lucc
 		ctx.GenerateLabelId();
 		ctx.Label("L_start");
 		condition->Codegen(ctx, cond_reg);
-		ctx.Cmp(cond_reg);
+		ctx.Cmp(cond_reg, int64(0), BitMode_8);
 		ctx.Jmp("L_end", Condition::Equal);
 		body_stmt->Codegen(ctx);
 		ctx.Jmp("L_start");
@@ -634,7 +637,7 @@ namespace lucc
 		ctx.GenerateLabelId();
 		ctx.Label("L_start");
 		cond_expr->Codegen(ctx, cond_reg);
-		ctx.Cmp(cond_reg);
+		ctx.Cmp(cond_reg, int64(0), BitMode_8);
 		ctx.Jmp("L_end", Condition::Equal);
 		body_stmt->Codegen(ctx);
 		iter_expr->Codegen(ctx);

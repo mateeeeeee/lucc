@@ -101,19 +101,19 @@ namespace lucc
 
 	void x86_64CodeGenerator::Context::Imul(register_t dst, register_t src, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("imul\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
+		Emit<Text>("imul {}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::Imul(register_t dst, char const* mem, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("imul\t{}, {} {}", registers[dst.id][bitmode],ConvertToCast(bitmode), mem);
+		Emit<Text>("imul {}, {} {}", registers[dst.id][bitmode],ConvertToCast(bitmode), mem);
 	}
 	void x86_64CodeGenerator::Context::Imul(register_t dst, register_t src, int32 value, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("imul\t{}, {}, {}", registers[dst.id][bitmode], registers[src.id][bitmode], value);
+		Emit<Text>("imul {}, {}, {}", registers[dst.id][bitmode], registers[src.id][bitmode], value);
 	}
 	void x86_64CodeGenerator::Context::Imul(register_t dst, char const* mem, int32 value, BitMode bitmode /*= BitMode_64*/)
 	{
-		Emit<Text>("imul\t{}, {} {}, {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem, value);
+		Emit<Text>("imul {}, {} {}, {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem, value);
 	}
 
 	void x86_64CodeGenerator::Context::Neg(register_t reg, BitMode bitmode /*= BitMode_64*/)
@@ -220,12 +220,12 @@ namespace lucc
 		switch (cond)
 		{
 		case Condition::Unconditional: LU_ASSERT(false); break;
-		case Condition::Equal:		   Emit<Text>("sete\t{}", reg_name);  break;
-		case Condition::NotEqual:	   Emit<Text>("setne\t{}", reg_name);  break;
-		case Condition::Greater:	   Emit<Text>("setg\t{}", reg_name);  break;
-		case Condition::GreaterEqual:  Emit<Text>("setge\t{}", reg_name);  break;
-		case Condition::Less:		   Emit<Text>("setl\t{}", reg_name);  break;
-		case Condition::LessEqual:	   Emit<Text>("setle\t{}", reg_name);  break;
+		case Condition::Equal:		   Emit<Text>("sete {}", reg_name);  break;
+		case Condition::NotEqual:	   Emit<Text>("setne {}", reg_name);  break;
+		case Condition::Greater:	   Emit<Text>("setg {}", reg_name);  break;
+		case Condition::GreaterEqual:  Emit<Text>("setge {}", reg_name);  break;
+		case Condition::Less:		   Emit<Text>("setl {}", reg_name);  break;
+		case Condition::LessEqual:	   Emit<Text>("setle {}", reg_name);  break;
 		}
 	}
 	void x86_64CodeGenerator::Context::Set(char const* mem, Condition cond)
@@ -233,12 +233,12 @@ namespace lucc
 		switch (cond)
 		{
 		case Condition::Unconditional: LU_ASSERT(false); break;
-		case Condition::Equal:		   Emit<Text>("sete\t{}", mem);  break;
-		case Condition::NotEqual:	   Emit<Text>("setne\t{}", mem);  break;
-		case Condition::Greater:	   Emit<Text>("setg\t{}", mem);  break;
-		case Condition::GreaterEqual:  Emit<Text>("setge\t{}", mem);  break;
-		case Condition::Less:		   Emit<Text>("setl\t{}", mem);  break;
-		case Condition::LessEqual:	   Emit<Text>("setle\t{}", mem);  break;
+		case Condition::Equal:		   Emit<Text>("sete {}", mem);  break;
+		case Condition::NotEqual:	   Emit<Text>("setne {}", mem);  break;
+		case Condition::Greater:	   Emit<Text>("setg {}", mem);  break;
+		case Condition::GreaterEqual:  Emit<Text>("setge {}", mem);  break;
+		case Condition::Less:		   Emit<Text>("setl {}", mem);  break;
+		case Condition::LessEqual:	   Emit<Text>("setle  {}", mem);  break;
 		}
 	}
 	void x86_64CodeGenerator::Context::Jmp(char const* label, Condition cond /*= Condition::Unconditional*/)
