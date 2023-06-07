@@ -35,6 +35,7 @@
     <ClCompile Include="precomp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Backend\ICodegenContext.h" />
     <ClInclude Include="Backend\ICodeGenerator.h" />
     <ClInclude Include="Backend\x86_64CodeGenerator.h" />
     <ClInclude Include="Backend\x86_64Context.h" />

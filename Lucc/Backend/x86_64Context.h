@@ -3,6 +3,7 @@
 #include <string>
 #include "Core/Defines.h"
 #include "x86_64CodeGenerator.h"
+#include "ICodegenContext.h"
 
 namespace lucc
 {
@@ -42,63 +43,77 @@ namespace lucc
 		virtual void FreeAllRegisters() override;
 
 		//arithmetic
-		virtual void Add(register_t dst, int32 value, BitMode bitmode = BitMode_64) override;
-		virtual void Add(register_t dst, register_t src, BitMode bitmode = BitMode_64) override;
-		virtual void Add(register_t dst, char const* mem, BitMode bitmode = BitMode_64) override;
-		virtual void Add(char const* mem, register_t src, BitMode bitmode = BitMode_64) override;
-		virtual void Add(char const* mem, int64 value, BitMode bitmode = BitMode_64) override;
+		virtual void Add(register_t dst, int32 value, BitMode bitmode) override;
+		virtual void Add(register_t dst, register_t src, BitMode bitmode) override;
+		virtual void Add(register_t dst, char const* mem, BitMode bitmode) override;
+		virtual void Add(char const* mem, register_t src, BitMode bitmode) override;
+		virtual void Add(char const* mem, int64 value, BitMode bitmode) override;
 
-		virtual void Sub(register_t dst, int32 value, BitMode bitmode = BitMode_64) override;
-		virtual void Sub(register_t dst, register_t src, BitMode  bitmode = BitMode_64) override;
-		virtual void Sub(register_t dst, char const* mem, BitMode bitmode = BitMode_64) override;
-		virtual void Sub(char const* mem, register_t src, BitMode bitmode = BitMode_64) override;
-		virtual void Sub(char const* mem, int64 value, BitMode bitmode = BitMode_64) override;
+		virtual void Sub(register_t dst, int32 value, BitMode bitmode) override;
+		virtual void Sub(register_t dst, register_t src, BitMode  bitmode) override;
+		virtual void Sub(register_t dst, char const* mem, BitMode bitmode) override;
+		virtual void Sub(char const* mem, register_t src, BitMode bitmode) override;
+		virtual void Sub(char const* mem, int64 value, BitMode bitmode) override;
 
-		virtual void Imul(register_t dst, register_t src, BitMode bitmode = BitMode_64) override;
-		virtual void Imul(register_t dst, char const* mem, BitMode bitmode = BitMode_64) override;
-		virtual void Imul(register_t dst, register_t src, int32 value, BitMode bitmode = BitMode_64) override;
-		virtual void Imul(register_t dst, char const* mem, int32 value, BitMode bitmode = BitMode_64) override;
+		virtual void Imul(register_t dst, register_t src, BitMode bitmode) override;
+		virtual void Imul(register_t dst, char const* mem, BitMode bitmode) override;
+		virtual void Imul(register_t dst, register_t src, int32 value, BitMode bitmode) override;
+		virtual void Imul(register_t dst, char const* mem, int32 value, BitMode bitmode) override;
 
 
-		virtual void Neg(register_t reg, BitMode bitmode = BitMode_64) override;
-		virtual void Neg(char const* mem) override;
+		virtual void Neg(register_t reg, BitMode bitmode) override;
+		virtual void Neg(char const* mem, BitMode bitmode) override;
 
-		virtual void Inc(char const* mem, BitMode bitmode = BitMode_64) override;
-		virtual void Inc(register_t reg, BitMode bitmode = BitMode_64) override;
-		virtual void Dec(char const* mem, BitMode bitmode = BitMode_64) override;
-		virtual void Dec(register_t reg, BitMode bitmode = BitMode_64) override;
+		virtual void Inc(char const* mem, BitMode bitmode) override;
+		virtual void Inc(register_t reg, BitMode bitmode) override;
+		virtual void Dec(char const* mem, BitMode bitmode) override;
+		virtual void Dec(register_t reg, BitMode bitmode) override;
+
+		virtual void Not(register_t reg, BitMode bitmode) override;
+		virtual void Not(char const* mem, BitMode bitmode) override;
+		virtual void Not(mem_ref_t const& mem_ref, BitMode bitmode) override;
+
+		//stack
+		virtual void Push(register_t reg, BitMode bitmode) override;
+		virtual void Push(char const* mem, BitMode bitmode) override;
+		virtual void Push(mem_ref_t const& mem_ref, BitMode bitmode) override;
+		virtual void Push(int32 value, BitMode bitmode) override;
+
+		virtual void Pop(register_t reg, BitMode bitmode) override;
+		virtual void Pop(char const* mem, BitMode bitmode) override;
+		virtual void Pop(mem_ref_t const& mem_ref, BitMode bitmode) override;
 
 		//control
 		virtual void GenerateLabelId() override;
 		virtual void Label(char const* lbl) override;
-		virtual void Cmp(register_t reg, int64 value, BitMode bitmode = BitMode_64) override;
-		virtual void Cmp(char const* mem, int64 value, BitMode bitmode = BitMode_64) override;
-		virtual void Cmp(register_t reg1, register_t reg2, BitMode bitmode = BitMode_64) override;
-		virtual void Cmp(char const* mem, register_t reg2, BitMode bitmode = BitMode_64) override;
-		virtual void Cmp(register_t reg1, char const* mem, BitMode bitmode = BitMode_64) override;
+		virtual void Cmp(register_t reg, int64 value, BitMode bitmode) override;
+		virtual void Cmp(char const* mem, int64 value, BitMode bitmode) override;
+		virtual void Cmp(register_t reg1, register_t reg2, BitMode bitmode) override;
+		virtual void Cmp(char const* mem, register_t reg2, BitMode bitmode) override;
+		virtual void Cmp(register_t reg1, char const* mem, BitMode bitmode) override;
 		virtual void Set(register_t reg, Condition cond) override;
 		virtual void Set(char const* mem, Condition cond) override;
 		virtual void Jmp(char const* label, Condition cond = Condition::Unconditional) override;
 
 		//transfer
-		virtual void Mov(register_t reg, int64 value, BitMode bitmode = BitMode_64) override;
-		virtual void Mov(char const* mem, int32 value, BitMode bitmode = BitMode_64) override;
-		virtual void Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode = BitMode_64) override;
+		virtual void Mov(register_t reg, int64 value, BitMode bitmode) override;
+		virtual void Mov(char const* mem, int32 value, BitMode bitmode) override;
+		virtual void Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) override;
 
-		virtual void Mov(register_t dst, register_t src, BitMode bitmode = BitMode_64) override;
-		virtual void Mov(register_t dst, char const* mem, BitMode bitmode = BitMode_64, bool address = false) override;
-		virtual void Mov(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode = BitMode_64) override;
-		virtual void Mov(char const* mem, register_t src, BitMode bitmode = BitMode_64) override;
-		virtual void Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode = BitMode_64) override;
+		virtual void Mov(register_t dst, register_t src, BitMode bitmode) override;
+		virtual void Mov(register_t dst, char const* mem, BitMode bitmode, bool address = false) override;
+		virtual void Mov(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode) override;
+		virtual void Mov(char const* mem, register_t src, BitMode bitmode) override;
+		virtual void Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) override;
 
 		virtual void Lea(register_t reg, char const* mem) override;
 		virtual void Lea(register_t reg, mem_ref_t const& mem_ref) override;
 
 
 		//declarations
-		virtual void DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode = BitMode_64) override;
-		virtual void DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode = BitMode_64) override;
-		virtual void DeclareExternVariable(char const* sym_name, BitMode bitmode = BitMode_64) override;
+		virtual void DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode) override;
+		virtual void DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode) override;
+		virtual void DeclareExternVariable(char const* sym_name, BitMode bitmode) override;
 		virtual void DeclareFunction(char const* sym_name, bool is_static) override;
 		virtual void DeclareExternFunction(char const* sym_name) override;
 

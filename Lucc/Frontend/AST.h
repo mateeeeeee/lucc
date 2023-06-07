@@ -5,7 +5,7 @@
 #include <string>
 #include "Type.h"
 #include "Symbol.h"
-#include "Backend/ICodeGenerator.h"
+#include "Backend/ICodegenContext.h"
 
 namespace lucc
 {
@@ -127,18 +127,25 @@ namespace lucc
 	class VarDeclAST : public DeclAST
 	{
 	public:
-		VarDeclAST(std::string_view name) : DeclAST(DeclKind::Var), name(name) {}
+		VarDeclAST(std::string_view name, bool global) : DeclAST(DeclKind::Var), name(name), global(global), local_offset(0) {}
 
 		void SetInitExpression(std::unique_ptr<ExprAST>&& expr)
 		{
 			init_expr = std::move(expr);
 		}
+		void SetLocalOffset(uint32 _local_offset) { local_offset = _local_offset; }
+
 		std::string_view GetName() const { return name; }
+		bool IsGlobal() const { return global; }
+		uint32 GetLocalOffset() const { return local_offset; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
 	private:
 		std::string name;
+		bool global;
+		uint32 local_offset;
 		std::unique_ptr<ExprAST> init_expr;
 	};
 	class FunctionDeclAST : public DeclAST

@@ -1,6 +1,5 @@
 #include "AST.h"
 #include "Diagnostics.h"
-#include "Backend/ICodeGenerator.h"
 #include "Core/Defines.h"
 
 namespace lucc
@@ -206,6 +205,8 @@ namespace lucc
 
 	void VarDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
+		if (!IsGlobal()) return;
+
 		if (sym.storage == Storage::Extern)
 		{
 			size_t type_size = sym.qtype->GetSize();
@@ -265,7 +266,7 @@ namespace lucc
 					ctx.Mov(tmp_reg, name, BitMode_64, true);
 					if (op == UnaryExprKind::PreIncrement)	   ctx.Add(tmp_reg, type_size, BitMode_64);
 					else if (op == UnaryExprKind::PreDecrement) ctx.Sub(tmp_reg, type_size, BitMode_64);
-					ctx.Mov(name, tmp_reg);
+					ctx.Mov(name, tmp_reg, BitMode_64);
 					if (return_reg) ctx.Mov(*return_reg, tmp_reg, BitMode_64);
 					ctx.FreeRegister(tmp_reg);
 				}
@@ -278,7 +279,7 @@ namespace lucc
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
 					if (op == UnaryExprKind::PreIncrement) ctx.Inc(name, bitmode);
-					else ctx.Dec(name);
+					else ctx.Dec(name, bitmode);
 					if (return_reg) ctx.Mov(*return_reg, name, bitmode);
 				}
 				else LU_ASSERT(false);
@@ -302,7 +303,7 @@ namespace lucc
 					if (op == UnaryExprKind::PreIncrement)	   ctx.Add(tmp_reg, type_size, BitMode_64);
 					else if (op == UnaryExprKind::PreDecrement) ctx.Sub(tmp_reg, type_size, BitMode_64);
 					if (return_reg) ctx.Mov(*return_reg, tmp_reg, BitMode_64);
-					ctx.Mov(name, tmp_reg);
+					ctx.Mov(name, tmp_reg, BitMode_64);
 					ctx.FreeRegister(tmp_reg);
 				}
 				else LU_ASSERT(false);
@@ -315,7 +316,7 @@ namespace lucc
 					char const* name = identifier->GetName().data();
 					if (return_reg) ctx.Mov(*return_reg, name, bitmode);
 					if (op == UnaryExprKind::PostIncrement) ctx.Inc(name, bitmode);
-					else ctx.Dec(name);
+					else ctx.Dec(name, bitmode);
 				}
 				else LU_ASSERT(false);
 			}
@@ -330,20 +331,20 @@ namespace lucc
 				if (operand->GetExprKind() == ExprKind::IntLiteral)
 				{
 					IntLiteralAST* literal = AstCast<IntLiteralAST>(operand.get());
-					ctx.Mov(*return_reg, literal->GetValue());
-					if(op == UnaryExprKind::Minus) ctx.Neg(*return_reg);
+					ctx.Mov(*return_reg, literal->GetValue(), bitmode);
+					if(op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
 				}
 				else if (operand->GetExprKind() == ExprKind::Identifier)
 				{
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
-					ctx.Mov(*return_reg, name);
-					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg);
+					ctx.Mov(*return_reg, name, bitmode);
+					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
 				}
 				else
 				{
 					operand->Codegen(ctx, *return_reg);
-					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg);
+					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
 				}
 			}
 		}
@@ -379,6 +380,31 @@ namespace lucc
 		}
 		return;
 		case UnaryExprKind::BitNot:
+		{
+			if (return_reg)
+			{
+				LU_ASSERT(!IsPointerLikeType(operand->GetType()));
+				if (operand->GetExprKind() == ExprKind::IntLiteral)
+				{
+					IntLiteralAST* literal = AstCast<IntLiteralAST>(operand.get());
+					ctx.Mov(*return_reg, literal->GetValue(), bitmode);
+					ctx.Not(*return_reg, bitmode);
+				}
+				else if (operand->GetExprKind() == ExprKind::Identifier)
+				{
+					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
+					char const* name = identifier->GetName().data();
+					ctx.Mov(*return_reg, name, bitmode);
+					ctx.Not(*return_reg, bitmode);
+				}
+				else
+				{
+					operand->Codegen(ctx, *return_reg);
+					ctx.Not(*return_reg, bitmode);
+				}
+			}
+		}
+		return;
 		case UnaryExprKind::LogicalNot:
 		case UnaryExprKind::Cast:
 		default:
@@ -409,14 +435,14 @@ namespace lucc
 					auto decayed_type = ValueTransformation(lhs->GetType());
 					lhs->Codegen(ctx, *return_reg);
 					rhs->Codegen(ctx, tmp_reg);
-					ctx.Imul(tmp_reg, tmp_reg, (int32)decayed_type->GetSize());
+					ctx.Imul(tmp_reg, tmp_reg, (int32)decayed_type->GetSize(), bitmode);
 				}
 				else
 				{
 					auto decayed_type = ValueTransformation(rhs->GetType());
 					rhs->Codegen(ctx, *return_reg);
 					lhs->Codegen(ctx, tmp_reg);
-					ctx.Imul(tmp_reg, tmp_reg, (int32)decayed_type->GetSize());
+					ctx.Imul(tmp_reg, tmp_reg, (int32)decayed_type->GetSize(), bitmode);
 				}
 
 				switch (kind)
@@ -594,7 +620,7 @@ namespace lucc
 		register_t cond_reg = ctx.AllocateRegister();
 		ctx.GenerateLabelId();
 		condition->Codegen(ctx, cond_reg);
-		ctx.Cmp(cond_reg);
+		ctx.Cmp(cond_reg, int64(0), BitMode_8);
 		ctx.Jmp("L_else", Condition::Equal);
 		then_stmt->Codegen(ctx);
 		ctx.Jmp("L_end");

@@ -38,16 +38,23 @@ mov	r8d, 1
 imul r8, r8, 8
 add	r11, r8
 mov	[r11], r10d
-mov	r11, offset arr
-mov	ecx, 1
-imul rcx, rcx, 8
-add	r11, rcx
-mov	r10, [r11]
-mov	r11, offset arr
-mov	edx, 0
+lea	r10, i
+mov	qword ptr p, r10
+mov	r10d, 300
+mov	r11, qword ptr p
+mov	[r11], r10d
+mov	r10d, dword ptr i
+mov	rcx, offset arr
+mov	edx, 1
 imul rdx, rdx, 8
-add	r11, rdx
-mov	rax, [r11]
+add	rcx, rdx
+mov	r11, [rcx]
+mov	rcx, offset arr
+mov	edi, 0
+imul rdi, rdi, 8
+add	rcx, rdi
+mov	rax, [rcx]
+add	eax, r11d
 add	eax, r10d
 jmp main_end
 main_end:

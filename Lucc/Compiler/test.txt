@@ -10,5 +10,7 @@ int main()
 	p = arr;
 	*p = 100;
 	*(p + 1) = 200;
-	return arr[0] + arr[1];
+	p = &i;
+	*p = 300;
+	return arr[0] + arr[1] + i;
 }

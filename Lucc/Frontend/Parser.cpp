@@ -135,7 +135,7 @@ namespace lucc
 				bool local_static = declaration_info.storage == Storage::Static && !is_global;
 
 				std::string_view name = declarator_info.name;
-				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
+				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name, is_global);
 				var_decl->SetLocation(current_token->GetLocation());
 				var_decl->SetSymbol(ctx.identifier_sym_table->LookUp(name));
 				if (Consume(TokenKind::equal))
@@ -191,7 +191,7 @@ namespace lucc
 		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_name);
 		for (auto&& func_param : func_type.GetParamTypes())
 		{
-			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name);
+			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name, false);
 			func_decl->AddParamDeclaration(std::move(param_decl));
 		}
 		func_type.EncounterPrototype();

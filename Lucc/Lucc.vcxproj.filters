@@ -131,6 +131,9 @@
     <ClInclude Include="Backend\x86_64CodeGenerator.h">
       <Filter>Backend\x86-64</Filter>
     </ClInclude>
+    <ClInclude Include="Backend\ICodegenContext.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Frontend\Tokens.def">
