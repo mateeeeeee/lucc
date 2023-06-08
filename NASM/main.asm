@@ -4,13 +4,13 @@ public p
 
 .data
 i	dword ?
-arr	dword 10 dup (?)
+arr	dword 1000, 9 dup (?)
 p	qword ?
 
 .code
 
 main proc 
-mov	dword ptr i, 0
+mov	dword ptr i, 1
 L_start1: 
 mov	r11d, dword ptr i
 cmp	r11d, 10
@@ -28,14 +28,6 @@ inc	i
 jmp	L_start1
 L_end1: 
 mov	r10, offset arr
-mov	qword ptr p, r10
-mov	r10d, 100
-mov	r11, p
-mov	[r11], r10d
-mov	r10, offset arr
-mov	r11d, 0
-imul r11, r11, 8
-add	r10, r11
 mov	rax, [r10]
 jmp main_end
 main_end:

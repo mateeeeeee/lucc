@@ -53,7 +53,6 @@ namespace lucc
 		{
 			return scope_sym_table.erase(sym_name) > 0;
 		}
-
 		Symbol* LookUp(std::string const& sym_name)
 		{
 			if (scope_sym_table.contains(sym_name)) return &scope_sym_table[sym_name];
@@ -86,13 +85,11 @@ namespace lucc
 		{
 			return scopes.back().Insert(symbol);
 		}
-
 		template <typename... Args> 
 		bool Insert(Args&&... args)
 		{
 			return scopes.back().Insert(std::forward<Args>(args)...);
 		}
-
 		bool Delete(std::string const& sym_name)
 		{
 			return scopes.back().Delete(sym_name);
@@ -106,7 +103,6 @@ namespace lucc
 			}
 			return nullptr;
 		}
-
 		Symbol* LookUp(std::string_view sym_name)
 		{
 			return LookUp(std::string(sym_name));

@@ -111,22 +111,25 @@ namespace lucc
 
 
 		//declarations
-		virtual void DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode) override;
-		virtual void DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode) override;
+		virtual void DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode, int64* init = nullptr) override;
+		virtual void DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode, int64 init_arr[] = nullptr, size_t init_size = 0) override;
 		virtual void DeclareExternVariable(char const* sym_name, BitMode bitmode) override;
 		virtual void DeclareFunction(char const* sym_name, bool is_static) override;
 		virtual void DeclareExternFunction(char const* sym_name) override;
 
 		//functions
+		virtual void SaveStackPointer() override;
 		virtual void CallFunction(char const* sym_name) override;
 		virtual void JumpToFunctionEnd() override;
-		virtual void ReturnFromFunction() override;
+		virtual void Return() override;
 
 	private:
 		OutputBuffer& output_buffer;
+		std::array<bool, REG_COUNT> free_registers;
+
 		size_t label_id;
 		char const* current_func_name;
-		std::array<bool, REG_COUNT> free_registers;
+		bool saved_stack_pointer;
 
 	private:
 		template<SegmentType segment, typename... Ts>

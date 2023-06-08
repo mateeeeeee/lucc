@@ -299,15 +299,21 @@ namespace lucc
 	}
 
 	//declarations
-	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode)
+	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode, int64* init)
 	{
 		if (!is_static) Emit<None>("public {}", sym_name);
-		Emit<Data>("{}\t{} ?", sym_name, ConvertToType(bitmode));
+
+		if(!init) Emit<Data>("{}\t{} ?", sym_name, ConvertToType(bitmode));
+		else Emit<Data>("{}\t{} {}", sym_name, ConvertToType(bitmode), *init);
 	}
-	void x86_64CodeGenerator::Context::DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode)
+	void x86_64CodeGenerator::Context::DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode, int64 init_arr[], size_t init_size)
 	{
 		if (!is_static) Emit<None>("public {}", sym_name);
-		Emit<Data>("{}\t{} {} dup (?)", sym_name, ConvertToType(bitmode), size);
+		if (!init_arr)
+		{
+			Emit<Data>("{}\t{} {} dup (?)", sym_name, ConvertToType(bitmode), size);
+		}
+		else{ /*#todo*/ }
 	}
 	void x86_64CodeGenerator::Context::DeclareExternVariable(char const* sym_name, BitMode bitmode)
 	{
@@ -324,6 +330,12 @@ namespace lucc
 	}
 
 	//functions
+	void x86_64CodeGenerator::Context::SaveStackPointer()
+	{
+		Emit<Text>("push rbp");
+		Emit<Text>("mov rbp, rsp");
+		saved_stack_pointer = true;
+	}
 	void x86_64CodeGenerator::Context::CallFunction(char const* sym_name)
 	{
 		Emit<Text>("call {}", sym_name);
@@ -332,9 +344,14 @@ namespace lucc
 	{
 		Emit<Text>("jmp {}_end", current_func_name);
 	}
-	void x86_64CodeGenerator::Context::ReturnFromFunction()
+	void x86_64CodeGenerator::Context::Return()
 	{
 		Emit<Text>("{}_end:", current_func_name);
+		if(saved_stack_pointer)
+		{
+			Emit<Text>("pop rbp");
+			saved_stack_pointer = false;
+		}
 		Emit<Text>("ret");
 		Emit<Text>("{} endp", current_func_name);
 	}

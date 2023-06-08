@@ -90,7 +90,7 @@ namespace lucc
 		{
 			declarations.push_back(std::move(stmt));
 		}
-		std::vector<std::unique_ptr<DeclAST>> const& GetDeclarations() const { return declarations; }
+		auto const& GetDeclarations() const { return declarations; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -133,11 +133,11 @@ namespace lucc
 		{
 			init_expr = std::move(expr);
 		}
-		void SetLocalOffset(uint32 _local_offset) { local_offset = _local_offset; }
+		void SetLocalOffset(int32 _local_offset) const { local_offset = _local_offset; }
 
 		std::string_view GetName() const { return name; }
 		bool IsGlobal() const { return global; }
-		uint32 GetLocalOffset() const { return local_offset; }
+		int32 GetLocalOffset() const { return local_offset; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -145,8 +145,8 @@ namespace lucc
 	private:
 		std::string name;
 		bool global;
-		uint32 local_offset;
 		std::unique_ptr<ExprAST> init_expr;
+		mutable int32 local_offset;
 	};
 	class FunctionDeclAST : public DeclAST
 	{
@@ -158,11 +158,9 @@ namespace lucc
 		{
 			param_decls.push_back(std::move(param));
 		}
-		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
-		{
-			body = std::move(_body);
-		}
+		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body);
 		bool IsDefinition() const { return body != nullptr; }
+		void AssignLocalVariableOffsets(uint64 args_in_registers);
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -171,6 +169,8 @@ namespace lucc
 		std::string name;
 		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
 		std::unique_ptr<CompoundStmtAST> body;
+		std::vector<VarDeclAST const*> local_variables;
+		uint32 stack_size;
 	};
 	class TypedefDeclAST final : public DeclAST
 	{
@@ -219,6 +219,12 @@ namespace lucc
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
+		template<typename F> requires std::is_invocable_v<F, StmtAST*>
+		void ForAllStatements(F&& fn)
+		{
+			for (auto& stmt : statements) fn(stmt.get());
+		}
+
 	private:
 		std::vector<std::unique_ptr<StmtAST>> statements;
 	};
@@ -238,6 +244,7 @@ namespace lucc
 	{
 	public:
 		DeclStmtAST(std::vector<std::unique_ptr<DeclAST>>&& decls) : StmtAST(StmtKind::Decl), decls(std::move(decls)) {}
+		auto const& GetDeclarations() const { return decls; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;

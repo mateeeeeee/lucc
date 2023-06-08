@@ -129,15 +129,16 @@ namespace lucc
 		virtual void Lea(register_t reg, mem_ref_t const& mem_ref) = 0;
 
 		//declarations
-		virtual void DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode) = 0;
-		virtual void DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode) = 0;
+		virtual void DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode, int64* init = nullptr) = 0;
+		virtual void DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode, int64 init_arr[] = nullptr, size_t init_size = 0) = 0;
 		virtual void DeclareExternVariable(char const* sym_name, BitMode bitmode) = 0;
 		virtual void DeclareFunction(char const* sym_name, bool is_static) = 0;
 		virtual void DeclareExternFunction(char const* sym_name) = 0;
 
 		//functions
+		virtual void SaveStackPointer() = 0;
 		virtual void CallFunction(char const* func_lbl) = 0;
 		virtual void JumpToFunctionEnd() = 0;
-		virtual void ReturnFromFunction() = 0;
+		virtual void Return() = 0;
 	};
 }

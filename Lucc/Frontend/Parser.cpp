@@ -132,8 +132,7 @@ namespace lucc
 			else
 			{
 				if (declaration_info.qtype->Is(PrimitiveTypeKind::Void)) Report(diag::void_not_expected);
-				bool local_static = declaration_info.storage == Storage::Static && !is_global;
-
+				
 				std::string_view name = declarator_info.name;
 				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name, is_global);
 				var_decl->SetLocation(current_token->GetLocation());
@@ -141,6 +140,14 @@ namespace lucc
 				if (Consume(TokenKind::equal))
 				{
 					std::unique_ptr<ExprAST> init_expr = ParseExpression();
+					if (is_global)
+					{
+						if (init_expr->GetExprKind() != ExprKind::IntLiteral) //#todo
+						{
+							Report(diag::initializer_element_is_not_constant);
+							return {};
+						}
+					}
 					var_decl->SetInitExpression(std::move(init_expr));
 				}
 				decls.push_back(std::move(var_decl));
@@ -1203,6 +1210,11 @@ namespace lucc
 			else if (current_token->Is(TokenKind::number))
 			{
 				size_t array_size = std::stoull(current_token->GetIdentifier().data(), nullptr, 0); //#todo check if the it succeeded
+				if (array_size == 0)
+				{
+					Report(diag::zero_size_array_not_allowed);
+					return false;
+				}
 				ArrayType arr_type(type, array_size);
 				type.SetRawType(arr_type);
 				++current_token;

@@ -1,8 +1,10 @@
 public i
+public i
 public arr
 public p
 
 .data
+i	dword 0
 i	dword ?
 arr	dword 10 dup (?)
 p	qword ?
@@ -10,7 +12,6 @@ p	qword ?
 .code
 
 main proc 
-mov	dword ptr i, 0
 L_start1: 
 mov	r11d, dword ptr i
 cmp	r11d, 10

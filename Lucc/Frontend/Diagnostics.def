@@ -47,5 +47,7 @@ DIAG(incompatible_integer_to_pointer_conversion, error, "incompatible integer to
 DIAG(incompatible_pointer_types_conversion_discards_qualifiers, error, "incompatible pointer types conversion discards qualifiers")
 DIAG(incompatible_pointer_types_conversion, error, "incompatible pointer types conversion")
 DIAG(pointer_type_unary_expression_invalid, error, "pointer type is invalid to unary expression")
+DIAG(zero_size_array_not_allowed, error, "Zero size array is not allowed")
+DIAG(initializer_element_is_not_constant, error, "Initializer element is not a constant")
 
 #undef DIAG

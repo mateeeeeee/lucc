@@ -4,6 +4,21 @@
 
 namespace lucc
 {
+	inline int32 AlignTo(int32 n, int32 align) { return (n + align - 1) / align * align; }
+	inline BitMode ConvertToBitMode(size_t type_size)
+	{
+		switch (type_size)
+		{
+		case 1: return BitMode_8;
+		case 2: return BitMode_16;
+		case 4: return BitMode_32;
+		case 8: return BitMode_64;
+		default:
+			LU_ASSERT(false);
+		}
+		return BitMode_Count;
+	}
+
 	/// Accept
 
 	void TranslationUnitAST::Accept(INodeVisitorAST& visitor, size_t depth) const
@@ -21,7 +36,6 @@ namespace lucc
 	{
 		visitor.Visit(*this, depth);
 	}
-
 	bool ExprAST::IsAssignable() const
 	{
 		if (!IsLValue()) return false;
@@ -58,9 +72,50 @@ namespace lucc
 		if (init_expr) init_expr->Accept(visitor, depth + 1);
 	}
 
+	void FunctionDeclAST::SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
+	{
+		body = std::move(_body);
+		body->ForAllStatements([this](StmtAST* stmt)
+			{
+				if (stmt->GetStmtKind() == StmtKind::Decl)
+				{
+					DeclStmtAST* decl_stmt = AstCast<DeclStmtAST>(stmt);
+					LU_ASSERT(decl_stmt);
+					auto const& decls = decl_stmt->GetDeclarations();
+					for (auto& decl : decls)
+					{
+						LU_ASSERT(decl->GetDeclKind() == DeclKind::Var);
+						VarDeclAST* var_decl = AstCast<VarDeclAST>(decl.get());
+						local_variables.push_back(var_decl);
+					}
+				}
+			});
+	}
+	void FunctionDeclAST::AssignLocalVariableOffsets(uint64 args_in_registers)
+	{
+		int32 top = 16;
+		for (uint64 i = args_in_registers; i < param_decls.size(); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			top = AlignTo(top, 8);
+			param->SetLocalOffset(top);
+			top += param->GetSymbol()->qtype->GetSize();
+		}
+
+		int32 bottom = 0;
+		for (VarDeclAST const* local_var : local_variables) 
+		{
+			int32 alignment = local_var->GetSymbol()->qtype->GetAlign();
+			bottom += local_var->GetSymbol()->qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			local_var->SetLocalOffset(-bottom);
+		}
+		stack_size = AlignTo(bottom, 16);
+	}
 	void FunctionDeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
+		for (auto&& param : param_decls) param->Accept(visitor, depth + 1);
 		if (body) body->Accept(visitor, depth + 1);
 	}
 
@@ -73,7 +128,6 @@ namespace lucc
 	{
 		statements.push_back(std::move(stmt));
 	}
-
 	void CompoundStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -184,20 +238,6 @@ namespace lucc
 
 	/// Codegen
 
-	static BitMode ConvertToBitMode(size_t type_size)
-	{
-		switch (type_size)
-		{
-		case 1: return BitMode_8;
-		case 2: return BitMode_16;
-		case 4: return BitMode_32;
-		case 8: return BitMode_64;
-		default:
-			LU_ASSERT(false);
-		}
-		return BitMode_Count;
-	}
-
 	void TranslationUnitAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		for (auto const& decl : declarations) decl->Codegen(ctx);
@@ -225,6 +265,15 @@ namespace lucc
 			else
 			{
 				size_t type_size = sym.qtype->GetSize();
+				if (init_expr)
+				{
+					if (init_expr->GetExprKind() == ExprKind::IntLiteral)
+					{
+						IntLiteralAST* integer = AstCast<IntLiteralAST>(init_expr.get());
+						int64 value = integer->GetValue();
+						ctx.DeclareVariable(name.c_str(), is_static, ConvertToBitMode(type_size), &value);
+					}
+				}
 				ctx.DeclareVariable(name.c_str(), is_static, ConvertToBitMode(type_size));
 			}
 		}
@@ -232,15 +281,14 @@ namespace lucc
 
 	void FunctionDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		//just a declaration but could be extern
-		if (!IsDefinition())
+		if (!IsDefinition()) 
 		{
-			if(sym.storage == Storage::Extern) ctx.DeclareExternFunction(name.c_str());
+			if(sym.storage == Storage::Extern) ctx.DeclareExternFunction(name.c_str()); //#todo not quite correct
 			return;
 		}
 		ctx.DeclareFunction(name.c_str(), sym.storage == Storage::Static);
 		body->Codegen(ctx);
-		ctx.ReturnFromFunction();
+		ctx.Return();
 		return;
 	}
 
