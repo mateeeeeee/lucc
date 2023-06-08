@@ -137,8 +137,11 @@ namespace lucc
 
 		//functions
 		virtual void SaveStackPointer() = 0;
+		virtual void ReserveStackSpace(uint32 stack_space) = 0;
+		virtual void SaveRegisterArgToStack(uint32 arg_index, int32 offset, BitMode bitmode) = 0;
 		virtual void CallFunction(char const* func_lbl) = 0;
 		virtual void JumpToFunctionEnd() = 0;
 		virtual void Return() = 0;
+		virtual uint64 GetFunctionArgsInRegisters() const = 0;
 	};
 }

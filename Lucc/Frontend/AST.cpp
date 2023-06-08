@@ -91,7 +91,7 @@ namespace lucc
 				}
 			});
 	}
-	void FunctionDeclAST::AssignLocalVariableOffsets(uint64 args_in_registers)
+	void FunctionDeclAST::AssignLocalVariableOffsets(uint64 args_in_registers) const
 	{
 		int32 top = 16;
 		for (uint64 i = args_in_registers; i < param_decls.size(); ++i)
@@ -103,6 +103,15 @@ namespace lucc
 		}
 
 		int32 bottom = 0;
+		for (uint64 i = 0; i < std::min(args_in_registers, param_decls.size()); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			int32 alignment = param->GetSymbol()->qtype->GetAlign();
+			bottom += param->GetSymbol()->qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			param->SetLocalOffset(-bottom);
+		}
+
 		for (VarDeclAST const* local_var : local_variables) 
 		{
 			int32 alignment = local_var->GetSymbol()->qtype->GetAlign();
@@ -286,7 +295,23 @@ namespace lucc
 			if(sym.storage == Storage::Extern) ctx.DeclareExternFunction(name.c_str()); //#todo not quite correct
 			return;
 		}
+		AssignLocalVariableOffsets(ctx.GetFunctionArgsInRegisters());
 		ctx.DeclareFunction(name.c_str(), sym.storage == Storage::Static);
+
+		if (param_decls.size() >= ctx.GetFunctionArgsInRegisters() || !local_variables.empty())
+		{
+			ctx.SaveStackPointer();
+			if(!local_variables.empty()) ctx.ReserveStackSpace(stack_size);
+		}
+		
+		for (uint64 i = 0; i < std::min(ctx.GetFunctionArgsInRegisters(), param_decls.size()); ++i)
+		{
+			VarDeclAST* param_var = param_decls[i].get();
+			LU_ASSERT(param_var->GetLocalOffset() < 0);
+			BitMode bitmode = ConvertToBitMode(param_var->GetSymbol()->qtype->GetSize());
+			ctx.SaveRegisterArgToStack(i, param_var->GetLocalOffset(), bitmode);
+		}
+
 		body->Codegen(ctx);
 		ctx.Return();
 		return;

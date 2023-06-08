@@ -1,10 +1,8 @@
 public i
-public i
 public arr
 public p
 
 .data
-i	dword 0
 i	dword ?
 arr	dword 10 dup (?)
 p	qword ?

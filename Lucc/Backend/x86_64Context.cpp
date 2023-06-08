@@ -14,8 +14,7 @@ namespace lucc
 	register_t x86_64CodeGenerator::Context::AllocateRegisterForFunctionArg(size_t arg_index)
 	{
 		LU_ASSERT_MSG(arg_index < FUNC_ARGS_COUNT_IN_REGISTERS, "Maximum of 4 parameters are passed in registers!");
-		static size_t mapping[FUNC_ARGS_COUNT_IN_REGISTERS] = { 4, 5, 2, 3 };
-		size_t const i = mapping[arg_index];
+		size_t const i = FUNC_ARG_REG_MAPPING[arg_index];
 		if (free_registers[i])
 		{
 			free_registers[i] = false;
@@ -336,6 +335,11 @@ namespace lucc
 		Emit<Text>("mov rbp, rsp");
 		saved_stack_pointer = true;
 	}
+	void x86_64CodeGenerator::Context::ReserveStackSpace(uint32 stack_space)
+	{
+		Emit<Text>("sub rsp, {}", stack_space);
+		reserved_stack = true;
+	}
 	void x86_64CodeGenerator::Context::CallFunction(char const* sym_name)
 	{
 		Emit<Text>("call {}", sym_name);
@@ -347,6 +351,11 @@ namespace lucc
 	void x86_64CodeGenerator::Context::Return()
 	{
 		Emit<Text>("{}_end:", current_func_name);
+		if (reserved_stack)
+		{
+			Emit<Text>("mov rsp, rbp");
+			reserved_stack = false;
+		}
 		if(saved_stack_pointer)
 		{
 			Emit<Text>("pop rbp");
@@ -419,6 +428,12 @@ namespace lucc
 	{
 		return ConvertToType(mode) + " ptr";
 	}
+
+	void x86_64CodeGenerator::Context::SaveRegisterArgToStack(uint32 arg_index, int32 offset, BitMode bitmode)
+	{
+		Emit<Text>("mov {} [rbp + {}], {}", ConvertToCast(bitmode), offset, registers[FUNC_ARG_REG_MAPPING[arg_index]][bitmode]); 
+	}
+
 }
 
 /*

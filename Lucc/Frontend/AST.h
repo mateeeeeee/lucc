@@ -160,7 +160,7 @@ namespace lucc
 		}
 		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body);
 		bool IsDefinition() const { return body != nullptr; }
-		void AssignLocalVariableOffsets(uint64 args_in_registers);
+		void AssignLocalVariableOffsets(uint64 args_in_registers) const;
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -170,7 +170,7 @@ namespace lucc
 		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
 		std::unique_ptr<CompoundStmtAST> body;
 		std::vector<VarDeclAST const*> local_variables;
-		uint32 stack_size;
+		mutable uint32 stack_size;
 	};
 	class TypedefDeclAST final : public DeclAST
 	{
