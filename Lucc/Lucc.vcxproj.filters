@@ -156,5 +156,6 @@
     <Text Include="Compiler\test2.txt">
       <Filter>Compiler</Filter>
     </Text>
+    <Text Include="todo.txt" />
   </ItemGroup>
 </Project>

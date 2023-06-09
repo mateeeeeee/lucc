@@ -1,0 +1,18 @@
+TODO:
+- Function parameters and local variables/arrays
+- Function prototypes and matching definition with declaration
+- Finish arithmetic and other exprs and deduce their types
+- Add runtime flags
+- Enums
+- Finish preprocessor
+- Break, continue, switch
+- Casts
+- Constant folding
+- Sizeof
+- Registry spilling
+- Static local ?
+- Atomics
+
+Probably wont bother:
+- Floats
+- Structs/Unions

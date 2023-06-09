@@ -67,6 +67,7 @@
   <ItemGroup>
     <Text Include="Compiler\test.txt" />
     <Text Include="Compiler\test2.txt" />
+    <Text Include="todo.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
