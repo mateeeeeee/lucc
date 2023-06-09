@@ -8,19 +8,19 @@ namespace lucc::diag
 {
 	namespace
 	{
-		enum class Class : uint32
+		enum class DiagKind : uint32
 		{
 			info,
 			warning,
 			error
 		};
-		std::string ToString(Class c)
+		std::string ToString(DiagKind c)
 		{
 			switch (c)
 			{
-			case Class::error: return "Error";
-			case Class::warning: return "Warning";
-			case Class::info: return "Info";
+			case DiagKind::error: return "Error";
+			case DiagKind::warning: return "Warning";
+			case DiagKind::info: return "Info";
 			}
 			return "";
 		}
@@ -30,9 +30,9 @@ namespace lucc::diag
 			#define DIAG(diag_code, diag_class, diag_msg) {Code::##diag_code, diag_msg},
 			#include "Diagnostics.def"
 		};
-		std::unordered_map<Code, Class> diag_classes =
+		std::unordered_map<Code, DiagKind> diag_kinds =
 		{
-			#define DIAG(diag_code, diag_class, diag_msg) {Code::##diag_code, Class::##diag_class},
+			#define DIAG(diag_code, diag_class, diag_msg) {Code::##diag_code, DiagKind::##diag_class},
 			#include "Diagnostics.def"
 		};
 
@@ -53,20 +53,20 @@ namespace lucc::diag
 
 	void Report(Code code, SourceLocation const& loc)
 	{
-		Class dclass = diag_classes[code];
+		DiagKind dclass = diag_kinds[code];
 		std::string output = std::format("[Diagnostics][{}]: {} in file {} at line: {}, col: {}\n",
 										 ToString(dclass), diag_msgs[code], loc.filename, loc.line, loc.column);
 		
 		for (auto* os : output_streams) *os << output;
-		if (dclass == Class::error) std::exit(static_cast<uint16>(code));
+		if (dclass == DiagKind::error) std::exit(static_cast<uint16>(code));
 	}
 
 	void Report(Code code)
 	{
-		Class dclass = diag_classes[code];
+		DiagKind dclass = diag_kinds[code];
 		std::string output = std::format("[Diagnostics][{}]: {}\n", ToString(dclass), diag_msgs[code]);
 		for (auto* os : output_streams) *os << output;
-		if (dclass == Class::error) std::exit(static_cast<uint16>(code));
+		if (dclass == DiagKind::error) std::exit(static_cast<uint16>(code));
 	}
 
 }

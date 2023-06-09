@@ -1,7 +1,13 @@
 
 int i;
 
-int main()
+int f(int a, int b)
 {
-	
+	return a + b;
+}
+
+int main(void)
+{
+	i = f(3, 4);
+	return i;
 }

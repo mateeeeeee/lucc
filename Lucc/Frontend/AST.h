@@ -367,7 +367,7 @@ namespace lucc
 		DoubleLiteral,
 		IntLiteral,
 		StringLiteral,
-		Identifier
+		VarRefIdentifier
 	};
 	enum class UnaryExprKind : uint8
 	{
@@ -477,70 +477,9 @@ namespace lucc
 			{
 			case BinaryExprKind::Assign: SetType(AsIfByAssignment(rhs->GetType(), lhs->GetType())); break;
 			case BinaryExprKind::Add:
-			case BinaryExprKind::Subtract: SetTypeAddOps();  break;
+			case BinaryExprKind::Subtract: SetType(AdditiveOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Subtract));  break;
 			}
 		}
-		// C11 6.5.6 Additive operators
-		void SetTypeAddOps()
-		{
-			QualifiedType const& lhs_qtype = ValueTransformation(lhs->GetType());
-			QualifiedType const& rhs_qtype = ValueTransformation(rhs->GetType());
-			if (IsArithmeticType(lhs_qtype) && IsArithmeticType(rhs_qtype)) { SetType(UsualArithmeticConversion(lhs_qtype, rhs_qtype)); }
-			else if (IsPointerType(lhs_qtype) || IsPointerType(rhs_qtype))
-			{
-				auto is_complete_obj_ptr_ty = [this](QualifiedType const& ptr_qtype)
-				{
-					if (!IsVoidPointerType(ptr_qtype) && !IsFunctionPointerType(ptr_qtype) && !TypeCast<PointerType>(ptr_qtype).PointeeType()->IsComplete())
-					{
-						exit(1);
-					}
-					else
-					{
-						if (IsVoidPointerType(ptr_qtype))
-						{
-							exit(1);
-						}
-						else if (IsFunctionPointerType(ptr_qtype))
-						{
-							exit(1);
-						}
-						return true;
-					}
-				};
-
-				if (IsPointerType(lhs_qtype) && IsPointerType(rhs_qtype) && op == BinaryExprKind::Subtract)
-				{
-					QualifiedType lhs_pte_qty = TypeCast<PointerType>(lhs_qtype).PointeeType();
-					QualifiedType rhs_pte_qty = TypeCast<PointerType>(rhs_qtype).PointeeType();
-					if (!lhs_pte_qty->IsCompatible(rhs_pte_qty))
-					{
-						exit(1);
-						//ErrInExpr("arithmetic on pointers to incompatible types");
-					}
-					else if (is_complete_obj_ptr_ty(lhs_qtype))
-					{
-						// C11 6.5.6p9: The size of the result is implementation-defined,
-						// and its type (a signed integer type) is ptrdiff_t defined in
-						// the <stddef.h> header.
-						SetType(builtin_types::LongLong);
-					}
-				}
-				else if (!IsIntegerType(lhs_qtype) && !IsIntegerType(rhs_qtype))
-				{
-					exit(1); //ErrInExpr("invalid operands to additive operators");
-				}
-				else
-				{
-					QualifiedType ptr_qtype = IsIntegerType(lhs_qtype) ? rhs_qtype : lhs_qtype;
-					if (is_complete_obj_ptr_ty(ptr_qtype)) SetType(ptr_qtype);
-				}
-			}
-			else
-			{
-				exit(1);
-			}
-		}
-
 	};
 	class TernaryExprAST : public ExprAST
 	{
@@ -649,20 +588,38 @@ namespace lucc
 	private:
 		std::string str;
 	};
+
 	class IdentifierAST : public ExprAST
 	{
 	public:
-		explicit IdentifierAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(ExprKind::Identifier, loc, type), name(name)
+		std::string_view GetName() const { return name; }
+
+	protected:
+		explicit IdentifierAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(ExprKind::VarRefIdentifier, loc, type), name(name)
 		{
 			SetValueCategory(ExprValueCategory::LValue);
 		}
-		std::string_view GetName() const { return name; }
 
+	private:
+		std::string name;
+	};
+
+	class DeclRefAST : public IdentifierAST
+	{
+	public:
+		DeclRefAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type, bool is_global) : IdentifierAST(name, loc, type),
+			is_global(is_global) {}
+
+		bool IsGlobal() const { return is_global; }
+		int32 GetLocalOffset() const { return local_offset; }
+		void SetLocalOffset(int32 _local_offset) { local_offset = _local_offset; }
+		
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
-		std::string name;
+		bool is_global;
+		int32 local_offset;
 	};
 
 	struct AST

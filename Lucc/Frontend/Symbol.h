@@ -29,6 +29,7 @@ namespace lucc
 		std::string name = "";
 		QualifiedType qtype;
 		Storage storage;
+		bool global;
 	};
 
 	class ScopeTable

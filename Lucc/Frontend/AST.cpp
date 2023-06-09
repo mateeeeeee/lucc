@@ -91,36 +91,6 @@ namespace lucc
 				}
 			});
 	}
-	void FunctionDeclAST::AssignLocalVariableOffsets(uint64 args_in_registers) const
-	{
-		int32 top = 16;
-		for (uint64 i = args_in_registers; i < param_decls.size(); ++i)
-		{
-			VarDeclAST* param = param_decls[i].get();
-			top = AlignTo(top, 8);
-			param->SetLocalOffset(top);
-			top += param->GetSymbol()->qtype->GetSize();
-		}
-
-		int32 bottom = 0;
-		for (uint64 i = 0; i < std::min(args_in_registers, param_decls.size()); ++i)
-		{
-			VarDeclAST* param = param_decls[i].get();
-			int32 alignment = param->GetSymbol()->qtype->GetAlign();
-			bottom += param->GetSymbol()->qtype->GetSize();
-			bottom = AlignTo(bottom, alignment);
-			param->SetLocalOffset(-bottom);
-		}
-
-		for (VarDeclAST const* local_var : local_variables) 
-		{
-			int32 alignment = local_var->GetSymbol()->qtype->GetAlign();
-			bottom += local_var->GetSymbol()->qtype->GetSize();
-			bottom = AlignTo(bottom, alignment);
-			local_var->SetLocalOffset(-bottom);
-		}
-		stack_size = AlignTo(bottom, 16);
-	}
 	void FunctionDeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -208,7 +178,7 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
-	void IdentifierAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void DeclRefAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
@@ -254,7 +224,17 @@ namespace lucc
 
 	void VarDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		if (!IsGlobal()) return;
+		if (!IsGlobal() && init_expr)
+		{
+			size_t type_size = sym.qtype->GetSize();
+			register_t init_reg = return_reg ? *return_reg : ctx.AllocateRegister();
+			init_expr->Codegen(ctx, init_reg);
+			LU_ASSERT(local_offset != 0);
+			mem_ref_t mem_ref{ .base_reg = ctx.GetStackFrameRegister(), .displacement = local_offset };
+			ctx.Mov(mem_ref, init_reg, ConvertToBitMode(type_size));
+			if (!return_reg) ctx.FreeRegister(init_reg);
+			return;
+		}
 
 		if (sym.storage == Storage::Extern)
 		{
@@ -309,12 +289,45 @@ namespace lucc
 			VarDeclAST* param_var = param_decls[i].get();
 			LU_ASSERT(param_var->GetLocalOffset() < 0);
 			BitMode bitmode = ConvertToBitMode(param_var->GetSymbol()->qtype->GetSize());
-			ctx.SaveRegisterArgToStack(i, param_var->GetLocalOffset(), bitmode);
+			register_t rbp = ctx.GetStackFrameRegister();
+			register_t arg = ctx.GetFunctionArgumentRegister(i);
+			mem_ref_t mem_ref{.base_reg = rbp, .displacement = param_var->GetLocalOffset() };
+			ctx.Mov(mem_ref, arg, bitmode);
 		}
 
 		body->Codegen(ctx);
 		ctx.Return();
 		return;
+	}
+	void FunctionDeclAST::AssignLocalVariableOffsets(uint64 args_in_registers) const
+	{
+		int32 top = 16;
+		for (uint64 i = args_in_registers; i < param_decls.size(); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			top = AlignTo(top, 8);
+			param->SetLocalOffset(top);
+			top += (int32)param->GetSymbol()->qtype->GetSize();
+		}
+
+		int32 bottom = 0;
+		for (uint64 i = 0; i < std::min(args_in_registers, param_decls.size()); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			int32 alignment = (int32)param->GetSymbol()->qtype->GetAlign();
+			bottom += (int32)param->GetSymbol()->qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			param->SetLocalOffset(-bottom);
+		}
+
+		for (VarDeclAST const* local_var : local_variables)
+		{
+			int32 alignment = (int32)local_var->GetSymbol()->qtype->GetAlign();
+			bottom += (int32)local_var->GetSymbol()->qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			local_var->SetLocalOffset(-bottom);
+		}
+		stack_size = AlignTo(bottom, 16);
 	}
 
 	void UnaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
@@ -331,7 +344,7 @@ namespace lucc
 			int32 type_size = (int32)operand->GetType()->GetSize();
 			if (is_pointer_arithmetic)
 			{
-				if (operand->GetExprKind() == ExprKind::Identifier)
+				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
 				{
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
@@ -347,7 +360,7 @@ namespace lucc
 			}
 			else
 			{
-				if (operand->GetExprKind() == ExprKind::Identifier)
+				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
 				{
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
@@ -367,7 +380,7 @@ namespace lucc
 			int32 type_size = (int32)operand->GetType()->GetSize();
 			if (is_pointer_arithmetic)
 			{
-				if (operand->GetExprKind() == ExprKind::Identifier)
+				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
 				{
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
@@ -383,7 +396,7 @@ namespace lucc
 			}
 			else
 			{
-				if (operand->GetExprKind() == ExprKind::Identifier)
+				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
 				{
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
@@ -407,7 +420,7 @@ namespace lucc
 					ctx.Mov(*return_reg, literal->GetValue(), bitmode);
 					if(op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
 				}
-				else if (operand->GetExprKind() == ExprKind::Identifier)
+				else if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
 				{
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
@@ -439,7 +452,7 @@ namespace lucc
 		{
 			if (return_reg)
 			{
-				if (operand->GetExprKind() == ExprKind::Identifier)
+				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
 				{
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
@@ -463,7 +476,7 @@ namespace lucc
 					ctx.Mov(*return_reg, literal->GetValue(), bitmode);
 					ctx.Not(*return_reg, bitmode);
 				}
-				else if (operand->GetExprKind() == ExprKind::Identifier)
+				else if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
 				{
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
@@ -589,7 +602,7 @@ namespace lucc
 		case BinaryExprKind::Assign:
 		{
 			LU_ASSERT_MSG(lhs->IsLValue(), "Cannot assign to rvalue!");
-			if (lhs->GetExprKind() == ExprKind::Identifier)
+			if (lhs->GetExprKind() == ExprKind::VarRefIdentifier)
 			{
 				IdentifierAST* var_decl = AstCast<IdentifierAST>(lhs.get());
 				char const* var_name = var_decl->GetName().data();
@@ -602,7 +615,7 @@ namespace lucc
 				else if (rhs->GetExprKind() == ExprKind::FunctionCall)
 				{
 					FunctionCallAST* func_call = AstCast<FunctionCallAST>(rhs.get());
-					register_t ret_reg = ctx.AllocateRegisterForReturn();
+					register_t ret_reg = ctx.AllocateReturnRegister();
 					func_call->Codegen(ctx);
 					ctx.Mov(var_name, ret_reg, bitmode);
 					ctx.FreeRegister(ret_reg);
@@ -656,18 +669,24 @@ namespace lucc
 		}
 	}
 
-	void IdentifierAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void DeclRefAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		LU_ASSERT(!IsFunctionType(GetType()));
+
+		if (!IsGlobal())
+		{
+			return;
+		}
+
 		if (IsArrayType(GetType()))
 		{
-			if (return_reg) ctx.Mov(*return_reg, name.c_str(), BitMode_64, true);
+			if (return_reg) ctx.Mov(*return_reg, GetName().data(), BitMode_64, true);
 		}
 		else
 		{
 			size_t type_size = GetType()->GetSize();
 			BitMode bitmode = ConvertToBitMode(type_size);
-			if (return_reg) ctx.Mov(*return_reg, name.c_str(), bitmode);
+			if (return_reg) ctx.Mov(*return_reg, GetName().data(), bitmode);
 		}
 	}
 
@@ -704,7 +723,7 @@ namespace lucc
 
 	void ReturnStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		register_t reg = ctx.AllocateRegisterForReturn();
+		register_t reg = ctx.AllocateReturnRegister();
 		ret_expr->Codegen(ctx, reg);
 		ctx.JumpToFunctionEnd();
 		ctx.FreeRegister(reg);
@@ -749,10 +768,10 @@ namespace lucc
 	{
 		for (size_t i = 0; i < func_args.size(); ++i)
 		{
-			register_t arg_reg = ctx.AllocateRegisterForFunctionArg(i);
+			register_t arg_reg = ctx.AllocateFunctionArgumentRegister(i);
 			func_args[i]->Codegen(ctx, arg_reg);
 		}
-		if (func_expr->GetExprKind() == ExprKind::Identifier)
+		if (func_expr->GetExprKind() == ExprKind::VarRefIdentifier)
 		{
 			IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get());
 			ctx.CallFunction(func_id->GetName().data());

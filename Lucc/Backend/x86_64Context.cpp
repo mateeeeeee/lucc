@@ -11,7 +11,7 @@ namespace lucc
 	}
 
 	//registers
-	register_t x86_64CodeGenerator::Context::AllocateRegisterForFunctionArg(size_t arg_index)
+	register_t x86_64CodeGenerator::Context::AllocateFunctionArgumentRegister(size_t arg_index)
 	{
 		LU_ASSERT_MSG(arg_index < FUNC_ARGS_COUNT_IN_REGISTERS, "Maximum of 4 parameters are passed in registers!");
 		size_t const i = FUNC_ARG_REG_MAPPING[arg_index];
@@ -23,7 +23,7 @@ namespace lucc
 		else LU_ASSERT(false);
 		return INVALID_REG;
 	}
-	register_t x86_64CodeGenerator::Context::AllocateRegisterForReturn()
+	register_t x86_64CodeGenerator::Context::AllocateReturnRegister()
 	{
 		if (free_registers[RETURN_REGISTER_INDEX])
 		{
@@ -35,7 +35,7 @@ namespace lucc
 	}
 	register_t x86_64CodeGenerator::Context::AllocateRegister()
 	{
-		for (size_t i = 0; i < REG_COUNT; ++i)
+		for (size_t i = 0; i < GP_REG_COUNT; ++i)
 		{
 			if (free_registers[i])
 			{
@@ -45,6 +45,14 @@ namespace lucc
 		}
 		LU_ASSERT_MSG(false, "Register spilling not implemented yet");
 		return INVALID_REG;
+	}
+	register_t x86_64CodeGenerator::Context::GetFunctionArgumentRegister(size_t arg_index)
+	{
+		return register_t(FUNC_ARG_REG_MAPPING[arg_index]);
+	}
+	register_t x86_64CodeGenerator::Context::GetStackFrameRegister()
+	{
+		return register_t{ .id = STACK_FRAME_REGISTER_INDEX };
 	}
 	void x86_64CodeGenerator::Context::FreeAllRegisters()
 	{
@@ -350,6 +358,8 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Return()
 	{
+		if(current_func_name == "main") Emit<Text>("mov rax, 0");
+
 		Emit<Text>("{}_end:", current_func_name);
 		if (reserved_stack)
 		{
@@ -407,7 +417,7 @@ namespace lucc
 		}
 		if (args.displacement)
 		{
-			if (!indirect_result.empty()) indirect_result += "+";
+			if (!indirect_result.empty() && args.displacement > 0) indirect_result += "+";
 			indirect_result += std::to_string(args.displacement);
 		}
 		indirect_result += "]";
@@ -427,11 +437,6 @@ namespace lucc
 	std::string x86_64CodeGenerator::Context::ConvertToCast(BitMode mode)
 	{
 		return ConvertToType(mode) + " ptr";
-	}
-
-	void x86_64CodeGenerator::Context::SaveRegisterArgToStack(uint32 arg_index, int32 offset, BitMode bitmode)
-	{
-		Emit<Text>("mov {} [rbp + {}], {}", ConvertToCast(bitmode), offset, registers[FUNC_ARG_REG_MAPPING[arg_index]][bitmode]); 
 	}
 
 }

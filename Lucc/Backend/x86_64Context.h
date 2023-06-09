@@ -10,12 +10,13 @@ namespace lucc
 
 	class x86_64CodeGenerator::Context : public ICodegenContext
 	{
-		static constexpr uint64 REG_COUNT = 9;
+		static constexpr uint64 GP_REG_COUNT = 9;
 		static constexpr uint64 FUNC_ARGS_COUNT_IN_REGISTERS = 4;
-		static constexpr uint64 RETURN_REGISTER_INDEX = REG_COUNT - 1;
+		static constexpr uint64 RETURN_REGISTER_INDEX = GP_REG_COUNT - 1;
+		static constexpr uint64 STACK_FRAME_REGISTER_INDEX = GP_REG_COUNT;
 		static constexpr size_t FUNC_ARG_REG_MAPPING[FUNC_ARGS_COUNT_IN_REGISTERS] = { 4, 5, 2, 3 };
 
-		static constexpr char const* registers[REG_COUNT][BitMode_Count] = {
+		static constexpr char const* registers[GP_REG_COUNT + 1][BitMode_Count] = {
 			{"r10b", "r10w", "r10d", "r10"},
 			{"r11b", "r11w", "r11d", "r11"},
 			{"r8b" , "r8w" , "r8d" , "r8" },
@@ -24,7 +25,8 @@ namespace lucc
 			{"dl"  , "dx"  , "edx" , "rdx"},
 			{"dil" , "di"  , "edi" , "rdi"},
 			{"sil" , "si"  , "esi" , "rsi"},
-			{"al"  , "ax"  , "eax" , "rax"}};
+			{"al"  , "ax"  , "eax" , "rax"},
+			{"bpl" , "bp"  , "ebp" , "rbp"}};
 
 		enum SegmentType : uint16
 		{
@@ -38,8 +40,10 @@ namespace lucc
 
 		//registers
 		virtual register_t AllocateRegister() override;
-		virtual register_t AllocateRegisterForReturn() override;
-		virtual register_t AllocateRegisterForFunctionArg(size_t arg_index) override;
+		virtual register_t AllocateReturnRegister() override;
+		virtual register_t AllocateFunctionArgumentRegister(size_t arg_index) override;
+		virtual register_t GetFunctionArgumentRegister(size_t arg_index) override;
+		virtual register_t GetStackFrameRegister() override;
 		virtual void FreeRegister(register_t reg) override;
 		virtual void FreeAllRegisters() override;
 
@@ -119,16 +123,16 @@ namespace lucc
 		virtual void DeclareExternFunction(char const* sym_name) override;
 
 		//functions
+		virtual uint64 GetFunctionArgsInRegisters() const override { return FUNC_ARGS_COUNT_IN_REGISTERS; }
 		virtual void SaveStackPointer() override;
+		virtual void ReserveStackSpace(uint32 stack_space) override;
 		virtual void CallFunction(char const* sym_name) override;
 		virtual void JumpToFunctionEnd() override;
 		virtual void Return() override;
-		virtual void ReserveStackSpace(uint32 stack_space) override;
-		virtual uint64 GetFunctionArgsInRegisters() const override { return FUNC_ARGS_COUNT_IN_REGISTERS; }
-		virtual void SaveRegisterArgToStack(uint32 arg_index, int32 offset, BitMode bitmode) override;
+		
 	private:
 		OutputBuffer& output_buffer;
-		std::array<bool, REG_COUNT> free_registers;
+		std::array<bool, GP_REG_COUNT> free_registers;
 
 		size_t label_id;
 		char const* current_func_name;

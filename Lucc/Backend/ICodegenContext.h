@@ -59,8 +59,10 @@ namespace lucc
 		//registers
 		virtual void		FreeAllRegisters() = 0;
 		virtual register_t	AllocateRegister() = 0;
-		virtual register_t	AllocateRegisterForReturn() = 0;
-		virtual register_t	AllocateRegisterForFunctionArg(size_t arg_index) = 0;
+		virtual register_t	AllocateReturnRegister() = 0;
+		virtual register_t	AllocateFunctionArgumentRegister(size_t arg_index) = 0;
+		virtual register_t  GetFunctionArgumentRegister(size_t arg_index) = 0;
+		virtual register_t  GetStackFrameRegister() = 0;
 		virtual void		FreeRegister(register_t reg) = 0;
 
 		//arithmetic
@@ -136,12 +138,11 @@ namespace lucc
 		virtual void DeclareExternFunction(char const* sym_name) = 0;
 
 		//functions
+		virtual uint64 GetFunctionArgsInRegisters() const = 0;
 		virtual void SaveStackPointer() = 0;
 		virtual void ReserveStackSpace(uint32 stack_space) = 0;
-		virtual void SaveRegisterArgToStack(uint32 arg_index, int32 offset, BitMode bitmode) = 0;
 		virtual void CallFunction(char const* func_lbl) = 0;
 		virtual void JumpToFunctionEnd() = 0;
 		virtual void Return() = 0;
-		virtual uint64 GetFunctionArgsInRegisters() const = 0;
 	};
 }

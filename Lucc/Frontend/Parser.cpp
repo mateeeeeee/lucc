@@ -112,7 +112,7 @@ namespace lucc
 			ParseDeclarator(decl_spec, declarator_info);
 			LU_ASSERT(declarator_info.qtype.HasRawType());
 			DeclarationInfo declaration_info(decl_spec, declarator_info);
-			ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage);
+			ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global);
 
 			if (declarator_info.qtype->Is(PrimitiveTypeKind::Function))
 			{
@@ -184,8 +184,6 @@ namespace lucc
 	{
 		LU_ASSERT(ctx.identifier_sym_table->IsGlobal());
 		ctx.identifier_sym_table->EnterScope();
-		ctx.gotos.clear();
-		ctx.labels.clear();
 
 		std::string_view func_name = decl_info.name;
 		if (func_name.empty())
@@ -198,15 +196,17 @@ namespace lucc
 		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_name);
 		for (auto&& func_param : func_type.GetParamTypes())
 		{
+			ctx.identifier_sym_table->Insert(func_param.name, func_param.qtype, Storage::None);
 			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name, false);
+			param_decl->SetSymbol(ctx.identifier_sym_table->LookUp(func_param.name));
 			func_decl->AddParamDeclaration(std::move(param_decl));
 		}
 		func_type.EncounterPrototype();
-		ctx.identifier_sym_table->Insert(std::string(func_name), decl_info.qtype, decl_info.storage);
 		if (current_token->Is(TokenKind::left_brace))
 		{
 			ctx.identifier_sym_table->EnterScope();
 			ctx.current_func_type = &func_type;
+
 			func_type.EncounteredDefinition();
 
 			std::unique_ptr<CompoundStmtAST> compound_stmt = ParseCompoundStatement();
@@ -851,7 +851,7 @@ namespace lucc
 		{
 			SourceLocation loc = current_token->GetLocation();
 			++current_token;
-			return std::make_unique<IdentifierAST>(name, loc, sym->qtype);
+			return std::make_unique<DeclRefAST>(name, loc, sym->qtype, sym->global);
 		}
 		else
 		{

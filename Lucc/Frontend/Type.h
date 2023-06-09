@@ -477,7 +477,6 @@ namespace lucc
 		}
 		else return RemoveQualifiers(qtype);
 	}
-
 	/*6.5.16.1 Simple assignment
 	Constraints
 	1 One of the following shall hold :
@@ -502,6 +501,8 @@ namespace lucc
 	  have qualified or unqualified versions of a compatible type; otherwise, the behavior is
 	  undefined. */
 	QualifiedType AsIfByAssignment(QualifiedType const& src_type, QualifiedType const& dst_type);
+	// C11 6.5.6 Additive operators
+	QualifiedType AdditiveOperatorType(QualifiedType const& lhs_type, QualifiedType const& rhs_type, bool subtract);
 
 
 	// C11 6.3.1.1p2: If an int can represent all values of the original type (as
@@ -509,7 +510,6 @@ namespace lucc
 	// otherwise, it is converted to an unsigned int. These are called the integer
 	// promotions. All other types are unchanged by the integer promotions.
 	QualifiedType IntPromote(QualifiedType const& type);
-
 	QualifiedType TryIntPromote(QualifiedType const& type);
 
 	// C11 6.3.1.8 Usual arithmetic conversions

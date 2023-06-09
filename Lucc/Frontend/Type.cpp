@@ -43,6 +43,68 @@ namespace lucc
 		return ret_type;
 	}
 
+	QualifiedType AdditiveOperatorType(QualifiedType const& lhs_type, QualifiedType const& rhs_type, bool subtract)
+	{
+		QualifiedType const& lhs_qtype = ValueTransformation(lhs_type);
+		QualifiedType const& rhs_qtype = ValueTransformation(rhs_type);
+		if (IsArithmeticType(lhs_qtype) && IsArithmeticType(rhs_qtype)) { return UsualArithmeticConversion(lhs_qtype, rhs_qtype); }
+		else if (IsPointerType(lhs_qtype) || IsPointerType(rhs_qtype))
+		{
+			auto IsComplete = [](QualifiedType const& ptr_qtype)
+			{
+				if (!IsVoidPointerType(ptr_qtype) && !IsFunctionPointerType(ptr_qtype) && !TypeCast<PointerType>(ptr_qtype).PointeeType()->IsComplete())
+				{
+					Report(diag::arithmetic_on_incomplete_object_type);
+					return false;
+				}
+				else
+				{
+					if (IsVoidPointerType(ptr_qtype))
+					{
+						Report(diag::arithmetic_on_void_pointer_type);
+					}
+					else if (IsFunctionPointerType(ptr_qtype))
+					{
+						Report(diag::arithmetic_on_function_pointer_type);
+					}
+					return true;
+				}
+				return true;
+			};
+
+			if (IsPointerType(lhs_qtype) && IsPointerType(rhs_qtype) && subtract)
+			{
+				QualifiedType lhs_pte_qty = TypeCast<PointerType>(lhs_qtype).PointeeType();
+				QualifiedType rhs_pte_qty = TypeCast<PointerType>(rhs_qtype).PointeeType();
+				if (!lhs_pte_qty->IsCompatible(rhs_pte_qty))
+				{
+					Report(diag::arithmetic_on_incompatible_pointers);
+				}
+				else if (IsComplete(lhs_qtype))
+				{
+					// C11 6.5.6p9: The size of the result is implementation-defined,
+					// and its type (a signed integer type) is ptrdiff_t defined in
+					// the <stddef.h> header.
+					return builtin_types::LongLong;
+				}
+			}
+			else if (!IsIntegerType(lhs_qtype) && !IsIntegerType(rhs_qtype))
+			{
+				Report(diag::additive_operator_invalid_operands); //ErrInExpr("invalid operands to additive operators");
+			}
+			else
+			{
+				QualifiedType ptr_qtype = IsIntegerType(lhs_qtype) ? rhs_qtype : lhs_qtype;
+				if (IsComplete(ptr_qtype))  return ptr_qtype;
+			}
+		}
+		else
+		{
+			Report(diag::additive_operator_invalid_operands);
+		}
+		return QualifiedType{};
+	}
+
 	QualifiedType IntPromote(QualifiedType const& type)
 	{
 		LU_ASSERT(IsIntegerType(type));
