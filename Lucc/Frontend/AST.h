@@ -366,6 +366,7 @@ namespace lucc
 
 	enum class ExprKind
 	{
+		InitializerList,
 		Unary,
 		Binary,
 		Ternary,
@@ -425,6 +426,7 @@ namespace lucc
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
 		void SetType(QualifiedType const& _type) { type = _type; }
 	};
+
 	class UnaryExprAST : public ExprAST
 	{
 	public:

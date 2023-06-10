@@ -5,7 +5,7 @@ VisualStudioVersion = 17.4.32916.344
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lucc", "Lucc\Lucc.vcxproj", "{CCF04FCC-E2B8-4F8F-AA04-9698CE5C5D84}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NASM", "NASM\NASM.vcxproj", "{CB06CFFD-B0DF-4C28-BB30-80F0465470B1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MASM", "MASM\MASM.vcxproj", "{CB06CFFD-B0DF-4C28-BB30-80F0465470B1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -22,32 +22,42 @@ f endp
 main proc 
 push rbp
 mov rbp, rsp
-sub rsp, 16
+sub rsp, 32
 mov	r10d, 0
-mov	dword ptr [rbp-4], r10d
-mov	r10d, 0
-mov	dword ptr [rbp-8], r10d
+mov	dword ptr [rbp-20], r10d
 L_start1: 
-mov	r11d, dword ptr [rbp-8]
-cmp	r11d, 10
+mov	r11d, dword ptr [rbp-20]
+cmp	r11d, 16
 setl r10b
 cmp	r10b, 0
 je	L_end1
-mov	ecx, dword ptr [rbp-8]
-mov	edx, dword ptr [rbp-8]
+mov	ecx, dword ptr [rbp-20]
+mov	edx, dword ptr [rbp-20]
 add	edx, 1
 call f
 mov	r8d, eax
-mov	r11d, dword ptr [rbp-4]
+lea	r9, [rbp-16]
+mov	edi, 0
+imul rdi, rdi, 8
+add	r9, rdi
+mov	r11, qword ptr [r9]
 add	r11d, r8d
-mov	dword ptr [rbp-4], r11d
-inc	dword ptr [rbp-8]
+lea	r8, [rbp-16]
+mov	r9d, 0
+imul r9, r9, 8
+add	r8, r9
+mov	dword ptr [r8], r11d
+inc	dword ptr [rbp-20]
 jmp	L_start1
 L_end1: 
-mov	eax, dword ptr [rbp-4]
+lea	r10, [rbp-16]
+mov	r11d, 0
+imul r11, r11, 8
+add	r10, r11
+mov	rax, qword ptr [r10]
 jmp main_end
 main_end:
-add rsp, 16
+add rsp, 32
 pop rbp
 ret
 main endp

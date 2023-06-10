@@ -381,6 +381,21 @@ namespace lucc
 		return nullptr;
 	}
 
+	//<initializer> ::= <assignment-expression>
+	//				  | { <initializer - list> }
+	//				  | { <initializer - list>, }
+	//<initializer - list> :: = <initializer>
+	//						  | <initializer - list>, <initializer>
+	std::unique_ptr<ExprAST> Parser::ParseInitializer(bool static_init)
+	{
+		if (Consume(TokenKind::left_brace))
+		{
+			//do initializer list here
+			Expect(TokenKind::right_brace);
+		}
+		else return ParseExpression();
+	}
+
 	template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
 	std::unique_ptr<ExprAST> Parser::ParseBinaryExpression()
 	{

@@ -114,6 +114,36 @@ namespace lucc
 		VarDeclVisitorAST var_decl_visitor(this);
 		body->Accept(var_decl_visitor, 0);
 	}
+	void FunctionDeclAST::AssignLocalVariableOffsets(uint64 args_in_registers) const
+	{
+		int32 top = 16;
+		for (uint64 i = args_in_registers; i < param_decls.size(); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			top = AlignTo(top, 8);
+			param->SetLocalOffset(top);
+			top += (int32)param->GetSymbol().qtype->GetSize();
+		}
+
+		int32 bottom = 0;
+		for (uint64 i = 0; i < std::min(args_in_registers, param_decls.size()); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			int32 alignment = (int32)param->GetSymbol().qtype->GetAlign();
+			bottom += (int32)param->GetSymbol().qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			param->SetLocalOffset(-bottom);
+		}
+
+		for (VarDeclAST const* local_var : local_variables)
+		{
+			int32 alignment = (int32)local_var->GetSymbol().qtype->GetAlign();
+			bottom += (int32)local_var->GetSymbol().qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			local_var->SetLocalOffset(-bottom);
+		}
+		stack_size = AlignTo(bottom, 16);
+	}
 	void FunctionDeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -319,36 +349,6 @@ namespace lucc
 		body->Codegen(ctx);
 		ctx.Return();
 		return;
-	}
-	void FunctionDeclAST::AssignLocalVariableOffsets(uint64 args_in_registers) const
-	{
-		int32 top = 16;
-		for (uint64 i = args_in_registers; i < param_decls.size(); ++i)
-		{
-			VarDeclAST* param = param_decls[i].get();
-			top = AlignTo(top, 8);
-			param->SetLocalOffset(top);
-			top += (int32)param->GetSymbol().qtype->GetSize();
-		}
-
-		int32 bottom = 0;
-		for (uint64 i = 0; i < std::min(args_in_registers, param_decls.size()); ++i)
-		{
-			VarDeclAST* param = param_decls[i].get();
-			int32 alignment = (int32)param->GetSymbol().qtype->GetAlign();
-			bottom += (int32)param->GetSymbol().qtype->GetSize();
-			bottom = AlignTo(bottom, alignment);
-			param->SetLocalOffset(-bottom);
-		}
-
-		for (VarDeclAST const* local_var : local_variables)
-		{
-			int32 alignment = (int32)local_var->GetSymbol().qtype->GetAlign();
-			bottom += (int32)local_var->GetSymbol().qtype->GetSize();
-			bottom = AlignTo(bottom, alignment);
-			local_var->SetLocalOffset(-bottom);
-		}
-		stack_size = AlignTo(bottom, 16);
 	}
 
 	void UnaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
@@ -790,16 +790,25 @@ namespace lucc
 		if (!return_reg) return;
 
 		size_t type_size = GetType()->GetSize();
-		BitMode bitmode = ConvertToBitMode(type_size);
-
 		if (!symbol.global)
 		{
-			register_t rbp = ctx.GetStackFrameRegister();
-			mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
-			ctx.Mov(*return_reg, mem_ref, bitmode);
+			if (IsArrayType(GetType()))
+			{
+				register_t rbp = ctx.GetStackFrameRegister();
+				mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+				ctx.Lea(*return_reg, mem_ref);
+			}
+			else
+			{
+				BitMode bitmode = ConvertToBitMode(type_size);
+
+				register_t rbp = ctx.GetStackFrameRegister();
+				mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+				ctx.Mov(*return_reg, mem_ref, bitmode);
+			}
 			return;
 		}
-		
+		BitMode bitmode = ConvertToBitMode(type_size);
 		if (IsArrayType(GetType())) ctx.Mov(*return_reg, GetName().data(), BitMode_64, true);
 		else if (return_reg) ctx.Mov(*return_reg, GetName().data(), bitmode);
 	}
