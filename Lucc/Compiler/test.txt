@@ -1,6 +1,4 @@
 
-int i;
-
 int f(int a, int b)
 {
 	return a + b;
@@ -8,6 +6,7 @@ int f(int a, int b)
 
 int main(void)
 {
-	i = f(3, 4);
-	return i;
+	int i = f(3, 4);
+	int* j = &i;
+	return *j;
 }

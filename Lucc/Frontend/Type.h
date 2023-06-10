@@ -265,11 +265,11 @@ namespace lucc
 		None,
 		Inline
 	};
-	class FuncType : public Type
+	class FunctionType : public Type
 	{
 	public:
 
-		FuncType(QualifiedType const& return_qtype, std::span<FunctionParameter> param_types = {}, bool is_variadic = false)
+		FunctionType(QualifiedType const& return_qtype, std::span<FunctionParameter> param_types = {}, bool is_variadic = false)
 			: Type(PrimitiveTypeKind::Function, false),
 			return_qtype(return_qtype), param_types(param_types.begin(), param_types.end()), is_variadic(is_variadic), has_prototype(false) {}
 

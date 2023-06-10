@@ -13,7 +13,7 @@ namespace lucc
 	enum class BinaryExprKind : uint8;
 	class SymbolTable;
 	class QualifiedType;
-	class FuncType;
+	class FunctionType;
 
 	struct AST;
 	class DeclAST;
@@ -46,7 +46,7 @@ namespace lucc
 		struct Context
 		{
 			std::unique_ptr<SymbolTable> identifier_sym_table;
-			FuncType const* current_func_type = nullptr;
+			FunctionType const* current_func_type = nullptr;
 			bool return_stmt_encountered = false;
 		};
 
@@ -133,7 +133,6 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<IntLiteralAST> ParseIntegerLiteral();
 		[[nodiscard]] std::unique_ptr<StringLiteralAST> ParseStringLiteral();
 		[[nodiscard]] std::unique_ptr<IdentifierAST> ParseIdentifier();
-		[[nodiscard]] std::unique_ptr<ExprAST> ConvertExpression(std::unique_ptr<ExprAST>&);
 
 		template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
 		std::unique_ptr<ExprAST> ParseBinaryExpression();

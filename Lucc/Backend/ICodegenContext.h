@@ -87,8 +87,10 @@ namespace lucc
 		virtual void Neg(char const* mem, BitMode bitmode) = 0;
 
 		virtual void Inc(char const* mem, BitMode bitmode) = 0;
+		virtual void Inc(mem_ref_t const& mem_ref, BitMode bitmode) = 0;
 		virtual void Inc(register_t reg, BitMode bitmode) = 0;
 		virtual void Dec(char const* mem, BitMode bitmode) = 0;
+		virtual void Dec(mem_ref_t const& mem_ref, BitMode bitmode) = 0;
 		virtual void Dec(register_t reg, BitMode bitmode) = 0;
 
 		virtual void Not(register_t reg, BitMode bitmode) = 0;
@@ -139,7 +141,6 @@ namespace lucc
 
 		//functions
 		virtual uint64 GetFunctionArgsInRegisters() const = 0;
-		virtual void SaveStackPointer() = 0;
 		virtual void ReserveStackSpace(uint32 stack_space) = 0;
 		virtual void CallFunction(char const* func_lbl) = 0;
 		virtual void JumpToFunctionEnd() = 0;

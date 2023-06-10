@@ -202,7 +202,7 @@ namespace lucc
 			return nullptr;
 		}
 
-		FuncType const& func_type = TypeCast<FuncType>(decl_info.qtype);
+		FunctionType const& func_type = TypeCast<FunctionType>(decl_info.qtype);
 		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_name);
 		for (auto&& func_param : func_type.GetParamTypes())
 		{
@@ -741,7 +741,8 @@ namespace lucc
 		{
 		case TokenKind::left_round:
 		{
-			if (expr->GetType()->IsNot(PrimitiveTypeKind::Function))
+			QualifiedType const& type = expr->GetType();
+			if (type->IsNot(PrimitiveTypeKind::Function))
 			{
 				Report(diag::invalid_function_call);
 				return nullptr;
@@ -750,14 +751,29 @@ namespace lucc
 			std::unique_ptr<FunctionCallAST> func_call_expr = std::make_unique<FunctionCallAST>(std::move(expr), current_token->GetLocation());
 			++current_token;
 
+			FunctionType const& func_type = TypeCast<FunctionType>(type);
+			std::span<FunctionParameter const> func_params = func_type.GetParamTypes();
+			uint32 arg_index = 0;
 			if (!Consume(TokenKind::right_round))
 			{
 				while (true)
 				{
-					func_call_expr->AddArgument(ParseAssignExpression());
+					std::unique_ptr<ExprAST> arg_expr = ParseAssignExpression();
+					if (arg_index >= func_params.size() || !arg_expr->GetType()->IsCompatible(func_params[arg_index].qtype))
+					{
+						Report(diag::invalid_function_call);
+						return nullptr;
+					}
+					func_call_expr->AddArgument(std::move(arg_expr));
+					++arg_index;
 					if (Consume(TokenKind::right_round)) break;
 					Expect(TokenKind::comma);
 				}
+			}
+			if (func_params.size() != arg_index)
+			{
+				Report(diag::invalid_function_call);
+				return nullptr;
 			}
 			return func_call_expr;
 		}
@@ -874,29 +890,6 @@ namespace lucc
 			Report(diag::variable_not_declared);
 			return nullptr;
 		}
-	}
-
-	std::unique_ptr<ExprAST> Parser::ConvertExpression(std::unique_ptr<ExprAST>& expr)
-	{
-		if (!expr) return nullptr;
-		auto const& type = expr->GetType();
-		SourceLocation loc = current_token->GetLocation();
-		switch (type->GetKind())
-		{
-		case PrimitiveTypeKind::Array:
-		{
-			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::ArrayToPointer, loc);
-		}
-		case PrimitiveTypeKind::Function:
-		{
-			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::FunctionToPointer, loc);
-		}
-		case PrimitiveTypeKind::Arithmetic:
-		{
-			return std::make_unique<ImplicitCastExprAST>(std::move(expr), CastKind::IntegerPromotion, loc);
-		}
-		}
-		return std::move(expr);
 	}
 
 	//<declaration - specifier> :: = <storage - class - specifier>
@@ -1154,7 +1147,7 @@ namespace lucc
 		{
 			if (Consume(TokenKind::KW_void))
 			{
-				FuncType func_type(type);
+				FunctionType func_type(type);
 				type.SetRawType(func_type);
 				if (!Consume(TokenKind::right_round))
 				{
@@ -1203,13 +1196,13 @@ namespace lucc
 					}
 					else if (qtype->Is(PrimitiveTypeKind::Function))
 					{
-						FuncType const& function_type = TypeCast<FuncType>(*qtype);
+						FunctionType const& function_type = TypeCast<FunctionType>(*qtype);
 						PointerType decayed_param_type(function_type);
 						qtype = QualifiedType(decayed_param_type);
 					}
 					param_types.emplace_back(param_declarator.name, param_declarator.qtype);
 				}
-				FuncType func_type(type, param_types, is_variadic);
+				FunctionType func_type(type, param_types, is_variadic);
 				type.SetRawType(func_type);
 				return true;
 			}

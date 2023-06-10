@@ -70,8 +70,10 @@ namespace lucc
 		virtual void Neg(char const* mem, BitMode bitmode) override;
 
 		virtual void Inc(char const* mem, BitMode bitmode) override;
+		virtual void Inc(mem_ref_t const& mem_ref, BitMode bitmode) override;
 		virtual void Inc(register_t reg, BitMode bitmode) override;
 		virtual void Dec(char const* mem, BitMode bitmode) override;
+		virtual void Dec(mem_ref_t const& mem_ref, BitMode bitmode) override;
 		virtual void Dec(register_t reg, BitMode bitmode) override;
 
 		virtual void Not(register_t reg, BitMode bitmode) override;
@@ -124,7 +126,6 @@ namespace lucc
 
 		//functions
 		virtual uint64 GetFunctionArgsInRegisters() const override { return FUNC_ARGS_COUNT_IN_REGISTERS; }
-		virtual void SaveStackPointer() override;
 		virtual void ReserveStackSpace(uint32 stack_space) override;
 		virtual void CallFunction(char const* sym_name) override;
 		virtual void JumpToFunctionEnd() override;
@@ -136,8 +137,7 @@ namespace lucc
 
 		size_t label_id;
 		char const* current_func_name;
-		bool saved_stack_pointer;
-		bool reserved_stack;
+		bool stack_reg_saved;
 
 	private:
 		template<SegmentType segment, typename... Ts>

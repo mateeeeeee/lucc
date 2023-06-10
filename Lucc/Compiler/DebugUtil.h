@@ -101,16 +101,6 @@ namespace lucc
 					return "invalid";
 				}
 			}
-			static constexpr std::string ImplicitCastKindToString(CastKind kind)
-			{
-				switch (kind)
-				{
-				case CastKind::ArrayToPointer: return "ArrayToPointer";
-				case CastKind::FunctionToPointer: return "FunctionToPointer";
-				case CastKind::IntegerPromotion: return "IntegerPromotion";
-				}
-				return "Invalid";
-			}
 		public:
 
 			explicit DebugNodeVisitorAST(AST* ast);
@@ -122,7 +112,6 @@ namespace lucc
 			virtual void Visit(BinaryExprAST const& node, size_t depth) override;
 			virtual void Visit(TernaryExprAST const& node, size_t depth) override;
 			virtual void Visit(FunctionCallAST const& node, size_t depth) override;
-			virtual void Visit(ImplicitCastExprAST const& node, size_t depth) override;
 			virtual void Visit(IntLiteralAST const& node, size_t depth) override;
 			virtual void Visit(StringLiteralAST const& node, size_t depth) override;
 			virtual void Visit(IdentifierAST const& node, size_t depth) override;

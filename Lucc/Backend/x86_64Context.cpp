@@ -135,13 +135,22 @@ namespace lucc
 	{
 		Emit<Text>("inc\t{}", mem);
 	}
+	void x86_64CodeGenerator::Context::Inc(mem_ref_t const& mem_ref, BitMode bitmode)
+	{
+		Emit<Text>("inc\t{}", ConvertMemRef(mem_ref, bitmode));
+	}
 	void x86_64CodeGenerator::Context::Inc(register_t reg, BitMode bitmode)
 	{
 		Emit<Text>("inc\t{}", registers[reg.id][bitmode]);
 	}
+
 	void x86_64CodeGenerator::Context::Dec(char const* mem, BitMode bitmode)
 	{
 		Emit<Text>("dec\t{}", mem);
+	}
+	void x86_64CodeGenerator::Context::Dec(mem_ref_t const& mem_ref, BitMode bitmode)
+	{
+		Emit<Text>("dec\t{}", ConvertMemRef(mem_ref, bitmode));
 	}
 	void x86_64CodeGenerator::Context::Dec(register_t reg, BitMode bitmode)
 	{
@@ -336,17 +345,19 @@ namespace lucc
 		Emit<None>("extern {} : proc", sym_name);
 	}
 
+	//push    rbp
+	//mov     rbp, rsp
+	//sub     rsp, 16
+	// 
+	// add    rsp, 16
+	// pop    rbp
 	//functions
-	void x86_64CodeGenerator::Context::SaveStackPointer()
+	void x86_64CodeGenerator::Context::ReserveStackSpace(uint32 stack_space)
 	{
 		Emit<Text>("push rbp");
 		Emit<Text>("mov rbp, rsp");
-		saved_stack_pointer = true;
-	}
-	void x86_64CodeGenerator::Context::ReserveStackSpace(uint32 stack_space)
-	{
-		Emit<Text>("sub rsp, {}", stack_space);
-		reserved_stack = true;
+		if(!stack_space) Emit<Text>("sub rsp, {}", stack_space);
+		stack_reg_saved = true;
 	}
 	void x86_64CodeGenerator::Context::CallFunction(char const* sym_name)
 	{
@@ -361,15 +372,10 @@ namespace lucc
 		if(current_func_name == "main") Emit<Text>("mov rax, 0");
 
 		Emit<Text>("{}_end:", current_func_name);
-		if (reserved_stack)
-		{
-			Emit<Text>("mov rsp, rbp");
-			reserved_stack = false;
-		}
-		if(saved_stack_pointer)
+		if(stack_reg_saved)
 		{
 			Emit<Text>("pop rbp");
-			saved_stack_pointer = false;
+			stack_reg_saved = false;
 		}
 		Emit<Text>("ret");
 		Emit<Text>("{} endp", current_func_name);

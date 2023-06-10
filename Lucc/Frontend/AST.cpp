@@ -19,6 +19,30 @@ namespace lucc
 		return BitMode_Count;
 	}
 
+	class DeclRefVisitorAST : public INodeVisitorAST
+	{
+	public:
+		DeclRefVisitorAST(FunctionDeclAST const* func_ref) : func_ref(func_ref) {}
+		virtual void Visit(DeclRefAST const& node, size_t depth) override
+		{
+			func_ref->ForAllDeclarations([&](DeclAST const* decl)
+			{
+				if (decl->GetDeclKind() == DeclKind::Var)
+				{
+					VarDeclAST const* var_decl = AstCast<VarDeclAST>(decl);
+					if (var_decl->GetSymbol() == node.GetSymbol())
+					{
+						node.SetLocalOffset(var_decl->GetLocalOffset());
+					}
+				}
+			}
+			);
+		}
+
+	private:
+		FunctionDeclAST const* func_ref;
+	};
+
 	/// Accept
 
 	void TranslationUnitAST::Accept(INodeVisitorAST& visitor, size_t depth) const
@@ -189,12 +213,6 @@ namespace lucc
 		if (ret_expr) ret_expr->Accept(visitor, depth + 1);
 	}
 
-	void ImplicitCastExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
-	{
-		visitor.Visit(*this, depth);
-		operand->Accept(visitor, depth + 1);
-	}
-
 	void GotoStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -224,15 +242,18 @@ namespace lucc
 
 	void VarDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		if (!IsGlobal() && init_expr)
+		if (!IsGlobal())
 		{
-			size_t type_size = sym.qtype->GetSize();
-			register_t init_reg = return_reg ? *return_reg : ctx.AllocateRegister();
-			init_expr->Codegen(ctx, init_reg);
-			LU_ASSERT(local_offset != 0);
-			mem_ref_t mem_ref{ .base_reg = ctx.GetStackFrameRegister(), .displacement = local_offset };
-			ctx.Mov(mem_ref, init_reg, ConvertToBitMode(type_size));
-			if (!return_reg) ctx.FreeRegister(init_reg);
+			if (init_expr)
+			{
+				size_t type_size = sym.qtype->GetSize();
+				register_t init_reg = return_reg ? *return_reg : ctx.AllocateRegister();
+				init_expr->Codegen(ctx, init_reg);
+				LU_ASSERT(local_offset != 0);
+				mem_ref_t mem_ref{ .base_reg = ctx.GetStackFrameRegister(), .displacement = local_offset };
+				ctx.Mov(mem_ref, init_reg, ConvertToBitMode(type_size));
+				if (!return_reg) ctx.FreeRegister(init_reg);
+			}
 			return;
 		}
 
@@ -276,12 +297,13 @@ namespace lucc
 			return;
 		}
 		AssignLocalVariableOffsets(ctx.GetFunctionArgsInRegisters());
-		ctx.DeclareFunction(name.c_str(), sym.storage == Storage::Static);
+		DeclRefVisitorAST decl_ref_visitor(this);
+		body->Accept(decl_ref_visitor, 0);
 
-		if (param_decls.size() >= ctx.GetFunctionArgsInRegisters() || !local_variables.empty())
+		ctx.DeclareFunction(name.c_str(), sym.storage == Storage::Static);
+		if (!param_decls.empty() || !local_variables.empty())
 		{
-			ctx.SaveStackPointer();
-			if(!local_variables.empty()) ctx.ReserveStackSpace(stack_size);
+			ctx.ReserveStackSpace(stack_size);
 		}
 		
 		for (uint64 i = 0; i < std::min(ctx.GetFunctionArgsInRegisters(), param_decls.size()); ++i)
@@ -330,7 +352,7 @@ namespace lucc
 		stack_size = AlignTo(bottom, 16);
 	}
 
-	void UnaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	void UnaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		size_t type_size = GetType()->GetSize();
 		BitMode bitmode = ConvertToBitMode(type_size);
@@ -344,29 +366,57 @@ namespace lucc
 			int32 type_size = (int32)operand->GetType()->GetSize();
 			if (is_pointer_arithmetic)
 			{
-				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
+				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
-					char const* name = identifier->GetName().data();
-					register_t tmp_reg = ctx.AllocateRegister();
-					ctx.Mov(tmp_reg, name, BitMode_64, true);
-					if (op == UnaryExprKind::PreIncrement)	   ctx.Add(tmp_reg, type_size, BitMode_64);
-					else if (op == UnaryExprKind::PreDecrement) ctx.Sub(tmp_reg, type_size, BitMode_64);
-					ctx.Mov(name, tmp_reg, BitMode_64);
-					if (return_reg) ctx.Mov(*return_reg, tmp_reg, BitMode_64);
-					ctx.FreeRegister(tmp_reg);
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					if (decl_ref->IsGlobal())
+					{
+						char const* name = decl_ref->GetName().data();
+						register_t tmp_reg = ctx.AllocateRegister();
+						ctx.Mov(tmp_reg, name, BitMode_64, true);
+						if (op == UnaryExprKind::PreIncrement)	   ctx.Add(tmp_reg, type_size, BitMode_64);
+						else if (op == UnaryExprKind::PreDecrement) ctx.Sub(tmp_reg, type_size, BitMode_64);
+						ctx.Mov(name, tmp_reg, BitMode_64);
+						if (return_reg) ctx.Mov(*return_reg, tmp_reg, BitMode_64);
+						ctx.FreeRegister(tmp_reg);
+					}
+					else
+					{
+						int32 local_offset = decl_ref->GetLocalOffset();
+						register_t rbp = ctx.GetStackFrameRegister();
+						mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+
+						register_t tmp_reg = ctx.AllocateRegister();
+						ctx.Lea(tmp_reg, mem_ref);
+						if (op == UnaryExprKind::PreIncrement)	   ctx.Add(tmp_reg, type_size, BitMode_64);
+						else if (op == UnaryExprKind::PreDecrement) ctx.Sub(tmp_reg, type_size, BitMode_64);
+						ctx.Mov(mem_ref, tmp_reg, BitMode_64);
+						if (return_reg) ctx.Mov(*return_reg, tmp_reg, BitMode_64);
+						ctx.FreeRegister(tmp_reg);
+					}
 				}
 				else LU_ASSERT(false);
 			}
 			else
 			{
-				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
+				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
-					char const* name = identifier->GetName().data();
-					if (op == UnaryExprKind::PreIncrement) ctx.Inc(name, bitmode);
-					else ctx.Dec(name, bitmode);
-					if (return_reg) ctx.Mov(*return_reg, name, bitmode);
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					if (decl_ref->IsGlobal())
+					{
+						char const* name = decl_ref->GetName().data();
+						if (op == UnaryExprKind::PreIncrement) ctx.Inc(name, bitmode);
+						else ctx.Dec(name, bitmode);
+						if (return_reg) ctx.Mov(*return_reg, name, bitmode);
+					}
+					else
+					{
+						int32 local_offset = decl_ref->GetLocalOffset();
+						register_t rbp = ctx.GetStackFrameRegister();
+						mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+						if (op == UnaryExprKind::PreIncrement) ctx.Inc(mem_ref, bitmode);
+						else ctx.Dec(mem_ref, bitmode);
+					}
 				}
 				else LU_ASSERT(false);
 			}
@@ -380,29 +430,58 @@ namespace lucc
 			int32 type_size = (int32)operand->GetType()->GetSize();
 			if (is_pointer_arithmetic)
 			{
-				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
+				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
-					char const* name = identifier->GetName().data();
-					register_t tmp_reg = ctx.AllocateRegister();
-					ctx.Mov(tmp_reg, name, BitMode_64, true);
-					if (op == UnaryExprKind::PreIncrement)	   ctx.Add(tmp_reg, type_size, BitMode_64);
-					else if (op == UnaryExprKind::PreDecrement) ctx.Sub(tmp_reg, type_size, BitMode_64);
-					if (return_reg) ctx.Mov(*return_reg, tmp_reg, BitMode_64);
-					ctx.Mov(name, tmp_reg, BitMode_64);
-					ctx.FreeRegister(tmp_reg);
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					if (decl_ref->IsGlobal())
+					{
+						char const* name = decl_ref->GetName().data();
+						register_t tmp_reg = ctx.AllocateRegister();
+						ctx.Mov(tmp_reg, name, BitMode_64, true);
+						if (op == UnaryExprKind::PreIncrement)	   ctx.Add(tmp_reg, type_size, BitMode_64);
+						else if (op == UnaryExprKind::PreDecrement) ctx.Sub(tmp_reg, type_size, BitMode_64);
+						if (return_reg) ctx.Mov(*return_reg, tmp_reg, BitMode_64);
+						ctx.Mov(name, tmp_reg, BitMode_64);
+						ctx.FreeRegister(tmp_reg);
+					}
+					else
+					{
+						int32 local_offset = decl_ref->GetLocalOffset();
+						register_t rbp = ctx.GetStackFrameRegister();
+						mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+						register_t tmp_reg = ctx.AllocateRegister();
+						ctx.Lea(tmp_reg, mem_ref);
+						if (op == UnaryExprKind::PreIncrement)	    ctx.Add(tmp_reg, type_size, BitMode_64);
+						else if (op == UnaryExprKind::PreDecrement) ctx.Sub(tmp_reg, type_size, BitMode_64);
+						if (return_reg) ctx.Mov(*return_reg, tmp_reg, BitMode_64);
+						ctx.Mov(mem_ref, tmp_reg, BitMode_64);
+						ctx.FreeRegister(tmp_reg);
+					}
 				}
 				else LU_ASSERT(false);
 			}
 			else
 			{
-				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
+				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
-					char const* name = identifier->GetName().data();
-					if (return_reg) ctx.Mov(*return_reg, name, bitmode);
-					if (op == UnaryExprKind::PostIncrement) ctx.Inc(name, bitmode);
-					else ctx.Dec(name, bitmode);
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					if (decl_ref->IsGlobal())
+					{
+						char const* name = decl_ref->GetName().data();
+						if (return_reg) ctx.Mov(*return_reg, name, bitmode);
+						if (op == UnaryExprKind::PostIncrement) ctx.Inc(name, bitmode);
+						else ctx.Dec(name, bitmode);
+					}
+					else
+					{
+						int32 local_offset = decl_ref->GetLocalOffset();
+						register_t rbp = ctx.GetStackFrameRegister();
+						mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+						if (return_reg) ctx.Mov(*return_reg, mem_ref, bitmode);
+						if (op == UnaryExprKind::PostIncrement) ctx.Inc(mem_ref, bitmode);
+						else ctx.Dec(mem_ref, bitmode);
+					}
+					
 				}
 				else LU_ASSERT(false);
 			}
@@ -420,10 +499,10 @@ namespace lucc
 					ctx.Mov(*return_reg, literal->GetValue(), bitmode);
 					if(op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
 				}
-				else if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
+				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
-					char const* name = identifier->GetName().data();
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					char const* name = decl_ref->GetName().data();
 					ctx.Mov(*return_reg, name, bitmode);
 					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
 				}
@@ -452,11 +531,21 @@ namespace lucc
 		{
 			if (return_reg)
 			{
-				if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
+				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
-					char const* name = identifier->GetName().data();
-					ctx.Lea(*return_reg, name);
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					if (decl_ref->IsGlobal())
+					{
+						char const* name = decl_ref->GetName().data();
+						ctx.Lea(*return_reg, name);
+					}
+					else
+					{
+						int32 local_offset = decl_ref->GetLocalOffset();
+						register_t rbp = ctx.GetStackFrameRegister();
+						mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+						ctx.Lea(*return_reg, mem_ref);
+					}
 				}
 				else
 				{
@@ -476,7 +565,7 @@ namespace lucc
 					ctx.Mov(*return_reg, literal->GetValue(), bitmode);
 					ctx.Not(*return_reg, bitmode);
 				}
-				else if (operand->GetExprKind() == ExprKind::VarRefIdentifier)
+				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
 					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
 					char const* name = identifier->GetName().data();
@@ -602,37 +691,41 @@ namespace lucc
 		case BinaryExprKind::Assign:
 		{
 			LU_ASSERT_MSG(lhs->IsLValue(), "Cannot assign to rvalue!");
-			if (lhs->GetExprKind() == ExprKind::VarRefIdentifier)
+			if (lhs->GetExprKind() == ExprKind::DeclRef)
 			{
-				IdentifierAST* var_decl = AstCast<IdentifierAST>(lhs.get());
-				char const* var_name = var_decl->GetName().data();
+				DeclRefAST* decl_ref = AstCast<DeclRefAST>(lhs.get());
+				char const* var_name = decl_ref->GetName().data();
+				int32 local_offset = decl_ref->GetLocalOffset();
+				register_t rbp = ctx.GetStackFrameRegister();
+				mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+				bool global = decl_ref->IsGlobal();
 
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
 					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
-					ctx.Mov(var_name, (int32)int_literal->GetValue(), bitmode);
+					if (global) ctx.Mov(var_name, (int32)int_literal->GetValue(), bitmode);
+					else ctx.Mov(mem_ref, (int32)int_literal->GetValue(), bitmode);
 				}
 				else if (rhs->GetExprKind() == ExprKind::FunctionCall)
 				{
 					FunctionCallAST* func_call = AstCast<FunctionCallAST>(rhs.get());
 					register_t ret_reg = ctx.AllocateReturnRegister();
 					func_call->Codegen(ctx);
-					ctx.Mov(var_name, ret_reg, bitmode);
+					if (global) ctx.Mov(var_name, ret_reg, bitmode);
+					else ctx.Mov(mem_ref, ret_reg, bitmode);
 					ctx.FreeRegister(ret_reg);
 				}
 				else
 				{
 					register_t rhs_reg = return_reg ? *return_reg : ctx.AllocateRegister();
 					rhs->Codegen(ctx, rhs_reg);
-					ctx.Mov(var_name, rhs_reg, bitmode);
+					if (global) ctx.Mov(var_name, rhs_reg, bitmode);
+					else ctx.Mov(mem_ref, rhs_reg, bitmode);
 					if (!return_reg) ctx.FreeRegister(rhs_reg);
 				}
 			}
 			else if (lhs->GetExprKind() == ExprKind::Unary)
 			{
-				//mov	r10d, 100
-				//mov	r11, (offset) p
-				//mov	[r11], r10d
 				UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(lhs.get());
 				if (unary_expr->GetUnaryKind() == UnaryExprKind::Dereference)
 				{
@@ -671,17 +764,21 @@ namespace lucc
 
 	void DeclRefAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		//LU_ASSERT(!IsFunctionType(GetType()));
-		if (IsArrayType(GetType()))
+		if (!return_reg) return;
+
+		size_t type_size = GetType()->GetSize();
+		BitMode bitmode = ConvertToBitMode(type_size);
+
+		if (!symbol.global)
 		{
-			if (return_reg) ctx.Mov(*return_reg, GetName().data(), BitMode_64, true);
+			register_t rbp = ctx.GetStackFrameRegister();
+			mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+			ctx.Mov(*return_reg, mem_ref, bitmode);
+			return;
 		}
-		else
-		{
-			size_t type_size = GetType()->GetSize();
-			BitMode bitmode = ConvertToBitMode(type_size);
-			if (return_reg) ctx.Mov(*return_reg, GetName().data(), bitmode);
-		}
+		
+		if (IsArrayType(GetType())) ctx.Mov(*return_reg, GetName().data(), BitMode_64, true);
+		else if (return_reg) ctx.Mov(*return_reg, GetName().data(), bitmode);
 	}
 
 	void IntLiteralAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
@@ -765,10 +862,20 @@ namespace lucc
 			register_t arg_reg = ctx.AllocateFunctionArgumentRegister(i);
 			func_args[i]->Codegen(ctx, arg_reg);
 		}
-		if (func_expr->GetExprKind() == ExprKind::VarRefIdentifier)
+		if (func_expr->GetExprKind() == ExprKind::DeclRef)
 		{
+			LU_ASSERT(IsFunctionType(func_expr->GetType()));
+			FunctionType const& func_type = TypeCast<FunctionType>(func_expr->GetType());
+			QualifiedType const& ret_type = func_type.GetReturnType();
+			size_t type_size = ret_type->GetSize();
 			IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get());
 			ctx.CallFunction(func_id->GetName().data());
+			if (return_reg)
+			{
+				register_t func_reg = ctx.AllocateReturnRegister();
+				ctx.Mov(*return_reg, func_reg, ConvertToBitMode(type_size));
+				ctx.FreeRegister(func_reg);
+			}
 		}
 		else LU_ASSERT(false);
 	}

@@ -21,6 +21,7 @@ namespace lucc
 	class IntLiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
+	class DeclRefAST;
 
 	class StmtAST;
 	class CompoundStmtAST;
@@ -54,6 +55,7 @@ namespace lucc
 		virtual void Visit(IntLiteralAST const& node, size_t depth) {}
 		virtual void Visit(StringLiteralAST const& node, size_t depth) {}
 		virtual void Visit(IdentifierAST const& node, size_t depth) {}
+		virtual void Visit(DeclRefAST const& node, size_t depth) {}
 		virtual void Visit(StmtAST const& node, size_t depth) {}
 		virtual void Visit(CompoundStmtAST const& node, size_t depth) {}
 		virtual void Visit(DeclStmtAST const& node, size_t depth) {}
@@ -161,6 +163,13 @@ namespace lucc
 		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body);
 		bool IsDefinition() const { return body != nullptr; }
 		void AssignLocalVariableOffsets(uint64 args_in_registers) const;
+
+		template<typename F> requires std::is_invocable_v<F, DeclAST*>
+		void ForAllDeclarations(F&& fn) const
+		{
+			for (auto const& param : param_decls) fn(param.get());
+			for (auto const* local : local_variables) fn(local);
+		}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -362,12 +371,11 @@ namespace lucc
 		Binary,
 		Ternary,
 		FunctionCall,
-		ImplicitCast,
 		FloatLiteral,
 		DoubleLiteral,
 		IntLiteral,
 		StringLiteral,
-		VarRefIdentifier
+		DeclRef
 	};
 	enum class UnaryExprKind : uint8
 	{
@@ -506,7 +514,11 @@ namespace lucc
 	{
 	public:
 		FunctionCallAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
-			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func)) {}
+			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func)) 
+		{
+			auto const& type = func_expr->GetType();
+			SetType(TypeCast<FunctionType>(type).GetReturnType());
+		}
 		void AddArgument(std::unique_ptr<ExprAST>&& arg)
 		{
 			func_args.push_back(std::move(arg));
@@ -521,26 +533,6 @@ namespace lucc
 	private:
 		std::unique_ptr<ExprAST> func_expr;
 		std::vector<std::unique_ptr<ExprAST>> func_args;
-	};
-
-	enum class CastKind
-	{
-		ArrayToPointer,
-		FunctionToPointer,
-		IntegerPromotion
-	};
-	class ImplicitCastExprAST : public ExprAST
-	{
-	public:
-		ImplicitCastExprAST(std::unique_ptr<ExprAST>&& expr, CastKind kind, SourceLocation const& loc)
-			: ExprAST(ExprKind::ImplicitCast, loc), operand(std::move(expr)), kind(kind) {}
-
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-
-		CastKind GetKind() const { return kind; }
-	private:
-		std::unique_ptr<ExprAST> operand;
-		CastKind kind;
 	};
 
 	class FloatLiteralAST final : public ExprAST
@@ -595,7 +587,7 @@ namespace lucc
 		std::string_view GetName() const { return name; }
 
 	protected:
-		explicit IdentifierAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(ExprKind::VarRefIdentifier, loc, type), name(name)
+		explicit IdentifierAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(ExprKind::DeclRef, loc, type), name(name)
 		{
 			SetValueCategory(ExprValueCategory::LValue);
 		}
@@ -607,14 +599,20 @@ namespace lucc
 	class DeclRefAST : public IdentifierAST
 	{
 	public:
-		DeclRefAST(Symbol* symbol, SourceLocation const& loc) : IdentifierAST(symbol->name, loc, symbol->qtype), symbol(*symbol) {}
+		DeclRefAST(Symbol* symbol, SourceLocation const& loc) : IdentifierAST(symbol->name, loc, symbol->qtype),
+			symbol(*symbol), local_offset(0) {}
 
 		Symbol const& GetSymbol() const { return symbol; }
+		bool IsGlobal() const { return symbol.global; }
+		void SetLocalOffset(int32 _local_offset) const { local_offset = _local_offset; }
+		int32 GetLocalOffset() const { return local_offset; }
+
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		Symbol symbol;
+		mutable int32 local_offset;
 	};
 
 	struct AST
