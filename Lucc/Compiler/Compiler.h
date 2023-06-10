@@ -15,10 +15,11 @@ namespace lucc
 
 	struct CompilerInput
 	{
+		std::string input_directory;
 		std::vector<std::string_view> sources;
 		std::string_view exe_file;
 		CompilerFlags	 flags;
 	};
 
-	void Compile(CompilerInput const&);
+	int Compile(CompilerInput const&);
 }

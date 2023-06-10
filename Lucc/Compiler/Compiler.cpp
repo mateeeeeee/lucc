@@ -43,23 +43,25 @@ namespace lucc
 		}
 	}
 
-	void Compile(CompilerInput const& input)
+	int Compile(CompilerInput const& input)
 	{
 		diag::Initialize();
-		fs::path compiler_path = fs::current_path() /= _compiler_path;
-		fs::current_path(compiler_path);
+		//fs::path compiler_path = fs::current_path() /= _compiler_path;
+		//fs::current_path(compiler_path);
 		bool const output_debug = input.flags & CompilerFlag_OutputDebugInfo;
 
+		fs::path directory_path = input.input_directory;
 		std::vector<fs::path> object_files(input.sources.size());
 		std::string masm_cmd = std::format("\"{}/ml64.exe\"", _executables_path);
 		for (size_t i = 0; i < input.sources.size(); ++i)
 		{
 			fs::path file_name = fs::path(input.sources[i]).stem();
 			fs::path file_ext  = fs::path(input.sources[i]).extension();
-			fs::path assembly_file = file_name;  assembly_file += ".asm";
-			fs::path object_file   = file_name; object_file += ".obj";
+			fs::path assembly_file = directory_path / file_name;  assembly_file += ".asm";
+			fs::path object_file   = directory_path / file_name; object_file += ".obj";
+			fs::path source_file = directory_path / input.sources[i];
 
-			CompileTranslationUnit(input.sources[i], assembly_file.string(), output_debug);
+			CompileTranslationUnit(source_file.string(), assembly_file.string(), output_debug);
 
 			masm_cmd += std::format(" /Fo {} /c {} ", object_file.string(), assembly_file.string());
 			object_files[i] = object_file;
@@ -72,7 +74,7 @@ namespace lucc
 		system(link_cmd.c_str());
 
 		std::string exe_cmd = std::format("{}", input.exe_file);
-		system(exe_cmd.c_str());
+		return system(exe_cmd.c_str());
 	}
 
 }

@@ -4,7 +4,7 @@ TODO:
 - Finish arithmetic and other exprs and deduce their types
 - Add runtime flags/options
 - Enums
-- Finish preprocessor
+- Improve preprocessor
 - Break, continue, switch
 - Casts
 - Constant folding

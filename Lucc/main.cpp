@@ -1,3 +1,5 @@
+#ifndef _LIB
+
 #include "Compiler/Compiler.h"
 #include "Core/CLIParser.h"
 #include <iostream>
@@ -14,5 +16,8 @@ int main(int argc, char** argv)
 	compiler_input.sources = { "test.txt" };
 	compiler_input.exe_file = "test.exe";
 	compiler_input.flags = CompilerFlag_OutputDebugInfo;
-	Compile(compiler_input);
+	int exit_code = Compile(compiler_input);
+	printf("Exit code: %d", exit_code);
 }
+
+#endif
