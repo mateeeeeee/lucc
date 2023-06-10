@@ -1,5 +1,5 @@
 TODO:
-- Function parameters and local variables/arrays
+- local arrays
 - Function prototypes and matching definition with declaration
 - Finish arithmetic and other exprs and deduce their types
 - Add runtime flags/options

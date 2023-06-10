@@ -354,9 +354,10 @@ namespace lucc
 	//functions
 	void x86_64CodeGenerator::Context::ReserveStackSpace(uint32 stack_space)
 	{
+		stack_space_used = stack_space;
 		Emit<Text>("push rbp");
 		Emit<Text>("mov rbp, rsp");
-		if(!stack_space) Emit<Text>("sub rsp, {}", stack_space);
+		if(stack_space_used) Emit<Text>("sub rsp, {}", stack_space_used);
 		stack_reg_saved = true;
 	}
 	void x86_64CodeGenerator::Context::CallFunction(char const* sym_name)
@@ -374,6 +375,7 @@ namespace lucc
 		Emit<Text>("{}_end:", current_func_name);
 		if(stack_reg_saved)
 		{
+			if (stack_space_used) Emit<Text>("add rsp, {}", stack_space_used);
 			Emit<Text>("pop rbp");
 			stack_reg_saved = false;
 		}

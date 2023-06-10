@@ -6,6 +6,7 @@
 f proc 
 push rbp
 mov rbp, rsp
+sub rsp, 16
 mov	dword ptr [rbp-4], ecx
 mov	dword ptr [rbp-8], edx
 mov	r10d, dword ptr [rbp-4]
@@ -13,6 +14,7 @@ mov	eax, dword ptr [rbp-8]
 sub	eax, r10d
 jmp f_end
 f_end:
+add rsp, 16
 pop rbp
 ret
 f endp
@@ -20,6 +22,7 @@ f endp
 main proc 
 push rbp
 mov rbp, rsp
+sub rsp, 16
 mov	r10d, 0
 mov	dword ptr [rbp-4], r10d
 mov	r10d, 0
@@ -44,6 +47,7 @@ L_end1:
 mov	eax, dword ptr [rbp-4]
 jmp main_end
 main_end:
+add rsp, 16
 pop rbp
 ret
 main endp

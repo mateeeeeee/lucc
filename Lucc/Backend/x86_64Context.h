@@ -138,6 +138,7 @@ namespace lucc
 		size_t label_id;
 		char const* current_func_name;
 		bool stack_reg_saved;
+		uint32 stack_space_used;
 
 	private:
 		template<SegmentType segment, typename... Ts>
