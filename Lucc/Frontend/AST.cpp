@@ -288,7 +288,7 @@ namespace lucc
 		{
 			VarDeclAST* param_var = param_decls[i].get();
 			LU_ASSERT(param_var->GetLocalOffset() < 0);
-			BitMode bitmode = ConvertToBitMode(param_var->GetSymbol()->qtype->GetSize());
+			BitMode bitmode = ConvertToBitMode(param_var->GetSymbol().qtype->GetSize());
 			register_t rbp = ctx.GetStackFrameRegister();
 			register_t arg = ctx.GetFunctionArgumentRegister(i);
 			mem_ref_t mem_ref{.base_reg = rbp, .displacement = param_var->GetLocalOffset() };
@@ -307,23 +307,23 @@ namespace lucc
 			VarDeclAST* param = param_decls[i].get();
 			top = AlignTo(top, 8);
 			param->SetLocalOffset(top);
-			top += (int32)param->GetSymbol()->qtype->GetSize();
+			top += (int32)param->GetSymbol().qtype->GetSize();
 		}
 
 		int32 bottom = 0;
 		for (uint64 i = 0; i < std::min(args_in_registers, param_decls.size()); ++i)
 		{
 			VarDeclAST* param = param_decls[i].get();
-			int32 alignment = (int32)param->GetSymbol()->qtype->GetAlign();
-			bottom += (int32)param->GetSymbol()->qtype->GetSize();
+			int32 alignment = (int32)param->GetSymbol().qtype->GetAlign();
+			bottom += (int32)param->GetSymbol().qtype->GetSize();
 			bottom = AlignTo(bottom, alignment);
 			param->SetLocalOffset(-bottom);
 		}
 
 		for (VarDeclAST const* local_var : local_variables)
 		{
-			int32 alignment = (int32)local_var->GetSymbol()->qtype->GetAlign();
-			bottom += (int32)local_var->GetSymbol()->qtype->GetSize();
+			int32 alignment = (int32)local_var->GetSymbol().qtype->GetAlign();
+			bottom += (int32)local_var->GetSymbol().qtype->GetSize();
 			bottom = AlignTo(bottom, alignment);
 			local_var->SetLocalOffset(-bottom);
 		}
@@ -671,13 +671,7 @@ namespace lucc
 
 	void DeclRefAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		LU_ASSERT(!IsFunctionType(GetType()));
-
-		if (!IsGlobal())
-		{
-			return;
-		}
-
+		//LU_ASSERT(!IsFunctionType(GetType()));
 		if (IsArrayType(GetType()))
 		{
 			if (return_reg) ctx.Mov(*return_reg, GetName().data(), BitMode_64, true);

@@ -9,7 +9,7 @@ namespace lucc
 											   loc{ .filename = std::string(source.GetRefName().data(), source.GetRefName().size())}
 	{}
 
-	bool Lexer::Lex()
+	void Lexer::Lex()
 	{
 		Token current_token{};
 		do
@@ -17,7 +17,11 @@ namespace lucc
 			current_token.Reset();
 			bool result = LexToken(current_token);
 
-			if (!result) return false;
+			if (!result)
+			{
+				Report(diag::lexing_failed);
+				return;
+			}
 			if (!tokens.empty())
 			{
 				auto const& prev_token = tokens.back();
@@ -36,7 +40,6 @@ namespace lucc
 
 			tokens.push_back(current_token);
 		} while (current_token.IsNot(TokenKind::eof));
-		return true;
 	}
 
 	bool Lexer::LexToken(Token& token)

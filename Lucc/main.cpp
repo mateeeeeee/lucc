@@ -14,5 +14,5 @@ int main(int argc, char** argv)
 	compiler_input.sources = { "test.txt" };
 	compiler_input.exe_file = "test.exe";
 	compiler_input.flags = CompilerFlag_OutputDebugInfo;
-	bool result = Compile(compiler_input);
+	Compile(compiler_input);
 }

@@ -43,7 +43,7 @@ namespace lucc
 		Preprocessor(Preprocessor const&) = delete;
 		Preprocessor& operator=(Preprocessor const&) = delete;
 
-		bool Preprocess();
+		void Preprocess();
 
 	private:
 		Lexer& lexer;

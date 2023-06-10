@@ -46,7 +46,6 @@ namespace lucc
 		struct Context
 		{
 			std::unique_ptr<SymbolTable> identifier_sym_table;
-
 			FuncType const* current_func_type = nullptr;
 			bool return_stmt_encountered = false;
 		};
@@ -55,7 +54,7 @@ namespace lucc
 
 		explicit Parser(std::vector<Token> const& tokens);
 		~Parser();
-		bool Parse();
+		void Parse();
 		AST* GetAST() const { return ast.get(); }
 
 	private:
@@ -95,7 +94,7 @@ namespace lucc
 		}
 		void Report(diag::Code);
 
-		[[nodiscard]] bool ParseTranslationUnit();
+		[[nodiscard]] void ParseTranslationUnit();
 
 		[[nodiscard]] std::vector<std::unique_ptr<DeclAST>> ParseDeclaration();
 		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclSpecInfo const& decl_spec);

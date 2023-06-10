@@ -17,7 +17,7 @@ namespace lucc
 	Preprocessor::Preprocessor(Lexer& lexer) : lexer(lexer)
 	{}
 
-	bool Preprocessor::Preprocess()
+	void Preprocessor::Preprocess()
 	{
 		for (auto const& token : lexer.tokens)
 		{
@@ -46,7 +46,7 @@ namespace lucc
 			break;
 			case TokenKind::PP_else:
 			{
-				if (!ProcessElse(curr)) return false;
+				if (!ProcessElse(curr)) Report(diag::preprocessing_failed);;
 				break;
 			}
 			break;
@@ -56,33 +56,32 @@ namespace lucc
 			}
 			break;
 			case TokenKind::PP_ifdef:
-				if (!ProcessIfDef(curr)) return false;
+				if (!ProcessIfDef(curr)) Report(diag::preprocessing_failed);
 				break;
 			break;
 			case TokenKind::PP_ifndef:
-				if (!ProcessIfNDef(curr)) return false;
+				if (!ProcessIfNDef(curr)) Report(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_elifdef:
-				if (!ProcessElifDef(curr)) return false;
+				if (!ProcessElifDef(curr)) Report(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_elifndef:
-				if (!ProcessElifNDef(curr)) return false;
+				if (!ProcessElifNDef(curr)) Report(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_endif:
-				if (!ProcessEndif(curr)) return false;
+				if (!ProcessEndif(curr)) Report(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_include:
-				if (!ProcessInclude(curr)) return false;
+				if (!ProcessInclude(curr)) Report(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_define:
-				if (!ProcessDefine(curr)) return false;
+				if (!ProcessDefine(curr)) Report(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_undef:
-				if (!ProcessUndef(curr)) return false;
+				if (!ProcessUndef(curr)) Report(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_defined:
 				Report(diag::defined_misplaced, curr->GetLocation());
-				return false;
 			}
 		}
 
@@ -95,7 +94,6 @@ namespace lucc
 			if (token.HasFlag(TokenFlag_SkipedByPP)) continue;
 			lexer.tokens.push_back(std::move(token));
 		}
-		return true;
 	}
 
 	bool Preprocessor::ProcessInclude(TokenPtr& curr)
@@ -108,11 +106,7 @@ namespace lucc
 			
 			SourceBuffer src(filename);
 			Lexer include_lexer(src);
-			if (!include_lexer.Lex())
-			{
-				Report(diag::lexing_failed, curr->GetLocation());
-				return false;
-			}
+			include_lexer.Lex();
 			curr->SetFlag(TokenFlag_PartOfPPDirective);
 			++curr;
 			include_lexer.tokens.pop_back(); //pop eof

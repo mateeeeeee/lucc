@@ -8,6 +8,8 @@ i	dword ?
 f proc 
 mov	[rbp-4], ecx
 mov	[rbp-8], edx
+mov	r10d, dword ptr b
+mov	eax, dword ptr a
 add	eax, r10d
 jmp f_end
 f_end:

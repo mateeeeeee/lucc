@@ -20,5 +20,5 @@ namespace lucc
 		CompilerFlags	 flags;
 	};
 
-	bool Compile(CompilerInput const&);
+	void Compile(CompilerInput const&);
 }

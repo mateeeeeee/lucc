@@ -2,17 +2,17 @@ TODO:
 - Function parameters and local variables/arrays
 - Function prototypes and matching definition with declaration
 - Finish arithmetic and other exprs and deduce their types
-- Add runtime flags
+- Add runtime flags/options
 - Enums
 - Finish preprocessor
 - Break, continue, switch
 - Casts
 - Constant folding
-- Sizeof
+- Sizeof, Alignof
 - Registry spilling
-- Static local ?
+- Static local
 - Atomics
 
-Probably wont bother:
+Probably won't bother:
 - Floats
 - Structs/Unions

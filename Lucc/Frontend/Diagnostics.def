@@ -54,5 +54,6 @@ DIAG(arithmetic_on_void_pointer_type, warning, "Arithmetic on void pointer")
 DIAG(arithmetic_on_function_pointer_type, warning, "Arithmetic on function pointer")
 DIAG(additive_operator_invalid_operands, error, "Invalid operands to additive operator")
 DIAG(arithmetic_on_incompatible_pointers, error, "Arithmetic on incompatible pointers")
+DIAG(redefinition_of_identifier, error, "Redefinition of an identifier")
 
 #undef DIAG

@@ -53,7 +53,7 @@ namespace lucc
 	Parser::Parser(std::vector<Token> const& _tokens)
 		: tokens(_tokens), current_token(tokens.begin()) {}
 	Parser::~Parser() = default;
-	bool Parser::Parse()
+	void Parser::Parse()
 	{
 		ast = std::make_unique<AST>();
 		ctx.identifier_sym_table = std::make_unique<SymbolTable>();
@@ -75,14 +75,14 @@ namespace lucc
 		++current_token;
 	}
 
-	bool Parser::ParseTranslationUnit()
+	void Parser::ParseTranslationUnit()
 	{
 		while (current_token->IsNot(TokenKind::eof))
 		{
 			auto decls = ParseDeclaration();
 			for(auto&& decl : decls) ast->translation_unit->AddDeclarations(std::move(decl));
 		}
-		return true;
+		
 	}
 
 	std::vector<std::unique_ptr<DeclAST>> Parser::ParseDeclaration()
@@ -112,7 +112,12 @@ namespace lucc
 			ParseDeclarator(decl_spec, declarator_info);
 			LU_ASSERT(declarator_info.qtype.HasRawType());
 			DeclarationInfo declaration_info(decl_spec, declarator_info);
-			ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global);
+			bool success = ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global);
+			if (!success)
+			{
+				Report(diag::redefinition_of_identifier);
+				return {};
+			}
 
 			if (declarator_info.qtype->Is(PrimitiveTypeKind::Function))
 			{
@@ -175,7 +180,12 @@ namespace lucc
 				return {};
 			}
 			typedefs.push_back(std::make_unique<TypedefDeclAST>(typedef_info.name));
-			ctx.identifier_sym_table->Insert(typedef_info.name, typedef_info.qtype, Storage::Typedef);
+			bool success = ctx.identifier_sym_table->Insert(typedef_info.name, typedef_info.qtype, Storage::Typedef);
+			if (!success)
+			{
+				Report(diag::redefinition_of_identifier);
+				return {};
+			}
 		}
 		return typedefs;
 	}
@@ -196,7 +206,12 @@ namespace lucc
 		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_name);
 		for (auto&& func_param : func_type.GetParamTypes())
 		{
-			ctx.identifier_sym_table->Insert(func_param.name, func_param.qtype, Storage::None);
+			bool success = ctx.identifier_sym_table->Insert(func_param.name, func_param.qtype, Storage::None);
+			if (!success)
+			{
+				Report(diag::redefinition_of_identifier);
+				return nullptr;
+			}
 			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name, false);
 			param_decl->SetSymbol(ctx.identifier_sym_table->LookUp(func_param.name));
 			func_decl->AddParamDeclaration(std::move(param_decl));
@@ -851,7 +866,8 @@ namespace lucc
 		{
 			SourceLocation loc = current_token->GetLocation();
 			++current_token;
-			return std::make_unique<DeclRefAST>(name, loc, sym->qtype, sym->global);
+			std::unique_ptr<DeclRefAST> decl_ref = std::make_unique<DeclRefAST>(sym, loc);
+			return decl_ref;
 		}
 		else
 		{

@@ -22,7 +22,7 @@ namespace lucc
 		Lexer(Lexer const&) = delete;
 		Lexer& operator=(Lexer const&) = delete;
 
-		bool Lex();
+		void Lex();
 
 		std::vector<Token> const& GetTokens() const { return tokens; }
 

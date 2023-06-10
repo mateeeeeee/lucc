@@ -111,7 +111,7 @@ namespace lucc
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
 		void SetSymbol(Symbol* _sym) { sym = *_sym; }
 		SourceLocation const& GetLocation() const { return loc; }
-		Symbol const* GetSymbol() const { return &sym; }
+		Symbol const& GetSymbol() const { return sym; }
 		DeclKind GetDeclKind() const { return kind; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -170,7 +170,7 @@ namespace lucc
 		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
 		std::unique_ptr<CompoundStmtAST> body;
 		std::vector<VarDeclAST const*> local_variables;
-		mutable uint32 stack_size;
+		mutable uint32 stack_size = 0;
 	};
 	class TypedefDeclAST final : public DeclAST
 	{
@@ -607,19 +607,14 @@ namespace lucc
 	class DeclRefAST : public IdentifierAST
 	{
 	public:
-		DeclRefAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type, bool is_global) : IdentifierAST(name, loc, type),
-			is_global(is_global) {}
+		DeclRefAST(Symbol* symbol, SourceLocation const& loc) : IdentifierAST(symbol->name, loc, symbol->qtype), symbol(*symbol) {}
 
-		bool IsGlobal() const { return is_global; }
-		int32 GetLocalOffset() const { return local_offset; }
-		void SetLocalOffset(int32 _local_offset) { local_offset = _local_offset; }
-		
+		Symbol const& GetSymbol() const { return symbol; }
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
-		bool is_global;
-		int32 local_offset;
+		Symbol symbol;
 	};
 
 	struct AST

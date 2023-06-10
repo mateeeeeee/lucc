@@ -27,13 +27,32 @@ namespace lucc
 	struct Symbol
 	{
 		std::string name = "";
-		QualifiedType qtype;
-		Storage storage;
-		bool global;
+		QualifiedType qtype = builtin_types::Int;
+		Storage storage = Storage::None;
+		bool global = false;	
+
+		Symbol() = default;
+		Symbol(Symbol const&) = default;
+		Symbol(std::string const& name, QualifiedType const& qtype, Storage storage = Storage::None, bool global = false)
+			: name(name), qtype(qtype), storage(storage), global(global) {}
+
+		friend bool operator==(Symbol const& sym1, Symbol const& sym2)
+		{
+			return sym1.id == sym2.id;
+		}
+		friend bool operator!=(Symbol const& sym1, Symbol const& sym2)
+		{
+			return !(sym1 == sym2);
+		}
+
+	private:
+		friend class ScopeTable;
+		mutable uint64 id = 0;
 	};
 
 	class ScopeTable
 	{
+		inline static uint64 id = 0;
 	public:
 		explicit ScopeTable(uint32 scope_id) : scope_id(scope_id) {}
 		uint32 GetScope() const { return scope_id; }
@@ -41,6 +60,7 @@ namespace lucc
 		bool InsertSymbol(Symbol const& symbol)
 		{
 			if (scope_sym_table.contains(symbol.name)) return false;
+			symbol.id = id++;
 			scope_sym_table[symbol.name] = symbol;
 			return true;
 		}
@@ -50,15 +70,12 @@ namespace lucc
 			return InsertSymbol(Symbol(std::forward<Args>(args)...));
 		}
 
-		bool Delete(std::string const& sym_name)
-		{
-			return scope_sym_table.erase(sym_name) > 0;
-		}
 		Symbol* LookUp(std::string const& sym_name)
 		{
 			if (scope_sym_table.contains(sym_name)) return &scope_sym_table[sym_name];
 			else return nullptr;
 		}
+
 
 	private:
 		uint32 const scope_id;
@@ -91,11 +108,7 @@ namespace lucc
 		{
 			return scopes.back().Insert(std::forward<Args>(args)...);
 		}
-		bool Delete(std::string const& sym_name)
-		{
-			return scopes.back().Delete(sym_name);
-		}
-
+		
 		Symbol* LookUp(std::string const& sym_name)
 		{
 			for (auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope)
