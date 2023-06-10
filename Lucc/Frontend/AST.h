@@ -160,6 +160,11 @@ namespace lucc
 		{
 			param_decls.push_back(std::move(param));
 		}
+		void AddLocalDeclaration(VarDeclAST const* var_decl)
+		{
+			local_variables.push_back(var_decl);
+		}
+
 		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body);
 		bool IsDefinition() const { return body != nullptr; }
 		void AssignLocalVariableOffsets(uint64 args_in_registers) const;
@@ -227,12 +232,6 @@ namespace lucc
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
-
-		template<typename F> requires std::is_invocable_v<F, StmtAST*>
-		void ForAllStatements(F&& fn)
-		{
-			for (auto& stmt : statements) fn(stmt.get());
-		}
 
 	private:
 		std::vector<std::unique_ptr<StmtAST>> statements;

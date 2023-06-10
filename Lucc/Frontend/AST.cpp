@@ -19,6 +19,18 @@ namespace lucc
 		return BitMode_Count;
 	}
 
+	class VarDeclVisitorAST : public INodeVisitorAST
+	{
+	public:
+		VarDeclVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
+		virtual void Visit(VarDeclAST const& node, size_t depth) override
+		{
+			func_ref->AddLocalDeclaration(&node);
+		}
+
+	private:
+		FunctionDeclAST* func_ref;
+	};
 	class DeclRefVisitorAST : public INodeVisitorAST
 	{
 	public:
@@ -99,21 +111,8 @@ namespace lucc
 	void FunctionDeclAST::SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
 	{
 		body = std::move(_body);
-		body->ForAllStatements([this](StmtAST* stmt)
-			{
-				if (stmt->GetStmtKind() == StmtKind::Decl)
-				{
-					DeclStmtAST* decl_stmt = AstCast<DeclStmtAST>(stmt);
-					LU_ASSERT(decl_stmt);
-					auto const& decls = decl_stmt->GetDeclarations();
-					for (auto& decl : decls)
-					{
-						LU_ASSERT(decl->GetDeclKind() == DeclKind::Var);
-						VarDeclAST* var_decl = AstCast<VarDeclAST>(decl.get());
-						local_variables.push_back(var_decl);
-					}
-				}
-			});
+		VarDeclVisitorAST var_decl_visitor(this);
+		body->Accept(var_decl_visitor, 0);
 	}
 	void FunctionDeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
@@ -502,9 +501,21 @@ namespace lucc
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
 					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
-					char const* name = decl_ref->GetName().data();
-					ctx.Mov(*return_reg, name, bitmode);
-					if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
+					if (decl_ref->IsGlobal())
+					{
+						char const* name = decl_ref->GetName().data();
+						ctx.Mov(*return_reg, name, bitmode);
+						if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
+					}
+					else
+					{
+						int32 local_offset = decl_ref->GetLocalOffset();
+						register_t rbp = ctx.GetStackFrameRegister();
+						mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+						ctx.Mov(*return_reg, mem_ref, bitmode);
+						if (op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
+					}
+					
 				}
 				else
 				{
@@ -567,10 +578,22 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					IdentifierAST* identifier = AstCast<IdentifierAST>(operand.get());
-					char const* name = identifier->GetName().data();
-					ctx.Mov(*return_reg, name, bitmode);
-					ctx.Not(*return_reg, bitmode);
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					if (decl_ref->IsGlobal())
+					{
+						char const* name = decl_ref->GetName().data();
+						ctx.Mov(*return_reg, name, bitmode);
+						ctx.Not(*return_reg, bitmode);
+					}
+					else
+					{
+						int32 local_offset = decl_ref->GetLocalOffset();
+						register_t rbp = ctx.GetStackFrameRegister();
+						mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
+						ctx.Mov(*return_reg, mem_ref, bitmode);
+						ctx.Not(*return_reg, bitmode);
+					}
+					
 				}
 				else
 				{

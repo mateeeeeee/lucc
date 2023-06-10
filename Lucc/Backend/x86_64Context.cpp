@@ -133,11 +133,11 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Inc(char const* mem, BitMode bitmode)
 	{
-		Emit<Text>("inc\t{}", mem);
+		Emit<Text>("inc\t{} {}", ConvertToCast(bitmode), mem);
 	}
 	void x86_64CodeGenerator::Context::Inc(mem_ref_t const& mem_ref, BitMode bitmode)
 	{
-		Emit<Text>("inc\t{}", ConvertMemRef(mem_ref, bitmode));
+		Emit<Text>("inc\t{} {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
 	}
 	void x86_64CodeGenerator::Context::Inc(register_t reg, BitMode bitmode)
 	{
@@ -146,11 +146,11 @@ namespace lucc
 
 	void x86_64CodeGenerator::Context::Dec(char const* mem, BitMode bitmode)
 	{
-		Emit<Text>("dec\t{}", mem);
+		Emit<Text>("dec\t{} {}", ConvertToCast(bitmode), mem);
 	}
 	void x86_64CodeGenerator::Context::Dec(mem_ref_t const& mem_ref, BitMode bitmode)
 	{
-		Emit<Text>("dec\t{}", ConvertMemRef(mem_ref, bitmode));
+		Emit<Text>("dec\t{} {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
 	}
 	void x86_64CodeGenerator::Context::Dec(register_t reg, BitMode bitmode)
 	{
@@ -211,7 +211,7 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
 	{
-		Emit<Text>("mov\t{}, {}", ConvertMemRef(mem_ref, bitmode), value);
+		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
 	}
 	void x86_64CodeGenerator::Context::Mov(register_t dst, register_t src, BitMode bitmode)
 	{
@@ -224,7 +224,7 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Mov(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
 	{
-		Emit<Text>("mov\t{}, {}", registers[dst.id][bitmode], ConvertMemRef(mem_ref, bitmode));
+		Emit<Text>("mov\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
 	}
 	void x86_64CodeGenerator::Context::Mov(char const* mem, register_t src, BitMode bitmode)
 	{
@@ -232,7 +232,7 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
 	{
-		Emit<Text>("mov\t{}, {}", ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
+		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::Lea(register_t reg, char const* mem)
 	{

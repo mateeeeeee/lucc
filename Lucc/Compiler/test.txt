@@ -1,12 +1,12 @@
 
 int f(int a, int b)
 {
-	return a + b;
+	return b - a;
 }
 
 int main(void)
 {
-	int i = f(3, 4);
-	int* j = &i;
-	return *j;
+	int final = 0;
+	for(int j = 0; j < 10; ++j) final = final + f(j, j + 1);
+	return final;
 }
