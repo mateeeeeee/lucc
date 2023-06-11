@@ -58,7 +58,7 @@ namespace lucc::diag
 										 ToString(dclass), diag_msgs[code], loc.filename, loc.line, loc.column);
 		
 		for (auto* os : output_streams) *os << output;
-		if (dclass == DiagKind::error) std::exit(static_cast<uint16>(code));
+		if (dclass == DiagKind::error) std::exit(COMPILATION_FAILED);
 	}
 
 	void Report(Code code)
@@ -66,7 +66,7 @@ namespace lucc::diag
 		DiagKind dclass = diag_kinds[code];
 		std::string output = std::format("[Diagnostics][{}]: {}\n", ToString(dclass), diag_msgs[code]);
 		for (auto* os : output_streams) *os << output;
-		if (dclass == DiagKind::error) std::exit(static_cast<uint16>(code));
+		if (dclass == DiagKind::error) std::exit(COMPILATION_FAILED);
 	}
 
 }

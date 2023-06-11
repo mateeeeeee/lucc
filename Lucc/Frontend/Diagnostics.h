@@ -7,6 +7,8 @@ namespace lucc
 }
 namespace lucc::diag
 {
+	inline constexpr uint32 COMPILATION_FAILED = uint32(-1);
+
 	enum class Code : uint16
 	{
 #define DIAG(diag_code, diag_class, diag_msg) diag_code,

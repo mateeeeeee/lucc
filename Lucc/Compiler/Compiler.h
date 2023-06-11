@@ -7,6 +7,9 @@ namespace lucc
 	enum CompilerFlag : uint32 
 	{
 		CompilerFlag_None = 0x0,
+		CompilerFlag_NoLinking = 0x1,
+		CompilerFlag_NoAssembling = 0x2,
+		CompilerFlag_OnlyPreprocessor = 0x4,
 		CompilerFlag_OutputDebugInfo = 0x10,
 		CompilerFlag_DumpAST = 0x20,
 	};

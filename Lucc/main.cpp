@@ -6,18 +6,52 @@
 
 using namespace lucc;
 
+void PrintHelp();
+
 int main(int argc, char** argv)
 {
 	CLIParser parser{};
-	CLIArg& opt = parser.AddArg(false, "-opt");
+	CLIArg& help = parser.AddArg(false, "-h", "--help");
+	CLIArg& no_linking = parser.AddArg(false, "-c", "--nolink");
+	CLIArg& no_assembling = parser.AddArg(false, "-S", "--noassembly");
+	CLIArg& only_preprocessor = parser.AddArg(false, "-E", "--only-pp");
+	CLIArg& ast_dump = parser.AddArg(false, "-ast-dump");
+	CLIArg& file_directory = parser.AddArg(true, "-d");
+	CLIArg& output_debug = parser.AddArg(false, "-debug");
+
 	parser.Parse(argc, argv);
 
+	if (help)
+	{
+		PrintHelp();
+		return 0;
+	}
+
+	CompilerFlags flags = CompilerFlag_None;
+	if (no_linking) flags |= CompilerFlag_NoLinking;
+	if (no_assembling) flags |= CompilerFlag_NoAssembling;
+	if (only_preprocessor) flags |= CompilerFlag_OnlyPreprocessor;
+	if (ast_dump) flags |= CompilerFlag_DumpAST;
+	if (output_debug) flags |= CompilerFlag_OutputDebugInfo;
+
 	CompilerInput compiler_input{};
-	compiler_input.sources = { "test.txt" };
+	compiler_input.input_directory = file_directory.AsStringOr("");
+	compiler_input.sources = { "test.c" };
 	compiler_input.exe_file = "test.exe";
-	compiler_input.flags = CompilerFlag_OutputDebugInfo;
+	compiler_input.flags = flags;
 	int exit_code = Compile(compiler_input);
-	printf("Exit code: %d", exit_code);
+	return exit_code;
+}
+
+void PrintHelp()
+{
+	printf("The following options are available:\n");
+	printf("-h, --help: for displaying available compile options\n");
+	printf("-c, --nolink: no linking is preformed, only .obj files are produced\n");
+	printf("-S, --noassembly: no assembling is preformed, only .asm files are produced \n");
+	printf("-E, --only-pp: Only preprocessor is run, the o \n");
+	printf("-d: Directory where the source files are located \n");
+	printf("-ast-dump: Only preprocessor is run \n");
 }
 
 #endif

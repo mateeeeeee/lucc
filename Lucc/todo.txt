@@ -2,7 +2,6 @@ TODO:
 - local arrays
 - Function prototypes and matching definition with declaration
 - Finish arithmetic and other exprs and deduce their types
-- Add runtime flags/options
 - Enums
 - Improve preprocessor
 - Break, continue, switch

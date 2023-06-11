@@ -25,8 +25,6 @@ namespace lucc
 		std::ofstream output(output_file);
 		ast->translation_unit->Codegen(*ctx);
 		output << output_buffer;
-		std::cout << "\n\nAfter Codegen:\n";
-		std::cout << output_buffer;
 		output.close();
 	}
 }
