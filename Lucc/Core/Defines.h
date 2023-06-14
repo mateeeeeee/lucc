@@ -1,9 +1,9 @@
 #pragma once
 #include <cassert>
 
-#define _STRINGIFY_IMPL(a) #a
+#define _STRINGIFY_IMPL(...) #__VA_ARGS__
 #define _CONCAT_IMPL(x, y) x##y
-#define LU_STRINGIFY(a) _STRINGIFY_IMPL(a)
+#define LU_STRINGIFY(...) _STRINGIFY_IMPL(__VA_ARGS__)
 #define LU_CONCAT(x, y) _CONCAT_IMPL( x, y )
 
 #define LU_ASSERT(expr) assert(expr)

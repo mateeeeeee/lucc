@@ -6,6 +6,8 @@
 using namespace lucc;
 using namespace diag;
 
+#define LU_TEST(...) LU_STRINGIFY(__VA_ARGS__)
+
 TEST(Lucc, Test1)
 {
 	//CompilerInput compiler_input{};
@@ -17,6 +19,7 @@ TEST(Lucc, Test1)
 	//int exit_code = Compile(compiler_input);
 	//EXPECT_EQ(exit_code, 16);
 
-	int exit_code = CompileTest(LU_TEST(int x; x = 5; return x;));
-	EXPECT_EQ(exit_code, 5);
+	auto x = LU_TEST(int x, y; x = 5; return x + 7;);
+	int exit_code = CompileTest(x);
+	EXPECT_EQ(exit_code, 12);
 }

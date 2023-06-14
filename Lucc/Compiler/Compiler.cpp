@@ -89,8 +89,9 @@ namespace lucc
 		return system(exe_cmd.c_str());
 	}
 
-	int CompileTest(std::string_view test_source_string)
+	int CompileTest(std::string_view test_code)
 	{
+		std::string code = std::format("int main(void){{ {} }}", test_code);
 		diag::Initialize();
 
 		fs::path tmp_directory = std::filesystem::current_path() / "Temp";
@@ -103,7 +104,7 @@ namespace lucc
 
 		//compilation
 		{
-			SourceBuffer src(test_source_string.data(), test_source_string.size());
+			SourceBuffer src(code.data(), code.size());
 			Lexer lex(src);
 			lex.Lex();
 

@@ -25,7 +25,5 @@ namespace lucc
 	};
 
 	int Compile(CompilerInput const&);
-
-	#define LU_TEST(code) "int main(void) {"##LU_STRINGIFY(code)##"}"
-	int CompileTest(std::string_view test_source_string);
+	int CompileTest(std::string_view);
 }
