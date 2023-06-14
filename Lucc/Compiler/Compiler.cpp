@@ -16,10 +16,13 @@ namespace lucc
 {
 	namespace
 	{
-		//C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC\14.34.31933
-		//C:\\Program Files\\Microsoft Visual Studio\\2022\\Preview\\VC\\Tools\\MSVC\\14.34.31823
+#if 0
+		constexpr char const* _executables_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\VC\\Tools\\MSVC\\14.34.31933\\bin\\Hostx64\\x64";
+		constexpr char const* _lib_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\VC\\Tools\\MSVC\\14.34.31933\\lib\\x64";
+#else
 		constexpr char const* _executables_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Preview\\VC\\Tools\\MSVC\\14.34.31823\\bin\\Hostx64\\x64";
 		constexpr char const* _lib_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Preview\\VC\\Tools\\MSVC\\14.34.31823\\lib\\x64";
+#endif
 
 		void CompileTranslationUnit(std::string_view source_file, std::string_view assembly_file, bool only_pp, bool ast_dump, bool output_debug)
 		{
@@ -72,6 +75,7 @@ namespace lucc
 			masm_cmd += std::format(" /Fo {} /c {} ", object_file.string(), assembly_file.string());
 			object_files[i] = object_file;
 		}
+
 		if (!no_assembly) return 0;
 		system(masm_cmd.c_str());
 
@@ -83,6 +87,46 @@ namespace lucc
 
 		std::string exe_cmd = std::format("{}", input.exe_file);
 		return system(exe_cmd.c_str());
+	}
+
+	int CompileTest(std::string_view test_source_string)
+	{
+		diag::Initialize();
+
+		fs::path tmp_directory = std::filesystem::current_path() / "Temp";
+		fs::create_directory(tmp_directory);
+
+		fs::path file_name = "tmp";
+		fs::path assembly_file = tmp_directory / file_name; assembly_file += ".asm";
+		fs::path object_file   = tmp_directory / file_name; object_file += ".obj";
+		fs::path output_file   = tmp_directory / file_name; output_file += ".exe";
+
+		//compilation
+		{
+			SourceBuffer src(test_source_string.data(), test_source_string.size());
+			Lexer lex(src);
+			lex.Lex();
+
+			Preprocessor pp(lex);
+			pp.Preprocess();
+
+			Parser parser(lex.GetTokens());
+			parser.Parse();
+			AST* ast = parser.GetAST();
+
+			x86_64CodeGenerator x86_64(assembly_file.string());
+			x86_64.Generate(ast);
+		}
+		std::string masm_cmd = std::format("\"{}/ml64.exe\"  /Fo {} /c {}", _executables_path, object_file.string(), assembly_file.string());
+		system(masm_cmd.c_str());
+		std::string link_cmd = std::format("\"{}/link.exe\" /out:{} {} /subsystem:console /entry:main", _executables_path, output_file.string(), object_file.string());
+		system(link_cmd.c_str());
+
+		std::string exe_cmd = std::format("{}", output_file.string());
+		int32 exitcode = system(exe_cmd.c_str());
+		fs::remove_all(tmp_directory);
+
+		return exitcode;
 	}
 
 }

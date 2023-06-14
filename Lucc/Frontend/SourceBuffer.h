@@ -8,7 +8,7 @@ namespace lucc
 	public:
 
 		explicit SourceBuffer(std::string_view source_file);
-		SourceBuffer(char const* buffer_start, char const* buffer_end, std::string_view refname = "");
+		SourceBuffer(char const* buffer_start, size_t buffer_size, std::string_view refname = "");
 
 		SourceBuffer(SourceBuffer const&) = delete;
 		SourceBuffer(SourceBuffer&&) = default;

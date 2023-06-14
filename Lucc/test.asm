@@ -1,0 +1,6 @@
+
+.data
+
+.code
+
+end

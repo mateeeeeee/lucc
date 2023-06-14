@@ -4,7 +4,7 @@
 
 namespace lucc
 {
-	enum CompilerFlag : uint32 
+	enum CompilerFlag : uint32
 	{
 		CompilerFlag_None = 0x0,
 		CompilerFlag_NoLinking = 0x1,
@@ -25,4 +25,7 @@ namespace lucc
 	};
 
 	int Compile(CompilerInput const&);
+
+	#define LU_TEST(code) "int main(void) {"##LU_STRINGIFY(code)##"}"
+	int CompileTest(std::string_view test_source_string);
 }

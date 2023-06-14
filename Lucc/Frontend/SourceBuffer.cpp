@@ -4,7 +4,7 @@
 
 namespace lucc
 {
-	
+
 
 	SourceBuffer::SourceBuffer(std::string_view source_file)
 		: ref_name(source_file)
@@ -18,8 +18,8 @@ namespace lucc
 		data_buffer.push_back('\0');
 	}
 
-	SourceBuffer::SourceBuffer(char const* buffer_start, char const* buffer_end, std::string_view refname)
-		: ref_name(refname), data_buffer(buffer_start, buffer_end - buffer_start)
+	SourceBuffer::SourceBuffer(char const* buffer_start, size_t buffer_size, std::string_view refname)
+		: ref_name(refname), data_buffer(buffer_start, buffer_size)
 	{}
 
 }
