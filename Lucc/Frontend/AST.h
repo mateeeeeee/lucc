@@ -434,6 +434,7 @@ namespace lucc
 		void SetOperand(std::unique_ptr<ExprAST>&& _operand)
 		{
 			operand = std::move(_operand);
+			SetExpressionType();
 		}
 		UnaryExprKind GetUnaryKind() const { return op; }
 		ExprAST* GetOperand() const { return operand.get(); }

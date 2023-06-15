@@ -417,7 +417,7 @@ namespace lucc
 	//					| <expression>, <assignment - expression>
 	std::unique_ptr<ExprAST> Parser::ParseExpression()
 	{
-		return ParseBinaryExpression<&Parser::ParseAssignExpression, TokenKind::comma, BinaryExprKind::Comma>();
+		return ParseBinaryExpression<&Parser::ParseAssignmentExpression, TokenKind::comma, BinaryExprKind::Comma>();
 	}
 
 	//<parenthesized - expression> :: = (<expression>)
@@ -431,7 +431,7 @@ namespace lucc
 
 	//<assignment - expression> ::= <conditional - expression>
 	//								| <unary - expression> <assignment - operator> <assignment - expression>
-	std::unique_ptr<ExprAST> Parser::ParseAssignExpression()
+	std::unique_ptr<ExprAST> Parser::ParseAssignmentExpression()
 	{
 		TokenPtr current_token_copy = current_token;
 		std::unique_ptr<ExprAST> lhs = ParseConditionalExpression();
@@ -458,13 +458,14 @@ namespace lucc
 			Report(diag::lhs_not_assignable);
 			return nullptr;
 		}
-
-		std::unique_ptr<ExprAST> rhs = ParseAssignExpression();
+		++current_token;
+		std::unique_ptr<ExprAST> rhs = ParseAssignmentExpression();
 		if (arith_op_kind != BinaryExprKind::Assign)
 		{
+			TokenPtr current_token_copy2 = current_token;
 			current_token = current_token_copy;
 			std::unique_ptr<ExprAST> lhs_copy = ParseConditionalExpression();
-			++current_token;
+			current_token = current_token_copy2;
 
 			std::unique_ptr<BinaryExprAST> tmp = std::make_unique<BinaryExprAST>(arith_op_kind, loc);
 			tmp->SetLHS(std::move(lhs_copy));
@@ -472,12 +473,11 @@ namespace lucc
 
 			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(BinaryExprKind::Assign, loc);
 			parent->SetLHS(std::move(lhs));
-			parent->SetLHS(std::move(tmp));
+			parent->SetRHS(std::move(tmp));
 			return parent;
 		}
 		else
 		{
-			++current_token;
 			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(arith_op_kind, loc);
 			parent->SetLHS(std::move(lhs));
 			parent->SetRHS(std::move(rhs));
@@ -793,7 +793,7 @@ namespace lucc
 			{
 				while (true)
 				{
-					std::unique_ptr<ExprAST> arg_expr = ParseAssignExpression();
+					std::unique_ptr<ExprAST> arg_expr = ParseAssignmentExpression();
 					if (arg_index >= func_params.size() || !arg_expr->GetType()->IsCompatible(func_params[arg_index].qtype))
 					{
 						Report(diag::invalid_function_call);

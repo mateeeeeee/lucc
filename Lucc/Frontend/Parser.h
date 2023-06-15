@@ -113,7 +113,7 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseInitializer(bool static_init);
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseParenthesizedExpression();
-		[[nodiscard]] std::unique_ptr<ExprAST> ParseAssignExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseAssignmentExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseConditionalExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseLogicalOrExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseLogicalAndExpression();

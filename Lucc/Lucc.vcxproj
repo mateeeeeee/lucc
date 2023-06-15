@@ -78,13 +78,11 @@
     <ClInclude Include="precomp.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Compiler\test.asm" />
-    <None Include="Compiler\test2.asm" />
     <None Include="Frontend\Diagnostics.def" />
     <None Include="Frontend\Tokens.def" />
+    <None Include="Test\test.asm" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Compiler\test2.txt" />
     <Text Include="todo.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
