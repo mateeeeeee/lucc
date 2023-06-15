@@ -208,6 +208,11 @@ namespace lucc
 				++cur_ptr;
 				t.SetKind(TokenKind::greater_equal);
 			}
+			else if (*cur_ptr == '>')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::greater_greater);
+			}
 			else t.SetKind(TokenKind::greater);
 			break;
 		case '<':
@@ -215,6 +220,11 @@ namespace lucc
 			{
 				++cur_ptr;
 				t.SetKind(TokenKind::less_equal);
+			}
+			else if (*cur_ptr == '<')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::less_less);
 			}
 			else t.SetKind(TokenKind::less);
 			break;
@@ -224,6 +234,11 @@ namespace lucc
 				++cur_ptr;
 				t.SetKind(TokenKind::plus_plus);
 			}
+			else if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::plus_equal);
+			}
 			else t.SetKind(TokenKind::plus);
 			break;
 		case '-':
@@ -232,10 +247,20 @@ namespace lucc
 				++cur_ptr;
 				t.SetKind(TokenKind::minus_minus);
 			}
+			else if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::minus_equal);
+			}
 			else t.SetKind(TokenKind::minus);
 			break;
 		case '*':
-			t.SetKind(TokenKind::star);
+			if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::star_equal);
+			}
+			else t.SetKind(TokenKind::star);
 			break;
 		case '&':
 			if (*cur_ptr == '&')
@@ -243,10 +268,20 @@ namespace lucc
 				++cur_ptr;
 				t.SetKind(TokenKind::amp_amp);
 			}
+			else if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::amp_equal);
+			}
 			else t.SetKind(TokenKind::amp);
 			break;
 		case '/':
-			t.SetKind(TokenKind::slash);
+			if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::slash_equal);
+			}
+			else t.SetKind(TokenKind::slash);
 			break;
 		case '?':
 			t.SetKind(TokenKind::question);
