@@ -12,6 +12,7 @@ namespace lucc
 	{
 		static constexpr uint64 GP_REG_COUNT = 9;
 		static constexpr uint64 FUNC_ARGS_COUNT_IN_REGISTERS = 4;
+		static constexpr uint64 SHIFT_REGISTER = 4;
 		static constexpr uint64 RETURN_REGISTER_INDEX = GP_REG_COUNT - 1;
 		static constexpr uint64 STACK_FRAME_REGISTER_INDEX = GP_REG_COUNT;
 		static constexpr size_t FUNC_ARG_REG_MAPPING[FUNC_ARGS_COUNT_IN_REGISTERS] = { 4, 5, 2, 3 };
@@ -65,7 +66,6 @@ namespace lucc
 		virtual void Imul(register_t dst, register_t src, int32 value, BitMode bitmode) override;
 		virtual void Imul(register_t dst, char const* mem, int32 value, BitMode bitmode) override;
 
-
 		virtual void Neg(register_t reg, BitMode bitmode) override;
 		virtual void Neg(char const* mem, BitMode bitmode) override;
 
@@ -75,6 +75,56 @@ namespace lucc
 		virtual void Dec(char const* mem, BitMode bitmode) override;
 		virtual void Dec(mem_ref_t const& mem_ref, BitMode bitmode) override;
 		virtual void Dec(register_t reg, BitMode bitmode) override;
+
+		//shifts
+		virtual void Shl(register_t dst, uint8 value, BitMode bitmode) override;
+		virtual void Shl(register_t dst, register_t shift_reg, BitMode bitmode) override;
+		virtual void Shl(char const* mem, uint8 value, BitMode bitmode) override;
+		virtual void Shl(char const* mem, register_t shift_reg, BitMode bitmode) override;
+		virtual void Shl(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode) override;
+		virtual void Shl(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode) override;
+
+		virtual void Shr(register_t dst, uint8 value, BitMode bitmode) override;
+		virtual void Shr(register_t dst, register_t shift_reg, BitMode bitmode) override;
+		virtual void Shr(char const* mem, uint8 value, BitMode bitmode) override;
+		virtual void Shr(char const* mem, register_t shift_reg, BitMode bitmode) override;
+		virtual void Shr(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode) override;
+		virtual void Shr(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode) override;
+
+		virtual void Sar(register_t dst, uint8 value, BitMode bitmode) override;
+		virtual void Sar(register_t dst, register_t shift_reg, BitMode bitmode) override;
+		virtual void Sar(char const* mem, uint8 value, BitMode bitmode) override;
+		virtual void Sar(char const* mem, register_t shift_reg, BitMode bitmode) override;
+		virtual void Sar(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode) override;
+		virtual void Sar(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode) override;
+
+		//logical
+		virtual void And(register_t dst, register_t src, BitMode bitmode) override;
+		virtual void And(register_t dst, char const* mem, BitMode bitmode) override;
+		virtual void And(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode) override;
+		virtual void And(char const* mem, register_t src, BitMode bitmode) override;
+		virtual void And(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) override;
+		virtual void And(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) override;
+		virtual void And(char const* mem, int32 value, BitMode bitmode) override;
+		virtual void And(register_t dst, int32 value, BitMode bitmode) override;
+
+		virtual void Or(register_t dst, register_t src, BitMode bitmode) override;
+		virtual void Or(register_t dst, char const* mem, BitMode bitmode) override;
+		virtual void Or(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode) override;
+		virtual void Or(char const* mem, register_t src, BitMode bitmode) override;
+		virtual void Or(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) override;
+		virtual void Or(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) override;
+		virtual void Or(char const* mem, int32 value, BitMode bitmode) override;
+		virtual void Or(register_t dst, int32 value, BitMode bitmode) override;
+
+		virtual void Xor(register_t dst, register_t src, BitMode bitmode) override;
+		virtual void Xor(register_t dst, char const* mem, BitMode bitmode) override;
+		virtual void Xor(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode) override;
+		virtual void Xor(char const* mem, register_t src, BitMode bitmode) override;
+		virtual void Xor(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) override;
+		virtual void Xor(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) override;
+		virtual void Xor(char const* mem, int32 value, BitMode bitmode) override;
+		virtual void Xor(register_t dst, int32 value, BitMode bitmode) override;
 
 		virtual void Not(register_t reg, BitMode bitmode) override;
 		virtual void Not(char const* mem, BitMode bitmode) override;
@@ -106,12 +156,15 @@ namespace lucc
 		virtual void Mov(register_t reg, int64 value, BitMode bitmode) override;
 		virtual void Mov(char const* mem, int32 value, BitMode bitmode) override;
 		virtual void Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) override;
-
 		virtual void Mov(register_t dst, register_t src, BitMode bitmode) override;
 		virtual void Mov(register_t dst, char const* mem, BitMode bitmode, bool address = false) override;
 		virtual void Mov(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode) override;
 		virtual void Mov(char const* mem, register_t src, BitMode bitmode) override;
 		virtual void Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) override;
+
+		virtual void Movzx(register_t dst, register_t src, BitMode bitmode, bool src_8bit = false) override;
+		virtual void Movzx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit = false) override;
+		virtual void Movzx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit = false) override;
 
 		virtual void Lea(register_t reg, char const* mem) override;
 		virtual void Lea(register_t reg, mem_ref_t const& mem_ref) override;

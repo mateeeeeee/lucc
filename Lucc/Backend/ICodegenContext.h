@@ -15,7 +15,6 @@ namespace lucc
 	{
 		return r1.id != r2.id;
 	}
-
 	struct mem_ref_t
 	{
 		enum Scale
@@ -78,6 +77,7 @@ namespace lucc
 		virtual void Sub(char const* mem, register_t src, BitMode bitmode) = 0;
 		virtual void Sub(char const* mem, int64 value, BitMode bitmode) = 0;
 
+		//Mul, Div, Idiv is missing
 		virtual void Imul(register_t dst, register_t src, BitMode bitmode) = 0;
 		virtual void Imul(register_t dst, char const* mem, BitMode bitmode) = 0;
 		virtual void Imul(register_t dst, register_t src, int32 value, BitMode bitmode) = 0;
@@ -93,9 +93,59 @@ namespace lucc
 		virtual void Dec(mem_ref_t const& mem_ref, BitMode bitmode) = 0;
 		virtual void Dec(register_t reg, BitMode bitmode) = 0;
 
+		//shifts
+		virtual void Shl(register_t dst, uint8 value, BitMode bitmode) = 0;
+		virtual void Shl(register_t dst, register_t shift_reg, BitMode bitmode) = 0;
+		virtual void Shl(char const* mem, uint8 value, BitMode bitmode) = 0;
+		virtual void Shl(char const* mem, register_t shift_reg, BitMode bitmode) = 0;
+		virtual void Shl(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode) = 0;
+		virtual void Shl(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode) = 0;
+
+		virtual void Shr(register_t dst, uint8 value, BitMode bitmode) = 0;
+		virtual void Shr(register_t dst, register_t shift_reg, BitMode bitmode) = 0;
+		virtual void Shr(char const* mem, uint8 value, BitMode bitmode) = 0;
+		virtual void Shr(char const* mem, register_t shift_reg, BitMode bitmode) = 0;
+		virtual void Shr(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode) = 0;
+		virtual void Shr(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode) = 0;
+
+		virtual void Sar(register_t dst, uint8 value, BitMode bitmode) = 0;
+		virtual void Sar(register_t dst, register_t shift_reg, BitMode bitmode) = 0;
+		virtual void Sar(char const* mem, uint8 value, BitMode bitmode) = 0;
+		virtual void Sar(char const* mem, register_t shift_reg, BitMode bitmode) = 0;
+		virtual void Sar(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode) = 0;
+		virtual void Sar(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode) = 0;
+
+		//logical
 		virtual void Not(register_t reg, BitMode bitmode) = 0;
 		virtual void Not(char const* mem, BitMode bitmode) = 0;
 		virtual void Not(mem_ref_t const& mem_ref, BitMode bitmode) = 0;
+
+		virtual void And(register_t dst, register_t src, BitMode bitmode) = 0;
+		virtual void And(register_t dst, char const* mem, BitMode bitmode) = 0;
+		virtual void And(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode) = 0;
+		virtual void And(char const* mem, register_t src, BitMode bitmode) = 0;
+		virtual void And(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) = 0;
+		virtual void And(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) = 0;
+		virtual void And(char const* mem, int32 value, BitMode bitmode) = 0;
+		virtual void And(register_t dst, int32 value, BitMode bitmode) = 0;
+
+		virtual void Or(register_t dst, register_t src, BitMode bitmode) = 0;
+		virtual void Or(register_t dst, char const* mem, BitMode bitmode) = 0;
+		virtual void Or(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode) = 0;
+		virtual void Or(char const* mem, register_t src, BitMode bitmode) = 0;
+		virtual void Or(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) = 0;
+		virtual void Or(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) = 0;
+		virtual void Or(char const* mem, int32 value, BitMode bitmode) = 0;
+		virtual void Or(register_t dst, int32 value, BitMode bitmode) = 0;
+
+		virtual void Xor(register_t dst, register_t src, BitMode bitmode) = 0;
+		virtual void Xor(register_t dst, char const* mem, BitMode bitmode) = 0;
+		virtual void Xor(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode) = 0;
+		virtual void Xor(char const* mem, register_t src, BitMode bitmode) = 0;
+		virtual void Xor(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) = 0;
+		virtual void Xor(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) = 0;
+		virtual void Xor(char const* mem, int32 value, BitMode bitmode) = 0;
+		virtual void Xor(register_t dst, int32 value, BitMode bitmode) = 0;
 
 		//stack
 		virtual void Push(register_t reg, BitMode bitmode) = 0;
@@ -122,12 +172,15 @@ namespace lucc
 		virtual void Mov(register_t reg, int64 value, BitMode bitmode) = 0;
 		virtual void Mov(char const* mem, int32 value, BitMode bitmode) = 0;
 		virtual void Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) = 0;
-
 		virtual void Mov(register_t dst, register_t src, BitMode bitmode) = 0;
 		virtual void Mov(register_t dst, char const* mem, BitMode bitmode, bool address = false) = 0;
 		virtual void Mov(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode) = 0;
 		virtual void Mov(char const* mem, register_t src, BitMode bitmode) = 0;
 		virtual void Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) = 0;
+
+		virtual void Movzx(register_t dst, register_t src, BitMode bitmode, bool src_8bit = false) = 0;
+		virtual void Movzx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit = false) = 0;
+		virtual void Movzx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit = false) = 0;
 
 		virtual void Lea(register_t reg, char const* mem) = 0;
 		virtual void Lea(register_t reg, mem_ref_t const& mem_ref) = 0;

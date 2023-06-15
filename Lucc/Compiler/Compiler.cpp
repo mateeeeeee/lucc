@@ -89,7 +89,7 @@ namespace lucc
 		return system(exe_cmd.c_str());
 	}
 
-	int CompileTest(std::string_view test_code)
+	int CompileTest(std::string_view test_code, bool debug)
 	{
 		std::string code = std::format("int main(void){{ {} }}", test_code);
 		diag::Initialize();
@@ -107,17 +107,21 @@ namespace lucc
 			SourceBuffer src(code.data(), code.size());
 			Lexer lex(src);
 			lex.Lex();
+			if (debug) debug::PrintTokens("After lexer:", lex.GetTokens());
 
 			Preprocessor pp(lex);
 			pp.Preprocess();
+			if (debug) debug::PrintTokens("\n\nAfter preprocessor:", lex.GetTokens());
 
 			Parser parser(lex.GetTokens());
 			parser.Parse();
 			AST* ast = parser.GetAST();
+			if (debug) debug::DebugNodeVisitorAST visitor(ast);
 
 			x86_64CodeGenerator x86_64(assembly_file.string());
 			x86_64.Generate(ast);
 		}
+
 		std::string masm_cmd = std::format("\"{}/ml64.exe\"  /Fo {} /c {}", _executables_path, object_file.string(), assembly_file.string());
 		system(masm_cmd.c_str());
 		std::string link_cmd = std::format("\"{}/link.exe\" /out:{} {} /subsystem:console /entry:main", _executables_path, output_file.string(), object_file.string());
@@ -125,8 +129,7 @@ namespace lucc
 
 		std::string exe_cmd = std::format("{}", output_file.string());
 		int32 exitcode = system(exe_cmd.c_str());
-		fs::remove_all(tmp_directory);
-
+		if(!debug) fs::remove_all(tmp_directory);
 		return exitcode;
 	}
 

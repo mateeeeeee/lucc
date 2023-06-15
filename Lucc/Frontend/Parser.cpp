@@ -392,6 +392,7 @@ namespace lucc
 		{
 			//do initializer list here
 			Expect(TokenKind::right_brace);
+			return nullptr;
 		}
 		else return ParseExpression();
 	}

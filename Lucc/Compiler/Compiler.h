@@ -25,5 +25,5 @@ namespace lucc
 	};
 
 	int Compile(CompilerInput const&);
-	int CompileTest(std::string_view);
+	int CompileTest(std::string_view, bool debug = false);
 }

@@ -383,8 +383,7 @@ namespace lucc
 		PostIncrement, PostDecrement,
 		Plus, Minus, BitNot,
 		LogicalNot,
-		Dereference, AddressOf,
-		Cast
+		Dereference, AddressOf, Cast
 	};
 	enum class BinaryExprKind : uint8
 	{

@@ -123,6 +123,91 @@ namespace lucc
 		Emit<Text>("imul {}, {} {}, {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem, value);
 	}
 
+
+	void x86_64CodeGenerator::Context::Shl(register_t dst, uint8 value, BitMode bitmode)
+	{
+		Emit<Text>("shl {}, {}", registers[dst.id][bitmode], value);
+	}
+	void x86_64CodeGenerator::Context::Shl(register_t dst, register_t shift_reg, BitMode bitmode)
+	{
+		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
+		Emit<Text>("shl {}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
+	}
+	void x86_64CodeGenerator::Context::Shl(char const* mem, uint8 value, BitMode bitmode)
+	{
+		Emit<Text>("shl {} {}, {}", ConvertToCast(bitmode), mem, value);
+	}
+	void x86_64CodeGenerator::Context::Shl(char const* mem, register_t shift_reg, BitMode bitmode)
+	{
+		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
+		Emit<Text>("shl {} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
+	}
+	void x86_64CodeGenerator::Context::Shl(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode)
+	{
+		Emit<Text>("shl {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
+	}
+	void x86_64CodeGenerator::Context::Shl(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode)
+	{
+		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
+		Emit<Text>("shl {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
+	}
+
+	void x86_64CodeGenerator::Context::Shr(register_t dst, uint8 value, BitMode bitmode)
+	{
+		Emit<Text>("shr {}, {}", registers[dst.id][bitmode], value);
+	}
+	void x86_64CodeGenerator::Context::Shr(register_t dst, register_t shift_reg, BitMode bitmode)
+	{
+		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
+		Emit<Text>("shr {}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
+	}
+	void x86_64CodeGenerator::Context::Shr(char const* mem, uint8 value, BitMode bitmode)
+	{
+		Emit<Text>("shr {} {}, {}", ConvertToCast(bitmode), mem, value);
+	}
+	void x86_64CodeGenerator::Context::Shr(char const* mem, register_t shift_reg, BitMode bitmode)
+	{
+		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
+		Emit<Text>("shr {} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
+	}
+	void x86_64CodeGenerator::Context::Shr(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode)
+	{
+		Emit<Text>("shr {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
+	}
+	void x86_64CodeGenerator::Context::Shr(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode)
+	{
+		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
+		Emit<Text>("shr {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
+	}
+
+	void x86_64CodeGenerator::Context::Sar(register_t dst, uint8 value, BitMode bitmode)
+	{
+		Emit<Text>("sar {}, {}", registers[dst.id][bitmode], value);
+	}
+	void x86_64CodeGenerator::Context::Sar(register_t dst, register_t shift_reg, BitMode bitmode)
+	{
+		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
+		Emit<Text>("sar {}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
+	}
+	void x86_64CodeGenerator::Context::Sar(char const* mem, uint8 value, BitMode bitmode)
+	{
+		Emit<Text>("sar {} {}, {}", ConvertToCast(bitmode), mem, value);
+	}
+	void x86_64CodeGenerator::Context::Sar(char const* mem, register_t shift_reg, BitMode bitmode)
+	{
+		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
+		Emit<Text>("sar {} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
+	}
+	void x86_64CodeGenerator::Context::Sar(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode)
+	{
+		Emit<Text>("sar {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
+	}
+	void x86_64CodeGenerator::Context::Sar(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode)
+	{
+		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
+		Emit<Text>("sar {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
+	}
+
 	void x86_64CodeGenerator::Context::Neg(register_t reg, BitMode bitmode)
 	{
 		Emit<Text>("neg\t{}", registers[reg.id][bitmode]);
@@ -155,6 +240,107 @@ namespace lucc
 	void x86_64CodeGenerator::Context::Dec(register_t reg, BitMode bitmode)
 	{
 		Emit<Text>("dec\t{}", registers[reg.id][bitmode]);
+	}
+
+	//logical
+
+	void x86_64CodeGenerator::Context::And(register_t dst, register_t src, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::And(register_t dst, char const* mem, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::And(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::And(char const* mem, register_t src, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::And(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::And(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::And(char const* mem, int32 value, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::And(register_t dst, int32 value, BitMode bitmode)
+	{
+
+	}
+
+	void x86_64CodeGenerator::Context::Or(register_t dst, register_t src, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Or(register_t dst, char const* mem, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Or(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Or(char const* mem, register_t src, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Or(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Or(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Or(char const* mem, int32 value, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Or(register_t dst, int32 value, BitMode bitmode)
+	{
+
+	}
+
+	void x86_64CodeGenerator::Context::Xor(register_t dst, register_t src, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Xor(register_t dst, char const* mem, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Xor(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Xor(char const* mem, register_t src, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Xor(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Xor(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Xor(char const* mem, int32 value, BitMode bitmode)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Xor(register_t dst, int32 value, BitMode bitmode)
+	{
+
 	}
 
 	void x86_64CodeGenerator::Context::Not(register_t reg, BitMode bitmode)
@@ -233,6 +419,18 @@ namespace lucc
 	void x86_64CodeGenerator::Context::Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
 	{
 		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
+	}
+	void x86_64CodeGenerator::Context::Movzx(register_t dst, register_t src, BitMode bitmode, bool src_8bit /*= false*/)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Movzx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit /*= false*/)
+	{
+
+	}
+	void x86_64CodeGenerator::Context::Movzx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit /*= false*/)
+	{
+
 	}
 	void x86_64CodeGenerator::Context::Lea(register_t reg, char const* mem)
 	{
@@ -446,7 +644,6 @@ namespace lucc
 	{
 		return ConvertToType(mode) + " ptr";
 	}
-
 }
 
 /*

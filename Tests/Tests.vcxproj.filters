@@ -3,12 +3,6 @@
   <ItemGroup>
     <ClCompile Include="test.cpp" />
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="Test1\test2.c">
-      <Filter>TestFiles</Filter>
-    </ClCompile>
-    <ClCompile Include="Test1\test3.c">
-      <Filter>TestFiles</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
