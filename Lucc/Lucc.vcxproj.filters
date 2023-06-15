@@ -68,6 +68,9 @@
     <ClCompile Include="Frontend\Type.cpp">
       <Filter>Frontend\Parser</Filter>
     </ClCompile>
+    <ClCompile Include="Test\test.c">
+      <Filter>Compiler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />
@@ -150,9 +153,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Compiler\test.txt">
-      <Filter>Compiler</Filter>
-    </Text>
     <Text Include="Compiler\test2.txt">
       <Filter>Compiler</Filter>
     </Text>

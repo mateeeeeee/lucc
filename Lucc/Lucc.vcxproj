@@ -49,6 +49,9 @@
     <ClCompile Include="Frontend\Type.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="precomp.cpp" />
+    <ClCompile Include="Test\test.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Backend\ICodegenContext.h" />
@@ -81,7 +84,6 @@
     <None Include="Frontend\Tokens.def" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Compiler\test.txt" />
     <Text Include="Compiler\test2.txt" />
     <Text Include="todo.txt" />
   </ItemGroup>

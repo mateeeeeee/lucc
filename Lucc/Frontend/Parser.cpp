@@ -433,37 +433,56 @@ namespace lucc
 	//								| <unary - expression> <assignment - operator> <assignment - expression>
 	std::unique_ptr<ExprAST> Parser::ParseAssignExpression()
 	{
+		TokenPtr current_token_copy = current_token;
 		std::unique_ptr<ExprAST> lhs = ParseConditionalExpression();
 		BinaryExprKind arith_op_kind = BinaryExprKind::Assign;
 		SourceLocation loc = current_token->GetLocation();
 		switch (current_token->GetKind())
 		{
-		case TokenKind::equal: arith_op_kind = BinaryExprKind::Assign; break;
-		case TokenKind::star_equal: arith_op_kind = BinaryExprKind::Multiply; break;
-		case TokenKind::slash_equal: arith_op_kind = BinaryExprKind::Divide; break;
-		case TokenKind::modulo_equal: arith_op_kind = BinaryExprKind::Modulo; break;
-		case TokenKind::plus_equal: arith_op_kind = BinaryExprKind::Add; break;
-		case TokenKind::minus_equal: arith_op_kind = BinaryExprKind::Subtract; break;
-		case TokenKind::less_less_equal: arith_op_kind = BinaryExprKind::ShiftLeft; break;
-		case TokenKind::greater_great_equal: arith_op_kind = BinaryExprKind::ShiftRight; break;
-		case TokenKind::amp_equal: arith_op_kind = BinaryExprKind::BitAnd; break;
-		case TokenKind::pipe_equal: arith_op_kind = BinaryExprKind::BitOr; break;
-		case TokenKind::caret_equal: arith_op_kind = BinaryExprKind::BitXor; break;
+		case TokenKind::equal:					arith_op_kind = BinaryExprKind::Assign; break;
+		case TokenKind::star_equal:				arith_op_kind = BinaryExprKind::Multiply; break;
+		case TokenKind::slash_equal:			arith_op_kind = BinaryExprKind::Divide; break;
+		case TokenKind::modulo_equal:			arith_op_kind = BinaryExprKind::Modulo; break;
+		case TokenKind::plus_equal:				arith_op_kind = BinaryExprKind::Add; break;
+		case TokenKind::minus_equal:			arith_op_kind = BinaryExprKind::Subtract; break;
+		case TokenKind::less_less_equal:		arith_op_kind = BinaryExprKind::ShiftLeft; break;
+		case TokenKind::greater_greater_equal:	arith_op_kind = BinaryExprKind::ShiftRight; break;
+		case TokenKind::amp_equal:				arith_op_kind = BinaryExprKind::BitAnd; break;
+		case TokenKind::pipe_equal:				arith_op_kind = BinaryExprKind::BitOr; break;
+		case TokenKind::caret_equal:			arith_op_kind = BinaryExprKind::BitXor; break;
 		default:
 			return lhs;
 		}
-		++current_token;
-		std::unique_ptr<ExprAST> rhs = ParseAssignExpression();
-
 		if (!lhs->IsAssignable())
 		{
 			Report(diag::lhs_not_assignable);
 			return nullptr;
 		}
-		std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(BinaryExprKind::Assign, loc);
-		parent->SetLHS(std::move(lhs));
-		parent->SetRHS(std::move(rhs));
-		return parent;
+
+		std::unique_ptr<ExprAST> rhs = ParseAssignExpression();
+		if (arith_op_kind != BinaryExprKind::Assign)
+		{
+			current_token = current_token_copy;
+			std::unique_ptr<ExprAST> lhs_copy = ParseConditionalExpression();
+			++current_token;
+
+			std::unique_ptr<BinaryExprAST> tmp = std::make_unique<BinaryExprAST>(arith_op_kind, loc);
+			tmp->SetLHS(std::move(lhs_copy));
+			tmp->SetRHS(std::move(rhs));
+
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(BinaryExprKind::Assign, loc);
+			parent->SetLHS(std::move(lhs));
+			parent->SetLHS(std::move(tmp));
+			return parent;
+		}
+		else
+		{
+			++current_token;
+			std::unique_ptr<BinaryExprAST> parent = std::make_unique<BinaryExprAST>(arith_op_kind, loc);
+			parent->SetLHS(std::move(lhs));
+			parent->SetRHS(std::move(rhs));
+			return parent;
+		}
 	}
 
 	//<conditional - expression> ::=  <logical - or -expression>

@@ -629,7 +629,7 @@ namespace lucc
 	{
 		size_t type_size = GetType()->GetSize();
 		BitMode bitmode = ConvertToBitMode(type_size);
-
+		
 		auto CommonArithmeticCodegen = [&](BinaryExprKind kind)
 		{
 			if (!return_reg) return;

@@ -211,7 +211,12 @@ namespace lucc
 			else if (*cur_ptr == '>')
 			{
 				++cur_ptr;
-				t.SetKind(TokenKind::greater_greater);
+				if (*cur_ptr == '=')
+				{
+					++cur_ptr;
+					t.SetKind(TokenKind::greater_greater_equal);
+				}
+				else t.SetKind(TokenKind::greater_greater);
 			}
 			else t.SetKind(TokenKind::greater);
 			break;
@@ -224,7 +229,12 @@ namespace lucc
 			else if (*cur_ptr == '<')
 			{
 				++cur_ptr;
-				t.SetKind(TokenKind::less_less);
+				if (*cur_ptr == '=')
+				{
+					++cur_ptr;
+					t.SetKind(TokenKind::less_less_equal);
+				}
+				else t.SetKind(TokenKind::less_less);
 			}
 			else t.SetKind(TokenKind::less);
 			break;

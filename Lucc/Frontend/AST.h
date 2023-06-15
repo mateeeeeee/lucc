@@ -406,7 +406,7 @@ namespace lucc
 	{
 	public:
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-
+		
 		SourceLocation const& GetLocation() const { return loc; }
 		QualifiedType const& GetType() const { return type; }
 		ExprKind GetExprKind() const { return kind; }
@@ -430,9 +430,7 @@ namespace lucc
 	{
 	public:
 		UnaryExprAST(UnaryExprKind op, SourceLocation const& loc) : ExprAST(ExprKind::Unary, loc), op(op), operand(nullptr)
-		{
-			if (op == UnaryExprKind::Dereference) SetValueCategory(ExprValueCategory::LValue);
-		}
+		{}
 		void SetOperand(std::unique_ptr<ExprAST>&& _operand)
 		{
 			operand = std::move(_operand);
@@ -442,7 +440,7 @@ namespace lucc
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
-
+		
 	private:
 		UnaryExprKind op;
 		std::unique_ptr<ExprAST> operand;
@@ -450,13 +448,37 @@ namespace lucc
 	private:
 		void SetExpressionType()
 		{
+			QualifiedType const& op_type = operand->GetType();
 			switch (op)
 			{
-			case UnaryExprKind::AddressOf: SetAddressOfType(); break;
+			case UnaryExprKind::PreIncrement:
+			case UnaryExprKind::PreDecrement:
+			case UnaryExprKind::PostIncrement:
+			case UnaryExprKind::PostDecrement:
+				SetType(IncDecOperatorType(op_type));
+				break;
+			case UnaryExprKind::Plus:
+			case UnaryExprKind::Minus:
+				SetType(PlusMinusOperatorType(op_type));
+				break;
+			case UnaryExprKind::BitNot:
+				SetType(BitNotOperatorType(op_type));
+				break;
+			case UnaryExprKind::LogicalNot:
+				SetType(LogicalNotOperatorType(op_type));
+				break;
+			case UnaryExprKind::Dereference:
+				SetType(DereferenceOperatorType(op_type));
+				if (!IsFunctionType(GetType())) SetValueCategory(ExprValueCategory::LValue);
+				break;
+			case UnaryExprKind::AddressOf:
+				LU_ASSERT(operand->IsLValue() || IsFunctionType(op_type));
+				SetType(AddressOfOperatorType(op_type));
+				break;
+			default:
+				LU_ASSERT(false);
 			}
 		}
-		void SetAddressOfType() {}
-
 	};
 	class BinaryExprAST : public ExprAST
 	{
@@ -466,7 +488,7 @@ namespace lucc
 		void SetRHS(std::unique_ptr<ExprAST>&& _rhs) {
 			rhs = std::move(_rhs); SetExpressionType();
 		}
-
+		
 		BinaryExprKind GetBinaryKind() const { return op; }
 		ExprAST* GetLHS() const { return lhs.get(); }
 		ExprAST* GetRHS() const { return rhs.get(); }
@@ -483,9 +505,37 @@ namespace lucc
 		{
 			switch (op)
 			{
-			case BinaryExprKind::Assign: SetType(AsIfByAssignment(rhs->GetType(), lhs->GetType())); break;
+			case BinaryExprKind::Assign: 
+				SetType(AsIfByAssignment(rhs->GetType(), lhs->GetType())); break;
 			case BinaryExprKind::Add:
-			case BinaryExprKind::Subtract: SetType(AdditiveOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Subtract));  break;
+			case BinaryExprKind::Subtract: 
+				SetType(AdditiveOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Subtract));  break;
+			case BinaryExprKind::Multiply:
+			case BinaryExprKind::Divide:
+			case BinaryExprKind::Modulo:
+				SetType(MultiplicativeOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Modulo));  break;
+			case BinaryExprKind::ShiftLeft:
+			case BinaryExprKind::ShiftRight: 
+				SetType(ShiftOperatorType(lhs->GetType(), rhs->GetType())); break;
+			case BinaryExprKind::LogicalAnd:
+			case BinaryExprKind::LogicalOr: 
+				SetType(LogicOperatorType(lhs->GetType(), rhs->GetType())); break;
+			case BinaryExprKind::BitAnd:
+			case BinaryExprKind::BitOr:
+			case BinaryExprKind::BitXor:
+				SetType(BitLogicOperatorType(lhs->GetType(), rhs->GetType())); break;
+			case BinaryExprKind::Equal:
+			case BinaryExprKind::NotEqual:
+				SetType(EqualityOperatorType(lhs->GetType(), rhs->GetType())); break;
+			case BinaryExprKind::Less:
+			case BinaryExprKind::Greater:
+			case BinaryExprKind::LessEqual:
+			case BinaryExprKind::GreaterEqual:
+				SetType(RelationOperatorType(lhs->GetType(), rhs->GetType())); break;
+			case BinaryExprKind::Comma:
+				SetType(ValueTransformation(rhs->GetType())); break;
+			default:
+				LU_ASSERT(false);
 			}
 		}
 	};
@@ -595,7 +645,6 @@ namespace lucc
 	private:
 		std::string name;
 	};
-
 	class DeclRefAST : public IdentifierAST
 	{
 	public:

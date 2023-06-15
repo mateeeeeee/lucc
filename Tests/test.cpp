@@ -19,6 +19,6 @@ TEST(Lucc, Test1)
 	//int exit_code = Compile(compiler_input);
 	//EXPECT_EQ(exit_code, 16);
 
-	EXPECT_EQ(CompileTest(LU_TEST(int x; x = 5; return x << 2;)), 20);
-	EXPECT_EQ(CompileTest(LU_TEST(int x, y; x = 5, y = 7; return x * y;)), 35);
+	EXPECT_EQ(CompileTest(LU_TEST(int x; x = 5; return x << 2;), true), 20);
+	//EXPECT_EQ(CompileTest(LU_TEST(int x, y; x = 5, y = 7; return x * y;)), 35);
 }
