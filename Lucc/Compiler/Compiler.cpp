@@ -76,10 +76,10 @@ namespace lucc
 			object_files[i] = object_file;
 		}
 
-		if (!no_assembly) return 0;
+		if (no_assembly) return 0;
 		system(masm_cmd.c_str());
 
-		if (!no_link) return 0;
+		if (no_link) return 0;
 		std::string link_cmd = std::format("\"{}/link.exe\" /out:{} ", _executables_path, input.exe_file);
 		for (auto const& obj_file : object_files) link_cmd += obj_file.string() + " "; ///msvcrt.lib libpath:\"\"{}\"\"
 		link_cmd += "/subsystem:console /entry:main";

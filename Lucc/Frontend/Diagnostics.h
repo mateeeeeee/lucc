@@ -7,7 +7,7 @@ namespace lucc
 }
 namespace lucc::diag
 {
-	inline constexpr uint32 COMPILATION_FAILED = uint32(-1);
+	inline constexpr int32 COMPILATION_FAILED = INT32_MAX;
 
 	enum class Code : uint16
 	{
