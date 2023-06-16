@@ -4,6 +4,16 @@
 namespace lucc
 {
 
+	bool ArithmeticType::IsCompatible(Type const& other) const
+	{
+		return IsArithmeticType(other) ? flags == TypeCast<ArithmeticType>(other).flags : false;
+	}
+
+	bool FunctionType::IsCompatible(Type const& other) const
+	{
+		return true;
+	}
+
 	// C11 6.3.1.1p2: If an int can represent all values of the original type (as
 	// restricted by the width, for a bit-field), the value is converted to an int;
 	// otherwise, it is converted to an unsigned int. These are called the integer

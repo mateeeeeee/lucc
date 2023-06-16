@@ -547,7 +547,10 @@ namespace lucc
 			std::unique_ptr<ExprAST>&& false_expr, SourceLocation const& loc) : ExprAST(ExprKind::Ternary, loc),
 			cond_expr(std::move(cond_expr)),
 			true_expr(std::move(true_expr)),
-			false_expr(std::move(false_expr)) {}
+			false_expr(std::move(false_expr)) 
+		{
+			
+		}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
@@ -567,8 +570,9 @@ namespace lucc
 		FunctionCallAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
 			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func)) 
 		{
+			//#todo 
 			auto const& type = func_expr->GetType();
-			SetType(TypeCast<FunctionType>(type).GetReturnType());
+			SetType(RemoveQualifiers(TypeCast<FunctionType>(type).GetReturnType()));
 		}
 		void AddArgument(std::unique_ptr<ExprAST>&& arg)
 		{

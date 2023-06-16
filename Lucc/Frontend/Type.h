@@ -247,6 +247,8 @@ namespace lucc
 			return rank;
 		}
 
+		virtual bool IsCompatible(Type const& other) const override;
+		
 	private:
 		ArithmeticFlags flags;
 		bool is_unsigned = false;
@@ -286,10 +288,7 @@ namespace lucc
 		void EncounterPrototype() const { has_prototype = true; }
 		bool HasPrototype() const { return has_prototype; }
 
-		virtual bool IsCompatible(Type const& other) const override
-		{
-			return true;
-		}
+		virtual bool IsCompatible(Type const& other) const override;
 
 	private:
 		QualifiedType return_qtype;
