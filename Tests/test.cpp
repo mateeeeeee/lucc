@@ -6,19 +6,118 @@
 using namespace lucc;
 using namespace diag;
 
-#define LU_TEST(...) LU_STRINGIFY(__VA_ARGS__)
+#define LU_CODE(...) LU_STRINGIFY(__VA_ARGS__)
+#define LU_CODE_SAMPLE(...) LU_STRINGIFY(int main{__VA_ARGS__})
 
-TEST(Lucc, Test1)
+#define LUCC_SAMPLE(...) system(LU_STRINGIFY(Lucc -test -i LU_CODE_SAMPLE(__VA_ARGS__)))
+#define LUCC_SAMPLE_DEBUG(...) system(LU_STRINGIFY(Lucc -test -debug -i LU_CODE_SAMPLE(__VA_ARGS__)))
+
+#define LUCC(...) system(LU_STRINGIFY(Lucc -test -i LU_CODE(__VA_ARGS__)))
+#define LUCC_DEBUG(...) system(LU_STRINGIFY(Lucc -test -debug -i LU_CODE(__VA_ARGS__)))
+
+TEST(Lucc, Typedef)
 {
-	//CompilerInput compiler_input{};
-	//compiler_input.input_directory = "Test1";
-	//compiler_input.exe_file = "test.exe";
-	//compiler_input.flags = CompilerFlag_None;
-	//
-	//compiler_input.sources = { "test1.c" };
-	//int exit_code = Compile(compiler_input);
-	//EXPECT_EQ(exit_code, 16);
+	EXPECT_EQ(LUCC(typedef int t; int main(void) { t x = 12; return x; }), 12);
+	EXPECT_EQ(LUCC_SAMPLE(short x = 12; return x;), 12);
+}
 
-	EXPECT_EQ(CompileTest(LU_TEST(int x; x = 5; return x << 2;), true), 20);
-	//EXPECT_EQ(CompileTest(LU_TEST(int x, y; x = 5, y = 7; return x * y;)), 35);
+TEST(Lucc, Arithmetic)
+{
+	
+}
+
+TEST(Lucc, Atomic)
+{
+
+}
+
+TEST(Lucc, Alignof)
+{
+
+}
+
+TEST(Lucc, Cast)
+{
+
+}
+
+TEST(Lucc, Const)
+{
+
+}
+
+TEST(Lucc, Constexpr)
+{
+
+}
+
+TEST(Lucc, Control)
+{
+
+}
+
+TEST(Lucc, Declaration)
+{
+
+}
+
+TEST(Lucc, Enum)
+{
+
+}
+
+TEST(Lucc, Extern)
+{
+
+}
+
+TEST(Lucc, Initialization)
+{
+
+}
+
+TEST(Lucc, Literal)
+{
+
+}
+
+TEST(Lucc, Macro)
+{
+
+}
+
+TEST(Lucc, Pointer)
+{
+
+}
+
+TEST(Lucc, Sizeof)
+{
+
+}
+
+TEST(Lucc, String)
+{
+
+}
+
+TEST(Lucc, Static)
+{
+
+}
+
+
+TEST(Lucc, Conversion)
+{
+
+}
+
+TEST(Lucc, ThreadLocal)
+{
+
+}
+
+TEST(Lucc, Variable)
+{
+
 }

@@ -36,6 +36,7 @@ namespace lucc::diag
 			#include "Diagnostics.def"
 		};
 
+		bool error_reported = false;
 		DiagSettings settings;
 		std::vector<std::ostream*> output_streams;
 	}
@@ -68,6 +69,5 @@ namespace lucc::diag
 		for (auto* os : output_streams) *os << output;
 		if (dclass == DiagKind::error) std::exit(COMPILATION_FAILED);
 	}
-
 }
 

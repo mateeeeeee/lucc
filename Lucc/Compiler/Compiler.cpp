@@ -91,7 +91,7 @@ namespace lucc
 
 	int CompileTest(std::string_view test_code, bool debug)
 	{
-		std::string code = std::format("int main(void){{ {} }}", test_code);
+		std::string code(test_code);
 		diag::Initialize();
 
 		fs::path tmp_directory = std::filesystem::current_path() / "Temp";
@@ -115,13 +115,13 @@ namespace lucc
 
 			Parser parser(lex.GetTokens());
 			parser.Parse();
+
 			AST* ast = parser.GetAST();
 			if (debug) debug::DebugNodeVisitorAST visitor(ast);
 
 			x86_64CodeGenerator x86_64(assembly_file.string());
 			x86_64.Generate(ast);
 		}
-
 		std::string masm_cmd = std::format("\"{}/ml64.exe\"  /Fo {} /c {}", _executables_path, object_file.string(), assembly_file.string());
 		system(masm_cmd.c_str());
 		std::string link_cmd = std::format("\"{}/link.exe\" /out:{} {} /subsystem:console /entry:main", _executables_path, output_file.string(), object_file.string());

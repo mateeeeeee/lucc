@@ -3,7 +3,6 @@
 #include "Symbol.h"
 #include "Core/Defines.h"
 
-
 namespace lucc
 {
 	namespace
@@ -57,7 +56,7 @@ namespace lucc
 	{
 		ast = std::make_unique<AST>();
 		ctx.identifier_sym_table = std::make_unique<SymbolTable>();
-		return ParseTranslationUnit();
+		ParseTranslationUnit();
 	}
 	bool Parser::Expect(TokenKind k)
 	{

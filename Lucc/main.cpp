@@ -1,5 +1,3 @@
-#ifndef _LIB
-
 #include "Compiler/Compiler.h"
 #include "Core/CLIParser.h"
 #include <iostream>
@@ -18,6 +16,8 @@ int main(int argc, char** argv)
 	CLIArg& ast_dump = parser.AddArg(false, "-ast-dump");
 	CLIArg& file_directory = parser.AddArg(true, "-d");
 	CLIArg& output_debug = parser.AddArg(false, "-debug");
+	CLIArg& test = parser.AddArg(false, "-test");
+	CLIArg& input = parser.AddArg(true, "-i");
 
 	parser.Parse(argc, argv);
 
@@ -25,6 +25,12 @@ int main(int argc, char** argv)
 	{
 		PrintHelp();
 		return 0;
+	}
+
+	if (test)
+	{
+		int exit_code = CompileTest(input.AsStringOr(""), output_debug);
+		return exit_code;
 	}
 
 	CompilerFlags flags = CompilerFlag_None;
@@ -52,6 +58,7 @@ void PrintHelp()
 	printf("-E, --only-pp: Only preprocessor is run, the o \n");
 	printf("-d: Directory where the source files are located \n");
 	printf("-ast-dump: Only preprocessor is run \n");
+	printf("-test: used for running g-tests \n");
+	printf("-i: input test code \n");
 }
 
-#endif

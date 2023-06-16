@@ -548,9 +548,7 @@ namespace lucc
 			cond_expr(std::move(cond_expr)),
 			true_expr(std::move(true_expr)),
 			false_expr(std::move(false_expr)) 
-		{
-			
-		}
+		{}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
@@ -682,13 +680,13 @@ namespace lucc
 		return dynamic_cast<To*>(from);
 	}
 	template<typename To, typename From>
-	requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+	requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
 	To* AstCast(From* from)
 	{
 		return static_cast<To*>(from);
 	}
 	template<typename To, typename From>
-	requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+	requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
 	To const* AstCast(From const* from)
 	{
 		return static_cast<To const*>(from);

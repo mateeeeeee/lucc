@@ -3,6 +3,9 @@
   <ItemGroup>
     <ClCompile Include="test.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="TestFiles\test1.c">
+      <Filter>TestFiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -14,10 +17,5 @@
     <Filter Include="TestFiles">
       <UniqueIdentifier>{c68f1198-c534-465a-838c-be8373994be3}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Test1\test1.c">
-      <Filter>TestFiles</Filter>
-    </Text>
   </ItemGroup>
 </Project>
