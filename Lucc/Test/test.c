@@ -1,5 +1,8 @@
 
+extern int abs(int n);
+
 int main(void)
 {
-	return 0 == 1;
+	int a = abs(-5);
+	return a;
 }

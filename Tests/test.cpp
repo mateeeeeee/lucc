@@ -207,4 +207,61 @@ TEST(Initialization, GlobalPointers)
 
 }
 
-//add tests for: enum, alignof, sizeof, cast, conversion, constexpr, const,pp macros, pp includes directives, static, extern, threadlocal
+TEST(Postprocessor, Macros)
+{
+
+}
+TEST(Postprocessor, Includes)
+{
+
+}
+TEST(Postprocessor, Directives)
+{
+
+}
+
+TEST(Storage, Static)
+{
+
+}
+TEST(Storage, Extern)
+{
+
+}
+TEST(Storage, TLS)
+{
+
+}
+
+TEST(Misc, Alignof)
+{
+
+}
+TEST(Misc, Sizeof)
+{
+
+}
+TEST(Misc, Atomic)
+{
+
+}
+TEST(Misc, Cast)
+{
+
+}
+TEST(Misc, Conversion)
+{
+
+}
+TEST(Misc, Const)
+{
+
+}
+TEST(Misc, Constexpr)
+{
+
+}
+TEST(Misc, Enum)
+{
+
+}
