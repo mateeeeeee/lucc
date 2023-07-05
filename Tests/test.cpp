@@ -83,10 +83,19 @@ TEST(Arithmetic, PostIncrementDecrement)
 }
 TEST(Arithmetic, Pointers)
 {
+	EXPECT_EQ(LUCC_EX(int x = 3; return *&x;), 3);
+	EXPECT_EQ(LUCC_EX(int x = 3; int* y = &x; int** z = &y; return **z;), 3);
+	EXPECT_EQ(LUCC_EX(int x = 3; int* y = &x; *y = 5; return x;), 5);
+	
+	//ASSERT(7, ({ int x = 3; int y = 5; *(&x + 1) = 7; y; }));
+	//ASSERT(7, ({ int x = 3; int y = 5; *(&y - 2 + 1) = 7; x; }));
+	//ASSERT(5, ({ int x = 3; (&x + 2) - &x + 3; }));
+
 	//ASSERT(20, ({ int x; int* p = &x; p + 20 - p; }));
 	//ASSERT(1, ({ int x; int* p = &x; p + 20 - p > 0; }));
 	//ASSERT(-20, ({ int x; int* p = &x; p - 20 - p; }));
 	//ASSERT(1, ({ int x; int* p = &x; p - 20 - p < 0; }));
+
 }
 TEST(Arithmetic, Arrays)
 {

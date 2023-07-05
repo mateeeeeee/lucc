@@ -2,5 +2,5 @@
 
 int main(void)
 {
-	int i = 0; while (i < 10) i = i + 1; return i;
+	int x = 3; return (&x + 2) - &x + 3;
 }
