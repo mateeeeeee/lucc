@@ -419,6 +419,7 @@ namespace lucc
 						mem_ref_t mem_ref{ .base_reg = rbp, .displacement = local_offset };
 						if (op == UnaryExprKind::PreIncrement) ctx.Inc(mem_ref, bitmode);
 						else ctx.Dec(mem_ref, bitmode);
+						if (return_reg) ctx.Mov(*return_reg, mem_ref, bitmode);
 					}
 				}
 				else LU_ASSERT(false);
@@ -678,7 +679,13 @@ namespace lucc
 					case BinaryExprKind::Add:		ctx.Add(*return_reg, value, bitmode); break;
 					case BinaryExprKind::Subtract:  ctx.Sub(*return_reg, value, bitmode); break;
 					case BinaryExprKind::Multiply:  ctx.Imul(*return_reg, *return_reg, value, bitmode); break;
-					case BinaryExprKind::Divide:	LU_ASSERT(false); break;
+					case BinaryExprKind::Divide:	
+					{
+						register_t tmp_reg = ctx.AllocateRegister();
+						ctx.Mov(tmp_reg, value, bitmode);
+						ctx.Idiv(*return_reg, tmp_reg, bitmode);
+					}
+					break;
 					case BinaryExprKind::Modulo:	LU_ASSERT(false); break;
 					}
 				}
@@ -689,10 +696,10 @@ namespace lucc
 					lhs->Codegen(ctx, *return_reg);
 					switch (kind)
 					{
-					case BinaryExprKind::Add:		ctx.Add(*return_reg, tmp_reg, bitmode); break;
-					case BinaryExprKind::Subtract:  ctx.Sub(*return_reg, tmp_reg, bitmode); break;
+					case BinaryExprKind::Add:		ctx.Add(*return_reg, tmp_reg, bitmode);  break;
+					case BinaryExprKind::Subtract:  ctx.Sub(*return_reg, tmp_reg, bitmode);  break;
 					case BinaryExprKind::Multiply:  ctx.Imul(*return_reg, tmp_reg, bitmode); break;
-					case BinaryExprKind::Divide:	LU_ASSERT(false); break;
+					case BinaryExprKind::Divide:	ctx.Idiv(*return_reg, tmp_reg, bitmode); break;
 					case BinaryExprKind::Modulo:	LU_ASSERT(false); break;
 					}
 					ctx.FreeRegister(tmp_reg);
@@ -740,7 +747,7 @@ namespace lucc
 				IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
 				lhs->Codegen(ctx, *return_reg);
 				if (kind == BinaryExprKind::ShiftLeft) ctx.Shl(*return_reg, (uint8)int_literal->GetValue(), bitmode);
-				else if (kind == BinaryExprKind::ShiftRight) ctx.Shr(*return_reg, (uint8)int_literal->GetValue(), bitmode);
+				else if (kind == BinaryExprKind::ShiftRight) ctx.Sar(*return_reg, (uint8)int_literal->GetValue(), bitmode);
 			}
 			else
 			{
@@ -748,7 +755,7 @@ namespace lucc
 				rhs->Codegen(ctx, reg2);
 				lhs->Codegen(ctx, *return_reg);
 				if (kind == BinaryExprKind::ShiftLeft)  ctx.Shl(*return_reg, reg2, bitmode);
-				if (kind == BinaryExprKind::ShiftRight) ctx.Shr(*return_reg, reg2, bitmode); //#todo check if unsigned
+				if (kind == BinaryExprKind::ShiftRight) ctx.Sar(*return_reg, reg2, bitmode); //#todo check if unsigned
 				ctx.FreeRegister(reg2);
 			}
 		};
@@ -787,7 +794,6 @@ namespace lucc
 				}
 				ctx.FreeRegister(tmp_reg);
 			}
-			
 		};
 
 		switch (op)

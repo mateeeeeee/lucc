@@ -1,8 +1,6 @@
 
-extern int abs(int n);
 
 int main(void)
 {
-	int a = abs(-5);
-	return a;
+	int i = 0; while (i < 10) i = i + 1; return i;
 }

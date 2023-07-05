@@ -123,6 +123,20 @@ namespace lucc
 		Emit<Text>("imul {}, {} {}, {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem, value);
 	}
 
+	void x86_64CodeGenerator::Context::Idiv(register_t dividend, register_t divisor, BitMode bitmode)
+	{
+		Emit<Text>("xor rdx, rdx");
+		if (dividend.id != DIVIDEND_REGISTER) Mov(register_t(DIVIDEND_REGISTER), dividend, bitmode);
+		Emit<Text>("idiv {}", registers[divisor.id][bitmode]);
+		if (dividend.id != DIVIDEND_REGISTER) Mov(dividend, register_t(DIVIDEND_REGISTER), bitmode);
+	}
+	void x86_64CodeGenerator::Context::Idiv(register_t dividend, char const* divisor, BitMode bitmode)
+	{
+		Emit<Text>("xor rdx, rdx");
+		if (dividend.id != DIVIDEND_REGISTER) Mov(register_t(DIVIDEND_REGISTER), dividend, bitmode);
+		Emit<Text>("idiv {} {}", ConvertToCast(bitmode), divisor);
+		if (dividend.id != DIVIDEND_REGISTER) Mov(dividend, register_t(DIVIDEND_REGISTER), bitmode);
+	}
 
 	void x86_64CodeGenerator::Context::Shl(register_t dst, uint8 value, BitMode bitmode)
 	{
@@ -422,15 +436,16 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Movzx(register_t dst, register_t src, BitMode bitmode, bool src_8bit /*= false*/)
 	{
-
+		Emit<Text>("movzx {}, {}", registers[dst.id][bitmode], registers[src.id][src_8bit ? BitMode_8 : BitMode_16]);
 	}
 	void x86_64CodeGenerator::Context::Movzx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit /*= false*/)
 	{
-
+		Emit<Text>("movzx {}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_8bit ? BitMode_8 : BitMode_16), mem);
 	}
 	void x86_64CodeGenerator::Context::Movzx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit /*= false*/)
 	{
-
+		BitMode src_bitmode = src_8bit ? BitMode_8 : BitMode_16;
+		Emit<Text>("movzx {}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_bitmode), ConvertMemRef(mem_ref, src_bitmode));
 	}
 	void x86_64CodeGenerator::Context::Lea(register_t reg, char const* mem)
 	{

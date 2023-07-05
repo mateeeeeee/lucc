@@ -338,6 +338,10 @@ namespace lucc
 			{
 				t.SetKind(TokenKind::period);
 			}
+			break;
+		case '~':
+			t.SetKind(TokenKind::tilde);
+			break;
 		}
 		t.SetLocation(loc);
 		UpdatePointersAndLocation();

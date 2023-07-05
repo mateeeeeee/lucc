@@ -461,6 +461,7 @@ namespace lucc
 		std::unique_ptr<ExprAST> rhs = ParseAssignmentExpression();
 		if (arith_op_kind != BinaryExprKind::Assign)
 		{
+			//#todo: remove this hack, add clone to ast nodes
 			TokenPtr current_token_copy2 = current_token;
 			current_token = current_token_copy;
 			std::unique_ptr<ExprAST> lhs_copy = ParseConditionalExpression();

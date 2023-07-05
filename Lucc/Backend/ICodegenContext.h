@@ -77,11 +77,16 @@ namespace lucc
 		virtual void Sub(char const* mem, register_t src, BitMode bitmode) = 0;
 		virtual void Sub(char const* mem, int64 value, BitMode bitmode) = 0;
 
-		//Mul, Div, Idiv is missing
+		//signed multiply
 		virtual void Imul(register_t dst, register_t src, BitMode bitmode) = 0;
 		virtual void Imul(register_t dst, char const* mem, BitMode bitmode) = 0;
 		virtual void Imul(register_t dst, register_t src, int32 value, BitMode bitmode) = 0;
 		virtual void Imul(register_t dst, char const* mem, int32 value, BitMode bitmode) = 0;
+
+		//Signed divide
+		virtual void Idiv(register_t dividend, register_t divisor, BitMode bitmode) = 0;
+		virtual void Idiv(register_t dividend, char const* divisor, BitMode bitmode) = 0;
+		//Mul, Div missing (unsigned versions)
 
 		virtual void Neg(register_t reg, BitMode bitmode) = 0;
 		virtual void Neg(char const* mem, BitMode bitmode) = 0;

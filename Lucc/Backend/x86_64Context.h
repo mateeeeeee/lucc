@@ -13,6 +13,7 @@ namespace lucc
 		static constexpr uint64 GP_REG_COUNT = 9;
 		static constexpr uint64 FUNC_ARGS_COUNT_IN_REGISTERS = 4;
 		static constexpr uint64 SHIFT_REGISTER = 4;
+		static constexpr uint64 DIVIDEND_REGISTER = 8;
 		static constexpr uint64 RETURN_REGISTER_INDEX = GP_REG_COUNT - 1;
 		static constexpr uint64 STACK_FRAME_REGISTER_INDEX = GP_REG_COUNT;
 		static constexpr size_t FUNC_ARG_REG_MAPPING[FUNC_ARGS_COUNT_IN_REGISTERS] = { 4, 5, 2, 3 };
@@ -65,6 +66,9 @@ namespace lucc
 		virtual void Imul(register_t dst, char const* mem, BitMode bitmode) override;
 		virtual void Imul(register_t dst, register_t src, int32 value, BitMode bitmode) override;
 		virtual void Imul(register_t dst, char const* mem, int32 value, BitMode bitmode) override;
+
+		virtual void Idiv(register_t dividend, register_t divisor, BitMode bitmode) override;
+		virtual void Idiv(register_t dividend, char const* divisor, BitMode bitmode) override;
 
 		virtual void Neg(register_t reg, BitMode bitmode) override;
 		virtual void Neg(char const* mem, BitMode bitmode) override;

@@ -1,31 +1,10 @@
 #include "pch.h"
-#include "../Lucc/Core/Defines.h"
+#include "TestMacros.h"
 #include "../Lucc/Compiler/Compiler.h"
 #include "../Lucc/Frontend/Diagnostics.h"
 
 using namespace lucc;
 using namespace diag;
-
-#define LU_CODE(...) LU_STRINGIFY(__VA_ARGS__)
-#define LU_CODE_EX(...) LU_STRINGIFY(int main(void){__VA_ARGS__})
-
-#if NDEBUG
-
-#define LUCC_EX(...) system(LU_STRINGIFY(Luccd -test -i LU_CODE_EX(__VA_ARGS__)))
-#define LUCC_EX_DEBUG(...) system(LU_STRINGIFY(Luccd -test -debug -i LU_CODE_EX(__VA_ARGS__)))
-
-#define LUCC(...) system(LU_STRINGIFY(Luccd -test -i LU_CODE(__VA_ARGS__)))
-#define LUCC_DEBUG(...) system(LU_STRINGIFY(Luccd -test -debug -i LU_CODE(__VA_ARGS__)))
-
-#else
-
-#define LUCC_EX(...) system(LU_STRINGIFY(Lucc -test -i LU_CODE_EX(__VA_ARGS__)))
-#define LUCC_EX_DEBUG(...) system(LU_STRINGIFY(Lucc -test -debug -i LU_CODE_EX(__VA_ARGS__)))
-
-#define LUCC(...) system(LU_STRINGIFY(Lucc -test -i LU_CODE(__VA_ARGS__)))
-#define LUCC_DEBUG(...) system(LU_STRINGIFY(Lucc -test -debug -i LU_CODE(__VA_ARGS__)))
-
-#endif
 
 TEST(Arithmetic, AdditiveMultiplicativeOperators)
 {
@@ -36,89 +15,71 @@ TEST(Arithmetic, AdditiveMultiplicativeOperators)
 	EXPECT_EQ(LUCC_EX(return 5 + 6 * 7;), 47);
 	EXPECT_EQ(LUCC_EX(return 5 * (9 - 6);), 15);
 	EXPECT_EQ(LUCC_EX(return -10 + 20;), 10);
-	//EXPECT_EQ(LUCC_EX(return (3 + 5) / 2;), 4);
-
-	//ASSERT(5, 17 % 6);
-	//ASSERT(5, ((long)17) % 6);
-	//ASSERT(2, ({ int i = 10; i %= 4; i; }));
-	//ASSERT(2, ({ long i = 10; i %= 4; i; }));
-	
-	//ASSERT(7, ({ int i = 2; i += 5; i; }));
-	//ASSERT(7, ({ int i = 2; i += 5; }));
-	//ASSERT(3, ({ int i = 5; i -= 2; i; }));
-	//ASSERT(3, ({ int i = 5; i -= 2; }));
-	//ASSERT(6, ({ int i = 3; i *= 2; i; }));
-	//ASSERT(6, ({ int i = 3; i *= 2; }));
-	//ASSERT(3, ({ int i = 6; i /= 2; i; }));
-	//ASSERT(3, ({ int i = 6; i /= 2; }));
+	EXPECT_EQ(LUCC_EX(return (3 + 5) / 2;), 4);
+	EXPECT_EQ(LUCC_EX(int i = 2; i += 5; return i;), 7);
+	EXPECT_EQ(LUCC_EX(int i = 5; i -= 7; return i;), -2);
+	EXPECT_EQ(LUCC_EX(int i = 5; i *= 4; return i - 15;), 5);
+	EXPECT_EQ(LUCC_EX(int i = 7; i /= 3; return i;), 2);
 }
-TEST(Arithmetic, RelationOperations)
+TEST(Arithmetic, RelationOperations) 
 {
-	EXPECT_EQ(LUCC_EX(return 0 == 1), COMPILATION_FAILED);
-	//EXPECT_EQ(LUCC_EX(return 42 == 42;), 1);
-	//EXPECT_EQ(LUCC_EX(return 0 != 1;), 1);
-	//EXPECT_EQ(LUCC_EX(return 42 != 42;), 0);
-
-	//ASSERT(1, 0 < 1);
-	//ASSERT(0, 1 < 1);
-	//ASSERT(0, 2 < 1);
-	//ASSERT(1, 0 <= 1);
-	//ASSERT(1, 1 <= 1);
-	//ASSERT(0, 2 <= 1);
-	//
-	//ASSERT(1, 1 > 0);
-	//ASSERT(0, 1 > 1);
-	//ASSERT(0, 1 > 2);
-	//ASSERT(1, 1 >= 0);
-	//ASSERT(1, 1 >= 1);
-	//ASSERT(0, 1 >= 2);
+	EXPECT_EQ(LUCC_EX(return 42 == 42;), 1);
+	EXPECT_EQ(LUCC_EX(return 0 != 1;), 1);
+	EXPECT_EQ(LUCC_EX(return 42 != 42;), 0);
+	EXPECT_EQ(LUCC_EX(return 0 < 1;), 1);
+	EXPECT_EQ(LUCC_EX(return 1 < 1;), 0);
+	EXPECT_EQ(LUCC_EX(return 2 < 1;), 0);
+	EXPECT_EQ(LUCC_EX(return 0 <= 1;), 1);
+	EXPECT_EQ(LUCC_EX(return 1 <= 1;), 1);
+	EXPECT_EQ(LUCC_EX(return 2 <= 1;), 0);
+	EXPECT_EQ(LUCC_EX(return 1 > 0;), 1);
+	EXPECT_EQ(LUCC_EX(return 1 > 1;), 0);
+	EXPECT_EQ(LUCC_EX(return 1 > 2;), 0);
+	EXPECT_EQ(LUCC_EX(return 1 >= 0;), 1);
+	EXPECT_EQ(LUCC_EX(return 1 >= 1;), 1);
+	EXPECT_EQ(LUCC_EX(return 1 >= 2;), 0);
 }
 TEST(Arithmetic, ShiftOperators)
 {
-	//ASSERT(1, 1 << 0);
-	//ASSERT(8, 1 << 3);
-	//ASSERT(10, 5 << 1);
-	//ASSERT(2, 5 >> 1);
-	//ASSERT(-1, -1 >> 1);
-	//ASSERT(1, ({ int i = 1; i <<= 0; i; }));
-	//ASSERT(8, ({ int i = 1; i <<= 3; i; }));
-	//ASSERT(10, ({ int i = 5; i <<= 1; i; }));
-	//ASSERT(2, ({ int i = 5; i >>= 1; i; }));
-	//ASSERT(-1, -1);
-	//ASSERT(-1, ({ int i = -1; i; }));
-	//ASSERT(-1, ({ int i = -1; i >>= 1; i; }));
-	//
+	EXPECT_EQ(LUCC_EX(return 1 << 0;), 1);
+	EXPECT_EQ(LUCC_EX(return 1 << 3;), 8);
+	EXPECT_EQ(LUCC_EX(return 5 << 1;), 10);
+	EXPECT_EQ(LUCC_EX(return 5 >> 1;), 2);
+	EXPECT_EQ(LUCC_EX(return 5 >> 1;), 2);
+	EXPECT_EQ(LUCC_EX(int i = 1; i <<= 0; return i;), 1);
+	EXPECT_EQ(LUCC_EX(int i = 1; i <<= 3; return i;), 8);
+	EXPECT_EQ(LUCC_EX(int i = 5; i <<= 1; return i;), 10);
+	EXPECT_EQ(LUCC_EX(int i = 5; i >>= 1; return i;), 2);
+	EXPECT_EQ(LUCC_EX(int i = -1; i >>= 1; return i;), -1);
 }
 TEST(Arithmetic, BitOperators)
 {
-	//ASSERT(-1, ~0);
-	//ASSERT(0, ~- 1);
+	EXPECT_EQ(LUCC_EX(return ~-1;), 0);
+	
+	//#todo add x86-64 and, or, xor implementation
+	//EXPECT_EQ(LUCC_EX(return 0 & 1;), 0);
 	//ASSERT(0, 0 & 1);
 	//ASSERT(1, 3 & 1);
 	//ASSERT(3, 7 & 3);
 	//ASSERT(10, -1 & 10);
 	//
 	//ASSERT(1, 0 | 1);
-	//ASSERT(0b10011, 0b10000 | 0b00011);
 	//
 	//ASSERT(0, 0 ^ 0);
-	//ASSERT(0, 0b1111 ^ 0b1111);
-	//ASSERT(0b110100, 0b111000 ^ 0b001100);
-	//
 	//ASSERT(2, ({ int i = 6; i &= 3; i; }));
 	//ASSERT(7, ({ int i = 6; i |= 3; i; }));
 	//ASSERT(10, ({ int i = 15; i ^= 5; i; }));
 }
 TEST(Arithmetic, PostIncrementDecrement)
 {
-	//ASSERT(2, ({ int i = 2; i++; }));
-	//ASSERT(2, ({ int i = 2; i--; }));
-	//ASSERT(3, ({ int i = 2; i++; i; }));
-	//ASSERT(1, ({ int i = 2; i--; i; }));
-	//ASSERT(2, ({ int i = 2; ++i; }));
-	//ASSERT(2, ({ int i = 2; --i; }));
-	//ASSERT(3, ({ int i = 2; ++i; i; }));
-	//ASSERT(1, ({ int i = 2; --i; i; }));
+	EXPECT_EQ(LUCC_EX(int i = 2; i++; return i;), 3);
+	EXPECT_EQ(LUCC_EX(int i = 2; ++i; return i;), 3);
+	EXPECT_EQ(LUCC_EX(int i = 2; i--; return i;), 1);
+	EXPECT_EQ(LUCC_EX(int i = 2; --i; return i;), 1);
+	EXPECT_EQ(LUCC_EX(int i = 2; int j = ++i; return j;), 3);
+	EXPECT_EQ(LUCC_EX(int i = 2; int j = i++; return j;), 2);
+	EXPECT_EQ(LUCC_EX(int i = 2; int j = --i; return j;), 1);
+	EXPECT_EQ(LUCC_EX(int i = 2; int j = i--; return j;), 2);
 }
 TEST(Arithmetic, Pointers)
 {
@@ -148,11 +109,27 @@ TEST(Arithmetic, Arrays)
 
 TEST(Control, If)
 {
-
+	EXPECT_EQ(LUCC_EX(int x; if (0) x = 2; else x = 3; return x;), 3);
+	EXPECT_EQ(LUCC_EX(int x; if (1 - 1) x = 2; else x = 3; return x;), 3);
+	EXPECT_EQ(LUCC_EX(int x; if (1) x = 2; else x = 3; return x;), 2);
+	EXPECT_EQ(LUCC_EX(int x; if (2 - 1) x = 2; else x = 3; return x;), 2);
+}
+TEST(Control, Switch)
+{
+	//ASSERT(5, ({ int i = 0; switch (0) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } i; }));
+	//ASSERT(6, ({ int i = 0; switch (1) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } i; }));
+	//ASSERT(7, ({ int i = 0; switch (2) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } i; }));
+	//ASSERT(0, ({ int i = 0; switch (3) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } i; }));
+	//ASSERT(5, ({ int i = 0; switch (0) { case 0:i = 5; break; default:i = 7; } i; }));
+	//ASSERT(7, ({ int i = 0; switch (1) { case 0:i = 5; break; default:i = 7; } i; }));
+	//ASSERT(2, ({ int i = 0; switch (1) { case 0: 0; case 1: 0; case 2: 0; i = 2; } i; }));
+	//ASSERT(0, ({ int i = 0; switch (3) { case 0: 0; case 1: 0; case 2: 0; i = 2; } i; }));
 }
 TEST(Control, Goto)
 {
-
+	//ASSERT(3, ({ int i = 0; goto a; a: i++; b: i++; c: i++; i; }));
+	//ASSERT(2, ({ int i = 0; goto e; d: i++; e: i++; f: i++; i; }));
+	//ASSERT(1, ({ int i = 0; goto i; g: i++; h: i++; i: i++; i; }));
 }
 TEST(Control, TernaryOperator)
 {
@@ -161,11 +138,30 @@ TEST(Control, TernaryOperator)
 
 TEST(Iteration, For)
 {
-
+	EXPECT_EQ(LUCC_EX(int i = 0; int j = 0; for (i = 0; i <= 10; i = i + 1) j = i + j; return j;), 55);
+	//ASSERT(55, ({ int j = 0; for (int i = 0; i <= 10; i = i + 1) j = j + i; j; }));
+	//ASSERT(3, ({ int i = 3; int j = 0; for (int i = 0; i <= 10; i = i + 1) j = j + i; i; }));
+	//ASSERT(3, ({ int i = 0; for (; i < 10; i++) { if (i == 3) break; } i; }));
+	//ASSERT(3, ({ int i = 0; for (; i < 10; i++) { for (;;) break; if (i == 3) break; } i; }));
+	//ASSERT(10, ({ int i = 0; int j = 0; for (; i < 10; i++) { if (i > 5) continue; j++; } i; }));
+	//ASSERT(6, ({ int i = 0; int j = 0; for (; i < 10; i++) { if (i > 5) continue; j++; } j; }));
+	//ASSERT(10, ({ int i = 0; int j = 0; for (; !i;) { for (; j != 10; j++) continue; break; } j; }));
 }
 TEST(Iteration, While)
 {
-
+	EXPECT_EQ(LUCC_EX(int i = 0; while (i < 10) i = i + 1; return i;), 10);
+	//ASSERT(10, ({ int i = 0; while (i < 10) i = i + 1; i; }));
+	//ASSERT(55, ({ int i = 0; int j = 0; while (i <= 10) { j = i + j; i = i + 1; } j; }));
+	//ASSERT(4, ({ int i = 0; while (1) { if (i++ == 3) break; } i; }));
+	//ASSERT(4, ({ int i = 0; while (1) { while (1) break; if (i++ == 3) break; } i; }));
+	//ASSERT(11, ({ int i = 0; int j = 0; while (i++ < 10) { if (i > 5) continue; j++; } i; }));
+	//ASSERT(5, ({ int i = 0; int j = 0; while (i++ < 10) { if (i > 5) continue; j++; } j; }));
+	//ASSERT(11, ({ int i = 0; int j = 0; while (!i) { while (j++ != 10) continue; break; } j; }));
+}
+TEST(Iteration, DoWhile)
+{
+	//ASSERT(7, ({ int i = 0; int j = 0; do { j++; } while (i++ < 6); j; }));
+	//ASSERT(4, ({ int i = 0; int j = 0; int k = 0; do { if (++j > 3) break; continue; k++; } while (1); j; }));
 }
 
 TEST(Declaration, Variable)
