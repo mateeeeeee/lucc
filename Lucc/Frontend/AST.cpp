@@ -366,9 +366,21 @@ namespace lucc
 		{
 			LU_ASSERT(operand->IsLValue());
 			bool const is_pointer_arithmetic = IsPointerLikeType(operand->GetType());
-			int32 type_size = (int32)operand->GetType()->GetSize();
 			if (is_pointer_arithmetic)
 			{
+				int32 type_size = 0;
+				if (IsPointerType(operand->GetType()))
+				{
+					PointerType const& ptr_type = TypeCast<PointerType>(operand->GetType());
+					type_size = (int32)ptr_type.PointeeType()->GetSize();
+				}
+				else if(IsArrayType(operand->GetType()))
+				{
+					ArrayType const& array_type = TypeCast<ArrayType>(operand->GetType());
+					type_size = (int32)array_type.GetElementType()->GetSize();
+				}
+				LU_ASSERT(type_size);
+
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
 					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
@@ -402,6 +414,7 @@ namespace lucc
 			}
 			else
 			{
+				int32 type_size = (int32)operand->GetType()->GetSize();
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
 					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
@@ -431,9 +444,21 @@ namespace lucc
 		{
 			LU_ASSERT(operand->IsLValue());
 			bool const is_pointer_arithmetic = IsPointerLikeType(operand->GetType());
-			int32 type_size = (int32)operand->GetType()->GetSize();
 			if (is_pointer_arithmetic)
 			{
+				int32 type_size = 0;
+				if (IsPointerType(operand->GetType()))
+				{
+					PointerType const& ptr_type = TypeCast<PointerType>(operand->GetType());
+					type_size = (int32)ptr_type.PointeeType()->GetSize();
+				}
+				else if (IsArrayType(operand->GetType()))
+				{
+					ArrayType const& array_type = TypeCast<ArrayType>(operand->GetType());
+					type_size = (int32)array_type.GetElementType()->GetSize();
+				}
+				LU_ASSERT(type_size);
+
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
 					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
@@ -466,6 +491,7 @@ namespace lucc
 			}
 			else
 			{
+				int32 type_size = (int32)operand->GetType()->GetSize();
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
 					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());

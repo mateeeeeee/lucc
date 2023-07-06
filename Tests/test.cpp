@@ -45,7 +45,6 @@ TEST(Arithmetic, ShiftOperators)
 	EXPECT_EQ(LUCC_EX(return 1 << 3;), 8);
 	EXPECT_EQ(LUCC_EX(return 5 << 1;), 10);
 	EXPECT_EQ(LUCC_EX(return 5 >> 1;), 2);
-	EXPECT_EQ(LUCC_EX(return 5 >> 1;), 2);
 	EXPECT_EQ(LUCC_EX(int i = 1; i <<= 0; return i;), 1);
 	EXPECT_EQ(LUCC_EX(int i = 1; i <<= 3; return i;), 8);
 	EXPECT_EQ(LUCC_EX(int i = 5; i <<= 1; return i;), 10);
@@ -55,20 +54,15 @@ TEST(Arithmetic, ShiftOperators)
 TEST(Arithmetic, BitOperators)
 {
 	EXPECT_EQ(LUCC_EX(return ~-1;), 0);
-	
-	//#todo add x86-64 and, or, xor implementation
-	//EXPECT_EQ(LUCC_EX(return 0 & 1;), 0);
-	//ASSERT(0, 0 & 1);
-	//ASSERT(1, 3 & 1);
-	//ASSERT(3, 7 & 3);
-	//ASSERT(10, -1 & 10);
-	//
-	//ASSERT(1, 0 | 1);
-	//
-	//ASSERT(0, 0 ^ 0);
-	//ASSERT(2, ({ int i = 6; i &= 3; i; }));
-	//ASSERT(7, ({ int i = 6; i |= 3; i; }));
-	//ASSERT(10, ({ int i = 15; i ^= 5; i; }));
+	EXPECT_EQ(LUCC_EX(return 0 & 1;), 0);
+	EXPECT_EQ(LUCC_EX(return 3 & 1;), 1);
+	EXPECT_EQ(LUCC_EX(return 3 & 7;), 3);
+	EXPECT_EQ(LUCC_EX(return 10 & -1;), 10);
+	EXPECT_EQ(LUCC_EX(return 0 | 1;), 1);
+	EXPECT_EQ(LUCC_EX(return 0 ^ 0;), 0);
+	EXPECT_EQ(LUCC_EX(int i = 6; i &= 3; return i;), 2);
+	EXPECT_EQ(LUCC_EX(int i = 6; i |= 3; return i;), 7);
+	EXPECT_EQ(LUCC_EX(int i = 15; i ^= 5; return i;), 10);
 }
 TEST(Arithmetic, PostIncrementDecrement)
 {
@@ -86,6 +80,7 @@ TEST(Arithmetic, Pointers)
 	EXPECT_EQ(LUCC_EX(int x = 3; return *&x;), 3);
 	EXPECT_EQ(LUCC_EX(int x = 3; int* y = &x; int** z = &y; return **z;), 3);
 	EXPECT_EQ(LUCC_EX(int x = 3; int* y = &x; *y = 5; return x;), 5);
+	//EXPECT_EQ(LUCC_EX(int x = 3; int y = 5; *(&x + 1) = 7; return y;), 7);
 	
 	//ASSERT(7, ({ int x = 3; int y = 5; *(&x + 1) = 7; y; }));
 	//ASSERT(7, ({ int x = 3; int y = 5; *(&y - 2 + 1) = 7; x; }));

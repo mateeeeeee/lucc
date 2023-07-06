@@ -285,6 +285,27 @@ namespace lucc
 			}
 			else t.SetKind(TokenKind::amp);
 			break;
+		case '|':
+			if (*cur_ptr == '|')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::pipe_pipe);
+			}
+			else if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::pipe_equal);
+			}
+			else t.SetKind(TokenKind::pipe);
+			break;
+		case '^':
+			if (*cur_ptr == '=')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::caret_equal);
+			}
+			else t.SetKind(TokenKind::caret);
+			break;
 		case '/':
 			if (*cur_ptr == '=')
 			{

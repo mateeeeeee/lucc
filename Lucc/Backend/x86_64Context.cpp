@@ -108,118 +108,118 @@ namespace lucc
 
 	void x86_64CodeGenerator::Context::Imul(register_t dst, register_t src, BitMode bitmode)
 	{
-		Emit<Text>("imul {}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
+		Emit<Text>("imul\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::Imul(register_t dst, char const* mem, BitMode bitmode)
 	{
-		Emit<Text>("imul {}, {} {}", registers[dst.id][bitmode],ConvertToCast(bitmode), mem);
+		Emit<Text>("imul\t{}, {} {}", registers[dst.id][bitmode],ConvertToCast(bitmode), mem);
 	}
 	void x86_64CodeGenerator::Context::Imul(register_t dst, register_t src, int32 value, BitMode bitmode)
 	{
-		Emit<Text>("imul {}, {}, {}", registers[dst.id][bitmode], registers[src.id][bitmode], value);
+		Emit<Text>("imul\t{}, {}, {}", registers[dst.id][bitmode], registers[src.id][bitmode], value);
 	}
 	void x86_64CodeGenerator::Context::Imul(register_t dst, char const* mem, int32 value, BitMode bitmode)
 	{
-		Emit<Text>("imul {}, {} {}, {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem, value);
+		Emit<Text>("imul\t{}, {} {}, {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem, value);
 	}
 
 	void x86_64CodeGenerator::Context::Idiv(register_t dividend, register_t divisor, BitMode bitmode)
 	{
-		Emit<Text>("xor rdx, rdx");
+		Emit<Text>("xor\trdx, rdx");
 		if (dividend.id != DIVIDEND_REGISTER) Mov(register_t(DIVIDEND_REGISTER), dividend, bitmode);
-		Emit<Text>("idiv {}", registers[divisor.id][bitmode]);
+		Emit<Text>("idiv\t{}", registers[divisor.id][bitmode]);
 		if (dividend.id != DIVIDEND_REGISTER) Mov(dividend, register_t(DIVIDEND_REGISTER), bitmode);
 	}
 	void x86_64CodeGenerator::Context::Idiv(register_t dividend, char const* divisor, BitMode bitmode)
 	{
-		Emit<Text>("xor rdx, rdx");
+		Emit<Text>("xor\trdx, rdx");
 		if (dividend.id != DIVIDEND_REGISTER) Mov(register_t(DIVIDEND_REGISTER), dividend, bitmode);
-		Emit<Text>("idiv {} {}", ConvertToCast(bitmode), divisor);
+		Emit<Text>("idiv\t{} {}", ConvertToCast(bitmode), divisor);
 		if (dividend.id != DIVIDEND_REGISTER) Mov(dividend, register_t(DIVIDEND_REGISTER), bitmode);
 	}
 
 	void x86_64CodeGenerator::Context::Shl(register_t dst, uint8 value, BitMode bitmode)
 	{
-		Emit<Text>("shl {}, {}", registers[dst.id][bitmode], value);
+		Emit<Text>("shl\t{}, {}", registers[dst.id][bitmode], value);
 	}
 	void x86_64CodeGenerator::Context::Shl(register_t dst, register_t shift_reg, BitMode bitmode)
 	{
 		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shl {}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
+		Emit<Text>("shl\t{}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
 	}
 	void x86_64CodeGenerator::Context::Shl(char const* mem, uint8 value, BitMode bitmode)
 	{
-		Emit<Text>("shl {} {}, {}", ConvertToCast(bitmode), mem, value);
+		Emit<Text>("shl\t{} {}, {}", ConvertToCast(bitmode), mem, value);
 	}
 	void x86_64CodeGenerator::Context::Shl(char const* mem, register_t shift_reg, BitMode bitmode)
 	{
 		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shl {} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
+		Emit<Text>("shl\t{} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
 	}
 	void x86_64CodeGenerator::Context::Shl(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode)
 	{
-		Emit<Text>("shl {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
+		Emit<Text>("shl\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
 	}
 	void x86_64CodeGenerator::Context::Shl(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode)
 	{
 		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shl {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
+		Emit<Text>("shl\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
 	}
 
 	void x86_64CodeGenerator::Context::Shr(register_t dst, uint8 value, BitMode bitmode)
 	{
-		Emit<Text>("shr {}, {}", registers[dst.id][bitmode], value);
+		Emit<Text>("shr\t{}, {}", registers[dst.id][bitmode], value);
 	}
 	void x86_64CodeGenerator::Context::Shr(register_t dst, register_t shift_reg, BitMode bitmode)
 	{
 		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shr {}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
+		Emit<Text>("shr\t{}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
 	}
 	void x86_64CodeGenerator::Context::Shr(char const* mem, uint8 value, BitMode bitmode)
 	{
-		Emit<Text>("shr {} {}, {}", ConvertToCast(bitmode), mem, value);
+		Emit<Text>("shr\t{} {}, {}", ConvertToCast(bitmode), mem, value);
 	}
 	void x86_64CodeGenerator::Context::Shr(char const* mem, register_t shift_reg, BitMode bitmode)
 	{
 		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shr {} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
+		Emit<Text>("shr\t{} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
 	}
 	void x86_64CodeGenerator::Context::Shr(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode)
 	{
-		Emit<Text>("shr {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
+		Emit<Text>("shr\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
 	}
 	void x86_64CodeGenerator::Context::Shr(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode)
 	{
 		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shr {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
+		Emit<Text>("shr\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
 	}
 
 	void x86_64CodeGenerator::Context::Sar(register_t dst, uint8 value, BitMode bitmode)
 	{
-		Emit<Text>("sar {}, {}", registers[dst.id][bitmode], value);
+		Emit<Text>("sar\t{}, {}", registers[dst.id][bitmode], value);
 	}
 	void x86_64CodeGenerator::Context::Sar(register_t dst, register_t shift_reg, BitMode bitmode)
 	{
 		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("sar {}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
+		Emit<Text>("sar\t{}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
 	}
 	void x86_64CodeGenerator::Context::Sar(char const* mem, uint8 value, BitMode bitmode)
 	{
-		Emit<Text>("sar {} {}, {}", ConvertToCast(bitmode), mem, value);
+		Emit<Text>("sar\t{} {}, {}", ConvertToCast(bitmode), mem, value);
 	}
 	void x86_64CodeGenerator::Context::Sar(char const* mem, register_t shift_reg, BitMode bitmode)
 	{
 		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("sar {} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
+		Emit<Text>("sar\t{} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
 	}
 	void x86_64CodeGenerator::Context::Sar(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode)
 	{
-		Emit<Text>("sar {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
+		Emit<Text>("sar\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
 	}
 	void x86_64CodeGenerator::Context::Sar(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode)
 	{
 		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("sar {} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
+		Emit<Text>("sar\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
 	}
 
 	void x86_64CodeGenerator::Context::Neg(register_t reg, BitMode bitmode)
@@ -230,6 +230,7 @@ namespace lucc
 	{
 		Emit<Text>("neg\t{} {}", ConvertToCast(bitmode), mem);
 	}
+	
 	void x86_64CodeGenerator::Context::Inc(char const* mem, BitMode bitmode)
 	{
 		Emit<Text>("inc\t{} {}", ConvertToCast(bitmode), mem);
@@ -260,101 +261,101 @@ namespace lucc
 
 	void x86_64CodeGenerator::Context::And(register_t dst, register_t src, BitMode bitmode)
 	{
-
+		Emit<Text>("and\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::And(register_t dst, char const* mem, BitMode bitmode)
 	{
-
+		Emit<Text>("and\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
 	}
 	void x86_64CodeGenerator::Context::And(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
 	{
-
+		Emit<Text>("and\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
 	}
 	void x86_64CodeGenerator::Context::And(char const* mem, register_t src, BitMode bitmode)
 	{
-
+		Emit<Text>("and\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::And(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
 	{
-
+		Emit<Text>("and\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::And(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
 	{
-
+		Emit<Text>("and\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
 	}
 	void x86_64CodeGenerator::Context::And(char const* mem, int32 value, BitMode bitmode)
 	{
-
+		Emit<Text>("and\t{} {}, {}", ConvertToCast(bitmode), mem, value);
 	}
 	void x86_64CodeGenerator::Context::And(register_t dst, int32 value, BitMode bitmode)
 	{
-
+		Emit<Text>("and\t{}, {}", registers[dst.id][bitmode], value);
 	}
 
 	void x86_64CodeGenerator::Context::Or(register_t dst, register_t src, BitMode bitmode)
 	{
-
+		Emit<Text>("or\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::Or(register_t dst, char const* mem, BitMode bitmode)
 	{
-
+		Emit<Text>("or\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
 	}
 	void x86_64CodeGenerator::Context::Or(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
 	{
-
+		Emit<Text>("or\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
 	}
 	void x86_64CodeGenerator::Context::Or(char const* mem, register_t src, BitMode bitmode)
 	{
-
+		Emit<Text>("or\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::Or(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
 	{
-
+		Emit<Text>("or\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::Or(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
 	{
-
+		Emit<Text>("or\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
 	}
 	void x86_64CodeGenerator::Context::Or(char const* mem, int32 value, BitMode bitmode)
 	{
-
+		Emit<Text>("or\t{} {}, {}", ConvertToCast(bitmode), mem, value);
 	}
 	void x86_64CodeGenerator::Context::Or(register_t dst, int32 value, BitMode bitmode)
 	{
-
+		Emit<Text>("or\t{}, {}", registers[dst.id][bitmode], value);
 	}
 
 	void x86_64CodeGenerator::Context::Xor(register_t dst, register_t src, BitMode bitmode)
 	{
-
+		Emit<Text>("xor\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::Xor(register_t dst, char const* mem, BitMode bitmode)
 	{
-
+		Emit<Text>("xor\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
 	}
 	void x86_64CodeGenerator::Context::Xor(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
 	{
-
+		Emit<Text>("xor\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
 	}
 	void x86_64CodeGenerator::Context::Xor(char const* mem, register_t src, BitMode bitmode)
 	{
-
+		Emit<Text>("xor\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::Xor(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
 	{
-
+		Emit<Text>("xor\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
 	}
 	void x86_64CodeGenerator::Context::Xor(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
 	{
-
+		Emit<Text>("xor\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
 	}
 	void x86_64CodeGenerator::Context::Xor(char const* mem, int32 value, BitMode bitmode)
 	{
-
+		Emit<Text>("xor\t{} {}, {}", ConvertToCast(bitmode), mem, value);
 	}
 	void x86_64CodeGenerator::Context::Xor(register_t dst, int32 value, BitMode bitmode)
 	{
-
+		Emit<Text>("xor\t{}, {}", registers[dst.id][bitmode], value);
 	}
 
 	void x86_64CodeGenerator::Context::Not(register_t reg, BitMode bitmode)
@@ -436,16 +437,16 @@ namespace lucc
 	}
 	void x86_64CodeGenerator::Context::Movzx(register_t dst, register_t src, BitMode bitmode, bool src_8bit /*= false*/)
 	{
-		Emit<Text>("movzx {}, {}", registers[dst.id][bitmode], registers[src.id][src_8bit ? BitMode_8 : BitMode_16]);
+		Emit<Text>("movzx\t{}, {}", registers[dst.id][bitmode], registers[src.id][src_8bit ? BitMode_8 : BitMode_16]);
 	}
 	void x86_64CodeGenerator::Context::Movzx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit /*= false*/)
 	{
-		Emit<Text>("movzx {}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_8bit ? BitMode_8 : BitMode_16), mem);
+		Emit<Text>("movzx\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_8bit ? BitMode_8 : BitMode_16), mem);
 	}
 	void x86_64CodeGenerator::Context::Movzx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit /*= false*/)
 	{
 		BitMode src_bitmode = src_8bit ? BitMode_8 : BitMode_16;
-		Emit<Text>("movzx {}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_bitmode), ConvertMemRef(mem_ref, src_bitmode));
+		Emit<Text>("movzx\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_bitmode), ConvertMemRef(mem_ref, src_bitmode));
 	}
 	void x86_64CodeGenerator::Context::Lea(register_t reg, char const* mem)
 	{
