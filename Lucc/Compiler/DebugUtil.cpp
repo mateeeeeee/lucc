@@ -29,6 +29,16 @@ void lucc::debug::DebugNodeVisitorAST::Visit(LabelStmtAST const& node, size_t de
 	std::cout << GetIndentation(depth) << "LabelStmtAST \n";
 }
 
+void lucc::debug::DebugNodeVisitorAST::Visit(ContinueStmtAST const& node, size_t depth)
+{
+	std::cout << GetIndentation(depth) << "ContinueStmtAST \n";
+}
+
+void lucc::debug::DebugNodeVisitorAST::Visit(BreakStmtAST const& node, size_t depth)
+{
+	std::cout << GetIndentation(depth) << "BreakStmtAST \n";
+}
+
 void lucc::debug::DebugNodeVisitorAST::Visit(FunctionCallAST const& node, size_t depth)
 {
 	std::cout << GetIndentation(depth) << "FunctionCallAST \n";

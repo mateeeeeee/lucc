@@ -27,6 +27,8 @@ namespace lucc
 	class WhileStmtAST;
 	class ForStmtAST;
 	class ReturnStmtAST;
+	class BreakStmtAST;
+	class ContinueStmtAST;
 	class GotoStmtAST;
 	class LabelStmtAST;
 	class IntLiteralAST;
@@ -48,6 +50,7 @@ namespace lucc
 			std::unique_ptr<SymbolTable> identifier_sym_table;
 			FunctionType const* current_func_type = nullptr;
 			bool return_stmt_encountered = false;
+
 		};
 
 	public:
@@ -108,6 +111,8 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<ForStmtAST> ParseForStatement();
 		[[nodiscard]] std::unique_ptr<ReturnStmtAST> ParseReturnStatement();
 		[[nodiscard]] std::unique_ptr<LabelStmtAST> ParseLabelStatement();
+		[[nodiscard]] std::unique_ptr<BreakStmtAST> ParseBreakStatement();
+		[[nodiscard]] std::unique_ptr<ContinueStmtAST> ParseContinueStatement();
 		[[nodiscard]] std::unique_ptr<GotoStmtAST> ParseGotoStatement();
 
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseInitializer(bool static_init);

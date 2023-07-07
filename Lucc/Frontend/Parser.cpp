@@ -248,10 +248,10 @@ namespace lucc
 		case TokenKind::KW_while: return ParseWhileStatement();
 		case TokenKind::KW_for: return ParseForStatement();
 		//case TokenKind::KW_do: return ParseDoWhileStatement();
-		//case TokenKind::KW_switch: return ParseSwitchStmt();
-		//case TokenKind::KW_continue: return ParseContinueStmt();
-		//case TokenKind::KW_break: return ParseBreakStmt();
+		case TokenKind::KW_continue: return ParseContinueStatement();
+		case TokenKind::KW_break: return ParseBreakStatement();
 		case TokenKind::KW_return: return ParseReturnStatement();
+		//case TokenKind::KW_switch: return ParseSwitchStmt();
 		//case TokenKind::KW_case: return ParseCaseStmt();
 		//case TokenKind::KW_default: return ParseCaseStmt();
 		default:
@@ -373,6 +373,22 @@ namespace lucc
 	std::unique_ptr<LabelStmtAST> Parser::ParseLabelStatement()
 	{
 		return nullptr;
+	}
+
+	std::unique_ptr<BreakStmtAST> Parser::ParseBreakStatement()
+	{
+		Expect(TokenKind::KW_break);
+		Expect(TokenKind::semicolon);
+		//check if inside loop or switch
+		return std::make_unique<BreakStmtAST>();
+	}
+
+	std::unique_ptr<ContinueStmtAST> Parser::ParseContinueStatement()
+	{
+		Expect(TokenKind::KW_continue);
+		Expect(TokenKind::semicolon);
+		//check if inside loop
+		return std::make_unique<ContinueStmtAST>();
 	}
 
 	std::unique_ptr<GotoStmtAST> Parser::ParseGotoStatement()

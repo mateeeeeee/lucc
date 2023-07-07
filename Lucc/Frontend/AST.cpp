@@ -1139,6 +1139,16 @@ namespace lucc
 		}
 		else LU_ASSERT(false);
 	}
+
+	void BreakStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		ctx.Jmp(label_name.c_str());
+	}
+
+	void ContinueStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		ctx.Jmp(label_name.c_str());
+	}
 }
 
 

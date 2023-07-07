@@ -1,6 +1,4 @@
-
-
 int main(void)
 {
-	const int i = 0; i = 5;  return i;
+	int i = 0; int j = 0; while (i <= 10) { j = i + j; i = i + 1; } return j;
 }

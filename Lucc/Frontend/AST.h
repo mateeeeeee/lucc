@@ -34,6 +34,8 @@ namespace lucc
 	class ReturnStmtAST;
 	class GotoStmtAST;
 	class LabelStmtAST;
+	class BreakStmtAST;
+	class ContinueStmtAST;
 
 	class DeclAST;
 	class VarDeclAST;
@@ -67,6 +69,8 @@ namespace lucc
 		virtual void Visit(ReturnStmtAST const& node, size_t depth) {}
 		virtual void Visit(GotoStmtAST const& node, size_t depth) {}
 		virtual void Visit(LabelStmtAST const& node, size_t depth) {}
+		virtual void Visit(BreakStmtAST const& node, size_t depth) {}
+		virtual void Visit(ContinueStmtAST const& node, size_t depth) {}
 		virtual void Visit(DeclAST const& node, size_t depth) {}
 		virtual void Visit(VarDeclAST const& node, size_t depth) {}
 		virtual void Visit(FunctionDeclAST const& node, size_t depth) {}
@@ -209,7 +213,9 @@ namespace lucc
 		For,
 		Return,
 		Goto,
-		Label
+		Label,
+		Break,
+		Continue
 	};
 	class StmtAST : public NodeAST
 	{
@@ -359,6 +365,40 @@ namespace lucc
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetName() const { return label_name; }
+
+	private:
+		std::string label_name;
+	};
+
+	class BreakStmtAST final : public StmtAST
+	{
+	public:
+		BreakStmtAST() : StmtAST(StmtKind::Break) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override
+		{
+			visitor.Visit(*this, depth);
+		}
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+		void SetLabel(char const* label) { label_name = label; }
+
+	private:
+		std::string label_name;
+	};
+
+	class ContinueStmtAST final : public StmtAST
+	{
+	public:
+		ContinueStmtAST() : StmtAST(StmtKind::Continue) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override
+		{
+			visitor.Visit(*this, depth);
+		}
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+		void SetLabel(char const* label) { label_name = label; }
 
 	private:
 		std::string label_name;

@@ -130,6 +130,8 @@ namespace lucc
 			virtual void Visit(ReturnStmtAST const& node, size_t depth) override;
 			virtual void Visit(GotoStmtAST const& node, size_t depth) override;
 			virtual void Visit(LabelStmtAST const& node, size_t depth) override;
+			virtual void Visit(BreakStmtAST const& node, size_t depth) override;
+			virtual void Visit(ContinueStmtAST const& node, size_t depth) override;
 		};
 	}
 }
