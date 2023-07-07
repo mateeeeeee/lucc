@@ -2,6 +2,7 @@
 #include "Diagnostics.h"
 #include "Core/Defines.h"
 
+
 namespace lucc
 {
 	inline int32 AlignTo(int32 n, int32 align) { return (n + align - 1) / align * align; }
@@ -137,8 +138,9 @@ namespace lucc
 			param->SetLocalOffset(-bottom);
 		}
 
-		for (VarDeclAST const* local_var : local_variables)
+		for (auto it = local_variables.rbegin(); it != local_variables.rend(); ++it)
 		{
+			VarDeclAST const* local_var = *it;
 			int32 alignment = (int32)local_var->GetSymbol().qtype->GetAlign();
 			bottom += (int32)local_var->GetSymbol().qtype->GetSize();
 			bottom = AlignTo(bottom, alignment);
@@ -279,13 +281,21 @@ namespace lucc
 		{
 			if (init_expr)
 			{
-				size_t type_size = sym.qtype->GetSize();
-				register_t init_reg = return_reg ? *return_reg : ctx.AllocateRegister();
-				init_expr->Codegen(ctx, init_reg);
 				LU_ASSERT(local_offset != 0);
+				size_t type_size = sym.qtype->GetSize();
 				mem_ref_t mem_ref{ .base_reg = ctx.GetStackFrameRegister(), .displacement = local_offset };
-				ctx.Mov(mem_ref, init_reg, ConvertToBitMode(type_size));
-				if (!return_reg) ctx.FreeRegister(init_reg);
+				if (init_expr->GetExprKind() == ExprKind::IntLiteral)
+				{
+					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(init_expr.get());
+					ctx.Mov(mem_ref, (int32)int_literal->GetValue(), ConvertToBitMode(type_size));
+				}
+				else
+				{
+					register_t init_reg = return_reg ? *return_reg : ctx.AllocateRegister();
+					init_expr->Codegen(ctx, init_reg);
+					ctx.Mov(mem_ref, init_reg, ConvertToBitMode(type_size));
+					if (!return_reg) ctx.FreeRegister(init_reg);
+				}
 			}
 			return;
 		}
@@ -317,7 +327,7 @@ namespace lucc
 						ctx.DeclareVariable(name.c_str(), is_static, ConvertToBitMode(type_size), &value);
 					}
 				}
-				ctx.DeclareVariable(name.c_str(), is_static, ConvertToBitMode(type_size));
+				else ctx.DeclareVariable(name.c_str(), is_static, ConvertToBitMode(type_size));
 			}
 		}
 	}
@@ -435,6 +445,14 @@ namespace lucc
 						if (return_reg) ctx.Mov(*return_reg, mem_ref, bitmode);
 					}
 				}
+				else if (operand->GetExprKind() == ExprKind::Unary && return_reg)
+				{
+					UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(operand.get());
+					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
+					unary_expr->Codegen(ctx, return_reg);
+					if (op == UnaryExprKind::PreIncrement) ctx.Inc(*return_reg, bitmode);
+					else ctx.Dec(*return_reg, bitmode);
+				}
 				else LU_ASSERT(false);
 			}
 		}
@@ -512,6 +530,14 @@ namespace lucc
 						else ctx.Dec(mem_ref, bitmode);
 					}
 					
+				}
+				else if (operand->GetExprKind() == ExprKind::Unary && return_reg)
+				{
+					UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(operand.get());
+					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
+					unary_expr->Codegen(ctx, return_reg);
+					if (op == UnaryExprKind::PreIncrement) ctx.Inc(*return_reg, bitmode);
+					else ctx.Dec(*return_reg, bitmode);
 				}
 				else LU_ASSERT(false);
 			}
@@ -668,22 +694,31 @@ namespace lucc
 			if (is_pointer_arithmetic)
 			{
 				LU_ASSERT(kind == BinaryExprKind::Add || kind == BinaryExprKind::Subtract);
-				if (kind == BinaryExprKind::Add) LU_ASSERT(!lhs_is_pointer || !rhs_is_pointer);
-
+				
 				register_t tmp_reg = ctx.AllocateRegister();
-				if (lhs_is_pointer)
+				if (lhs_is_pointer && rhs_is_pointer)
 				{
-					auto decayed_type = ValueTransformation(lhs->GetType());
+					LU_ASSERT(kind == BinaryExprKind::Subtract);
 					lhs->Codegen(ctx, *return_reg);
 					rhs->Codegen(ctx, tmp_reg);
-					ctx.Imul(tmp_reg, tmp_reg, (int32)decayed_type->GetSize(), bitmode);
+				}
+				else if (lhs_is_pointer)
+				{
+					QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
+					LU_ASSERT(IsPointerType(decayed_type));
+					PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+					lhs->Codegen(ctx, *return_reg);
+					rhs->Codegen(ctx, tmp_reg);
+					ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
 				}
 				else
 				{
-					auto decayed_type = ValueTransformation(rhs->GetType());
+					QualifiedType const& decayed_type = ValueTransformation(rhs->GetType());
+					LU_ASSERT(IsPointerType(decayed_type));
+					PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
 					rhs->Codegen(ctx, *return_reg);
 					lhs->Codegen(ctx, tmp_reg);
-					ctx.Imul(tmp_reg, tmp_reg, (int32)decayed_type->GetSize(), bitmode);
+					ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
 				}
 
 				switch (kind)
@@ -691,6 +726,7 @@ namespace lucc
 				case BinaryExprKind::Add:		ctx.Add(*return_reg, tmp_reg, bitmode); break;
 				case BinaryExprKind::Subtract:  ctx.Sub(*return_reg, tmp_reg, bitmode); break;
 				}
+				ctx.FreeRegister(tmp_reg);
 			}
 			else
 			{

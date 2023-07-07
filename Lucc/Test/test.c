@@ -2,5 +2,11 @@
 
 int main(void)
 {
-	int x; int* p = &x; return p + 20 - p;
+	int a[3];
+	a[0] = 0;
+	a[1] = 1;
+	a[2] = 2;
+	int* p = a + 1;
+	++* p;
+	return *p;
 }

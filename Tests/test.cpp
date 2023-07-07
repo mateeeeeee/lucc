@@ -80,10 +80,9 @@ TEST(Arithmetic, Pointers)
 	EXPECT_EQ(LUCC_EX(int x = 3; return *&x;), 3);
 	EXPECT_EQ(LUCC_EX(int x = 3; int* y = &x; int** z = &y; return **z;), 3);
 	EXPECT_EQ(LUCC_EX(int x = 3; int* y = &x; *y = 5; return x;), 5);
-	//EXPECT_EQ(LUCC_EX(int x = 3; int y = 5; *(&x + 1) = 7; return y;), 7);
+	EXPECT_EQ(LUCC_EX(int x = 3; int y = 5; *(&x + 1) = 7; return y;), 7);
+	EXPECT_EQ(LUCC_EX(int x = 3; int y = 5; *(&y - 2 + 1) = 7; return x;), 7);
 	
-	//ASSERT(7, ({ int x = 3; int y = 5; *(&x + 1) = 7; y; }));
-	//ASSERT(7, ({ int x = 3; int y = 5; *(&y - 2 + 1) = 7; x; }));
 	//ASSERT(5, ({ int x = 3; (&x + 2) - &x + 3; }));
 
 	//ASSERT(20, ({ int x; int* p = &x; p + 20 - p; }));
@@ -154,8 +153,7 @@ TEST(Iteration, For)
 TEST(Iteration, While)
 {
 	EXPECT_EQ(LUCC_EX(int i = 0; while (i < 10) i = i + 1; return i;), 10);
-	//ASSERT(10, ({ int i = 0; while (i < 10) i = i + 1; i; }));
-	//ASSERT(55, ({ int i = 0; int j = 0; while (i <= 10) { j = i + j; i = i + 1; } j; }));
+	EXPECT_EQ(LUCC_EX(int i = 0; int j = 0; while (i <= 10) { j = i + j; i = i + 1; } return j;), 55);
 	//ASSERT(4, ({ int i = 0; while (1) { if (i++ == 3) break; } i; }));
 	//ASSERT(4, ({ int i = 0; while (1) { while (1) break; if (i++ == 3) break; } i; }));
 	//ASSERT(11, ({ int i = 0; int j = 0; while (i++ < 10) { if (i > 5) continue; j++; } i; }));
