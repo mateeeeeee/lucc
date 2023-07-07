@@ -13,8 +13,6 @@ void lucc::debug::PrintTokens(char const* name, std::vector<Token> const& tokens
 	{
 		std::cout << "Type: " << GetTokenName(token.GetKind()) << "\t";
 		std::cout << "Value: " << token.GetIdentifier() << "\t";
-		//auto const& loc = token.GetLocation();
-		//std::cout << "Location: " << loc.filename << ", line: " << loc.line << ", column: " << loc.column;
 		std::cout << "\n";
 	}
 	std::cout << "\n\n";

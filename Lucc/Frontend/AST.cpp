@@ -445,15 +445,22 @@ namespace lucc
 						if (return_reg) ctx.Mov(*return_reg, mem_ref, bitmode);
 					}
 				}
-				else if (operand->GetExprKind() == ExprKind::Unary && return_reg)
+				else if (operand->GetExprKind() == ExprKind::Unary) //#todo fix this
 				{
 					UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(operand.get());
 					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
-					unary_expr->Codegen(ctx, return_reg);
-					if (op == UnaryExprKind::PreIncrement) ctx.Inc(*return_reg, bitmode);
-					else ctx.Dec(*return_reg, bitmode);
+					ExprAST* dereference_operand = unary_expr->GetOperand();
+
+					register_t address_reg = ctx.AllocateRegister();
+					dereference_operand->Codegen(ctx, address_reg);
+					mem_ref_t mem_ref{ .base_reg = address_reg };
+					
+					if (op == UnaryExprKind::PreIncrement) ctx.Inc(mem_ref, bitmode);
+					else ctx.Dec(mem_ref, bitmode);
+					if (return_reg) ctx.Mov(*return_reg, mem_ref, bitmode);
+					ctx.FreeRegister(address_reg);
 				}
-				else LU_ASSERT(false);
+				else LU_ASSERT(false); 
 			}
 		}
 		return;
@@ -531,13 +538,19 @@ namespace lucc
 					}
 					
 				}
-				else if (operand->GetExprKind() == ExprKind::Unary && return_reg)
+				else if (operand->GetExprKind() == ExprKind::Unary)
 				{
 					UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(operand.get());
 					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
-					unary_expr->Codegen(ctx, return_reg);
-					if (op == UnaryExprKind::PreIncrement) ctx.Inc(*return_reg, bitmode);
-					else ctx.Dec(*return_reg, bitmode);
+					ExprAST* dereference_operand = unary_expr->GetOperand();
+
+					register_t address_reg = ctx.AllocateRegister();
+					dereference_operand->Codegen(ctx, address_reg);
+					mem_ref_t mem_ref{ .base_reg = address_reg };
+					if (return_reg) ctx.Mov(*return_reg, mem_ref, bitmode);
+					if (op == UnaryExprKind::PreIncrement) ctx.Inc(mem_ref, bitmode);
+					else ctx.Dec(mem_ref, bitmode);
+					ctx.FreeRegister(address_reg);
 				}
 				else LU_ASSERT(false);
 			}

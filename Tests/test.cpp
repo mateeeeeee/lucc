@@ -93,17 +93,15 @@ TEST(Arithmetic, Pointers)
 }
 TEST(Arithmetic, Arrays)
 {
-	//ASSERT(2, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; ++* p; }));
-	//ASSERT(0, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; --* p; }));
-	//
-	//ASSERT(1, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; *p++; }));
-	//ASSERT(1, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; *p--; }));
-	//
-	//ASSERT(0, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; a[0]; }));
-	//ASSERT(0, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*(p--))--; a[1]; }));
-	//ASSERT(2, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p)--; a[2]; }));
+	EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; return ++*p;), 2);
+	EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; return *p++;), 1);
+	EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; return --*p;), 0);
+	EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; return *p--;), 1);
+	EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p)--; return a[2];), 2);
+
+	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[0];), 0);
+	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*(p--))--; return a[1];), 0);
 	//ASSERT(2, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p)--; p++; *p; }));
-	//
 	//ASSERT(0, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; a[0]; }));
 	//ASSERT(0, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; a[1]; }));
 	//ASSERT(2, ({ int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; a[2]; }));
@@ -253,7 +251,7 @@ TEST(Misc, Conversion)
 }
 TEST(Misc, Const)
 {
-
+	EXPECT_EQ(LUCC_EX(const int i = 0; i = 5;  return i;), COMPILATION_FAILED);
 }
 TEST(Misc, Constexpr)
 {
