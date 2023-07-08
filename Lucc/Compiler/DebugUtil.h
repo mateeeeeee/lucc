@@ -126,6 +126,7 @@ namespace lucc
 			virtual void Visit(TypedefDeclAST const& node, size_t depth) override;
 			virtual void Visit(IfStmtAST const& node, size_t depth) override;
 			virtual void Visit(WhileStmtAST const& node, size_t depth) override;
+			virtual void Visit(DoWhileStmtAST const& node, size_t depth) override;
 			virtual void Visit(ForStmtAST const& node, size_t depth) override;
 			virtual void Visit(ReturnStmtAST const& node, size_t depth) override;
 			virtual void Visit(GotoStmtAST const& node, size_t depth) override;

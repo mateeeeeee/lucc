@@ -247,10 +247,11 @@ namespace lucc
 		case TokenKind::KW_if: return ParseIfStatement();
 		case TokenKind::KW_while: return ParseWhileStatement();
 		case TokenKind::KW_for: return ParseForStatement();
-		//case TokenKind::KW_do: return ParseDoWhileStatement();
+		case TokenKind::KW_do: return ParseDoWhileStatement();
 		case TokenKind::KW_continue: return ParseContinueStatement();
 		case TokenKind::KW_break: return ParseBreakStatement();
 		case TokenKind::KW_return: return ParseReturnStatement();
+		case TokenKind::KW_goto: return ParseReturnStatement();
 		//case TokenKind::KW_switch: return ParseSwitchStmt();
 		//case TokenKind::KW_case: return ParseCaseStmt();
 		//case TokenKind::KW_default: return ParseCaseStmt();
@@ -312,6 +313,21 @@ namespace lucc
 		ctx.continue_callback_stack.pop_back();
 		return while_stmt;
 	}
+	//<dowhile - statement> ::= do <statement> while ( <expression> ) ;
+	std::unique_ptr<DoWhileStmtAST> Parser::ParseDoWhileStatement()
+	{
+		Expect(TokenKind::KW_do);
+		std::unique_ptr<DoWhileStmtAST> dowhile_stmt = std::make_unique<DoWhileStmtAST>();
+		ctx.break_callback_stack.push_back([&](BreakStmtAST* break_stmt) { dowhile_stmt->AddBreakStmt(break_stmt); });
+		ctx.continue_callback_stack.push_back([&](ContinueStmtAST* continue_stmt) { dowhile_stmt->AddContinueStmt(continue_stmt); });
+		dowhile_stmt->SetBody(ParseStatement());
+		Expect(TokenKind::KW_while);
+		dowhile_stmt->SetCondition(ParseParenthesizedExpression());
+		Expect(TokenKind::semicolon);
+		ctx.break_callback_stack.pop_back();
+		ctx.continue_callback_stack.pop_back();
+		return dowhile_stmt;
+	}
 
 	//<for - statement> ::= for ( {<init>}? ; {<expression>}? ; {<expression>}? ) <statement>
 	std::unique_ptr<ForStmtAST> Parser::ParseForStatement()
@@ -367,11 +383,6 @@ namespace lucc
 		return std::make_unique<ReturnStmtAST>(std::move(ret_expr_stmt));
 	}
 
-	std::unique_ptr<LabelStmtAST> Parser::ParseLabelStatement()
-	{
-		return nullptr;
-	}
-
 	std::unique_ptr<BreakStmtAST> Parser::ParseBreakStatement()
 	{
 		Expect(TokenKind::KW_break);
@@ -394,6 +405,16 @@ namespace lucc
 
 	std::unique_ptr<GotoStmtAST> Parser::ParseGotoStatement()
 	{
+		Expect(TokenKind::KW_goto);
+		std::unique_ptr<IdentifierAST> label_identifier = ParseIdentifier();
+		std::unique_ptr<GotoStmtAST> goto_stmt = std::make_unique<GotoStmtAST>(label_identifier->GetName());
+		Expect(TokenKind::semicolon);
+		return goto_stmt;
+	}
+
+	std::unique_ptr<LabelStmtAST> Parser::ParseLabelStatement()
+	{
+		//check if token is identifier and is before ":"
 		return nullptr;
 	}
 
@@ -831,11 +852,6 @@ namespace lucc
 		}
 		case TokenKind::plus_plus:
 		{
-			if (IsPointerType(expr->GetType()))
-			{
-				Report(diag::pointer_type_unary_expression_invalid);
-				return nullptr;
-			}
 			++current_token;
 			std::unique_ptr<UnaryExprAST> post_inc_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostIncrement, loc);
 			post_inc_expr->SetOperand(std::move(expr));
@@ -843,11 +859,6 @@ namespace lucc
 		}
 		case TokenKind::minus_minus:
 		{
-			if (IsPointerLikeType(expr->GetType()))
-			{
-				Report(diag::pointer_type_unary_expression_invalid);
-				return nullptr;
-			}
 			++current_token;
 			std::unique_ptr<UnaryExprAST> post_dec_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::PostDecrement, loc);
 			post_dec_expr->SetOperand(std::move(expr));

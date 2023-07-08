@@ -26,6 +26,7 @@ namespace lucc
 	class CompoundStmtAST;
 	class IfStmtAST;
 	class WhileStmtAST;
+	class DoWhileStmtAST;
 	class ForStmtAST;
 	class ReturnStmtAST;
 	class BreakStmtAST;
@@ -114,6 +115,7 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<CompoundStmtAST> ParseCompoundStatement();
 		[[nodiscard]] std::unique_ptr<IfStmtAST> ParseIfStatement();
 		[[nodiscard]] std::unique_ptr<WhileStmtAST> ParseWhileStatement();
+		[[nodiscard]] std::unique_ptr<DoWhileStmtAST> ParseDoWhileStatement();
 		[[nodiscard]] std::unique_ptr<ForStmtAST> ParseForStatement();
 		[[nodiscard]] std::unique_ptr<ReturnStmtAST> ParseReturnStatement();
 		[[nodiscard]] std::unique_ptr<LabelStmtAST> ParseLabelStatement();

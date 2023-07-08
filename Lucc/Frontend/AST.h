@@ -30,6 +30,7 @@ namespace lucc
 	class NullStmtAST;
 	class IfStmtAST;
 	class WhileStmtAST;
+	class DoWhileStmtAST;
 	class ForStmtAST;
 	class ReturnStmtAST;
 	class GotoStmtAST;
@@ -65,6 +66,7 @@ namespace lucc
 		virtual void Visit(NullStmtAST const& node, size_t depth) {}
 		virtual void Visit(IfStmtAST const& node, size_t depth) {}
 		virtual void Visit(WhileStmtAST const& node, size_t depth) {}
+		virtual void Visit(DoWhileStmtAST const& node, size_t depth) {}
 		virtual void Visit(ForStmtAST const& node, size_t depth) {}
 		virtual void Visit(ReturnStmtAST const& node, size_t depth) {}
 		virtual void Visit(GotoStmtAST const& node, size_t depth) {}
@@ -210,6 +212,7 @@ namespace lucc
 		Null,
 		If,
 		While,
+		DoWhile,
 		For,
 		Return,
 		Goto,
@@ -330,6 +333,38 @@ namespace lucc
 		std::vector<ContinueStmtAST*> continue_stmts;
 		std::vector<BreakStmtAST*> break_stmts;
 	};
+	class DoWhileStmtAST final : public StmtAST
+	{
+	public:
+		DoWhileStmtAST() : StmtAST(StmtKind::DoWhile) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
+		{
+			condition = std::move(_condition);
+		}
+		void SetBody(std::unique_ptr<StmtAST>&& _body_stmt)
+		{
+			body_stmt = std::move(_body_stmt);
+		}
+
+		void AddContinueStmt(ContinueStmtAST* continue_stmt)
+		{
+			continue_stmts.push_back(continue_stmt);
+		}
+		void AddBreakStmt(BreakStmtAST* break_stmt)
+		{
+			break_stmts.push_back(break_stmt);
+		}
+
+	private:
+		std::unique_ptr<ExprAST> condition;
+		std::unique_ptr<StmtAST> body_stmt;
+		std::vector<ContinueStmtAST*> continue_stmts;
+		std::vector<BreakStmtAST*> break_stmts;
+	};
 	class ForStmtAST final : public StmtAST
 	{
 	public:
@@ -387,11 +422,11 @@ namespace lucc
 	class GotoStmtAST final : public StmtAST
 	{
 	public:
-		GotoStmtAST(std::string_view label) : StmtAST(StmtKind::Goto), goto_label(label) {}
+		explicit GotoStmtAST(std::string_view label) : StmtAST(StmtKind::Goto), goto_label(label) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
-		std::string_view GetName() const { return goto_label; }
+		std::string_view GetLabel() const { return goto_label; }
 
 	private:
 		std::string goto_label;
