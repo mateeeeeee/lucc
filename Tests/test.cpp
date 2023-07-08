@@ -140,10 +140,8 @@ TEST(Control, TernaryOperator)
 TEST(Iteration, For)
 {
 	EXPECT_EQ(LUCC_EX(int i = 0; int j = 0; for (i = 0; i <= 10; i = i + 1) j = i + j; return j;), 55);
-	//ASSERT(55, ({ int j = 0; for (int i = 0; i <= 10; i = i + 1) j = j + i; j; }));
-	//ASSERT(3, ({ int i = 3; int j = 0; for (int i = 0; i <= 10; i = i + 1) j = j + i; i; }));
-	//ASSERT(3, ({ int i = 0; for (; i < 10; i++) { if (i == 3) break; } i; }));
-	//ASSERT(3, ({ int i = 0; for (; i < 10; i++) { for (;;) break; if (i == 3) break; } i; }));
+	EXPECT_EQ(LUCC_EX(int i = 0; for (; i < 10; i++) { if (i == 3) break; } return i;), 3);
+	EXPECT_EQ(LUCC_EX(int i = 0; for (; i < 10; i++) { for (;;) break; if (i == 3) break; } return i;), 3);
 	//ASSERT(10, ({ int i = 0; int j = 0; for (; i < 10; i++) { if (i > 5) continue; j++; } i; }));
 	//ASSERT(6, ({ int i = 0; int j = 0; for (; i < 10; i++) { if (i > 5) continue; j++; } j; }));
 	//ASSERT(10, ({ int i = 0; int j = 0; for (; !i;) { for (; j != 10; j++) continue; break; } j; }));
@@ -152,11 +150,10 @@ TEST(Iteration, While)
 {
 	EXPECT_EQ(LUCC_EX(int i = 0; while (i < 10) i = i + 1; return i;), 10);
 	EXPECT_EQ(LUCC_EX(int i = 0; int j = 0; while (i <= 10) { j = i + j; i = i + 1; } return j;), 55);
-	//ASSERT(4, ({ int i = 0; while (1) { if (i++ == 3) break; } i; }));
-	//ASSERT(4, ({ int i = 0; while (1) { while (1) break; if (i++ == 3) break; } i; }));
-	//ASSERT(11, ({ int i = 0; int j = 0; while (i++ < 10) { if (i > 5) continue; j++; } i; }));
-	//ASSERT(5, ({ int i = 0; int j = 0; while (i++ < 10) { if (i > 5) continue; j++; } j; }));
-	//ASSERT(11, ({ int i = 0; int j = 0; while (!i) { while (j++ != 10) continue; break; } j; }));
+	EXPECT_EQ(LUCC_EX(int i = 0; while (1) { if (i++ == 3) break; } return i), 4);
+	EXPECT_EQ(LUCC_EX(int i = 0; while (1) { while (1) break; if (i++ == 3) break; } return i;), 4);
+	EXPECT_EQ(LUCC_EX(int i = 0; int j = 0; while (i++ < 10) { if (i > 5) continue; j++; } return i;), 11);
+	EXPECT_EQ(LUCC_EX(int i = 0; int j = 0; while (i++ < 10) { if (i > 5) continue; j++; } return j;), 5);
 }
 TEST(Iteration, DoWhile)
 {

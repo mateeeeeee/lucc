@@ -8,7 +8,7 @@ namespace lucc
 {
 	void operator<<(std::ostream& os, x86_64CodeGenerator::OutputBuffer const& buff)
 	{
-		os << buff.preamble << "\n";
+		os << buff.no_segment << "\n";
 		os << buff.data_segment << "\n";
 		os << buff.text_segment << "\nend\n";
 	}

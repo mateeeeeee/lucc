@@ -1,4 +1,4 @@
 int main(void)
 {
-	int i = 0; int j = 0; while (i <= 10) { j = i + j; i = i + 1; } return j;
+	int i = 0; int j = 0; for (; i < 3; i++) { if (i > 1) continue; j++; } return i;
 }

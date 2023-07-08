@@ -12,7 +12,7 @@ namespace lucc
 
 		struct OutputBuffer
 		{
-			std::string preamble;
+			std::string no_segment;
 			std::string data_segment;
 			std::string text_segment;
 		};

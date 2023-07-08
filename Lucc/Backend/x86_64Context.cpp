@@ -11,10 +11,10 @@ namespace lucc
 	}
 
 	//registers
-	register_t x86_64CodeGenerator::Context::AllocateFunctionArgumentRegister(size_t arg_index)
+	register_t x86_64CodeGenerator::Context::AllocateFunctionArgumentRegister(uint16 arg_index)
 	{
 		LU_ASSERT_MSG(arg_index < FUNC_ARGS_COUNT_IN_REGISTERS, "Maximum of 4 parameters are passed in registers!");
-		size_t const i = FUNC_ARG_REG_MAPPING[arg_index];
+		uint16 const i = FUNC_ARG_REG_MAPPING[arg_index];
 		if (free_registers[i])
 		{
 			free_registers[i] = false;
@@ -35,7 +35,7 @@ namespace lucc
 	}
 	register_t x86_64CodeGenerator::Context::AllocateRegister()
 	{
-		for (size_t i = 0; i < GP_REG_COUNT; ++i)
+		for (uint16 i = 0; i < GP_REG_COUNT; ++i)
 		{
 			if (free_registers[i])
 			{
@@ -46,7 +46,7 @@ namespace lucc
 		LU_ASSERT_MSG(false, "Register spilling not implemented yet");
 		return INVALID_REG;
 	}
-	register_t x86_64CodeGenerator::Context::GetFunctionArgumentRegister(size_t arg_index)
+	register_t x86_64CodeGenerator::Context::GetFunctionArgumentRegister(uint16 arg_index)
 	{
 		return register_t(FUNC_ARG_REG_MAPPING[arg_index]);
 	}
@@ -458,13 +458,13 @@ namespace lucc
 	}
 
 	//control
-	void x86_64CodeGenerator::Context::Label(char const* label)
+	void x86_64CodeGenerator::Context::Label(char const* label, uint64 label_id)
 	{
 		Emit<Text>("{}{}: ", label, label_id);
 	}
-	void x86_64CodeGenerator::Context::GenerateLabelId()
+	uint64 x86_64CodeGenerator::Context::GenerateLabelId()
 	{
-		label_id = GenerateUniqueInteger();
+		return GenerateUniqueInteger();
 	}
 	void x86_64CodeGenerator::Context::Cmp(register_t reg, int64 value, BitMode bitmode)
 	{
@@ -514,7 +514,7 @@ namespace lucc
 		case Condition::LessEqual:	   Emit<Text>("setle  {}", mem);  break;
 		}
 	}
-	void x86_64CodeGenerator::Context::Jmp(char const* label, Condition cond /*= Condition::Unconditional*/)
+	void x86_64CodeGenerator::Context::Jmp(char const* label, uint64 label_id, Condition cond)
 	{
 		switch (cond)
 		{
@@ -603,13 +603,13 @@ namespace lucc
 	{
 		std::string output = std::vformat(fmt, std::make_format_args(std::forward<Ts>(args)...));
 		output += "\n";
-		if		constexpr (segment == x86_64CodeGenerator::Context::SegmentType::None)	output_buffer.preamble += output;
+		if		constexpr (segment == x86_64CodeGenerator::Context::SegmentType::None)	 output_buffer.no_segment += output;
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Data)	 output_buffer.data_segment += output;
 		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Text)	 output_buffer.text_segment += output;
 	}
-	size_t x86_64CodeGenerator::Context::GenerateUniqueInteger()
+	uint64 x86_64CodeGenerator::Context::GenerateUniqueInteger()
 	{
-		static size_t i = 0;
+		static uint64 i = 0;
 		return ++i;
 	}
 	std::string x86_64CodeGenerator::Context::ConvertMemRef(mem_ref_t const& args, BitMode mode)

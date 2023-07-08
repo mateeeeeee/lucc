@@ -292,17 +292,10 @@ namespace lucc
 	std::unique_ptr<IfStmtAST> Parser::ParseIfStatement()
 	{
 		Expect(TokenKind::KW_if);
-		std::unique_ptr<ExprAST> condition = ParseParenthesizedExpression();
-
-		std::unique_ptr<IfStmtAST> if_stmt;
-		std::unique_ptr<StmtAST> then_stmt = ParseStatement();
-		if_stmt = std::make_unique<IfStmtAST>(std::move(condition), std::move(then_stmt));
-		if (Consume(TokenKind::KW_else))
-		{
-			std::unique_ptr<StmtAST> else_stmt = ParseStatement();
-			if_stmt->AddElseStatement(std::move(else_stmt));
-		}
-
+		std::unique_ptr<IfStmtAST> if_stmt = std::make_unique<IfStmtAST>();
+		if_stmt->SetCondition(ParseParenthesizedExpression());
+		if_stmt->SetThenStatement(ParseStatement());
+		if (Consume(TokenKind::KW_else)) if_stmt->SetElseStatement(ParseStatement());
 		return if_stmt;
 	}
 
@@ -310,9 +303,14 @@ namespace lucc
 	std::unique_ptr<WhileStmtAST> Parser::ParseWhileStatement()
 	{
 		Expect(TokenKind::KW_while);
-		std::unique_ptr<ExprAST> condition = ParseParenthesizedExpression();
-		std::unique_ptr<StmtAST> body = ParseStatement();
-		return std::make_unique<WhileStmtAST>(std::move(condition), std::move(body));
+		std::unique_ptr<WhileStmtAST> while_stmt = std::make_unique<WhileStmtAST>();
+		ctx.break_callback_stack.push_back([&](BreakStmtAST* break_stmt) { while_stmt->AddBreakStmt(break_stmt); });
+		ctx.continue_callback_stack.push_back([&](ContinueStmtAST* continue_stmt) { while_stmt->AddContinueStmt(continue_stmt); });
+		while_stmt->SetCondition(ParseParenthesizedExpression());
+		while_stmt->SetBody(ParseStatement());
+		ctx.break_callback_stack.pop_back();
+		ctx.continue_callback_stack.pop_back();
+		return while_stmt;
 	}
 
 	//<for - statement> ::= for ( {<init>}? ; {<expression>}? ; {<expression>}? ) <statement>
@@ -320,35 +318,34 @@ namespace lucc
 	{
 		Expect(TokenKind::KW_for);
 		Expect(TokenKind::left_round);
+		std::unique_ptr<ForStmtAST> for_stmt = std::make_unique<ForStmtAST>();
 
 		std::unique_ptr<StmtAST> init = nullptr;
 		if (IsType())
 		{
 			std::vector<std::unique_ptr<DeclAST>> decl = ParseDeclaration();
-			init = std::make_unique<DeclStmtAST>(std::move(decl));
+			for_stmt->SetInit(std::make_unique<DeclStmtAST>(std::move(decl)));
 		}
-		else init = ParseExpressionStatement();
+		else for_stmt->SetInit(ParseExpressionStatement());
 
 		std::unique_ptr<ExprAST> cond_expr = nullptr;
 		if (!Consume(TokenKind::semicolon))
 		{
-			cond_expr = ParseExpression();
+			for_stmt->SetCondition(ParseExpression());
 			Expect(TokenKind::semicolon);
 		}
 
 		std::unique_ptr<ExprAST> iter_expr = nullptr;
 		if (!Consume(TokenKind::right_round))
 		{
-			iter_expr = ParseExpression();
+			for_stmt->SetIterExpression(ParseExpression());
 			Expect(TokenKind::right_round);
 		}
-		std::unique_ptr<StmtAST> stmt = ParseStatement();
-
-		std::unique_ptr<ForStmtAST> for_stmt = std::make_unique<ForStmtAST>(std::move(stmt));
-		for_stmt->SetInit(std::move(init));
-		for_stmt->SetConditionExpression(std::move(cond_expr));
-		for_stmt->SetIterExpression(std::move(iter_expr));
-
+		ctx.break_callback_stack.push_back([&](BreakStmtAST* break_stmt) { for_stmt->AddBreakStmt(break_stmt); });
+		ctx.continue_callback_stack.push_back([&](ContinueStmtAST* continue_stmt) { for_stmt->AddContinueStmt(continue_stmt); });
+		for_stmt->SetBody(ParseStatement());
+		ctx.break_callback_stack.pop_back();
+		ctx.continue_callback_stack.pop_back();
 		return for_stmt;
 	}
 
@@ -379,16 +376,20 @@ namespace lucc
 	{
 		Expect(TokenKind::KW_break);
 		Expect(TokenKind::semicolon);
-		//check if inside loop or switch
-		return std::make_unique<BreakStmtAST>();
+		std::unique_ptr<BreakStmtAST> break_stmt = std::make_unique<BreakStmtAST>();
+		if (ctx.break_callback_stack.empty()) Report(diag::stray_break);
+		else ctx.break_callback_stack.back()(break_stmt.get());
+		return break_stmt;
 	}
 
 	std::unique_ptr<ContinueStmtAST> Parser::ParseContinueStatement()
 	{
 		Expect(TokenKind::KW_continue);
 		Expect(TokenKind::semicolon);
-		//check if inside loop
-		return std::make_unique<ContinueStmtAST>();
+		std::unique_ptr<ContinueStmtAST> continue_stmt = std::make_unique<ContinueStmtAST>();
+		if (ctx.continue_callback_stack.empty()) Report(diag::stray_continue);
+		else ctx.continue_callback_stack.back()(continue_stmt.get());
+		return continue_stmt;
 	}
 
 	std::unique_ptr<GotoStmtAST> Parser::ParseGotoStatement()

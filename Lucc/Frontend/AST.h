@@ -275,11 +275,17 @@ namespace lucc
 	class IfStmtAST final : public StmtAST
 	{
 	public:
-		IfStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& then_stmt)
-			: StmtAST(StmtKind::If), condition(std::move(condition)), then_stmt(std::move(then_stmt))
-		{}
+		IfStmtAST() : StmtAST(StmtKind::If) {}
 
-		void AddElseStatement(std::unique_ptr<StmtAST>&& _else_stmt)
+		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
+		{
+			condition = std::move(_condition);
+		}
+		void SetThenStatement(std::unique_ptr<StmtAST>&& _then_stmt)
+		{
+			then_stmt = std::move(_then_stmt);
+		}
+		void SetElseStatement(std::unique_ptr<StmtAST>&& _else_stmt)
 		{
 			else_stmt = std::move(_else_stmt);
 		}
@@ -295,27 +301,48 @@ namespace lucc
 	class WhileStmtAST final : public StmtAST
 	{
 	public:
-		WhileStmtAST(std::unique_ptr<ExprAST>&& condition, std::unique_ptr<StmtAST>&& body_stmt)
-			: StmtAST(StmtKind::While), condition(std::move(condition)), body_stmt(std::move(body_stmt)) {}
+		WhileStmtAST() : StmtAST(StmtKind::While){}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
+		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
+		{
+			condition = std::move(_condition);
+		}
+		void SetBody(std::unique_ptr<StmtAST>&& _body_stmt)
+		{
+			body_stmt = std::move(_body_stmt);
+		}
+
+		void AddContinueStmt(ContinueStmtAST* continue_stmt)
+		{
+			continue_stmts.push_back(continue_stmt);
+		}
+		void AddBreakStmt(BreakStmtAST* break_stmt)
+		{
+			break_stmts.push_back(break_stmt);
+		}
+
 	private:
 		std::unique_ptr<ExprAST> condition;
 		std::unique_ptr<StmtAST> body_stmt;
+		std::vector<ContinueStmtAST*> continue_stmts;
+		std::vector<BreakStmtAST*> break_stmts;
 	};
 	class ForStmtAST final : public StmtAST
 	{
 	public:
-		explicit ForStmtAST(std::unique_ptr<StmtAST>&& body_stmt)
-			: StmtAST(StmtKind::For), body_stmt(std::move(body_stmt)) {}
+		ForStmtAST() : StmtAST(StmtKind::For) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 		void SetInit(std::unique_ptr<StmtAST>&& _init)
 		{
 			init_stmt = std::move(_init);
 		}
-		void SetConditionExpression(std::unique_ptr<ExprAST>&& _cond_expr)
+		void SetCondition(std::unique_ptr<ExprAST>&& _cond_expr)
 		{
 			cond_expr = std::move(_cond_expr);
 		}
@@ -323,15 +350,27 @@ namespace lucc
 		{
 			iter_expr = std::move(_iter_expr);
 		}
+		void SetBody(std::unique_ptr<StmtAST>&& _body_stmt)
+		{
+			body_stmt = std::move(_body_stmt);
+		}
 
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+		void AddContinueStmt(ContinueStmtAST* continue_stmt)
+		{
+			continue_stmts.push_back(continue_stmt);
+		}
+		void AddBreakStmt(BreakStmtAST* break_stmt)
+		{
+			break_stmts.push_back(break_stmt);
+		}
 
 	private:
 		std::unique_ptr<StmtAST> init_stmt;
 		std::unique_ptr<ExprAST> cond_expr;
 		std::unique_ptr<ExprAST> iter_expr;
 		std::unique_ptr<StmtAST> body_stmt;
+		std::vector<ContinueStmtAST*> continue_stmts;
+		std::vector<BreakStmtAST*> break_stmts;
 	};
 	class ReturnStmtAST final : public StmtAST
 	{
@@ -369,11 +408,10 @@ namespace lucc
 	private:
 		std::string label_name;
 	};
-
 	class BreakStmtAST final : public StmtAST
 	{
 	public:
-		BreakStmtAST() : StmtAST(StmtKind::Break) {}
+		BreakStmtAST() : StmtAST(StmtKind::Break), label_id(-1) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override
 		{
@@ -381,16 +419,16 @@ namespace lucc
 		}
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
-		void SetLabel(char const* label) { label_name = label; }
+		void SetLabel(char const* _label_name, uint64 _label_id) { label_name = _label_name; label_id = _label_id; }
 
 	private:
 		std::string label_name;
+		uint64 label_id;
 	};
-
 	class ContinueStmtAST final : public StmtAST
 	{
 	public:
-		ContinueStmtAST() : StmtAST(StmtKind::Continue) {}
+		ContinueStmtAST() : StmtAST(StmtKind::Continue), label_id(-1) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override
 		{
@@ -398,10 +436,11 @@ namespace lucc
 		}
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
-		void SetLabel(char const* label) { label_name = label; }
+		void SetLabel(char const* _label_name, uint64 _label_id) { label_name = _label_name; label_id = _label_id; }
 
 	private:
 		std::string label_name;
+		uint64 label_id;
 	};
 
 	enum class ExprKind

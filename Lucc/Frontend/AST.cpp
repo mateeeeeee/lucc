@@ -349,7 +349,7 @@ namespace lucc
 			ctx.ReserveStackSpace(stack_size);
 		}
 		
-		for (uint64 i = 0; i < std::min(ctx.GetFunctionArgsInRegisters(), param_decls.size()); ++i)
+		for (uint16 i = 0; i < std::min(ctx.GetFunctionArgsInRegisters(), param_decls.size()); ++i)
 		{
 			VarDeclAST* param_var = param_decls[i].get();
 			LU_ASSERT(param_var->GetLocalOffset() < 0);
@@ -957,21 +957,22 @@ namespace lucc
 		{
 			if (return_reg)
 			{
+				uint64 label_id = ctx.GenerateLabelId();
+
 				register_t cond_reg = ctx.AllocateRegister();
-				ctx.GenerateLabelId();
 				lhs->Codegen(ctx, cond_reg);
 				size_t lhs_type_size = lhs->GetType()->GetSize();
 				ctx.Cmp(cond_reg, int64(0), ConvertToBitMode(lhs_type_size));
-				ctx.Jmp("L_false", Condition::Equal);
+				ctx.Jmp("L_false", label_id, Condition::Equal);
 				rhs->Codegen(ctx, cond_reg);
 				size_t rhs_type_size = rhs->GetType()->GetSize();
 				ctx.Cmp(cond_reg, int64(0), ConvertToBitMode(rhs_type_size));
-				ctx.Jmp("L_false", Condition::Equal);
+				ctx.Jmp("L_false", label_id, Condition::Equal);
 				ctx.Mov(*return_reg, int64(1), BitMode_64);
-				ctx.Jmp("L_end");
-				ctx.Label("L_false");
+				ctx.Jmp("L_end", label_id);
+				ctx.Label("L_false", label_id);
 				ctx.Mov(*return_reg, int64(0), BitMode_64);
-				ctx.Label("L_end");
+				ctx.Label("L_end", label_id);
 			}
 		}
 		break;
@@ -979,21 +980,22 @@ namespace lucc
 		{
 			if (return_reg)
 			{
+				uint64 label_id = ctx.GenerateLabelId();
+
 				register_t cond_reg = ctx.AllocateRegister();
-				ctx.GenerateLabelId();
 				lhs->Codegen(ctx, cond_reg);
 				size_t lhs_type_size = lhs->GetType()->GetSize();
 				ctx.Cmp(cond_reg, int64(0), ConvertToBitMode(lhs_type_size));
-				ctx.Jmp("L_true", Condition::NotEqual);
+				ctx.Jmp("L_true", label_id, Condition::NotEqual);
 				rhs->Codegen(ctx, cond_reg);
 				size_t rhs_type_size = rhs->GetType()->GetSize();
 				ctx.Cmp(cond_reg, int64(0), ConvertToBitMode(rhs_type_size));
-				ctx.Jmp("L_true", Condition::NotEqual);
+				ctx.Jmp("L_true", label_id, Condition::NotEqual);
 				ctx.Mov(*return_reg, int64(0), BitMode_64);
-				ctx.Jmp("L_end");
-				ctx.Label("L_true");
+				ctx.Jmp("L_end", label_id);
+				ctx.Label("L_true", label_id);
 				ctx.Mov(*return_reg, int64(1), BitMode_64);
-				ctx.Label("L_end");
+				ctx.Label("L_end", label_id);
 			}
 		}
 		break;
@@ -1060,16 +1062,19 @@ namespace lucc
 
 	void IfStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
+		static char const* else_label = "L_else";
+		static char const* end_label = "L_end";
+		uint64 label_id = ctx.GenerateLabelId();
+
 		register_t cond_reg = ctx.AllocateRegister();
-		ctx.GenerateLabelId();
 		condition->Codegen(ctx, cond_reg);
 		ctx.Cmp(cond_reg, int64(0), BitMode_8);
-		ctx.Jmp("L_else", Condition::Equal);
+		ctx.Jmp(else_label, label_id, Condition::Equal);
 		then_stmt->Codegen(ctx);
-		ctx.Jmp("L_end");
-		ctx.Label("L_else");
+		ctx.Jmp(end_label, label_id);
+		ctx.Label(else_label, label_id);
 		if (else_stmt) else_stmt->Codegen(ctx);
-		ctx.Label("L_end");
+		ctx.Label(end_label, label_id);
 	}
 
 	void ReturnStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
@@ -1082,15 +1087,20 @@ namespace lucc
 
 	void WhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
+		static char const* start_label = "L_start";
+		static char const* end_label = "L_end";
+		uint64 label_id = ctx.GenerateLabelId();
+		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
+		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+
+		ctx.Label(start_label, label_id);
 		register_t cond_reg = ctx.AllocateRegister();
-		ctx.GenerateLabelId();
-		ctx.Label("L_start");
 		condition->Codegen(ctx, cond_reg);
 		ctx.Cmp(cond_reg, int64(0), BitMode_8);
-		ctx.Jmp("L_end", Condition::Equal);
+		ctx.Jmp(end_label, label_id, Condition::Equal);
 		body_stmt->Codegen(ctx);
-		ctx.Jmp("L_start");
-		ctx.Label("L_end");
+		ctx.Jmp(start_label, label_id);
+		ctx.Label(end_label, label_id);
 		ctx.FreeRegister(cond_reg);
 	}
 
@@ -1101,23 +1111,28 @@ namespace lucc
 
 	void ForStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
+		static char const* start_label = "L_start";
+		static char const* end_label = "L_end";
+		uint64 label_id = ctx.GenerateLabelId();
+		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
+		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+
 		init_stmt->Codegen(ctx);
+		ctx.Label(start_label, label_id);
 		register_t cond_reg = ctx.AllocateRegister();
-		ctx.GenerateLabelId();
-		ctx.Label("L_start");
 		cond_expr->Codegen(ctx, cond_reg);
 		ctx.Cmp(cond_reg, int64(0), BitMode_8);
-		ctx.Jmp("L_end", Condition::Equal);
+		ctx.Jmp(end_label, label_id, Condition::Equal);
 		body_stmt->Codegen(ctx);
 		iter_expr->Codegen(ctx);
-		ctx.Jmp("L_start");
-		ctx.Label("L_end");
+		ctx.Jmp(start_label, label_id);
+		ctx.Label(end_label, label_id);
 		ctx.FreeRegister(cond_reg);
 	}
 
 	void FunctionCallAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		for (size_t i = 0; i < func_args.size(); ++i)
+		for (uint16 i = 0; i < func_args.size(); ++i)
 		{
 			register_t arg_reg = ctx.AllocateFunctionArgumentRegister(i);
 			func_args[i]->Codegen(ctx, arg_reg);
@@ -1142,12 +1157,12 @@ namespace lucc
 
 	void BreakStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
 	{
-		ctx.Jmp(label_name.c_str());
+		ctx.Jmp(label_name.c_str(), label_id);
 	}
 
 	void ContinueStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
 	{
-		ctx.Jmp(label_name.c_str());
+		ctx.Jmp(label_name.c_str(), label_id);
 	}
 }
 

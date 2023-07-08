@@ -4,9 +4,9 @@ namespace lucc
 {
 	struct register_t
 	{
-		size_t id;
+		uint16 id;
 	};
-	inline constexpr register_t INVALID_REG = register_t{ .id = size_t(-1) };
+	inline constexpr register_t INVALID_REG = register_t{ .id = uint16(-1) };
 	inline constexpr bool operator==(register_t r1, register_t r2)
 	{
 		return r1.id == r2.id;
@@ -15,6 +15,7 @@ namespace lucc
 	{
 		return r1.id != r2.id;
 	}
+
 	struct mem_ref_t
 	{
 		enum Scale
@@ -59,8 +60,8 @@ namespace lucc
 		virtual void		FreeAllRegisters() = 0;
 		virtual register_t	AllocateRegister() = 0;
 		virtual register_t	AllocateReturnRegister() = 0;
-		virtual register_t	AllocateFunctionArgumentRegister(size_t arg_index) = 0;
-		virtual register_t  GetFunctionArgumentRegister(size_t arg_index) = 0;
+		virtual register_t	AllocateFunctionArgumentRegister(uint16 arg_index) = 0;
+		virtual register_t  GetFunctionArgumentRegister(uint16 arg_index) = 0;
 		virtual register_t  GetStackFrameRegister() = 0;
 		virtual void		FreeRegister(register_t reg) = 0;
 
@@ -162,8 +163,8 @@ namespace lucc
 		virtual void Pop(char const* mem, BitMode bitmode) = 0;
 		virtual void Pop(mem_ref_t const& mem_ref, BitMode bitmode) = 0;
 		//control
-		virtual void GenerateLabelId() = 0;
-		virtual void Label(char const* lbl) = 0;
+		virtual uint64 GenerateLabelId() = 0;
+		virtual void Label(char const* label, uint64 label_id) = 0;
 		virtual void Cmp(register_t reg, int64 value, BitMode bitmode) = 0;
 		virtual void Cmp(char const* mem, int64 value, BitMode bitmode) = 0;
 		virtual void Cmp(register_t reg1, register_t reg2, BitMode bitmode) = 0;
@@ -171,7 +172,7 @@ namespace lucc
 		virtual void Cmp(register_t reg1, char const* mem, BitMode bitmode) = 0;
 		virtual void Set(register_t reg, Condition cond) = 0;
 		virtual void Set(char const* mem, Condition cond) = 0;
-		virtual void Jmp(char const* label, Condition cond = Condition::Unconditional) = 0;
+		virtual void Jmp(char const* label, uint64 label_id, Condition cond = Condition::Unconditional) = 0;
 
 		//transfer
 		virtual void Mov(register_t reg, int64 value, BitMode bitmode) = 0;

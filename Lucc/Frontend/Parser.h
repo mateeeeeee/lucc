@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <functional>
 #include "Token.h"
 #include "Diagnostics.h"
 
@@ -44,13 +45,18 @@ namespace lucc
 		struct DeclaratorInfo;
 		struct DeclarationInfo;
 		using TokenPtr = std::vector<Token>::iterator;
+		using BreakCallbackFn = std::function<void(BreakStmtAST*)>;
+		using ContinueCallbackFn = std::function<void(ContinueStmtAST*)>;
 
 		struct Context
 		{
 			std::unique_ptr<SymbolTable> identifier_sym_table;
+
 			FunctionType const* current_func_type = nullptr;
 			bool return_stmt_encountered = false;
 
+			std::vector<BreakCallbackFn> break_callback_stack;
+			std::vector<ContinueCallbackFn> continue_callback_stack;
 		};
 
 	public:

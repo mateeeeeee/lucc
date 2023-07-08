@@ -10,13 +10,13 @@ namespace lucc
 
 	class x86_64CodeGenerator::Context : public ICodegenContext
 	{
-		static constexpr uint64 GP_REG_COUNT = 9;
-		static constexpr uint64 FUNC_ARGS_COUNT_IN_REGISTERS = 4;
-		static constexpr uint64 SHIFT_REGISTER = 4;
-		static constexpr uint64 DIVIDEND_REGISTER = 8;
-		static constexpr uint64 RETURN_REGISTER_INDEX = GP_REG_COUNT - 1;
-		static constexpr uint64 STACK_FRAME_REGISTER_INDEX = GP_REG_COUNT;
-		static constexpr size_t FUNC_ARG_REG_MAPPING[FUNC_ARGS_COUNT_IN_REGISTERS] = { 4, 5, 2, 3 };
+		static constexpr uint16 GP_REG_COUNT = 9;
+		static constexpr uint16 FUNC_ARGS_COUNT_IN_REGISTERS = 4;
+		static constexpr uint16 SHIFT_REGISTER = 4;
+		static constexpr uint16 DIVIDEND_REGISTER = 8;
+		static constexpr uint16 RETURN_REGISTER_INDEX = GP_REG_COUNT - 1;
+		static constexpr uint16 STACK_FRAME_REGISTER_INDEX = GP_REG_COUNT;
+		static constexpr uint16 FUNC_ARG_REG_MAPPING[FUNC_ARGS_COUNT_IN_REGISTERS] = { 4, 5, 2, 3 };
 
 		static constexpr char const* registers[GP_REG_COUNT + 1][BitMode_Count] = {
 			{"r10b", "r10w", "r10d", "r10"},
@@ -43,8 +43,8 @@ namespace lucc
 		//registers
 		virtual register_t AllocateRegister() override;
 		virtual register_t AllocateReturnRegister() override;
-		virtual register_t AllocateFunctionArgumentRegister(size_t arg_index) override;
-		virtual register_t GetFunctionArgumentRegister(size_t arg_index) override;
+		virtual register_t AllocateFunctionArgumentRegister(uint16 arg_index) override;
+		virtual register_t GetFunctionArgumentRegister(uint16 arg_index) override;
 		virtual register_t GetStackFrameRegister() override;
 		virtual void FreeRegister(register_t reg) override;
 		virtual void FreeAllRegisters() override;
@@ -145,8 +145,8 @@ namespace lucc
 		virtual void Pop(mem_ref_t const& mem_ref, BitMode bitmode) override;
 
 		//control
-		virtual void GenerateLabelId() override;
-		virtual void Label(char const* lbl) override;
+		virtual uint64 GenerateLabelId() override;
+		virtual void Label(char const* lbl, uint64 label_id) override;
 		virtual void Cmp(register_t reg, int64 value, BitMode bitmode) override;
 		virtual void Cmp(char const* mem, int64 value, BitMode bitmode) override;
 		virtual void Cmp(register_t reg1, register_t reg2, BitMode bitmode) override;
@@ -154,7 +154,7 @@ namespace lucc
 		virtual void Cmp(register_t reg1, char const* mem, BitMode bitmode) override;
 		virtual void Set(register_t reg, Condition cond) override;
 		virtual void Set(char const* mem, Condition cond) override;
-		virtual void Jmp(char const* label, Condition cond = Condition::Unconditional) override;
+		virtual void Jmp(char const* label, uint64 label_id, Condition cond = Condition::Unconditional) override;
 
 		//transfer
 		virtual void Mov(register_t reg, int64 value, BitMode bitmode) override;
@@ -192,7 +192,6 @@ namespace lucc
 		OutputBuffer& output_buffer;
 		std::array<bool, GP_REG_COUNT> free_registers;
 
-		size_t label_id;
 		char const* current_func_name;
 		bool stack_reg_saved;
 		uint32 stack_space_used;
@@ -201,7 +200,7 @@ namespace lucc
 		template<SegmentType segment, typename... Ts>
 		void Emit(std::string_view fmt, Ts&&... args);
 
-		static size_t GenerateUniqueInteger();
+		static uint64 GenerateUniqueInteger();
 		static std::string ConvertMemRef(mem_ref_t const& args, BitMode mode);
 		static std::string ConvertToType(BitMode mode);
 		static std::string ConvertToCast(BitMode mode);
