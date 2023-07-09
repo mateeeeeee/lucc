@@ -27,6 +27,8 @@ namespace lucc
 	class IfStmtAST;
 	class WhileStmtAST;
 	class DoWhileStmtAST;
+	class SwitchStmtAST;
+	class CaseStmtAST;
 	class ForStmtAST;
 	class ReturnStmtAST;
 	class BreakStmtAST;
@@ -62,6 +64,7 @@ namespace lucc
 
 			std::vector<BreakCallbackFn> break_callback_stack;
 			std::vector<ContinueCallbackFn> continue_callback_stack;
+			std::vector<SwitchStmtAST*> switch_stack;
 		};
 
 	public:
@@ -126,6 +129,8 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<BreakStmtAST> ParseBreakStatement();
 		[[nodiscard]] std::unique_ptr<ContinueStmtAST> ParseContinueStatement();
 		[[nodiscard]] std::unique_ptr<GotoStmtAST> ParseGotoStatement();
+		[[nodiscard]] std::unique_ptr<SwitchStmtAST> ParseSwitchStatement();
+		[[nodiscard]] std::unique_ptr<CaseStmtAST> ParseCaseStatement();
 
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseInitializer(bool static_init);
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseExpression();
@@ -158,10 +163,12 @@ namespace lucc
 		bool ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
 		bool ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
 
+		bool ParseType(QualifiedType& type);
+		
 		bool ParsePointers(QualifiedType& type);
 		bool ParseTypeSuffix(QualifiedType& type);
 
-		bool IsType(uint32 offset = 0) const;
+		bool IsTokenType(uint32 offset = 0) const;
 	};
 	
 

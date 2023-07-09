@@ -73,6 +73,11 @@ DIAG(dereference_expected_pointer_operand, error, "The operand to dereference ha
 DIAG(address_of_function_variable, error, "Cannot take address of a function")
 DIAG(stray_break, error, "Break must be inside a loop or a switch statement")
 DIAG(stray_continue, error, "Continue must be inside a loop")
+DIAG(stray_case, error, "Case must be inside a switch statement")
 DIAG(undeclared_label, error, "Use of an undeclared label")
+DIAG(multiple_default_cases, error, "Multiple default cases in switch statement are not allowed")
+DIAG(sizeof_invalid_argument, error, "sizeof cannot be used with function types or incomplete types")
+DIAG(alignof_invalid_argument, error, "_Alignof cannot be used with function types or incomplete types")
+DIAG(alignof_expects_type_argument, error, "_Alignof expects type as an argument")
 
 #undef DIAG

@@ -269,11 +269,12 @@ namespace lucc
 		case TokenKind::KW_break: return ParseBreakStatement();
 		case TokenKind::KW_return: return ParseReturnStatement();
 		case TokenKind::KW_goto: return ParseGotoStatement();
-		//case TokenKind::KW_switch: return ParseSwitchStmt();
-		//case TokenKind::KW_case: return ParseCaseStmt();
-		//case TokenKind::KW_default: return ParseCaseStmt();
+		case TokenKind::KW_switch: return ParseSwitchStatement();
+		case TokenKind::KW_case:
+		case TokenKind::KW_default: return ParseCaseStatement();
 		case TokenKind::identifier:
 			if ((current_token + 1)->Is(TokenKind::colon)) return ParseLabelStatement();
+			[[fallthrough]];
 		default:
 			return ParseExpressionStatement();
 		}
@@ -294,7 +295,7 @@ namespace lucc
 		std::unique_ptr<CompoundStmtAST> compound_stmt = std::make_unique<CompoundStmtAST>();
 		while (current_token->IsNot(TokenKind::right_brace))
 		{
-			if (IsType())
+			if (IsTokenType())
 			{
 				std::vector<std::unique_ptr<DeclAST>> decl = ParseDeclaration();
 				compound_stmt->AddStatement(std::make_unique<DeclStmtAST>(std::move(decl)));
@@ -328,8 +329,8 @@ namespace lucc
 		ctx.continue_callback_stack.push_back([&](ContinueStmtAST* continue_stmt) { while_stmt->AddContinueStmt(continue_stmt); });
 		while_stmt->SetCondition(ParseParenthesizedExpression());
 		while_stmt->SetBody(ParseStatement());
-		ctx.break_callback_stack.pop_back();
 		ctx.continue_callback_stack.pop_back();
+		ctx.break_callback_stack.pop_back();
 		return while_stmt;
 	}
 	//<dowhile - statement> ::= do <statement> while ( <expression> ) ;
@@ -343,8 +344,8 @@ namespace lucc
 		Expect(TokenKind::KW_while);
 		dowhile_stmt->SetCondition(ParseParenthesizedExpression());
 		Expect(TokenKind::semicolon);
-		ctx.break_callback_stack.pop_back();
 		ctx.continue_callback_stack.pop_back();
+		ctx.break_callback_stack.pop_back();
 		return dowhile_stmt;
 	}
 
@@ -356,7 +357,7 @@ namespace lucc
 		std::unique_ptr<ForStmtAST> for_stmt = std::make_unique<ForStmtAST>();
 
 		std::unique_ptr<StmtAST> init = nullptr;
-		if (IsType())
+		if (IsTokenType())
 		{
 			std::vector<std::unique_ptr<DeclAST>> decl = ParseDeclaration();
 			for_stmt->SetInit(std::make_unique<DeclStmtAST>(std::move(decl)));
@@ -379,8 +380,8 @@ namespace lucc
 		ctx.break_callback_stack.push_back([&](BreakStmtAST* break_stmt) { for_stmt->AddBreakStmt(break_stmt); });
 		ctx.continue_callback_stack.push_back([&](ContinueStmtAST* continue_stmt) { for_stmt->AddContinueStmt(continue_stmt); });
 		for_stmt->SetBody(ParseStatement());
-		ctx.break_callback_stack.pop_back();
 		ctx.continue_callback_stack.pop_back();
+		ctx.break_callback_stack.pop_back();
 		return for_stmt;
 	}
 
@@ -431,6 +432,40 @@ namespace lucc
 		std::unique_ptr<GotoStmtAST> goto_stmt = std::make_unique<GotoStmtAST>(label_name);
 		ctx.gotos.push_back(label_name.data());
 		return goto_stmt;
+	}
+
+	std::unique_ptr<SwitchStmtAST> Parser::ParseSwitchStatement()
+	{
+		Expect(TokenKind::KW_switch);
+		std::unique_ptr<SwitchStmtAST> switch_stmt = std::make_unique<SwitchStmtAST>();
+		ctx.switch_stack.push_back(switch_stmt.get());
+		ctx.break_callback_stack.push_back([&](BreakStmtAST* break_stmt) { switch_stmt->AddBreakStmt(break_stmt); });
+		switch_stmt->SetCondition(ParseParenthesizedExpression());
+		switch_stmt->SetBody(ParseStatement());
+		ctx.break_callback_stack.pop_back();
+		ctx.switch_stack.pop_back();
+		return switch_stmt;
+	}
+
+	std::unique_ptr<CaseStmtAST> Parser::ParseCaseStatement()
+	{
+		if (ctx.switch_stack.empty()) Report(diag::stray_case);
+
+		std::unique_ptr<CaseStmtAST> case_stmt = nullptr;
+		if (Consume(TokenKind::KW_default))
+		{
+			if (ctx.switch_stack.back()->HasDefaultCase()) Report(diag::multiple_default_cases);
+			case_stmt = std::make_unique<CaseStmtAST>();
+		}
+		else
+		{
+			Expect(TokenKind::KW_case);
+			std::unique_ptr<IntLiteralAST> case_value = ParseIntegerLiteral();
+			case_stmt = std::make_unique<CaseStmtAST>(case_value->GetValue());
+		}
+		Expect(TokenKind::colon);
+		ctx.switch_stack.back()->AddCaseStatement(case_stmt.get());
+		return case_stmt;
 	}
 
 	std::unique_ptr<LabelStmtAST> Parser::ParseLabelStatement()
@@ -741,7 +776,7 @@ namespace lucc
 	//					   | (<type - name>) < cast - expression >
 	std::unique_ptr<ExprAST> Parser::ParseCastExpression()
 	{
-		if (current_token->Is(TokenKind::left_round) && IsType(1))
+		if (current_token->Is(TokenKind::left_round) && IsTokenType(1))
 		{
 			//#todo
 			return nullptr;
@@ -810,7 +845,8 @@ namespace lucc
 			unary_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::LogicalNot, loc);
 			break;
 		case TokenKind::KW_sizeof: return ParseSizeofExpression();
-		case TokenKind::KW__Alignas: return ParseAlignofExpression();
+		case TokenKind::KW__Alignof: return ParseAlignofExpression();
+		//case TokenKind::KW__Alignas: return ParseAlignasExpression();
 		default:
 			return ParsePostFixExpression();
 		}
@@ -916,14 +952,61 @@ namespace lucc
 
 	std::unique_ptr<ExprAST> Parser::ParseSizeofExpression()
 	{
-		//#todo
-		return nullptr;
+		Expect(TokenKind::KW_sizeof);
+		if (Consume(TokenKind::left_round))
+		{
+			SourceLocation loc = current_token->GetLocation();
+			if (IsTokenType())
+			{
+				QualifiedType type{};
+				ParseType(type);
+				if (IsFunctionType(type) || !type->IsComplete())
+				{
+					Report(diag::sizeof_invalid_argument);
+				}
+				Expect(TokenKind::right_round);
+				return std::make_unique<IntLiteralAST>(type->GetSize(), loc);
+			}
+			else
+			{
+				std::unique_ptr<ExprAST> sizeof_expr = ParseExpression();
+				Expect(TokenKind::right_round);
+				return std::make_unique<IntLiteralAST>(sizeof_expr->GetType()->GetSize(), loc);
+			}
+		}
+		else
+		{
+			SourceLocation loc = current_token->GetLocation();
+			std::unique_ptr<ExprAST> sizeof_expr = ParseExpression();
+			return std::make_unique<IntLiteralAST>(sizeof_expr->GetType()->GetSize(), loc);
+		}
 	}
 
 	std::unique_ptr<ExprAST> Parser::ParseAlignofExpression()
 	{
-		//#todo
-		return nullptr;
+		Expect(TokenKind::KW__Alignof);
+		Expect(TokenKind::left_round);
+		
+		if (!IsTokenType())
+		{
+			Report(diag::alignof_expects_type_argument);
+		}
+		
+		SourceLocation loc = current_token->GetLocation();
+		std::unique_ptr<ExprAST> alignof_expr = nullptr;
+		if (IsTokenType())
+		{
+			QualifiedType type{};
+			ParseType(type);
+			if (IsFunctionType(type) || !type->IsComplete())
+			{
+				Report(diag::alignof_invalid_argument);
+			}
+
+			alignof_expr = std::make_unique<IntLiteralAST>(type->GetAlign(), loc);
+		}
+		Expect(TokenKind::right_round);
+		return alignof_expr;
 	}
 
 	//<primary - expression> :: = <identifier>
@@ -1006,7 +1089,7 @@ namespace lucc
 			UNSIGNED = 1 << 18,
 		};
 		uint32 counter = 0;
-		while (IsType())
+		while (IsTokenType())
 		{
 			if (current_token->IsStorageSpecifier())
 			{
@@ -1063,7 +1146,7 @@ namespace lucc
 				continue;
 			}
 
-			if (!IsType()) break;
+			if (!IsTokenType()) break;
 
 			// Handle user-defined types.
 			QualifiedType* typedef_type = nullptr;
@@ -1190,6 +1273,7 @@ namespace lucc
 
 		if (Consume(TokenKind::left_round))
 		{
+			//#todo
 			//DeclaratorInfo stub{};
 			//ParseDeclarator(decl_spec, stub);
 			//Expect(TokenKind::right_round);
@@ -1204,6 +1288,18 @@ namespace lucc
 			++current_token;
 		}
 		return ParseTypeSuffix(declarator.qtype);
+	}
+
+	bool Parser::ParseType(QualifiedType& type)
+	{
+		DeclSpecInfo decl_spec{};
+		if (!ParseDeclSpec(decl_spec, true))
+		{
+			return false;
+		}
+		type = decl_spec.qtype;
+		ParseTypeSuffix(type);
+		return true;
 	}
 
 	//<pointer> :: = * { <type - qualifier> }* {<pointer>} ?
@@ -1328,7 +1424,7 @@ namespace lucc
 		return true;
 	}
 
-	bool Parser::IsType(uint32 offset) const
+	bool Parser::IsTokenType(uint32 offset) const
 	{
 		if ((current_token + offset)->Is(TokenKind::identifier))
 		{

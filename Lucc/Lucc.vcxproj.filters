@@ -149,7 +149,4 @@
       <Filter>Compiler</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="todo.txt" />
-  </ItemGroup>
 </Project>

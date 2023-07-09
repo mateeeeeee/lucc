@@ -51,6 +51,12 @@ TEST(Arithmetic, ShiftOperators)
 	EXPECT_EQ(LUCC_EX(int i = 5; i >>= 1; return i;), 2);
 	EXPECT_EQ(LUCC_EX(int i = -1; i >>= 1; return i;), -1);
 }
+
+TEST(Arithmetic, Comma)
+{
+	EXPECT_EQ(LUCC_EX(return (1,3);), 3);
+}
+
 TEST(Arithmetic, BitOperators)
 {
 	EXPECT_EQ(LUCC_EX(return ~-1;), 0);
@@ -116,14 +122,13 @@ TEST(Control, If)
 }
 TEST(Control, Switch)
 {
-	//ASSERT(5, ({ int i = 0; switch (0) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } i; }));
-	//ASSERT(6, ({ int i = 0; switch (1) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } i; }));
-	//ASSERT(7, ({ int i = 0; switch (2) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } i; }));
-	//ASSERT(0, ({ int i = 0; switch (3) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } i; }));
-	//ASSERT(5, ({ int i = 0; switch (0) { case 0:i = 5; break; default:i = 7; } i; }));
-	//ASSERT(7, ({ int i = 0; switch (1) { case 0:i = 5; break; default:i = 7; } i; }));
-	//ASSERT(2, ({ int i = 0; switch (1) { case 0: 0; case 1: 0; case 2: 0; i = 2; } i; }));
-	//ASSERT(0, ({ int i = 0; switch (3) { case 0: 0; case 1: 0; case 2: 0; i = 2; } i; }));
+	EXPECT_EQ(LUCC_EX(int i = 0; switch (0) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } return i;), 5);
+	EXPECT_EQ(LUCC_EX(int i = 0; switch (1) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } return i;), 6);
+	EXPECT_EQ(LUCC_EX(int i = 0; switch (2) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } return i;), 7);
+	EXPECT_EQ(LUCC_EX(int i = 0; switch (3) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; } return i;), 0);
+	EXPECT_EQ(LUCC_EX(int i = 0; switch (3) { case 0:i = 5; break; case 1:i = 6; break; case 2:i = 7; break; default: i = 8; } return i;), 8);
+	EXPECT_EQ(LUCC_EX(int i = 0; switch (0) { case 0:i = 5; break; default:i = 7; } return i;), 5);
+	EXPECT_EQ(LUCC_EX(int i = 0; switch (1) { case 0:i = 5; break; default:i = 7; } return i;), 7);
 }
 TEST(Control, Goto)
 {

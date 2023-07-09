@@ -32,6 +32,8 @@ namespace lucc
 	class WhileStmtAST;
 	class DoWhileStmtAST;
 	class ForStmtAST;
+	class SwitchStmtAST;
+	class CaseStmtAST;
 	class ReturnStmtAST;
 	class GotoStmtAST;
 	class LabelStmtAST;
@@ -68,6 +70,8 @@ namespace lucc
 		virtual void Visit(WhileStmtAST const& node, size_t depth) {}
 		virtual void Visit(DoWhileStmtAST const& node, size_t depth) {}
 		virtual void Visit(ForStmtAST const& node, size_t depth) {}
+		virtual void Visit(SwitchStmtAST const& node, size_t depth) {}
+		virtual void Visit(CaseStmtAST const& node, size_t depth) {}
 		virtual void Visit(ReturnStmtAST const& node, size_t depth) {}
 		virtual void Visit(GotoStmtAST const& node, size_t depth) {}
 		virtual void Visit(LabelStmtAST const& node, size_t depth) {}
@@ -213,6 +217,8 @@ namespace lucc
 		If,
 		While,
 		DoWhile,
+		Switch,
+		Case,
 		For,
 		Return,
 		Goto,
@@ -301,10 +307,131 @@ namespace lucc
 		std::unique_ptr<StmtAST> then_stmt;
 		std::unique_ptr<StmtAST> else_stmt;
 	};
+	class CaseStmtAST final : public StmtAST
+	{
+	public:
+		CaseStmtAST() : StmtAST(StmtKind::Case), switch_id(-1), is_default(true), value(0), label_name("L_default") {}
+		explicit CaseStmtAST(int64 value) : StmtAST(StmtKind::Case), switch_id(-1), is_default(false), value(value), label_name("L_case" + std::to_string(value)) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+		void SetSwitchId(uint64 _switch_id) { switch_id = _switch_id; }
+		bool IsDefault() const { return is_default; }
+		int64 GetValue() const { return value; }
+		std::string_view GetLabel() const { return label_name; }
+	private:
+		std::string label_name;
+		uint64 switch_id;
+		int64 value;
+		bool is_default;
+	};
+	class GotoStmtAST final : public StmtAST
+	{
+	public:
+		explicit GotoStmtAST(std::string_view label) : StmtAST(StmtKind::Goto), goto_label(label) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+		std::string_view GetLabel() const { return goto_label; }
+
+	private:
+		std::string goto_label;
+	};
+	class LabelStmtAST final : public StmtAST
+	{
+	public:
+		LabelStmtAST(std::string_view label) : StmtAST(StmtKind::Label), label_name(label) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+		std::string_view GetLabel() const { return label_name; }
+
+	private:
+		std::string label_name;
+	};
+	class BreakStmtAST final : public StmtAST
+	{
+	public:
+		BreakStmtAST() : StmtAST(StmtKind::Break), label_id(-1) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override
+		{
+			visitor.Visit(*this, depth);
+		}
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+		void SetLabel(char const* _label_name, uint64 _label_id) { label_name = _label_name; label_id = _label_id; }
+
+	private:
+		std::string label_name;
+		uint64 label_id;
+	};
+	class ContinueStmtAST final : public StmtAST
+	{
+	public:
+		ContinueStmtAST() : StmtAST(StmtKind::Continue), label_id(-1) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override
+		{
+			visitor.Visit(*this, depth);
+		}
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+		void SetLabel(char const* _label_name, uint64 _label_id) { label_name = _label_name; label_id = _label_id; }
+
+	private:
+		std::string label_name;
+		uint64 label_id;
+	};
+	class SwitchStmtAST final : public StmtAST
+	{
+	public:
+		SwitchStmtAST() : StmtAST(StmtKind::Switch) {}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+
+		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
+		{
+			condition = std::move(_condition);
+		}
+		void SetBody(std::unique_ptr<StmtAST>&& _body_stmt)
+		{
+			body_stmt = std::move(_body_stmt);
+		}
+
+		void AddBreakStmt(BreakStmtAST* break_stmt)
+		{
+			break_stmts.push_back(break_stmt);
+		}
+		void AddCaseStatement(CaseStmtAST* case_stmt)
+		{
+			if (case_stmt->IsDefault())
+			{
+				LU_ASSERT(!has_default);
+				has_default = true;
+			}
+			case_stmts.push_back(case_stmt);
+		}
+		bool HasDefaultCase() const
+		{
+			return has_default;
+		}
+
+	private:
+		std::unique_ptr<ExprAST> condition;
+		std::unique_ptr<StmtAST> body_stmt;
+		std::vector<BreakStmtAST*> break_stmts;
+		std::vector<CaseStmtAST*> case_stmts;
+		bool has_default = false;
+	};
 	class WhileStmtAST final : public StmtAST
 	{
 	public:
-		WhileStmtAST() : StmtAST(StmtKind::While){}
+		WhileStmtAST() : StmtAST(StmtKind::While) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -418,66 +545,6 @@ namespace lucc
 
 	private:
 		std::unique_ptr <ExprStmtAST> ret_expr;
-	};
-	class GotoStmtAST final : public StmtAST
-	{
-	public:
-		explicit GotoStmtAST(std::string_view label) : StmtAST(StmtKind::Goto), goto_label(label) {}
-
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
-
-		std::string_view GetLabel() const { return goto_label; }
-
-	private:
-		std::string goto_label;
-	};
-	class LabelStmtAST final : public StmtAST
-	{
-	public:
-		LabelStmtAST(std::string_view label) : StmtAST(StmtKind::Label), label_name(label) {}
-
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
-
-		std::string_view GetLabel() const { return label_name; }
-
-	private:
-		std::string label_name;
-	};
-	class BreakStmtAST final : public StmtAST
-	{
-	public:
-		BreakStmtAST() : StmtAST(StmtKind::Break), label_id(-1) {}
-
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override
-		{
-			visitor.Visit(*this, depth);
-		}
-		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
-
-		void SetLabel(char const* _label_name, uint64 _label_id) { label_name = _label_name; label_id = _label_id; }
-
-	private:
-		std::string label_name;
-		uint64 label_id;
-	};
-	class ContinueStmtAST final : public StmtAST
-	{
-	public:
-		ContinueStmtAST() : StmtAST(StmtKind::Continue), label_id(-1) {}
-
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override
-		{
-			visitor.Visit(*this, depth);
-		}
-		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
-
-		void SetLabel(char const* _label_name, uint64 _label_id) { label_name = _label_name; label_id = _label_id; }
-
-	private:
-		std::string label_name;
-		uint64 label_id;
 	};
 
 	enum class ExprKind

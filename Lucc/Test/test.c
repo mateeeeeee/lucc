@@ -1,5 +1,5 @@
 int main(void) 
 {
-	int a = 14;
-	return a > 10 ? a - 10 : a - 5;
+	unsigned long long i = 4; 
+	return sizeof(int[10]);
 }

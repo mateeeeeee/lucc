@@ -203,6 +203,19 @@ namespace lucc
 		body_stmt->Accept(visitor, depth + 1);
 	}
 
+	void SwitchStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	{
+		LU_ASSERT(condition && body_stmt);
+		visitor.Visit(*this, depth);
+		condition->Accept(visitor, depth + 1);
+		body_stmt->Accept(visitor, depth + 1);
+	}
+
+	void CaseStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+
 	void ForStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		LU_ASSERT(body_stmt);
@@ -1023,7 +1036,7 @@ namespace lucc
 		}
 	}
 
-	void TernaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	void TernaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		static char const* false_label = "L_false";
 		static char const* end_label = "L_end";
@@ -1129,7 +1142,7 @@ namespace lucc
 		ctx.FreeRegister(cond_reg);
 	}
 
-	void DoWhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	void DoWhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		static char const* start_label = "L_start";
 		static char const* end_label = "L_end";
@@ -1201,25 +1214,64 @@ namespace lucc
 		else LU_ASSERT(false);
 	}
 
-	void BreakStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	void BreakStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		ctx.Jmp(label_name.c_str(), label_id);
 	}
 
-	void ContinueStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	void ContinueStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		ctx.Jmp(label_name.c_str(), label_id);
 	}
 
-	void GotoStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	void GotoStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		ctx.Jmp(goto_label.c_str());
 	}
 
-	void LabelStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	void LabelStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		ctx.Label(label_name.c_str());
 	}
+
+	void SwitchStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	{
+		static char const* end_label = "L_end";
+		uint64 label_id = ctx.GenerateLabelId();
+		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+		for (CaseStmtAST* case_stmt : case_stmts) case_stmt->SetSwitchId(label_id);
+		
+		register_t cond_reg = ctx.AllocateRegister();
+		condition->Codegen(ctx, cond_reg);
+
+		BitMode bitmode = ConvertToBitMode(condition->GetType()->GetSize());
+
+		CaseStmtAST* default_case = nullptr;
+		for (CaseStmtAST* case_stmt : case_stmts)
+		{
+			if (!case_stmt->IsDefault())
+			{
+				ctx.Cmp(cond_reg, case_stmt->GetValue(), bitmode);
+				ctx.Jmp(case_stmt->GetLabel().data(), label_id, Condition::Equal);
+			}
+			else
+			{
+				LU_ASSERT(!default_case);
+				default_case = case_stmt;
+			}
+		}
+		if(default_case) ctx.Jmp(default_case->GetLabel().data(), label_id);
+		ctx.Jmp(end_label, label_id);
+		body_stmt->Codegen(ctx);
+		ctx.Label(end_label, label_id);
+		ctx.FreeRegister(cond_reg);
+	}
+
+	void CaseStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	{
+		ctx.Label(label_name.c_str(), switch_id);
+	}
+
 }
 
 
