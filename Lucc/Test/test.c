@@ -1,4 +1,5 @@
 int main(void) 
 {
-	int i = 0; goto i; g: i++; h: i++; i: i++; return i;
+	int a = 14;
+	return a > 10 ? a - 10 : a - 5;
 }

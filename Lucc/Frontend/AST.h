@@ -659,18 +659,18 @@ namespace lucc
 	class TernaryExprAST : public ExprAST
 	{
 	public:
-		TernaryExprAST(std::unique_ptr<ExprAST>&& cond_expr, std::unique_ptr<ExprAST>&& true_expr,
-			std::unique_ptr<ExprAST>&& false_expr, SourceLocation const& loc) : ExprAST(ExprKind::Ternary, loc),
+		explicit TernaryExprAST(SourceLocation const& loc) : ExprAST(ExprKind::Ternary, loc),
 			cond_expr(std::move(cond_expr)),
 			true_expr(std::move(true_expr)),
 			false_expr(std::move(false_expr)) 
 		{}
 
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		void SetCondition(std::unique_ptr<ExprAST>&& expr) { cond_expr = std::move(expr); }
+		void SetTrueExpr(std::unique_ptr<ExprAST>&& expr) { true_expr = std::move(expr); }
+		void SetFalseExpr(std::unique_ptr<ExprAST>&& expr) { false_expr = std::move(expr); }
 
-		ExprAST* GetConditionExpr() const	{ return cond_expr.get(); }
-		ExprAST* GetTrueExpr() const		{ return true_expr.get(); }
-		ExprAST* GetFalseExpr() const		{ return false_expr.get(); }
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
 		std::unique_ptr<ExprAST> cond_expr;

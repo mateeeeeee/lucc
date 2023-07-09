@@ -200,7 +200,7 @@ namespace lucc
 				++cur_ptr;
 				t.SetKind(TokenKind::not_equal);
 			}
-			else t.SetKind(TokenKind::question);
+			else t.SetKind(TokenKind::exclaim);
 			break;
 		case '>':
 			if (*cur_ptr == '=')

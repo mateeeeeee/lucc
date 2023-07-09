@@ -1023,6 +1023,23 @@ namespace lucc
 		}
 	}
 
+	void TernaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		static char const* false_label = "L_false";
+		static char const* end_label = "L_end";
+		uint64 label_id = ctx.GenerateLabelId();
+
+		register_t cond_reg = ctx.AllocateRegister();
+		cond_expr->Codegen(ctx, cond_reg);
+		ctx.Cmp(cond_reg, int64(0), BitMode_8);
+		ctx.Jmp(false_label, label_id, Condition::Equal);
+		true_expr->Codegen(ctx, return_reg);
+		ctx.Jmp(end_label, label_id);
+		ctx.Label(false_label, label_id);
+		false_expr->Codegen(ctx, return_reg);
+		ctx.Label(end_label, label_id);
+	}
+
 	void DeclRefAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		if (!return_reg) return;
@@ -1203,7 +1220,6 @@ namespace lucc
 	{
 		ctx.Label(label_name.c_str());
 	}
-
 }
 
 

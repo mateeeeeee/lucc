@@ -133,7 +133,8 @@ TEST(Control, Goto)
 }
 TEST(Control, TernaryOperator)
 {
-
+	EXPECT_EQ(LUCC_EX(int a = 14; return a > 10 ? a - 10 : a - 5;), 4);
+	EXPECT_EQ(LUCC_EX(int a = 6; return a > 10 ? a - 10 : a - 5;), 1);
 }
 
 TEST(Iteration, For)

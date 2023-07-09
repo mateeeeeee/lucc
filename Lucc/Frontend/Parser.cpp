@@ -552,14 +552,16 @@ namespace lucc
 	//								| <logical - or -expression> ? <expression> : <conditional - expression>
 	std::unique_ptr<ExprAST> Parser::ParseConditionalExpression()
 	{
+		SourceLocation loc = current_token->GetLocation();
 		std::unique_ptr<ExprAST> cond = ParseLogicalOrExpression();
 		if (Consume(TokenKind::question))
 		{
-			std::unique_ptr<ExprAST> true_expr = ParseExpression();
+			std::unique_ptr<TernaryExprAST> ternary_expr = std::make_unique<TernaryExprAST>(loc);
+			ternary_expr->SetCondition(std::move(cond));
+			ternary_expr->SetTrueExpr(ParseExpression());
 			Expect(TokenKind::colon);
-			std::unique_ptr<ExprAST> false_expr = ParseConditionalExpression();
-			SourceLocation loc = current_token->GetLocation();
-			return std::make_unique<TernaryExprAST>(std::move(cond), std::move(true_expr), std::move(false_expr), loc);
+			ternary_expr->SetFalseExpr(ParseConditionalExpression());
+			return ternary_expr;
 		}
 		return cond;
 	}
