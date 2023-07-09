@@ -1194,6 +1194,16 @@ namespace lucc
 		ctx.Jmp(label_name.c_str(), label_id);
 	}
 
+	void GotoStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		ctx.Jmp(goto_label.c_str());
+	}
+
+	void LabelStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg /*= std::nullopt*/) const
+	{
+		ctx.Label(label_name.c_str());
+	}
+
 }
 
 

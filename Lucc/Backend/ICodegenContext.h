@@ -164,6 +164,7 @@ namespace lucc
 		virtual void Pop(mem_ref_t const& mem_ref, BitMode bitmode) = 0;
 		//control
 		virtual uint64 GenerateLabelId() = 0;
+		virtual void Label(char const* label) = 0;
 		virtual void Label(char const* label, uint64 label_id) = 0;
 		virtual void Cmp(register_t reg, int64 value, BitMode bitmode) = 0;
 		virtual void Cmp(char const* mem, int64 value, BitMode bitmode) = 0;
@@ -172,6 +173,7 @@ namespace lucc
 		virtual void Cmp(register_t reg1, char const* mem, BitMode bitmode) = 0;
 		virtual void Set(register_t reg, Condition cond) = 0;
 		virtual void Set(char const* mem, Condition cond) = 0;
+		virtual void Jmp(char const* label, Condition cond = Condition::Unconditional) = 0;
 		virtual void Jmp(char const* label, uint64 label_id, Condition cond = Condition::Unconditional) = 0;
 
 		//transfer

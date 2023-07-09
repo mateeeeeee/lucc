@@ -127,9 +127,9 @@ TEST(Control, Switch)
 }
 TEST(Control, Goto)
 {
-	//ASSERT(3, ({ int i = 0; goto a; a: i++; b: i++; c: i++; i; }));
-	//ASSERT(2, ({ int i = 0; goto e; d: i++; e: i++; f: i++; i; }));
-	//ASSERT(1, ({ int i = 0; goto i; g: i++; h: i++; i: i++; i; }));
+	EXPECT_EQ(LUCC_EX(int i = 0; goto a; a: i++; b: i++; c: i++; return i;), 3);
+	EXPECT_EQ(LUCC_EX(int i = 0; goto e; d: i++; e: i++; f: i++; return i;), 2);
+	EXPECT_EQ(LUCC_EX(int i = 0; goto i; g: i++; h: i++; i: i++; return i;), 1);
 }
 TEST(Control, TernaryOperator)
 {

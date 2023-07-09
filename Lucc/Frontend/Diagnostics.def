@@ -73,5 +73,6 @@ DIAG(dereference_expected_pointer_operand, error, "The operand to dereference ha
 DIAG(address_of_function_variable, error, "Cannot take address of a function")
 DIAG(stray_break, error, "Break must be inside a loop or a switch statement")
 DIAG(stray_continue, error, "Continue must be inside a loop")
+DIAG(undeclared_label, error, "Use of an undeclared label")
 
 #undef DIAG

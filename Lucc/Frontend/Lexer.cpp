@@ -341,6 +341,9 @@ namespace lucc
 		case ';':
 			t.SetKind(TokenKind::semicolon);
 			break;
+		case ':':
+			t.SetKind(TokenKind::colon);
+			break;
 		case '#':
 			if (*cur_ptr == '#')
 			{

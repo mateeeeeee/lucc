@@ -1,4 +1,4 @@
 int main(void) 
 {
-	int i = 0; int j = 0; int k = 0; do { if (++j > 3) break; continue; k++; } while (1); return j;
+	int i = 0; goto i; g: i++; h: i++; i: i++; return i;
 }

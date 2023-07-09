@@ -146,6 +146,7 @@ namespace lucc
 
 		//control
 		virtual uint64 GenerateLabelId() override;
+		virtual void Label(char const* label) override;
 		virtual void Label(char const* lbl, uint64 label_id) override;
 		virtual void Cmp(register_t reg, int64 value, BitMode bitmode) override;
 		virtual void Cmp(char const* mem, int64 value, BitMode bitmode) override;
@@ -154,6 +155,7 @@ namespace lucc
 		virtual void Cmp(register_t reg1, char const* mem, BitMode bitmode) override;
 		virtual void Set(register_t reg, Condition cond) override;
 		virtual void Set(char const* mem, Condition cond) override;
+		virtual void Jmp(char const* label, Condition cond = Condition::Unconditional) override;
 		virtual void Jmp(char const* label, uint64 label_id, Condition cond = Condition::Unconditional) override;
 
 		//transfer

@@ -425,6 +425,7 @@ namespace lucc
 		explicit GotoStmtAST(std::string_view label) : StmtAST(StmtKind::Goto), goto_label(label) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 		std::string_view GetLabel() const { return goto_label; }
 
@@ -437,8 +438,9 @@ namespace lucc
 		LabelStmtAST(std::string_view label) : StmtAST(StmtKind::Label), label_name(label) {}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
-		std::string_view GetName() const { return label_name; }
+		std::string_view GetLabel() const { return label_name; }
 
 	private:
 		std::string label_name;

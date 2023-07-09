@@ -458,14 +458,19 @@ namespace lucc
 	}
 
 	//control
-	void x86_64CodeGenerator::Context::Label(char const* label, uint64 label_id)
-	{
-		Emit<Text>("{}{}: ", label, label_id);
-	}
 	uint64 x86_64CodeGenerator::Context::GenerateLabelId()
 	{
 		return GenerateUniqueInteger();
 	}
+	void x86_64CodeGenerator::Context::Label(char const* label)
+	{
+		Emit<Text>("{}: ", label);
+	}
+	void x86_64CodeGenerator::Context::Label(char const* label, uint64 label_id)
+	{
+		Emit<Text>("{}{}: ", label, label_id);
+	}
+
 	void x86_64CodeGenerator::Context::Cmp(register_t reg, int64 value, BitMode bitmode)
 	{
 		Emit<Text>("cmp\t{}, {}", registers[reg.id][bitmode], value);
@@ -514,6 +519,19 @@ namespace lucc
 		case Condition::LessEqual:	   Emit<Text>("setle  {}", mem);  break;
 		}
 	}
+	void x86_64CodeGenerator::Context::Jmp(char const* label, Condition cond)
+	{
+		switch (cond)
+		{
+		case Condition::Unconditional: Emit<Text>("jmp\t{}", label); break;
+		case Condition::Equal:		   Emit<Text>("je\t{}", label);  break;
+		case Condition::NotEqual:	   Emit<Text>("jne\t{}", label);  break;
+		case Condition::Greater:	   Emit<Text>("jg\t{}", label);  break;
+		case Condition::GreaterEqual:  Emit<Text>("jge\t{}", label);  break;
+		case Condition::Less:		   Emit<Text>("jl\t{}", label);  break;
+		case Condition::LessEqual:	   Emit<Text>("jle\t{}", label);  break;
+		}
+	}
 	void x86_64CodeGenerator::Context::Jmp(char const* label, uint64 label_id, Condition cond)
 	{
 		switch (cond)
@@ -527,6 +545,7 @@ namespace lucc
 		case Condition::LessEqual:	   Emit<Text>("jle\t{}{}", label, label_id);  break;
 		}
 	}
+
 
 	//declarations
 	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode, int64* init)

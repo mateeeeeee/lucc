@@ -236,6 +236,23 @@ namespace lucc
 			ctx.identifier_sym_table->ExitScope();
 		}
 		ctx.identifier_sym_table->ExitScope();
+
+		for (std::string_view goto_label : ctx.gotos)
+		{
+			bool found = false;
+			for (std::string_view label_name : ctx.labels)
+			{
+				if (goto_label == label_name)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found) Report(diag::undeclared_label);
+		}
+		ctx.gotos.clear();
+		ctx.labels.clear();
+
 		return func_decl;
 	}
 
@@ -251,10 +268,12 @@ namespace lucc
 		case TokenKind::KW_continue: return ParseContinueStatement();
 		case TokenKind::KW_break: return ParseBreakStatement();
 		case TokenKind::KW_return: return ParseReturnStatement();
-		case TokenKind::KW_goto: return ParseReturnStatement();
+		case TokenKind::KW_goto: return ParseGotoStatement();
 		//case TokenKind::KW_switch: return ParseSwitchStmt();
 		//case TokenKind::KW_case: return ParseCaseStmt();
 		//case TokenKind::KW_default: return ParseCaseStmt();
+		case TokenKind::identifier:
+			if ((current_token + 1)->Is(TokenKind::colon)) return ParseLabelStatement();
 		default:
 			return ParseExpressionStatement();
 		}
@@ -406,16 +425,22 @@ namespace lucc
 	std::unique_ptr<GotoStmtAST> Parser::ParseGotoStatement()
 	{
 		Expect(TokenKind::KW_goto);
-		std::unique_ptr<IdentifierAST> label_identifier = ParseIdentifier();
-		std::unique_ptr<GotoStmtAST> goto_stmt = std::make_unique<GotoStmtAST>(label_identifier->GetName());
+		std::string_view label_name = current_token->GetIdentifier();
+		Expect(TokenKind::identifier);
 		Expect(TokenKind::semicolon);
+		std::unique_ptr<GotoStmtAST> goto_stmt = std::make_unique<GotoStmtAST>(label_name);
+		ctx.gotos.push_back(label_name.data());
 		return goto_stmt;
 	}
 
 	std::unique_ptr<LabelStmtAST> Parser::ParseLabelStatement()
 	{
-		//check if token is identifier and is before ":"
-		return nullptr;
+		std::string_view label_name = current_token->GetIdentifier();
+		Expect(TokenKind::identifier);
+		Expect(TokenKind::colon);
+		std::unique_ptr<LabelStmtAST> label_stmt = std::make_unique<LabelStmtAST>(label_name);
+		ctx.labels.push_back(label_name.data());
+		return label_stmt;
 	}
 
 	//<initializer> ::= <assignment-expression>
