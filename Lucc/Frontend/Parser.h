@@ -162,8 +162,8 @@ namespace lucc
 
 		bool ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
 		bool ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
-
-		bool ParseType(QualifiedType& type);
+		bool ParseAbstractDeclarator(DeclSpecInfo const& decl_spec, QualifiedType& abstract_declarator);
+		bool ParseTypename(QualifiedType& type);
 		
 		bool ParsePointers(QualifiedType& type);
 		bool ParseTypeSuffix(QualifiedType& type);

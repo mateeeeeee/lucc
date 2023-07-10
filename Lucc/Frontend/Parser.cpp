@@ -28,6 +28,7 @@ namespace lucc
 		Storage storage = Storage::None;
 		FunctionSpecifier func_spec = FunctionSpecifier::None;
 	};
+	
 	struct Parser::DeclaratorInfo
 	{
 		std::string name = "";
@@ -959,7 +960,7 @@ namespace lucc
 			if (IsTokenType())
 			{
 				QualifiedType type{};
-				ParseType(type);
+				ParseTypename(type);
 				if (IsFunctionType(type) || !type->IsComplete())
 				{
 					Report(diag::sizeof_invalid_argument);
@@ -997,7 +998,7 @@ namespace lucc
 		if (IsTokenType())
 		{
 			QualifiedType type{};
-			ParseType(type);
+			ParseTypename(type); 
 			if (IsFunctionType(type) || !type->IsComplete())
 			{
 				Report(diag::alignof_invalid_argument);
@@ -1129,7 +1130,7 @@ namespace lucc
 				}
 			}
 
-			//ignore for now, later add support: atomic, tls, alignas
+			//ignore for now, later add support: KW__Atomic, KW__Alignas, KW__Thread_local
 			if (Consume(
 				KW_auto, KW_register, KW__Atomic,
 				KW__Alignas, KW__Thread_local))
@@ -1273,12 +1274,13 @@ namespace lucc
 
 		if (Consume(TokenKind::left_round))
 		{
-			//#todo
-			//DeclaratorInfo stub{};
-			//ParseDeclarator(decl_spec, stub);
-			//Expect(TokenKind::right_round);
-			//return true;
-			return false;
+			TokenPtr start = current_token;
+			DeclaratorInfo dummy{};
+			if (!ParseDeclarator(decl_spec, dummy)) return false;
+			Expect(TokenKind::right_round);
+			current_token = start;
+			ParseTypeSuffix(declarator.qtype);
+			return ParseDeclarator(decl_spec, declarator);
 		}
 
 		if (current_token->Is(TokenKind::identifier))
@@ -1290,15 +1292,35 @@ namespace lucc
 		return ParseTypeSuffix(declarator.qtype);
 	}
 
-	bool Parser::ParseType(QualifiedType& type)
+	//<abstract-declarator> ::= <pointer>
+	//                        | <pointer> <direct-abstract-declarator>
+	//                        | <direct-abstract-declarator>
+	//<direct-abstract-declarator> ::=  ( <abstract-declarator> )
+	//                               | {<direct-abstract-declarator>}? [ {<constant-expression>}? ]
+	//                               | {<direct-abstract-declarator>}? ( {<parameter-type-list>}? )
+	bool Parser::ParseAbstractDeclarator(DeclSpecInfo const& decl_spec, QualifiedType& abstract_declarator)
+	{
+		abstract_declarator = decl_spec.qtype;
+		ParsePointers(abstract_declarator);
+
+		if (Consume(TokenKind::left_round))
+		{
+			TokenPtr start = current_token;
+			QualifiedType dummy{};
+			if (!ParseAbstractDeclarator(decl_spec, dummy)) return false;
+			Expect(TokenKind::right_round);
+			current_token = start;
+			ParseTypeSuffix(abstract_declarator);
+			return ParseAbstractDeclarator(decl_spec, abstract_declarator);
+		}
+		else return ParseTypeSuffix(abstract_declarator);
+	}
+
+	bool Parser::ParseTypename(QualifiedType& type)
 	{
 		DeclSpecInfo decl_spec{};
-		if (!ParseDeclSpec(decl_spec, true))
-		{
-			return false;
-		}
-		type = decl_spec.qtype;
-		ParseTypeSuffix(type);
+		if (!ParseDeclSpec(decl_spec, true)) return false;	
+		if (!ParseAbstractDeclarator(decl_spec, type)) return false;
 		return true;
 	}
 

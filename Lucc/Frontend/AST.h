@@ -589,6 +589,9 @@ namespace lucc
 	{
 	public:
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+
+		virtual bool IsConstexpr() const { return true;  } //later = 0;
+		virtual uint64 EvaluateConstexpr() const { return 0; } //later = 0;
 		
 		SourceLocation const& GetLocation() const { return loc; }
 		QualifiedType const& GetType() const { return type; }
