@@ -461,8 +461,9 @@ namespace lucc
 		else
 		{
 			Expect(TokenKind::KW_case);
-			std::unique_ptr<IntLiteralAST> case_value = ParseIntegerLiteral();
-			case_stmt = std::make_unique<CaseStmtAST>(case_value->GetValue());
+			std::unique_ptr<ExprAST> case_value = ParseExpression();
+			if (!case_value->IsConstexpr()) Report(diag::case_value_not_constexpr);
+			case_stmt = std::make_unique<CaseStmtAST>(case_value->EvaluateConstexpr());
 		}
 		Expect(TokenKind::colon);
 		ctx.switch_stack.back()->AddCaseStatement(case_stmt.get());
@@ -1424,11 +1425,11 @@ namespace lucc
 				type.SetRawType(arr_type);
 				return ParseTypeSuffix(type);
 			}
-			else //if (current_token->Is(TokenKind::number))
+			else 
 			{
 				std::unique_ptr<ExprAST> dimensions_expr = ParseExpression();
 				if (!dimensions_expr->IsConstexpr()) Report(diag::array_dimensions_not_constexpr);
-				int64 array_size = dimensions_expr->EvaluateConstexpr(); //#todo check if the it succeeded
+				int64 array_size = dimensions_expr->EvaluateConstexpr();
 				if (array_size == 0) Report(diag::zero_size_array_not_allowed);
 
 				ArrayType arr_type(type, array_size);

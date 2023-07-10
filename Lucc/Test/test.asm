@@ -4,15 +4,9 @@
 .code
 
 main proc 
-push rbp
-mov rbp, rsp
-sub rsp, 16
-mov	qword ptr [rbp-8], 4
-mov	eax, 80
+mov	eax, 32
 jmp main_end
 main_end:
-add rsp, 16
-pop rbp
 ret
 main endp
 

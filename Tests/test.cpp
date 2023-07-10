@@ -233,11 +233,32 @@ TEST(Storage, TLS)
 
 TEST(Misc, Alignof)
 {
-
+	EXPECT_EQ(1, LUCC_EX(return _Alignof(char);));
+	EXPECT_EQ(2, LUCC_EX(return _Alignof(short);));
+	EXPECT_EQ(4, LUCC_EX(return _Alignof(int);));
+	EXPECT_EQ(8, LUCC_EX(return _Alignof(long);));
+	EXPECT_EQ(8, LUCC_EX(return _Alignof(long long);));
+	EXPECT_EQ(1, LUCC_EX(return _Alignof(char[3]);));
+	EXPECT_EQ(4, LUCC_EX(return _Alignof(int[3]);));
 }
 TEST(Misc, Sizeof)
 {
-
+	EXPECT_EQ(1,  LUCC_EX(return sizeof(char);));
+	EXPECT_EQ(2,  LUCC_EX(return sizeof(short);));
+	EXPECT_EQ(2,  LUCC_EX(return sizeof(short int);));
+	EXPECT_EQ(2,  LUCC_EX(return sizeof(int short);));
+	EXPECT_EQ(4,  LUCC_EX(return sizeof(int);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(long);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(long int);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(long int);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(char*);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(int*);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(long*);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(int**);));
+	//EXPECT_EQ(8,  LUCC_EX(return sizeof(int(*)[4]);));
+	EXPECT_EQ(32, LUCC_EX(return sizeof(int* [4]);));
+	EXPECT_EQ(16, LUCC_EX(return sizeof(int[4]);));
+	EXPECT_EQ(48, LUCC_EX(return sizeof(int[3][4]);));
 }
 TEST(Misc, Atomic)
 {
