@@ -19,7 +19,6 @@ namespace lucc
 		}
 		return BitMode_Count;
 	}
-
 	class VarDeclVisitorAST : public INodeVisitorAST
 	{
 	public:
@@ -74,13 +73,6 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
-	bool ExprAST::IsAssignable() const
-	{
-		if (!IsLValue()) return false;
-		if (!type->IsComplete() || type.IsConst() || type->Is(PrimitiveTypeKind::Array)) return false;
-		return true;
-	}
-
 	void BinaryExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -110,45 +102,6 @@ namespace lucc
 		if (init_expr) init_expr->Accept(visitor, depth + 1);
 	}
 
-	void FunctionDeclAST::SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
-	{
-		body = std::move(_body);
-		VarDeclVisitorAST var_decl_visitor(this);
-		body->Accept(var_decl_visitor, 0);
-	}
-
-	void FunctionDeclAST::AssignLocalVariableOffsets(uint64 args_in_registers) const
-	{
-		int32 top = 16;
-		for (uint64 i = args_in_registers; i < param_decls.size(); ++i)
-		{
-			VarDeclAST* param = param_decls[i].get();
-			top = AlignTo(top, 8);
-			param->SetLocalOffset(top);
-			top += (int32)param->GetSymbol().qtype->GetSize();
-		}
-
-		int32 bottom = 0;
-		for (uint64 i = 0; i < std::min(args_in_registers, param_decls.size()); ++i)
-		{
-			VarDeclAST* param = param_decls[i].get();
-			int32 alignment = (int32)param->GetSymbol().qtype->GetAlign();
-			bottom += (int32)param->GetSymbol().qtype->GetSize();
-			bottom = AlignTo(bottom, alignment);
-			param->SetLocalOffset(-bottom);
-		}
-
-		for (auto it = local_variables.rbegin(); it != local_variables.rend(); ++it)
-		{
-			VarDeclAST const* local_var = *it;
-			int32 alignment = (int32)local_var->GetSymbol().qtype->GetAlign();
-			bottom += (int32)local_var->GetSymbol().qtype->GetSize();
-			bottom = AlignTo(bottom, alignment);
-			local_var->SetLocalOffset(-bottom);
-		}
-		stack_size = AlignTo(bottom, 16);
-	}
-
 	void FunctionDeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -159,11 +112,6 @@ namespace lucc
 	void TypedefDeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
-	}
-
-	void CompoundStmtAST::AddStatement(std::unique_ptr<StmtAST>&& stmt)
-	{
-		statements.push_back(std::move(stmt));
 	}
 
 	void CompoundStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
@@ -258,6 +206,16 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
+	bool StringLiteralAST::IsConstexpr() const
+	{
+		return false;
+	}
+
+	int64 StringLiteralAST::EvaluateConstexpr() const
+	{
+		return 0;
+	}
+
 	void DeclRefAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -279,14 +237,172 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
-	void FloatLiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	//misc
+
+	bool ExprAST::IsAssignable() const
 	{
-		visitor.Visit(*this, depth);
+		if (!IsLValue()) return false;
+		if (!type->IsComplete() || type.IsConst() || type->Is(PrimitiveTypeKind::Array)) return false;
+		return true;
 	}
 
-	void DoubleLiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void FunctionDeclAST::SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
 	{
-		visitor.Visit(*this, depth);
+		body = std::move(_body);
+		VarDeclVisitorAST var_decl_visitor(this);
+		body->Accept(var_decl_visitor, 0);
+	}
+
+	void FunctionDeclAST::AssignLocalVariableOffsets(uint64 args_in_registers) const
+	{
+		int32 top = 16;
+		for (uint64 i = args_in_registers; i < param_decls.size(); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			top = AlignTo(top, 8);
+			param->SetLocalOffset(top);
+			top += (int32)param->GetSymbol().qtype->GetSize();
+		}
+
+		int32 bottom = 0;
+		for (uint64 i = 0; i < std::min(args_in_registers, param_decls.size()); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			int32 alignment = (int32)param->GetSymbol().qtype->GetAlign();
+			bottom += (int32)param->GetSymbol().qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			param->SetLocalOffset(-bottom);
+		}
+
+		for (auto it = local_variables.rbegin(); it != local_variables.rend(); ++it)
+		{
+			VarDeclAST const* local_var = *it;
+			int32 alignment = (int32)local_var->GetSymbol().qtype->GetAlign();
+			bottom += (int32)local_var->GetSymbol().qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			local_var->SetLocalOffset(-bottom);
+		}
+		stack_size = AlignTo(bottom, 16);
+	}
+
+	void CompoundStmtAST::AddStatement(std::unique_ptr<StmtAST>&& stmt)
+	{
+		statements.push_back(std::move(stmt));
+	}
+
+	//constexpr 
+
+	bool UnaryExprAST::IsConstexpr() const
+	{
+		return operand->IsConstexpr();
+	}
+
+	int64 UnaryExprAST::EvaluateConstexpr() const
+	{
+		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
+		switch (op)
+		{
+		case UnaryExprKind::Plus:
+			return operand->EvaluateConstexpr();
+		case UnaryExprKind::Minus:
+			return -operand->EvaluateConstexpr();
+		case UnaryExprKind::BitNot:
+			return ~operand->EvaluateConstexpr();
+		case UnaryExprKind::LogicalNot:
+			return !operand->EvaluateConstexpr();
+		default:
+			LU_ASSERT_MSG(false, "Invalid operation for constepxr");
+		}
+		return 0;
+	}
+
+	bool BinaryExprAST::IsConstexpr() const
+	{
+		return lhs->IsConstexpr() && rhs->IsConstexpr();
+	}
+
+	int64 BinaryExprAST::EvaluateConstexpr() const
+	{
+		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
+
+		switch (op)
+		{
+		case BinaryExprKind::Add:
+			return lhs->EvaluateConstexpr() + rhs->EvaluateConstexpr();
+		case BinaryExprKind::Subtract:
+			return lhs->EvaluateConstexpr() - rhs->EvaluateConstexpr();
+		case BinaryExprKind::Multiply:
+			return lhs->EvaluateConstexpr() * rhs->EvaluateConstexpr();
+		case BinaryExprKind::Divide:
+			return lhs->EvaluateConstexpr() / rhs->EvaluateConstexpr();
+		case BinaryExprKind::Modulo:
+			return lhs->EvaluateConstexpr() % rhs->EvaluateConstexpr();
+		case BinaryExprKind::ShiftLeft:
+			return lhs->EvaluateConstexpr() << rhs->EvaluateConstexpr();
+		case BinaryExprKind::ShiftRight:
+			return lhs->EvaluateConstexpr() >> rhs->EvaluateConstexpr();
+		case BinaryExprKind::LogicalAnd:
+			return lhs->EvaluateConstexpr() && rhs->EvaluateConstexpr();
+		case BinaryExprKind::LogicalOr:
+			return lhs->EvaluateConstexpr() || rhs->EvaluateConstexpr();
+		case BinaryExprKind::BitAnd:
+			return lhs->EvaluateConstexpr() & rhs->EvaluateConstexpr();
+		case BinaryExprKind::BitOr:
+			return lhs->EvaluateConstexpr() | rhs->EvaluateConstexpr();
+		case BinaryExprKind::BitXor:
+			return lhs->EvaluateConstexpr() ^ rhs->EvaluateConstexpr();
+		case BinaryExprKind::Equal:
+			return lhs->EvaluateConstexpr() == rhs->EvaluateConstexpr();
+		case BinaryExprKind::NotEqual:
+			return lhs->EvaluateConstexpr() != rhs->EvaluateConstexpr();
+		case BinaryExprKind::Less:
+			return lhs->EvaluateConstexpr() < rhs->EvaluateConstexpr();
+		case BinaryExprKind::Greater:
+			return lhs->EvaluateConstexpr() > rhs->EvaluateConstexpr();
+		case BinaryExprKind::LessEqual:
+			return lhs->EvaluateConstexpr() <= rhs->EvaluateConstexpr();
+		case BinaryExprKind::GreaterEqual:
+			return lhs->EvaluateConstexpr() >= rhs->EvaluateConstexpr();
+		case BinaryExprKind::Comma:
+			return rhs->EvaluateConstexpr();
+		default:
+			LU_ASSERT_MSG(false, "Invalid operation for constepxr");
+		}
+		return 0;
+	}
+
+	bool TernaryExprAST::IsConstexpr() const
+	{
+		if (!cond_expr->IsConstexpr()) return false;
+		if (cond_expr->EvaluateConstexpr()) return true_expr->IsConstexpr();
+		else return false_expr->IsConstexpr();
+	}
+
+	int64 TernaryExprAST::EvaluateConstexpr() const
+	{
+		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
+		if (cond_expr->EvaluateConstexpr()) return true_expr->EvaluateConstexpr();
+		else return false_expr->EvaluateConstexpr();
+	}
+
+	bool FunctionCallAST::IsConstexpr() const
+	{
+		return false;
+	}
+
+	int64 FunctionCallAST::EvaluateConstexpr() const
+	{
+		return 0;
+	}
+
+	bool IntLiteralAST::IsConstexpr() const
+	{
+		return true;
+	}
+
+	int64 IntLiteralAST::EvaluateConstexpr() const
+	{
+		return value;
 	}
 
 	/// Codegen

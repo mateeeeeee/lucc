@@ -1424,22 +1424,16 @@ namespace lucc
 				type.SetRawType(arr_type);
 				return ParseTypeSuffix(type);
 			}
-			else if (current_token->Is(TokenKind::number))
+			else //if (current_token->Is(TokenKind::number))
 			{
-				size_t array_size = std::stoull(current_token->GetIdentifier().data(), nullptr, 0); //#todo check if the it succeeded
-				if (array_size == 0)
-				{
-					Report(diag::zero_size_array_not_allowed);
-					return false;
-				}
+				std::unique_ptr<ExprAST> dimensions_expr = ParseExpression();
+				if (!dimensions_expr->IsConstexpr()) Report(diag::array_dimensions_not_constexpr);
+				int64 array_size = dimensions_expr->EvaluateConstexpr(); //#todo check if the it succeeded
+				if (array_size == 0) Report(diag::zero_size_array_not_allowed);
+
 				ArrayType arr_type(type, array_size);
 				type.SetRawType(arr_type);
-				++current_token;
-				if (!Consume(TokenKind::right_square))
-				{
-					Report(diag::array_brackets_not_closed);
-					return false;
-				}
+				if (!Consume(TokenKind::right_square)) Report(diag::array_brackets_not_closed);
 				else return ParseTypeSuffix(type);
 			}
 		}

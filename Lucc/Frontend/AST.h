@@ -554,8 +554,6 @@ namespace lucc
 		Binary,
 		Ternary,
 		FunctionCall,
-		FloatLiteral,
-		DoubleLiteral,
 		IntLiteral,
 		StringLiteral,
 		DeclRef
@@ -590,8 +588,8 @@ namespace lucc
 	public:
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
-		virtual bool IsConstexpr() const { return true;  } //later = 0;
-		virtual uint64 EvaluateConstexpr() const { return 0; } //later = 0;
+		virtual bool IsConstexpr() const = 0;
+		virtual int64 EvaluateConstexpr() const = 0;
 		
 		SourceLocation const& GetLocation() const { return loc; }
 		QualifiedType const& GetType() const { return type; }
@@ -628,6 +626,9 @@ namespace lucc
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 		
+		virtual bool IsConstexpr() const override;
+		virtual int64 EvaluateConstexpr() const override;
+
 	private:
 		UnaryExprKind op;
 		std::unique_ptr<ExprAST> operand;
@@ -682,6 +683,8 @@ namespace lucc
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+		virtual bool IsConstexpr() const override;
+		virtual int64 EvaluateConstexpr() const override;
 
 	private:
 		std::unique_ptr<ExprAST> lhs, rhs;
@@ -741,6 +744,8 @@ namespace lucc
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+		virtual bool IsConstexpr() const override;
+		virtual int64 EvaluateConstexpr() const override;
 
 	private:
 		std::unique_ptr<ExprAST> cond_expr;
@@ -768,33 +773,12 @@ namespace lucc
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+		virtual bool IsConstexpr() const override;
+		virtual int64 EvaluateConstexpr() const override;
 
 	private:
 		std::unique_ptr<ExprAST> func_expr;
 		std::vector<std::unique_ptr<ExprAST>> func_args;
-	};
-
-	class FloatLiteralAST final : public ExprAST
-	{
-	public:
-		FloatLiteralAST(float value, SourceLocation const& loc) : ExprAST(ExprKind::FloatLiteral, loc, builtin_types::Float), value(value) {}
-		float GetValue() const { return value; }
-
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-
-	private:
-		float value;
-	};
-	class DoubleLiteralAST final : public ExprAST
-	{
-	public:
-		DoubleLiteralAST(double value, SourceLocation const& loc) : ExprAST(ExprKind::DoubleLiteral, loc, builtin_types::Double), value(value) {}
-		double GetValue() const { return value; }
-
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-
-	private:
-		double value;
 	};
 	class IntLiteralAST final : public ExprAST
 	{
@@ -804,6 +788,8 @@ namespace lucc
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
+		virtual bool IsConstexpr() const override;
+		virtual int64 EvaluateConstexpr() const override;
 
 	private:
 		int64 value;
@@ -815,6 +801,8 @@ namespace lucc
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 		std::string_view GetString() const { return str; }
+		virtual bool IsConstexpr() const override;
+		virtual int64 EvaluateConstexpr() const override;
 
 	private:
 		std::string str;
@@ -830,6 +818,8 @@ namespace lucc
 		{
 			SetValueCategory(ExprValueCategory::LValue);
 		}
+		virtual bool IsConstexpr() const override { return false; }
+		virtual int64 EvaluateConstexpr() const override { return 0; }
 
 	private:
 		std::string name;
