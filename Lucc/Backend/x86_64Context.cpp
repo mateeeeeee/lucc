@@ -402,7 +402,7 @@ namespace lucc
 	}
 
 	//transfer
-	void x86_64CodeGenerator::Context::Mov(register_t reg, int64 value, BitMode bitmode)
+	void x86_64CodeGenerator::Context::Mov(register_t reg, int32 value, BitMode bitmode)
 	{
 		Emit<Text>("mov\t{}, {}", registers[reg.id][bitmode], value);
 	}
@@ -435,6 +435,12 @@ namespace lucc
 	{
 		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
 	}
+
+	void x86_64CodeGenerator::Context::Movabs(register_t dst, int64 value)
+	{
+		Emit<Text>("movabs\t{}, {}", registers[dst.id][BitMode_64], value);
+	}
+
 	void x86_64CodeGenerator::Context::Movzx(register_t dst, register_t src, BitMode bitmode, bool src_8bit /*= false*/)
 	{
 		Emit<Text>("movzx\t{}, {}", registers[dst.id][bitmode], registers[src.id][src_8bit ? BitMode_8 : BitMode_16]);
@@ -448,6 +454,34 @@ namespace lucc
 		BitMode src_bitmode = src_8bit ? BitMode_8 : BitMode_16;
 		Emit<Text>("movzx\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_bitmode), ConvertMemRef(mem_ref, src_bitmode));
 	}
+
+	void x86_64CodeGenerator::Context::Movsx(register_t dst, register_t src, BitMode bitmode, bool src_8bit /*= false*/)
+	{
+		Emit<Text>("movsx\t{}, {}", registers[dst.id][bitmode], registers[src.id][src_8bit ? BitMode_8 : BitMode_16]);
+	}
+	void x86_64CodeGenerator::Context::Movsx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit /*= false*/)
+	{
+		Emit<Text>("movsx\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_8bit ? BitMode_8 : BitMode_16), mem);
+	}
+	void x86_64CodeGenerator::Context::Movsx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit /*= false*/)
+	{
+		BitMode src_bitmode = src_8bit ? BitMode_8 : BitMode_16;
+		Emit<Text>("movsx\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_bitmode), ConvertMemRef(mem_ref, src_bitmode));
+	}
+
+	void x86_64CodeGenerator::Context::Movsxd(register_t dst, register_t src)
+	{
+		Emit<Text>("movsxd\t{}, {}", registers[dst.id][BitMode_64], registers[src.id][BitMode_32]);
+	}
+	void x86_64CodeGenerator::Context::Movsxd(register_t dst, mem_ref_t const& mem_ref)
+	{
+		Emit<Text>("movsx\t{}, {} {}", registers[dst.id][BitMode_64], ConvertToCast(BitMode_32), ConvertMemRef(mem_ref, BitMode_32));
+	}
+	void x86_64CodeGenerator::Context::Movsxd(register_t dst, char const* mem)
+	{
+		Emit<Text>("movsx\t{}, {} {}", registers[dst.id][BitMode_64], ConvertToCast(BitMode_32), mem);
+	}
+
 	void x86_64CodeGenerator::Context::Lea(register_t reg, char const* mem)
 	{
 		Emit<Text>("lea\t{}, {}", registers[reg.id][BitMode_64], mem);
@@ -679,6 +713,7 @@ namespace lucc
 	{
 		return ConvertToType(mode) + " ptr";
 	}
+
 }
 
 /*

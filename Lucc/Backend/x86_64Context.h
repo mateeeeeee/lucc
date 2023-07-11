@@ -159,7 +159,7 @@ namespace lucc
 		virtual void Jmp(char const* label, uint64 label_id, Condition cond = Condition::Unconditional) override;
 
 		//transfer
-		virtual void Mov(register_t reg, int64 value, BitMode bitmode) override;
+		virtual void Mov(register_t reg, int32 value, BitMode bitmode) override;
 		virtual void Mov(char const* mem, int32 value, BitMode bitmode) override;
 		virtual void Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode) override;
 		virtual void Mov(register_t dst, register_t src, BitMode bitmode) override;
@@ -168,9 +168,19 @@ namespace lucc
 		virtual void Mov(char const* mem, register_t src, BitMode bitmode) override;
 		virtual void Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode) override;
 
+		virtual void Movabs(register_t dst, int64 value) override;
+
 		virtual void Movzx(register_t dst, register_t src, BitMode bitmode, bool src_8bit = false) override;
 		virtual void Movzx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit = false) override;
 		virtual void Movzx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit = false) override;
+
+		virtual void Movsx(register_t dst, register_t src, BitMode bitmode, bool src_8bit = false) override;
+		virtual void Movsx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit = false) override;
+		virtual void Movsx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit = false) override;
+
+		virtual void Movsxd(register_t dst, register_t src) override;
+		virtual void Movsxd(register_t dst, mem_ref_t const& mem_ref) override;
+		virtual void Movsxd(register_t dst, char const* mem) override;
 
 		virtual void Lea(register_t reg, char const* mem) override;
 		virtual void Lea(register_t reg, mem_ref_t const& mem_ref) override;
