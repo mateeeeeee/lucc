@@ -148,5 +148,6 @@
     <None Include="Test\test.asm">
       <Filter>Compiler</Filter>
     </None>
+    <None Include="..\README.md" />
   </ItemGroup>
 </Project>

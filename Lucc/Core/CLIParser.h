@@ -60,6 +60,11 @@ namespace lucc
 			else return def;
 		}
 
+		std::vector<std::string> const& AsVector() const
+		{
+			return value_vector;
+		}
+
 		bool IsPresent() const
 		{
 			return is_present;
@@ -73,6 +78,7 @@ namespace lucc
 		std::vector<std::string> prefixes;
 		bool has_value;
 		std::string value;
+		std::vector<std::string> value_vector;
 		bool is_present = false;
 
 		void SetValue(std::string const& _value)
@@ -102,7 +108,7 @@ namespace lucc
 
 		void Parse(int argc, char** argv)
 		{
-			std::vector<std::string> cmdline(argv, argv + argc);
+			std::vector<std::string> cmdline(argv + 1, argv + argc);
 			for (size_t i = 0; i < cmdline.size(); ++i)
 			{
 				bool found = false;
@@ -120,6 +126,18 @@ namespace lucc
 						}
 					}
 					if (found) break;
+				}
+
+				if (!found)
+				{
+					for (CLIArg& arg : args)
+					{
+						if (arg.prefixes.empty())
+						{
+							arg.value_vector.push_back(cmdline[i]);
+							break;
+						}
+					}
 				}
 			}
 		}
