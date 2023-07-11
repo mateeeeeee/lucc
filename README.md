@@ -3,7 +3,13 @@ Toy C compiler for x86-64 made for learning purposes. Both lexer and parser are 
 No optimization passes are performed, the assembly is generated from AST traversal. 
 
 ## Features
-  * operators: +,-,*,/, +=,-=,*=,/=,==,!=,>,>=,<,<=,>>,<<,>>=,<<=,&,|,^,~,&=,|=,^=,&&,||,!,++,--
+  * operators:
+    - additive: +, -, +=, -=, ++, --
+    - multiplicative: *, /, *=, /=
+    - relation: ==, !=, >, >=, <, <=
+    - shift: >>, <<, >>=, <<=
+    - bitwise: &, |, ^, ~, &=, |=, ^=
+    - logic: &&, ||, !
   * pointers and arrays
   * control statements
     - if statement
