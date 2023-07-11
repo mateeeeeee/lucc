@@ -31,10 +31,11 @@ No optimization passes are performed, the assembly is generated from AST travers
 
 ## Todo
   * alignas
-  * register spilling
+  * string literals
   * casts, conversions
   * postprocessor: #if,#elif, macro functions
-  * Tags (structs, unions, enums)
+  * register spilling
+  * tags (structs, unions, enums)
  
 ## Not planned
   * floating points
