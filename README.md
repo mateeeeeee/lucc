@@ -1,6 +1,6 @@
 # lucc
 Toy C compiler for x86-64 made for learning purposes. Both lexer and parser are handwritten (i.e. not using generators).
-No optimization passes are performed, the code is generated from AST. The assembly outputed is
+No optimization passes are performed, the assembly is generated from AST traversal. 
 
 ## Features
   * operators: +,-,*,/, +=,-=,*=,/=,==,!=,>,>=,<,<=,>>,<<,>>=,<<=,&,|,^,~,&=,|=,^=,&&,||,!,++,--
