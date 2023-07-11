@@ -30,6 +30,7 @@ No optimization passes are performed, the assembly is generated from AST travers
   * scopes
 
 ## Todo
+  * bugs: pointer arithmetic, declspec parsing
   * alignas
   * string literals
   * casts, conversions
