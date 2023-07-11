@@ -30,7 +30,7 @@ No optimization passes are performed, the assembly is generated from AST travers
   * scopes
 
 ## Todo
-  * bugs: pointer arithmetic, declspec parsing
+  * known bugs: pointer arithmetic, declspec parsing
   * alignas
   * string literals
   * casts, conversions
@@ -39,7 +39,7 @@ No optimization passes are performed, the assembly is generated from AST travers
   * tags (structs, unions, enums)
  
 ## Not planned
-  * floating points
+  * floating point numbers
   * variadic functions and macros
   * thread local, atomic
   * bitfields
@@ -58,3 +58,4 @@ No optimization passes are performed, the assembly is generated from AST travers
 ## Dependencies
   * MASM (included with Visual Studio) is used as an assembler.
   * Microsoft Linker (included with Visual Studio) is used for linking.
+  * For successful build, updated the _executables_path and _lib_path in Compiler.cpp to an existing paths on your machine
