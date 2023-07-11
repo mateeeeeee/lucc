@@ -21,7 +21,7 @@ namespace lucc
 	class IntLiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
-	class DeclRefAST;
+	class VarDeclRefAST;
 
 	class StmtAST;
 	class CompoundStmtAST;
@@ -60,7 +60,7 @@ namespace lucc
 		virtual void Visit(IntLiteralAST const& node, size_t depth) {}
 		virtual void Visit(StringLiteralAST const& node, size_t depth) {}
 		virtual void Visit(IdentifierAST const& node, size_t depth) {}
-		virtual void Visit(DeclRefAST const& node, size_t depth) {}
+		virtual void Visit(VarDeclRefAST const& node, size_t depth) {}
 		virtual void Visit(StmtAST const& node, size_t depth) {}
 		virtual void Visit(CompoundStmtAST const& node, size_t depth) {}
 		virtual void Visit(DeclStmtAST const& node, size_t depth) {}
@@ -122,6 +122,8 @@ namespace lucc
 	public:
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
 		void SetSymbol(Symbol* _sym) { sym = *_sym; }
+
+		std::string_view GetName() const { return name; }
 		SourceLocation const& GetLocation() const { return loc; }
 		Symbol const& GetSymbol() const { return sym; }
 		DeclKind GetDeclKind() const { return kind; }
@@ -129,17 +131,18 @@ namespace lucc
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	protected:
+		std::string name;
 		SourceLocation loc;
 		Symbol sym;
 		DeclKind kind;
 
 	protected:
-		explicit DeclAST(DeclKind kind) : kind(kind) {}
+		DeclAST(std::string_view name, DeclKind kind) : name(name), kind(kind) {}
 	};
 	class VarDeclAST : public DeclAST
 	{
 	public:
-		VarDeclAST(std::string_view name, bool global) : DeclAST(DeclKind::Var), name(name), global(global), local_offset(0) {}
+		explicit VarDeclAST(std::string_view name) : DeclAST(name, DeclKind::Var), local_offset(0) {}
 
 		void SetInitExpression(std::unique_ptr<ExprAST>&& expr)
 		{
@@ -147,24 +150,21 @@ namespace lucc
 		}
 		void SetLocalOffset(int32 _local_offset) const { local_offset = _local_offset; }
 
-		std::string_view GetName() const { return name; }
-		bool IsGlobal() const { return global; }
+		bool IsGlobal() const { return GetSymbol().global; }
 		int32 GetLocalOffset() const { return local_offset; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
-		std::string name;
-		bool global;
 		std::unique_ptr<ExprAST> init_expr;
 		mutable int32 local_offset;
+
 	};
 	class FunctionDeclAST : public DeclAST
 	{
 	public:
-		FunctionDeclAST(std::string_view name) : DeclAST(DeclKind::Func), name(name) {}
-		std::string_view GetName() const { return name; }
+		explicit FunctionDeclAST(std::string_view name) : DeclAST(name, DeclKind::Func) {}
 
 		void AddParamDeclaration(std::unique_ptr<VarDeclAST>&& param)
 		{
@@ -190,7 +190,6 @@ namespace lucc
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
 
 	private:
-		std::string name;
 		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
 		std::unique_ptr<CompoundStmtAST> body;
 		std::vector<VarDeclAST const*> local_variables;
@@ -199,13 +198,8 @@ namespace lucc
 	class TypedefDeclAST final : public DeclAST
 	{
 	public:
-		TypedefDeclAST(std::string_view typedef_name) : DeclAST(DeclKind::Typedef), typedef_name(typedef_name) {}
+		TypedefDeclAST(std::string_view typedef_name) : DeclAST(typedef_name, DeclKind::Typedef) {}
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-
-		std::string_view GetName() const { return typedef_name; }
-
-	private:
-		std::string typedef_name;
 	};
 
 	enum class StmtKind
@@ -824,10 +818,10 @@ namespace lucc
 	private:
 		std::string name;
 	};
-	class DeclRefAST : public IdentifierAST
+	class VarDeclRefAST : public IdentifierAST
 	{
 	public:
-		DeclRefAST(Symbol* symbol, SourceLocation const& loc) : IdentifierAST(symbol->name, loc, symbol->qtype),
+		VarDeclRefAST(Symbol* symbol, SourceLocation const& loc) : IdentifierAST(symbol->name, loc, symbol->qtype),
 			symbol(*symbol), local_offset(0) {}
 
 		Symbol const& GetSymbol() const { return symbol; }

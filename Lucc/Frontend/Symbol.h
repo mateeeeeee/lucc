@@ -128,18 +128,4 @@ namespace lucc
 		std::vector<ScopeTable> scopes;
 		uint32 scope_id = 0;
 	};
-
-	//extern Table constants;
-	//extern Table externals;
-	//extern Table globals;
-	//extern Table identifiers;
-	//extern Table labels;
-	//extern Table types;
-	//Subsets of these tables implement three of the name spaces in ANSI C.
-	//identifiers holds the ordinary identifiers. externals holds the subset
-	//of identifiers that have been declared extern; it is used to warn about
-	//conflicting declarations of external identifiers.globals is the part of the
-	//identifiers table that holds identifiers with file scope.
-	//Compiler - defined internal labels are stored in 1abe1 s, and type tags
-	//are stored in types.
 }	

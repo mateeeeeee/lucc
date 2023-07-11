@@ -139,7 +139,7 @@ namespace lucc
 				if (declaration_info.qtype->Is(PrimitiveTypeKind::Void)) Report(diag::void_not_expected);
 				
 				std::string_view name = declarator_info.name;
-				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name, is_global);
+				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
 				var_decl->SetLocation(current_token->GetLocation());
 				var_decl->SetSymbol(ctx.identifier_sym_table->LookUp(name));
 				if (Consume(TokenKind::equal))
@@ -212,7 +212,7 @@ namespace lucc
 				Report(diag::redefinition_of_identifier);
 				return nullptr;
 			}
-			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name, false);
+			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name);
 			param_decl->SetSymbol(ctx.identifier_sym_table->LookUp(func_param.name));
 			func_decl->AddParamDeclaration(std::move(param_decl));
 		}
@@ -989,24 +989,12 @@ namespace lucc
 		Expect(TokenKind::KW__Alignof);
 		Expect(TokenKind::left_round);
 		
-		if (!IsTokenType())
-		{
-			Report(diag::alignof_expects_type_argument);
-		}
-		
+		if (!IsTokenType()) Report(diag::alignof_expects_type_argument);
 		SourceLocation loc = current_token->GetLocation();
-		std::unique_ptr<ExprAST> alignof_expr = nullptr;
-		if (IsTokenType())
-		{
-			QualifiedType type{};
-			ParseTypename(type); 
-			if (IsFunctionType(type) || !type->IsComplete())
-			{
-				Report(diag::alignof_invalid_argument);
-			}
-
-			alignof_expr = std::make_unique<IntLiteralAST>(type->GetAlign(), loc);
-		}
+		QualifiedType type{};
+		ParseTypename(type);
+		if (IsFunctionType(type) || !type->IsComplete()) Report(diag::alignof_invalid_argument);
+		std::unique_ptr<ExprAST> alignof_expr = std::make_unique<IntLiteralAST>(type->GetAlign(), loc);
 		Expect(TokenKind::right_round);
 		return alignof_expr;
 	}
@@ -1057,14 +1045,10 @@ namespace lucc
 		{
 			SourceLocation loc = current_token->GetLocation();
 			++current_token;
-			std::unique_ptr<DeclRefAST> decl_ref = std::make_unique<DeclRefAST>(sym, loc);
+			std::unique_ptr<VarDeclRefAST> decl_ref = std::make_unique<VarDeclRefAST>(sym, loc);
 			return decl_ref;
 		}
-		else
-		{
-			Report(diag::variable_not_declared);
-			return nullptr;
-		}
+		else Report(diag::variable_not_declared);
 	}
 
 	//<declaration - specifier> :: = <storage - class - specifier>

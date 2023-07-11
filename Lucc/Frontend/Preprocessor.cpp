@@ -7,7 +7,6 @@
 #include "Core/Defines.h"
 
 //preprocessor todo list:
-//- pragma once
 //- macros function
 //- stringify, concat operators
 //- #if,#elif

@@ -67,6 +67,7 @@ namespace lucc
 				TokenKind::KW_restrict,
 				TokenKind::KW_bool,
 				TokenKind::KW_char,
+				TokenKind::KW_short,
 				TokenKind::KW_int,
 				TokenKind::KW_signed,
 				TokenKind::KW_unsigned,

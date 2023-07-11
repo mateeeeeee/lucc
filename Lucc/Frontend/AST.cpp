@@ -31,11 +31,12 @@ namespace lucc
 	private:
 		FunctionDeclAST* func_ref;
 	};
+
 	class DeclRefVisitorAST : public INodeVisitorAST
 	{
 	public:
 		DeclRefVisitorAST(FunctionDeclAST const* func_ref) : func_ref(func_ref) {}
-		virtual void Visit(DeclRefAST const& node, size_t depth) override
+		virtual void Visit(VarDeclRefAST const& node, size_t depth) override
 		{
 			func_ref->ForAllDeclarations([&](DeclAST const* decl)
 			{
@@ -216,7 +217,7 @@ namespace lucc
 		return 0;
 	}
 
-	void DeclRefAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void VarDeclRefAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
@@ -530,7 +531,7 @@ namespace lucc
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -564,7 +565,7 @@ namespace lucc
 				int32 type_size = (int32)operand->GetType()->GetSize();
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -623,7 +624,7 @@ namespace lucc
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -656,7 +657,7 @@ namespace lucc
 				int32 type_size = (int32)operand->GetType()->GetSize();
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -707,7 +708,7 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -751,7 +752,7 @@ namespace lucc
 			{
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -785,7 +786,7 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -1015,7 +1016,7 @@ namespace lucc
 			LU_ASSERT_MSG(lhs->IsLValue(), "Cannot assign to rvalue!");
 			if (lhs->GetExprKind() == ExprKind::DeclRef)
 			{
-				DeclRefAST* decl_ref = AstCast<DeclRefAST>(lhs.get());
+				VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(lhs.get());
 				char const* var_name = decl_ref->GetName().data();
 				int32 local_offset = decl_ref->GetLocalOffset();
 				register_t rbp = ctx.GetStackFrameRegister();
@@ -1169,7 +1170,7 @@ namespace lucc
 		ctx.Label(end_label, label_id);
 	}
 
-	void DeclRefAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void VarDeclRefAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
 		if (!return_reg) return;
 

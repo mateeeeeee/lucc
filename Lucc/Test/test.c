@@ -1,5 +1,13 @@
+
+
+void f(int* p)
+{
+	*p = 5;
+}
+
 int main(void) 
 {
-	//return sizeof(int(*)[4]);
-	//return sizeof(void(*)(void));
+	int a = 1;
+	f(&a);
+	return a;
 }

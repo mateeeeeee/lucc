@@ -51,12 +51,10 @@ TEST(Arithmetic, ShiftOperators)
 	EXPECT_EQ(LUCC_EX(int i = 5; i >>= 1; return i;), 2);
 	EXPECT_EQ(LUCC_EX(int i = -1; i >>= 1; return i;), -1);
 }
-
 TEST(Arithmetic, Comma)
 {
 	EXPECT_EQ(LUCC_EX(return (1,3);), 3);
 }
-
 TEST(Arithmetic, BitOperators)
 {
 	EXPECT_EQ(LUCC_EX(return ~-1;), 0);
@@ -168,7 +166,7 @@ TEST(Iteration, DoWhile)
 
 TEST(Declaration, Variable)
 {
-
+	EXPECT_EQ(LUCC(int t = 5; int main(void) { int t = 12; return t; }), 12);
 }
 TEST(Declaration, Function)
 {
@@ -178,31 +176,6 @@ TEST(Declaration, Typedef)
 {
 	EXPECT_EQ(LUCC(typedef int t; int main(void) { t x = 12; return x; }), 12);
 	EXPECT_EQ(LUCC_EX(typedef int t; t x = 12; return x;), 12);
-}
-
-TEST(Initialization, LocalVariables)
-{
-
-}
-TEST(Initialization, GlobalVariables)
-{
-
-}
-TEST(Initialization, LocalArrays)
-{
-
-}
-TEST(Initialization, GlobalArrays)
-{
-
-}
-TEST(Initialization, LocalPointers)
-{
-
-}
-TEST(Initialization, GlobalPointers)
-{
-
 }
 
 TEST(Postprocessor, Macros)
@@ -226,17 +199,13 @@ TEST(Storage, Extern)
 {
 
 }
-TEST(Storage, TLS)
-{
-
-}
 
 TEST(Misc, Alignof)
 {
 	EXPECT_EQ(1, LUCC_EX(return _Alignof(char);));
 	EXPECT_EQ(2, LUCC_EX(return _Alignof(short);));
 	EXPECT_EQ(4, LUCC_EX(return _Alignof(int);));
-	EXPECT_EQ(8, LUCC_EX(return _Alignof(long);));
+	EXPECT_EQ(4, LUCC_EX(return _Alignof(long);));
 	EXPECT_EQ(8, LUCC_EX(return _Alignof(long long);));
 	EXPECT_EQ(1, LUCC_EX(return _Alignof(char[3]);));
 	EXPECT_EQ(4, LUCC_EX(return _Alignof(int[3]);));
@@ -248,9 +217,9 @@ TEST(Misc, Sizeof)
 	EXPECT_EQ(2,  LUCC_EX(return sizeof(short int);));
 	EXPECT_EQ(2,  LUCC_EX(return sizeof(int short);));
 	EXPECT_EQ(4,  LUCC_EX(return sizeof(int);));
-	EXPECT_EQ(8,  LUCC_EX(return sizeof(long);));
-	EXPECT_EQ(8,  LUCC_EX(return sizeof(long int);));
-	EXPECT_EQ(8,  LUCC_EX(return sizeof(long int);));
+	EXPECT_EQ(4,  LUCC_EX(return sizeof(long);));
+	EXPECT_EQ(4,  LUCC_EX(return sizeof(long int);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(long long);));
 	EXPECT_EQ(8,  LUCC_EX(return sizeof(char*);));
 	EXPECT_EQ(8,  LUCC_EX(return sizeof(int*);));
 	EXPECT_EQ(8,  LUCC_EX(return sizeof(long*);));
@@ -260,7 +229,36 @@ TEST(Misc, Sizeof)
 	EXPECT_EQ(16, LUCC_EX(return sizeof(int[4]);));
 	EXPECT_EQ(48, LUCC_EX(return sizeof(int[3][4]);));
 }
-TEST(Misc, Atomic)
+TEST(Misc, Const)
+{
+	EXPECT_EQ(LUCC_EX(const int i = 0; i = 5; return i;), COMPILATION_FAILED);
+}
+TEST(Misc, Constexpr)
+{
+	EXPECT_EQ(1, LUCC_EX(int i = 0; switch (3) { case 5 - 2 + 0 * 3: i++; } return i; ));
+	EXPECT_EQ(8, LUCC_EX(int x[1 + 1]; return sizeof(x); ));
+	EXPECT_EQ(6, LUCC_EX(char x[8 - 2]; return sizeof(x); ));
+	EXPECT_EQ(6, LUCC_EX(char x[2 * 3]; return sizeof(x); ));
+	EXPECT_EQ(3, LUCC_EX(char x[12 / 4]; return sizeof(x);));
+	//EXPECT_EQ(2, ({ char x[12 % 10]; return sizeof(x); }));
+	EXPECT_EQ(4, LUCC_EX(char x[1 << 2]; return sizeof(x);));
+	EXPECT_EQ(2, LUCC_EX(char x[4 >> 1]; return sizeof(x);));
+	EXPECT_EQ(2, LUCC_EX(char x[(1 == 1) + 1]; return sizeof(x);));
+	EXPECT_EQ(1, LUCC_EX(char x[(1 != 1) + 1]; return sizeof(x);));
+	EXPECT_EQ(1, LUCC_EX(char x[(1 < 1) + 1]; return sizeof(x);));
+	EXPECT_EQ(2, LUCC_EX(char x[(1 <= 1) + 1]; return sizeof(x);));
+	EXPECT_EQ(2, LUCC_EX(char x[1 ? 2 : 3]; return sizeof(x);));
+	EXPECT_EQ(3, LUCC_EX(char x[0 ? 2 : 3]; return sizeof(x);));
+	EXPECT_EQ(3, LUCC_EX(char x[(1,3)]; return sizeof(x); ));
+	EXPECT_EQ(2, LUCC_EX(char x[!0 + 1]; return sizeof(x);));
+	EXPECT_EQ(1, LUCC_EX(char x[!1 + 1]; return sizeof(x);));
+	EXPECT_EQ(2, LUCC_EX(char x[~- 3]; return sizeof(x);));
+	EXPECT_EQ(2, LUCC_EX(char x[(5 || 6) + 1]; return sizeof(x);));
+	EXPECT_EQ(1, LUCC_EX(char x[(0 || 0) + 1]; return sizeof(x);));
+	EXPECT_EQ(2, LUCC_EX(char x[(1 && 1) + 1]; return sizeof(x);));
+	EXPECT_EQ(1, LUCC_EX(char x[(1 && 0) + 1]; return sizeof(x);));
+}
+TEST(Misc, Enum)
 {
 
 }
@@ -269,18 +267,6 @@ TEST(Misc, Cast)
 
 }
 TEST(Misc, Conversion)
-{
-
-}
-TEST(Misc, Const)
-{
-	EXPECT_EQ(LUCC_EX(const int i = 0; i = 5;  return i;), COMPILATION_FAILED);
-}
-TEST(Misc, Constexpr)
-{
-
-}
-TEST(Misc, Enum)
 {
 
 }
