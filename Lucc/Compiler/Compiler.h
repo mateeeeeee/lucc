@@ -16,12 +16,20 @@ namespace lucc
 	DEFINE_ENUM_BIT_OPERATORS(CompilerFlag);
 	using CompilerFlags = uint32;
 
+	enum class CompilerOutput
+	{
+		Exe,
+		Dll,
+		Lib
+	};
+
 	struct CompilerInput
 	{
+		CompilerFlags flags;
 		std::string input_directory;
 		std::vector<std::string> sources;
-		std::string exe_file;
-		CompilerFlags	 flags;
+		std::string output_file;
+		CompilerOutput output_type = CompilerOutput::Exe;
 	};
 
 	int Compile(CompilerInput const&);

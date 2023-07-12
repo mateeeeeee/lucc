@@ -28,6 +28,7 @@ No optimization passes are performed, the assembly is generated from AST travers
   * constant folding
   * functions
   * scopes
+  * .dll and .lib using MSVC link.exe/lib.exe
 
 ## Todo
   * known bugs: pointer arithmetic, declspec parsing
@@ -50,7 +51,9 @@ No optimization passes are performed, the assembly is generated from AST travers
   * -S, --noassembly: no assembling is preformed, only .asm files are produced
   * -E, --only-pp: Only preprocessor is run
   * -d: Directory where the source files are located
-  * -o: The name of the executable
+  * -o: The name of the output file
+  * -dll: builds a dll
+  *	-lib: builds a lib
   * -ast-dump: Dump AST to console
   * -test: used for running g-tests
   * -i: input test code (used for g-tests)

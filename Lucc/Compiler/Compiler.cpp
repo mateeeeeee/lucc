@@ -16,7 +16,7 @@ namespace lucc
 {
 	namespace
 	{
-#if 0
+#if 1
 		constexpr char const* _executables_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\VC\\Tools\\MSVC\\14.34.31933\\bin\\Hostx64\\x64";
 		constexpr char const* _lib_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\VC\\Tools\\MSVC\\14.34.31933\\lib\\x64";
 #else
@@ -80,14 +80,42 @@ namespace lucc
 		system(masm_cmd.c_str());
 
 		if (no_link) return 0;
-		std::string link_cmd = std::format("\"\"{}/link.exe\" /out:{} ", _executables_path, input.exe_file);
-		for (auto const& obj_file : object_files) link_cmd += obj_file.string() + " "; ///msvcrt.lib libpath:\"\"{}\"\"
-		link_cmd += std::format("\"/libpath:{}\"", _lib_path);
-		link_cmd += "/subsystem:console /entry:main\"";
-		system(link_cmd.c_str());
 
-		std::string exe_cmd = std::format("{}", input.exe_file);
-		return system(exe_cmd.c_str());
+		fs::path output_file = directory_path / input.output_file;
+		switch (input.output_type)
+		{
+		case CompilerOutput::Exe:
+		{
+			output_file.replace_extension("exe");
+			std::string link_cmd = std::format("\"\"{}/link.exe\" /out:{} ", _executables_path, output_file.string());
+			for (auto const& obj_file : object_files) link_cmd += obj_file.string() + " ";
+			link_cmd += std::format("\"/libpath:{}\"", _lib_path);
+			link_cmd += "/subsystem:console /entry:main\"";
+			system(link_cmd.c_str());
+
+			std::string exe_cmd = std::format("{}", output_file.string());
+			return system(exe_cmd.c_str());
+		}
+		case CompilerOutput::Dll:
+		{
+			output_file.replace_extension("dll");
+			std::string link_cmd = std::format("\"\"{}/link.exe\" /dll /out:{} ", _executables_path, output_file.string());
+			for (auto const& obj_file : object_files) link_cmd += obj_file.string() + " ";
+			link_cmd += std::format("\"/libpath:{}\"", _lib_path);
+			link_cmd += "/entry:DllMain\"";
+			system(link_cmd.c_str());
+			return 0;
+		}
+		case CompilerOutput::Lib:
+		{
+			output_file.replace_extension("lib");
+			std::string lib_cmd = std::format("\"\"{}/lib.exe\" /out:{} ", _executables_path, output_file.string());
+			for (auto const& obj_file : object_files) lib_cmd += obj_file.string() + " ";
+			lib_cmd += std::format("\"/libpath:{}\"", _lib_path);
+			system(lib_cmd.c_str());
+		}
+		}
+		return 0;
 	}
 
 	int CompileTest(std::string_view test_code, bool debug)
