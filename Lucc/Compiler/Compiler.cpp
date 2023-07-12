@@ -16,13 +16,8 @@ namespace lucc
 {
 	namespace
 	{
-#if 1
-		constexpr char const* _executables_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\VC\\Tools\\MSVC\\14.34.31933\\bin\\Hostx64\\x64";
-		constexpr char const* _lib_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\VC\\Tools\\MSVC\\14.34.31933\\lib\\x64";
-#else
-		constexpr char const* _executables_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Preview\\VC\\Tools\\MSVC\\14.34.31823\\bin\\Hostx64\\x64";
-		constexpr char const* _lib_path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Preview\\VC\\Tools\\MSVC\\14.34.31823\\lib\\x64";
-#endif
+		char const* _executables_path = EXE_PATH;
+		//constexpr char const* _lib_path = LIB_PATHS;
 
 		void CompileTranslationUnit(std::string_view source_file, std::string_view assembly_file, bool only_pp, bool ast_dump, bool output_debug)
 		{
@@ -89,7 +84,7 @@ namespace lucc
 			output_file.replace_extension("exe");
 			std::string link_cmd = std::format("\"\"{}/link.exe\" /out:{} ", _executables_path, output_file.string());
 			for (auto const& obj_file : object_files) link_cmd += obj_file.string() + " ";
-			link_cmd += std::format("\"/libpath:{}\"", _lib_path);
+			//link_cmd += std::format("\"/libpath:{}\"", _lib_path);
 			link_cmd += "/subsystem:console /entry:main\"";
 			system(link_cmd.c_str());
 
@@ -101,7 +96,7 @@ namespace lucc
 			output_file.replace_extension("dll");
 			std::string link_cmd = std::format("\"\"{}/link.exe\" /dll /out:{} ", _executables_path, output_file.string());
 			for (auto const& obj_file : object_files) link_cmd += obj_file.string() + " ";
-			link_cmd += std::format("\"/libpath:{}\"", _lib_path);
+			//link_cmd += std::format("\"/libpath:{}\"", _lib_path);
 			link_cmd += "/entry:DllMain\"";
 			system(link_cmd.c_str());
 			return 0;
@@ -111,7 +106,7 @@ namespace lucc
 			output_file.replace_extension("lib");
 			std::string lib_cmd = std::format("\"\"{}/lib.exe\" /out:{} ", _executables_path, output_file.string());
 			for (auto const& obj_file : object_files) lib_cmd += obj_file.string() + " ";
-			lib_cmd += std::format("\"/libpath:{}\"", _lib_path);
+			//lib_cmd += std::format("\"/libpath:{}\"", _lib_path);
 			system(lib_cmd.c_str());
 		}
 		}
@@ -163,3 +158,9 @@ namespace lucc
 	}
 
 }
+
+//LIB_PATHS=R"(
+//C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Tools\MSVC\14.34.31823\lib\x64;;
+//C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Tools\MSVC\14.34.31823\atlmfc\lib\x64;;
+//C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Auxiliary\VS\lib\x64;;
+//C:\Program Files (x86)\Windows Kits\10\lib\10.0.19041.0\ucrt\x64;;)"

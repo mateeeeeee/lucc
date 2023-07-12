@@ -383,9 +383,7 @@ namespace lucc
 		if (elem_type->IsNot(PrimitiveTypeKind::Arithmetic)) return false;
 		ArithmeticType const& elem_arithmetic_type = TypeCast<ArithmeticType>(elem_type);
 		auto elem_arithmetic_flags = elem_arithmetic_type.GetFlags();
-		return (elem_arithmetic_flags & ArithmeticType::Char) ||
-			(elem_arithmetic_flags == ArithmeticType::Short && elem_arithmetic_type.IsUnsigned()) ||
-			(elem_arithmetic_flags == ArithmeticType::Int && elem_arithmetic_type.IsUnsigned());
+		return (elem_arithmetic_flags & ArithmeticType::Char);
 	}
 
 	namespace builtin_types
