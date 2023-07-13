@@ -224,7 +224,8 @@ TEST(Misc, Sizeof)
 	EXPECT_EQ(8,  LUCC_EX(return sizeof(int*);));
 	EXPECT_EQ(8,  LUCC_EX(return sizeof(long*);));
 	EXPECT_EQ(8,  LUCC_EX(return sizeof(int**);));
-	//EXPECT_EQ(8,  LUCC_EX(return sizeof(int(*)[4]);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(int(*)[4]);));
+	EXPECT_EQ(8,  LUCC_EX(return sizeof(void(*)(void));));
 	EXPECT_EQ(32, LUCC_EX(return sizeof(int* [4]);));
 	EXPECT_EQ(16, LUCC_EX(return sizeof(int[4]);));
 	EXPECT_EQ(48, LUCC_EX(return sizeof(int[3][4]);));

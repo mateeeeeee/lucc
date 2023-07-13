@@ -3,5 +3,5 @@
 
 int main(void)
 {
-	return 5;
+	return sizeof(int(*)[4]);
 }

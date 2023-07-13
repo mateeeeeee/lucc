@@ -93,11 +93,7 @@ namespace lucc
 		std::vector<std::unique_ptr<DeclAST>> decls;
 
 		DeclSpecInfo decl_spec{};
-		if (!ParseDeclSpec(decl_spec))
-		{
-			Report(diag::declarator_specifier_error);
-			return decls;
-		}
+		ParseDeclSpec(decl_spec);
 
 		if (decl_spec.storage == Storage::Typedef)
 		{
@@ -296,7 +292,7 @@ namespace lucc
 		std::unique_ptr<CompoundStmtAST> compound_stmt = std::make_unique<CompoundStmtAST>();
 		while (current_token->IsNot(TokenKind::right_brace))
 		{
-			if (IsTokenType())
+			if (IsTokenTypename())
 			{
 				std::vector<std::unique_ptr<DeclAST>> decl = ParseDeclaration();
 				compound_stmt->AddStatement(std::make_unique<DeclStmtAST>(std::move(decl)));
@@ -358,7 +354,7 @@ namespace lucc
 		std::unique_ptr<ForStmtAST> for_stmt = std::make_unique<ForStmtAST>();
 
 		std::unique_ptr<StmtAST> init = nullptr;
-		if (IsTokenType())
+		if (IsTokenTypename())
 		{
 			std::vector<std::unique_ptr<DeclAST>> decl = ParseDeclaration();
 			for_stmt->SetInit(std::make_unique<DeclStmtAST>(std::move(decl)));
@@ -778,7 +774,7 @@ namespace lucc
 	//					   | (<type - name>) < cast - expression >
 	std::unique_ptr<ExprAST> Parser::ParseCastExpression()
 	{
-		if (current_token->Is(TokenKind::left_round) && IsTokenType(1))
+		if (current_token->Is(TokenKind::left_round) && IsTokenTypename(1))
 		{
 			//#todo
 			return nullptr;
@@ -958,7 +954,7 @@ namespace lucc
 		if (Consume(TokenKind::left_round))
 		{
 			SourceLocation loc = current_token->GetLocation();
-			if (IsTokenType())
+			if (IsTokenTypename())
 			{
 				QualifiedType type{};
 				ParseTypename(type);
@@ -989,7 +985,7 @@ namespace lucc
 		Expect(TokenKind::KW__Alignof);
 		Expect(TokenKind::left_round);
 		
-		if (!IsTokenType()) Report(diag::alignof_expects_type_argument);
+		if (!IsTokenTypename()) Report(diag::alignof_expects_type_argument);
 		SourceLocation loc = current_token->GetLocation();
 		QualifiedType type{};
 		ParseTypename(type);
@@ -1049,12 +1045,13 @@ namespace lucc
 			return decl_ref;
 		}
 		else Report(diag::variable_not_declared);
+		return nullptr;
 	}
 
 	//<declaration - specifier> :: = <storage - class - specifier>
 	//							 | <type - specifier>
 	//							 | <type - qualifier>
-	bool Parser::ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs /*= false*/)
+	void Parser::ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs /*= false*/)
 	{
 		using enum TokenKind;
 		decl_spec = DeclSpecInfo{};
@@ -1075,23 +1072,15 @@ namespace lucc
 			UNSIGNED = 1 << 18,
 		};
 		uint32 counter = 0;
-		while (IsTokenType())
+		while (IsTokenTypename())
 		{
 			if (current_token->IsStorageSpecifier())
 			{
-				if (forbid_storage_specs)
-				{
-					Report(diag::storage_specifier_forbidden_context);
-					return false;
-				}
+				if (forbid_storage_specs) Report(diag::storage_specifier_forbidden_context);
 
 				TokenKind kind = current_token->GetKind();
 				++current_token;
-				if (decl_spec.storage != Storage::None)
-				{
-					Report(diag::multiple_storage_specifiers);
-					return false;
-				}
+				if (decl_spec.storage != Storage::None) Report(diag::multiple_storage_specifiers);
 
 				switch (kind)
 				{
@@ -1132,7 +1121,7 @@ namespace lucc
 				continue;
 			}
 
-			if (!IsTokenType()) break;
+			if (!IsTokenTypename()) break;
 
 			// Handle user-defined types.
 			QualifiedType* typedef_type = nullptr;
@@ -1239,11 +1228,10 @@ namespace lucc
 				decl_spec.qtype.SetRawType(builtin_types::LongDouble);
 				break;
 			default:
-				//diag
-				return false;
+				Report(diag::declarator_specifier_error);
 			}
 		}
-		return counter != 0;
+		if (counter == 0) Report(diag::declarator_specifier_error);
 	}
 
 	//<declarator> :: = { <pointer> } ? <direct - declarator>
@@ -1252,20 +1240,32 @@ namespace lucc
 	//						 | <direct - declarator>[{<constant - expression>} ? ]
 	//						 | <direct - declarator> (<parameter - type - list>)
 	//						 | <direct - declarator> ({ <identifier> }*)
-	bool Parser::ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator)
+	void Parser::ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator)
 	{
 		declarator.qtype = decl_spec.qtype;
 		ParsePointers(declarator.qtype);
 
 		if (Consume(TokenKind::left_round))
 		{
-			TokenPtr start = current_token;
-			DeclaratorInfo dummy{};
-			if (!ParseDeclarator(decl_spec, dummy)) return false;
-			Expect(TokenKind::right_round);
-			current_token = start;
-			ParseTypeSuffix(declarator.qtype);
-			return ParseDeclarator(decl_spec, declarator);
+			if (IsTokenTypename())
+			{
+				return ParseDeclaratorTailFunction(declarator.qtype);
+			}
+			else
+			{
+				TokenPtr start = current_token;
+				QualifiedType dummy{};
+				ParseAbstractDeclarator(decl_spec, dummy);
+				Expect(TokenKind::right_round);
+				ParseDeclaratorTail(declarator.qtype);
+				TokenPtr end = current_token;
+				current_token = start;
+				DeclSpecInfo decl_spec2{ decl_spec };
+				decl_spec2.qtype = declarator.qtype;
+				ParseDeclarator(decl_spec2, declarator);
+				current_token = end;
+				return;
+			}
 		}
 
 		if (current_token->Is(TokenKind::identifier))
@@ -1274,7 +1274,7 @@ namespace lucc
 			declarator.loc = current_token->GetLocation();
 			++current_token;
 		}
-		return ParseTypeSuffix(declarator.qtype);
+		return ParseDeclaratorTail(declarator.qtype);
 	}
 
 	//<abstract-declarator> ::= <pointer>
@@ -1283,35 +1283,46 @@ namespace lucc
 	//<direct-abstract-declarator> ::=  ( <abstract-declarator> )
 	//                               | {<direct-abstract-declarator>}? [ {<constant-expression>}? ]
 	//                               | {<direct-abstract-declarator>}? ( {<parameter-type-list>}? )
-	bool Parser::ParseAbstractDeclarator(DeclSpecInfo const& decl_spec, QualifiedType& abstract_declarator)
+	void Parser::ParseAbstractDeclarator(DeclSpecInfo const& decl_spec, QualifiedType& abstract_declarator)
 	{
 		abstract_declarator = decl_spec.qtype;
 		ParsePointers(abstract_declarator);
 
 		if (Consume(TokenKind::left_round))
 		{
-			TokenPtr start = current_token;
-			QualifiedType dummy{};
-			if (!ParseAbstractDeclarator(decl_spec, dummy)) return false;
-			Expect(TokenKind::right_round);
-			current_token = start;
-			ParseTypeSuffix(abstract_declarator);
-			return ParseAbstractDeclarator(decl_spec, abstract_declarator);
+			if (IsTokenTypename())
+			{
+				return ParseDeclaratorTailFunction(abstract_declarator, true);
+			}
+			else
+			{
+				TokenPtr start = current_token;
+				QualifiedType dummy{};
+				ParseAbstractDeclarator(decl_spec, dummy);
+				Expect(TokenKind::right_round);
+				ParseDeclaratorTail(abstract_declarator, true);
+				TokenPtr end = current_token;
+				current_token = start;
+				DeclSpecInfo decl_spec2{ decl_spec };
+				decl_spec2.qtype = abstract_declarator;
+				ParseAbstractDeclarator(decl_spec2, abstract_declarator);
+				current_token = end;
+				return;
+			}
 		}
-		else return ParseTypeSuffix(abstract_declarator);
+		else return ParseDeclaratorTail(abstract_declarator);
 	}
 
-	bool Parser::ParseTypename(QualifiedType& type)
+	void Parser::ParseTypename(QualifiedType& type)
 	{
 		DeclSpecInfo decl_spec{};
-		if (!ParseDeclSpec(decl_spec, true)) return false;	
-		if (!ParseAbstractDeclarator(decl_spec, type)) return false;
-		return true;
+		ParseDeclSpec(decl_spec, true);
+		ParseAbstractDeclarator(decl_spec, type);
 	}
 
 	//<pointer> :: = * { <type - qualifier> }* {<pointer>} ?
 	//<type - qualifier> :: = const | volatile
-	bool Parser::ParsePointers(QualifiedType& type)
+	void Parser::ParsePointers(QualifiedType& type)
 	{
 		while (Consume(TokenKind::star))
 		{
@@ -1328,104 +1339,93 @@ namespace lucc
 				++current_token;
 			}
 		}
-		return true;
 	}
 
 	// func-params = ("void" | param ("," param)* ("," "...")?)? ")"
 	// param = declspec declarator
 	// array-dimensions = "["("static" | "restrict")* const-expr? "]" type-suffix
-	bool Parser::ParseTypeSuffix(QualifiedType& type)
+	void Parser::ParseDeclaratorTail(QualifiedType& type, bool abstract)
 	{
-		if (Consume(TokenKind::left_round))
-		{
-			if (Consume(TokenKind::KW_void))
-			{
-				FunctionType func_type(type);
-				type.SetRawType(func_type);
-				if (!Consume(TokenKind::right_round))
-				{
-					Report(diag::function_params_not_closed);
-					return false;
-				}
-				else return true;
-			}
-			else
-			{
-				bool is_variadic = false;
-				std::vector<FunctionParameter> param_types{};
-				bool first = true;
-				while (!Consume(TokenKind::right_round))
-				{
-					if (!first && !Consume(TokenKind::comma))
-					{
-						Report(diag::function_params_missing_coma);
-						return false;
-					}
-					first = false;
-
-					if (Consume(TokenKind::ellipsis))
-					{
-						is_variadic = true;
-						if (!Consume(TokenKind::right_round))
-						{
-							Report(diag::variadic_params_not_last);
-							return false;
-						}
-						else break;
-					}
-
-					DeclSpecInfo param_decl_spec{};
-					if (!ParseDeclSpec(param_decl_spec)) return false;
-					DeclaratorInfo param_declarator{};
-					if (!ParseDeclarator(param_decl_spec, param_declarator)) return false;
-					QualifiedType& qtype = param_declarator.qtype;
-					if (qtype->Is(PrimitiveTypeKind::Void)) return false;
-					else if (qtype->Is(PrimitiveTypeKind::Array))
-					{
-						ArrayType const& array_type = TypeCast<ArrayType>(*qtype);
-						QualifiedType base_type = array_type.GetElementType();
-						PointerType decayed_param_type(base_type);
-						qtype = QualifiedType(decayed_param_type);
-					}
-					else if (qtype->Is(PrimitiveTypeKind::Function))
-					{
-						FunctionType const& function_type = TypeCast<FunctionType>(*qtype);
-						PointerType decayed_param_type(function_type);
-						qtype = QualifiedType(decayed_param_type);
-					}
-					param_types.emplace_back(param_declarator.name, param_declarator.qtype);
-				}
-				FunctionType func_type(type, param_types, is_variadic);
-				type.SetRawType(func_type);
-				return true;
-			}
-		}
-		else if (Consume(TokenKind::left_square))
-		{
-			while (Consume(TokenKind::KW_static, TokenKind::KW_restrict));
-			if (Consume(TokenKind::right_square))
-			{
-				ArrayType arr_type(type);
-				type.SetRawType(arr_type);
-				return ParseTypeSuffix(type);
-			}
-			else 
-			{
-				std::unique_ptr<ExprAST> dimensions_expr = ParseExpression();
-				if (!dimensions_expr->IsConstexpr()) Report(diag::array_dimensions_not_constexpr);
-				int64 array_size = dimensions_expr->EvaluateConstexpr();
-				if (array_size == 0) Report(diag::zero_size_array_not_allowed);
-
-				ArrayType arr_type(type, array_size);
-				type.SetRawType(arr_type);
-				if (!Consume(TokenKind::right_square)) Report(diag::array_brackets_not_closed);
-				else return ParseTypeSuffix(type);
-			}
-		}
-		return true;
+		if (current_token->GetKind() == TokenKind::left_round) ParseDeclaratorTailFunction(type, abstract);
+		else if (current_token->GetKind() == TokenKind::left_square) ParseDeclaratorTailArray(type, abstract);
 	}
 
-	bool Parser::IsTokenType(uint32 offset) const
+	void Parser::ParseDeclaratorTailFunction(QualifiedType& type, bool abstract)
+	{
+		Expect(TokenKind::left_round);
+		if (Consume(TokenKind::KW_void))
+		{
+			FunctionType func_type(type);
+			type.SetRawType(func_type);
+			if (!Consume(TokenKind::right_round)) Report(diag::function_params_not_closed);
+		}
+		else
+		{
+			bool is_variadic = false;
+			std::vector<FunctionParameter> param_types{};
+			bool first = true;
+			while (!Consume(TokenKind::right_round))
+			{
+				if (!first && !Consume(TokenKind::comma)) Report(diag::function_params_missing_coma);
+
+				if (Consume(TokenKind::ellipsis))
+				{
+					is_variadic = true;
+					if (!Consume(TokenKind::right_round)) Report(diag::variadic_params_not_last);
+					else break;
+				}
+
+				DeclSpecInfo param_decl_spec{};
+				ParseDeclSpec(param_decl_spec);
+				DeclaratorInfo param_declarator{};
+				abstract ? ParseAbstractDeclarator(param_decl_spec, param_declarator.qtype) : ParseDeclarator(param_decl_spec, param_declarator);
+				QualifiedType& qtype = param_declarator.qtype;
+				if (qtype->Is(PrimitiveTypeKind::Void)) Report(diag::void_not_first_and_only_parameter);
+				else if (qtype->Is(PrimitiveTypeKind::Array))
+				{
+					ArrayType const& array_type = TypeCast<ArrayType>(*qtype);
+					QualifiedType base_type = array_type.GetElementType();
+					PointerType decayed_param_type(base_type);
+					qtype = QualifiedType(decayed_param_type);
+				}
+				else if (qtype->Is(PrimitiveTypeKind::Function))
+				{
+					FunctionType const& function_type = TypeCast<FunctionType>(*qtype);
+					PointerType decayed_param_type(function_type);
+					qtype = QualifiedType(decayed_param_type);
+				}
+				param_types.emplace_back(param_declarator.name, param_declarator.qtype);
+			}
+			FunctionType func_type(type, param_types, is_variadic);
+			type.SetRawType(func_type);
+		}
+	}
+
+	void Parser::ParseDeclaratorTailArray(QualifiedType& type, bool abstract)
+	{
+		Expect(TokenKind::left_square);
+		while (Consume(TokenKind::KW_static, TokenKind::KW_restrict));
+		if (Consume(TokenKind::right_square))
+		{
+			ArrayType arr_type(type);
+			type.SetRawType(arr_type);
+			return ParseDeclaratorTail(type, abstract);
+		}
+		else
+		{
+			std::unique_ptr<ExprAST> dimensions_expr = ParseExpression();
+			if (!dimensions_expr->IsConstexpr()) Report(diag::array_dimensions_not_constexpr);
+			int64 array_size = dimensions_expr->EvaluateConstexpr();
+			if (array_size == 0) Report(diag::zero_size_array_not_allowed);
+
+			ArrayType arr_type(type, array_size);
+			type.SetRawType(arr_type);
+			if (!Consume(TokenKind::right_square)) Report(diag::array_brackets_not_closed);
+			else return ParseDeclaratorTail(type, abstract);
+		}
+	}
+
+	bool Parser::IsTokenTypename(uint32 offset) const
 	{
 		if ((current_token + offset)->Is(TokenKind::identifier))
 		{

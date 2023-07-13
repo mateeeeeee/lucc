@@ -81,5 +81,6 @@ DIAG(multiple_default_cases, error, "Multiple default cases in switch statement 
 DIAG(sizeof_invalid_argument, error, "sizeof cannot be used with function types or incomplete types")
 DIAG(alignof_invalid_argument, error, "_Alignof cannot be used with function types or incomplete types")
 DIAG(alignof_expects_type_argument, error, "_Alignof expects type as an argument")
+DIAG(void_not_first_and_only_parameter, error, "'void' must be the first and only parameter if specified")
 
 #undef DIAG

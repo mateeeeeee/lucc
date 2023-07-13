@@ -160,15 +160,17 @@ namespace lucc
 		template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
 		std::unique_ptr<ExprAST> ParseBinaryExpression();
 
-		bool ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
-		bool ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
-		bool ParseAbstractDeclarator(DeclSpecInfo const& decl_spec, QualifiedType& abstract_declarator);
-		bool ParseTypename(QualifiedType& type);
+		void ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
+		void ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
+		void ParseAbstractDeclarator(DeclSpecInfo const& decl_spec, QualifiedType& abstract_declarator);
+		void ParseTypename(QualifiedType& type);
 		
-		bool ParsePointers(QualifiedType& type);
-		bool ParseTypeSuffix(QualifiedType& type);
+		void ParsePointers(QualifiedType& type);
+		void ParseDeclaratorTail(QualifiedType& type, bool abstract = false);
+		void ParseDeclaratorTailFunction(QualifiedType& type, bool abstract = false);
+		void ParseDeclaratorTailArray(QualifiedType& type, bool abstract = false);
 
-		bool IsTokenType(uint32 offset = 0) const;
+		bool IsTokenTypename(uint32 offset = 0) const;
 	};
 	
 

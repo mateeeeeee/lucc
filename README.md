@@ -31,7 +31,7 @@ No optimization passes are performed, the assembly is generated from AST travers
   * .dll and .lib using MSVC link.exe/lib.exe
 
 ## Todo
-  * known bugs: pointer arithmetic, declspec parsing
+  * known bugs: pointer arithmetic
   * alignas
   * string literals
   * casts, conversions
