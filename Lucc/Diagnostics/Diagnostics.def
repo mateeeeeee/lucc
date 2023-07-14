@@ -83,4 +83,7 @@ DIAG(alignof_invalid_argument, error, "_Alignof cannot be used with function typ
 DIAG(alignof_expects_type_argument, error, "_Alignof expects type as an argument")
 DIAG(void_not_first_and_only_parameter, error, "'void' must be the first and only parameter if specified")
 
+//codegen
+DIAG(out_of_registers, error, "Out of registers!")
+DIAG(out_of_func_arg_registers, error, "All function argument registers have been used!")
 #undef DIAG

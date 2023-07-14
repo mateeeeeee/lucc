@@ -1,717 +1,393 @@
 #include <format>
 #include "x86_64Context.h"
+#include "Diagnostics/Diagnostics.h"
 
 namespace lucc
 {
-	x86_64CodeGenerator::Context::Context(OutputBuffer& output_buffer) : output_buffer(output_buffer)
+	namespace
 	{
-		free_registers.fill(true);
-		Emit<Data>(".data");
-		Emit<Text>(".code");
-	}
-
-	//registers
-	register_t x86_64CodeGenerator::Context::AllocateFunctionArgumentRegister(uint16 arg_index)
-	{
-		LU_ASSERT_MSG(arg_index < FUNC_ARGS_COUNT_IN_REGISTERS, "Maximum of 4 parameters are passed in registers!");
-		uint16 const i = FUNC_ARG_REG_MAPPING[arg_index];
-		if (free_registers[i])
+		uint64 GenerateUniqueInteger()
 		{
-			free_registers[i] = false;
-			return register_t(i);
-		}
-		else LU_ASSERT(false);
-		return INVALID_REG;
-	}
-	register_t x86_64CodeGenerator::Context::AllocateReturnRegister()
-	{
-		if (free_registers[RETURN_REGISTER_INDEX])
-		{
-			free_registers[RETURN_REGISTER_INDEX] = false;
-			return register_t(RETURN_REGISTER_INDEX);
-		}
-		else LU_ASSERT(false);
-		return INVALID_REG;
-	}
-	register_t x86_64CodeGenerator::Context::AllocateRegister()
-	{
-		for (uint16 i = 0; i < GP_REG_COUNT; ++i)
-		{
-			if (free_registers[i])
-			{
-				free_registers[i] = false;
-				return register_t(i);
-			}
-		}
-		LU_ASSERT_MSG(false, "Register spilling not implemented yet");
-		return INVALID_REG;
-	}
-	register_t x86_64CodeGenerator::Context::GetFunctionArgumentRegister(uint16 arg_index)
-	{
-		return register_t(FUNC_ARG_REG_MAPPING[arg_index]);
-	}
-	register_t x86_64CodeGenerator::Context::GetStackFrameRegister()
-	{
-		return register_t{ .id = STACK_FRAME_REGISTER_INDEX };
-	}
-	void x86_64CodeGenerator::Context::FreeAllRegisters()
-	{
-		free_registers.fill(true);
-	}
-	void x86_64CodeGenerator::Context::FreeRegister(register_t reg)
-	{
-		free_registers[reg.id] = true;
-	}
-
-	//arithmetic
-	void x86_64CodeGenerator::Context::Add(register_t dst, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("add\t{}, {}", registers[dst.id][bitmode], value);
-	}
-	void x86_64CodeGenerator::Context::Add(register_t dst, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("add\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Add(register_t dst, char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("add\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Add(char const* mem, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("add\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Add(char const* mem, int64 value, BitMode bitmode)
-	{
-		Emit<Text>("add\t{}, {}", mem, value);
-	}
-
-	void x86_64CodeGenerator::Context::Sub(register_t dst, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("sub\t{}, {}", registers[dst.id][bitmode], value);
-	}
-	void x86_64CodeGenerator::Context::Sub(register_t dst, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("sub\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Sub(register_t dst, char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("sub\t{}, {}", registers[dst.id][bitmode], mem);
-	}
-	void x86_64CodeGenerator::Context::Sub(char const* mem, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("sub\t{}, {}", mem, registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Sub(char const* mem, int64 value, BitMode bitmode)
-	{
-		Emit<Text>("sub\t{}, {}", mem, value);
-	}
-
-	void x86_64CodeGenerator::Context::Imul(register_t dst, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("imul\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Imul(register_t dst, char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("imul\t{}, {} {}", registers[dst.id][bitmode],ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Imul(register_t dst, register_t src, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("imul\t{}, {}, {}", registers[dst.id][bitmode], registers[src.id][bitmode], value);
-	}
-	void x86_64CodeGenerator::Context::Imul(register_t dst, char const* mem, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("imul\t{}, {} {}, {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem, value);
-	}
-
-	void x86_64CodeGenerator::Context::Idiv(register_t dividend, register_t divisor, BitMode bitmode)
-	{
-		Emit<Text>("xor\trdx, rdx");
-		if (dividend.id != DIVIDEND_REGISTER) Mov(register_t(DIVIDEND_REGISTER), dividend, bitmode);
-		Emit<Text>("idiv\t{}", registers[divisor.id][bitmode]);
-		if (dividend.id != DIVIDEND_REGISTER) Mov(dividend, register_t(DIVIDEND_REGISTER), bitmode);
-	}
-	void x86_64CodeGenerator::Context::Idiv(register_t dividend, char const* divisor, BitMode bitmode)
-	{
-		Emit<Text>("xor\trdx, rdx");
-		if (dividend.id != DIVIDEND_REGISTER) Mov(register_t(DIVIDEND_REGISTER), dividend, bitmode);
-		Emit<Text>("idiv\t{} {}", ConvertToCast(bitmode), divisor);
-		if (dividend.id != DIVIDEND_REGISTER) Mov(dividend, register_t(DIVIDEND_REGISTER), bitmode);
-	}
-
-	void x86_64CodeGenerator::Context::Shl(register_t dst, uint8 value, BitMode bitmode)
-	{
-		Emit<Text>("shl\t{}, {}", registers[dst.id][bitmode], value);
-	}
-	void x86_64CodeGenerator::Context::Shl(register_t dst, register_t shift_reg, BitMode bitmode)
-	{
-		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shl\t{}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
-	}
-	void x86_64CodeGenerator::Context::Shl(char const* mem, uint8 value, BitMode bitmode)
-	{
-		Emit<Text>("shl\t{} {}, {}", ConvertToCast(bitmode), mem, value);
-	}
-	void x86_64CodeGenerator::Context::Shl(char const* mem, register_t shift_reg, BitMode bitmode)
-	{
-		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shl\t{} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
-	}
-	void x86_64CodeGenerator::Context::Shl(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode)
-	{
-		Emit<Text>("shl\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
-	}
-	void x86_64CodeGenerator::Context::Shl(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode)
-	{
-		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shl\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
-	}
-
-	void x86_64CodeGenerator::Context::Shr(register_t dst, uint8 value, BitMode bitmode)
-	{
-		Emit<Text>("shr\t{}, {}", registers[dst.id][bitmode], value);
-	}
-	void x86_64CodeGenerator::Context::Shr(register_t dst, register_t shift_reg, BitMode bitmode)
-	{
-		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shr\t{}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
-	}
-	void x86_64CodeGenerator::Context::Shr(char const* mem, uint8 value, BitMode bitmode)
-	{
-		Emit<Text>("shr\t{} {}, {}", ConvertToCast(bitmode), mem, value);
-	}
-	void x86_64CodeGenerator::Context::Shr(char const* mem, register_t shift_reg, BitMode bitmode)
-	{
-		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shr\t{} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
-	}
-	void x86_64CodeGenerator::Context::Shr(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode)
-	{
-		Emit<Text>("shr\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
-	}
-	void x86_64CodeGenerator::Context::Shr(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode)
-	{
-		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("shr\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
-	}
-
-	void x86_64CodeGenerator::Context::Sar(register_t dst, uint8 value, BitMode bitmode)
-	{
-		Emit<Text>("sar\t{}, {}", registers[dst.id][bitmode], value);
-	}
-	void x86_64CodeGenerator::Context::Sar(register_t dst, register_t shift_reg, BitMode bitmode)
-	{
-		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("sar\t{}, {}", registers[dst.id][bitmode], registers[SHIFT_REGISTER][BitMode_8]);
-	}
-	void x86_64CodeGenerator::Context::Sar(char const* mem, uint8 value, BitMode bitmode)
-	{
-		Emit<Text>("sar\t{} {}, {}", ConvertToCast(bitmode), mem, value);
-	}
-	void x86_64CodeGenerator::Context::Sar(char const* mem, register_t shift_reg, BitMode bitmode)
-	{
-		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("sar\t{} {}, {}", ConvertToCast(bitmode), mem, registers[SHIFT_REGISTER][BitMode_8]);
-	}
-	void x86_64CodeGenerator::Context::Sar(mem_ref_t const& mem_ref, uint8 value, BitMode bitmode)
-	{
-		Emit<Text>("sar\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
-	}
-	void x86_64CodeGenerator::Context::Sar(mem_ref_t const& mem_ref, register_t shift_reg, BitMode bitmode)
-	{
-		if (shift_reg.id != SHIFT_REGISTER) Mov(register_t(SHIFT_REGISTER), shift_reg, BitMode_8);
-		Emit<Text>("sar\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[SHIFT_REGISTER][BitMode_8]);
-	}
-
-	void x86_64CodeGenerator::Context::Neg(register_t reg, BitMode bitmode)
-	{
-		Emit<Text>("neg\t{}", registers[reg.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Neg(char const* mem, BitMode bitmode = BitMode_64)
-	{
-		Emit<Text>("neg\t{} {}", ConvertToCast(bitmode), mem);
-	}
-	
-	void x86_64CodeGenerator::Context::Inc(char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("inc\t{} {}", ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Inc(mem_ref_t const& mem_ref, BitMode bitmode)
-	{
-		Emit<Text>("inc\t{} {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
-	}
-	void x86_64CodeGenerator::Context::Inc(register_t reg, BitMode bitmode)
-	{
-		Emit<Text>("inc\t{}", registers[reg.id][bitmode]);
-	}
-
-	void x86_64CodeGenerator::Context::Dec(char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("dec\t{} {}", ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Dec(mem_ref_t const& mem_ref, BitMode bitmode)
-	{
-		Emit<Text>("dec\t{} {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
-	}
-	void x86_64CodeGenerator::Context::Dec(register_t reg, BitMode bitmode)
-	{
-		Emit<Text>("dec\t{}", registers[reg.id][bitmode]);
-	}
-
-	//logical
-
-	void x86_64CodeGenerator::Context::And(register_t dst, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("and\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::And(register_t dst, char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("and\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::And(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
-	{
-		Emit<Text>("and\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
-	}
-	void x86_64CodeGenerator::Context::And(char const* mem, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("and\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::And(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("and\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::And(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("and\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
-	}
-	void x86_64CodeGenerator::Context::And(char const* mem, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("and\t{} {}, {}", ConvertToCast(bitmode), mem, value);
-	}
-	void x86_64CodeGenerator::Context::And(register_t dst, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("and\t{}, {}", registers[dst.id][bitmode], value);
-	}
-
-	void x86_64CodeGenerator::Context::Or(register_t dst, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("or\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Or(register_t dst, char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("or\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Or(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
-	{
-		Emit<Text>("or\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
-	}
-	void x86_64CodeGenerator::Context::Or(char const* mem, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("or\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Or(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("or\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Or(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("or\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
-	}
-	void x86_64CodeGenerator::Context::Or(char const* mem, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("or\t{} {}, {}", ConvertToCast(bitmode), mem, value);
-	}
-	void x86_64CodeGenerator::Context::Or(register_t dst, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("or\t{}, {}", registers[dst.id][bitmode], value);
-	}
-
-	void x86_64CodeGenerator::Context::Xor(register_t dst, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("xor\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Xor(register_t dst, char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("xor\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Xor(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
-	{
-		Emit<Text>("xor\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
-	}
-	void x86_64CodeGenerator::Context::Xor(char const* mem, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("xor\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Xor(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("xor\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Xor(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("xor\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
-	}
-	void x86_64CodeGenerator::Context::Xor(char const* mem, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("xor\t{} {}, {}", ConvertToCast(bitmode), mem, value);
-	}
-	void x86_64CodeGenerator::Context::Xor(register_t dst, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("xor\t{}, {}", registers[dst.id][bitmode], value);
-	}
-
-	void x86_64CodeGenerator::Context::Not(register_t reg, BitMode bitmode)
-	{
-		Emit<Text>("not\t{}", registers[reg.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Not(char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("not\t{} {}", ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Not(mem_ref_t const& mem_ref, BitMode bitmode)
-	{
-		Emit<Text>("not\t{}", ConvertMemRef(mem_ref, bitmode));
-	}
-
-	//stack
-	void x86_64CodeGenerator::Context::Push(register_t reg, BitMode bitmode)
-	{
-		Emit<Text>("push\t{}", registers[reg.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Push(char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("push\t{} {}", ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Push(mem_ref_t const& mem_ref, BitMode bitmode)
-	{
-		Emit<Text>("push\t{} {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
-	}
-	void x86_64CodeGenerator::Context::Push(int32 value, BitMode bitmode)
-	{
-		Emit<Text>("push\t{}", value);
-	}
-	void x86_64CodeGenerator::Context::Pop(register_t reg, BitMode bitmode)
-	{
-		Emit<Text>("pop\t{}", registers[reg.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Pop(char const* mem, BitMode bitmode)
-	{
-		Emit<Text>("pop\t{} {}", ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Pop(mem_ref_t const& mem_ref, BitMode bitmode)
-	{
-		Emit<Text>("pop\t{} {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
-	}
-
-	//transfer
-	void x86_64CodeGenerator::Context::Mov(register_t reg, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("mov\t{}, {}", registers[reg.id][bitmode], value);
-	}
-	void x86_64CodeGenerator::Context::Mov(char const* mem, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), mem, value);
-	}
-	void x86_64CodeGenerator::Context::Mov(mem_ref_t const& mem_ref, int32 value, BitMode bitmode)
-	{
-		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), value);
-	}
-	void x86_64CodeGenerator::Context::Mov(register_t dst, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("mov\t{}, {}", registers[dst.id][bitmode], registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Mov(register_t dst, char const* mem, BitMode bitmode, bool address /*= false*/)
-	{
-		if(address)  Emit<Text>("mov\t{}, offset {}", registers[dst.id][BitMode_64], mem);
-		else		 Emit<Text>("mov\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), mem);
-	}
-	void x86_64CodeGenerator::Context::Mov(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode)
-	{
-		Emit<Text>("mov\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode));
-	}
-	void x86_64CodeGenerator::Context::Mov(char const* mem, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), mem, registers[src.id][bitmode]);
-	}
-	void x86_64CodeGenerator::Context::Mov(mem_ref_t const& mem_ref, register_t src, BitMode bitmode)
-	{
-		Emit<Text>("mov\t{} {}, {}", ConvertToCast(bitmode), ConvertMemRef(mem_ref, bitmode), registers[src.id][bitmode]);
-	}
-
-	void x86_64CodeGenerator::Context::Movabs(register_t dst, int64 value)
-	{
-		Emit<Text>("movabs\t{}, {}", registers[dst.id][BitMode_64], value);
-	}
-
-	void x86_64CodeGenerator::Context::Movzx(register_t dst, register_t src, BitMode bitmode, bool src_8bit /*= false*/)
-	{
-		Emit<Text>("movzx\t{}, {}", registers[dst.id][bitmode], registers[src.id][src_8bit ? BitMode_8 : BitMode_16]);
-	}
-	void x86_64CodeGenerator::Context::Movzx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit /*= false*/)
-	{
-		Emit<Text>("movzx\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_8bit ? BitMode_8 : BitMode_16), mem);
-	}
-	void x86_64CodeGenerator::Context::Movzx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit /*= false*/)
-	{
-		BitMode src_bitmode = src_8bit ? BitMode_8 : BitMode_16;
-		Emit<Text>("movzx\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_bitmode), ConvertMemRef(mem_ref, src_bitmode));
-	}
-
-	void x86_64CodeGenerator::Context::Movsx(register_t dst, register_t src, BitMode bitmode, bool src_8bit /*= false*/)
-	{
-		Emit<Text>("movsx\t{}, {}", registers[dst.id][bitmode], registers[src.id][src_8bit ? BitMode_8 : BitMode_16]);
-	}
-	void x86_64CodeGenerator::Context::Movsx(register_t dst, char const* mem, BitMode bitmode, bool src_8bit /*= false*/)
-	{
-		Emit<Text>("movsx\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_8bit ? BitMode_8 : BitMode_16), mem);
-	}
-	void x86_64CodeGenerator::Context::Movsx(register_t dst, mem_ref_t const& mem_ref, BitMode bitmode, bool src_8bit /*= false*/)
-	{
-		BitMode src_bitmode = src_8bit ? BitMode_8 : BitMode_16;
-		Emit<Text>("movsx\t{}, {} {}", registers[dst.id][bitmode], ConvertToCast(src_bitmode), ConvertMemRef(mem_ref, src_bitmode));
-	}
-
-	void x86_64CodeGenerator::Context::Movsxd(register_t dst, register_t src)
-	{
-		Emit<Text>("movsxd\t{}, {}", registers[dst.id][BitMode_64], registers[src.id][BitMode_32]);
-	}
-	void x86_64CodeGenerator::Context::Movsxd(register_t dst, mem_ref_t const& mem_ref)
-	{
-		Emit<Text>("movsx\t{}, {} {}", registers[dst.id][BitMode_64], ConvertToCast(BitMode_32), ConvertMemRef(mem_ref, BitMode_32));
-	}
-	void x86_64CodeGenerator::Context::Movsxd(register_t dst, char const* mem)
-	{
-		Emit<Text>("movsx\t{}, {} {}", registers[dst.id][BitMode_64], ConvertToCast(BitMode_32), mem);
-	}
-
-	void x86_64CodeGenerator::Context::Lea(register_t reg, char const* mem)
-	{
-		Emit<Text>("lea\t{}, {}", registers[reg.id][BitMode_64], mem);
-	}
-	void x86_64CodeGenerator::Context::Lea(register_t reg, mem_ref_t const& mem_ref)
-	{
-		Emit<Text>("lea\t{}, {}", registers[reg.id][BitMode_64], ConvertMemRef(mem_ref, BitMode_64));
-	}
-
-	//control
-	uint64 x86_64CodeGenerator::Context::GenerateLabelId()
-	{
-		return GenerateUniqueInteger();
-	}
-	void x86_64CodeGenerator::Context::Label(char const* label)
-	{
-		Emit<Text>("{}: ", label);
-	}
-	void x86_64CodeGenerator::Context::Label(char const* label, uint64 label_id)
-	{
-		Emit<Text>("{}{}: ", label, label_id);
-	}
-
-	void x86_64CodeGenerator::Context::Cmp(register_t reg, int64 value, BitMode bitmode)
-	{
-		Emit<Text>("cmp\t{}, {}", registers[reg.id][bitmode], value);
-	}
-	void x86_64CodeGenerator::Context::Cmp(char const* mem, int64 value, BitMode bitmode)
-	{
-		Emit<Text>("cmp\t{} {}, {}",ConvertToCast(bitmode), mem, value);
-	}
-	void x86_64CodeGenerator::Context::Cmp(register_t reg1, register_t reg2, BitMode bitmode)
-	{
-
-	}
-	void x86_64CodeGenerator::Context::Cmp(char const* mem, register_t reg2, BitMode bitmode)
-	{
-
-	}
-	void x86_64CodeGenerator::Context::Cmp(register_t reg1, char const* mem, BitMode bitmode)
-	{
-
-	}
-
-	void x86_64CodeGenerator::Context::Set(register_t reg, Condition cond)
-	{
-		char const* reg_name = registers[reg.id][BitMode_8];
-		switch (cond)
-		{
-		case Condition::Unconditional: LU_ASSERT(false); break;
-		case Condition::Equal:		   Emit<Text>("sete {}", reg_name);  break;
-		case Condition::NotEqual:	   Emit<Text>("setne {}", reg_name);  break;
-		case Condition::Greater:	   Emit<Text>("setg {}", reg_name);  break;
-		case Condition::GreaterEqual:  Emit<Text>("setge {}", reg_name);  break;
-		case Condition::Less:		   Emit<Text>("setl {}", reg_name);  break;
-		case Condition::LessEqual:	   Emit<Text>("setle {}", reg_name);  break;
-		}
-	}
-	void x86_64CodeGenerator::Context::Set(char const* mem, Condition cond)
-	{
-		switch (cond)
-		{
-		case Condition::Unconditional: LU_ASSERT(false); break;
-		case Condition::Equal:		   Emit<Text>("sete {}", mem);  break;
-		case Condition::NotEqual:	   Emit<Text>("setne {}", mem);  break;
-		case Condition::Greater:	   Emit<Text>("setg {}", mem);  break;
-		case Condition::GreaterEqual:  Emit<Text>("setge {}", mem);  break;
-		case Condition::Less:		   Emit<Text>("setl {}", mem);  break;
-		case Condition::LessEqual:	   Emit<Text>("setle  {}", mem);  break;
-		}
-	}
-	void x86_64CodeGenerator::Context::Jmp(char const* label, Condition cond)
-	{
-		switch (cond)
-		{
-		case Condition::Unconditional: Emit<Text>("jmp\t{}", label); break;
-		case Condition::Equal:		   Emit<Text>("je\t{}", label);  break;
-		case Condition::NotEqual:	   Emit<Text>("jne\t{}", label);  break;
-		case Condition::Greater:	   Emit<Text>("jg\t{}", label);  break;
-		case Condition::GreaterEqual:  Emit<Text>("jge\t{}", label);  break;
-		case Condition::Less:		   Emit<Text>("jl\t{}", label);  break;
-		case Condition::LessEqual:	   Emit<Text>("jle\t{}", label);  break;
-		}
-	}
-	void x86_64CodeGenerator::Context::Jmp(char const* label, uint64 label_id, Condition cond)
-	{
-		switch (cond)
-		{
-		case Condition::Unconditional: Emit<Text>("jmp\t{}{}", label, label_id); break;
-		case Condition::Equal:		   Emit<Text>("je\t{}{}", label, label_id);  break;
-		case Condition::NotEqual:	   Emit<Text>("jne\t{}{}", label, label_id);  break;
-		case Condition::Greater:	   Emit<Text>("jg\t{}{}", label, label_id);  break;
-		case Condition::GreaterEqual:  Emit<Text>("jge\t{}{}", label, label_id);  break;
-		case Condition::Less:		   Emit<Text>("jl\t{}{}", label, label_id);  break;
-		case Condition::LessEqual:	   Emit<Text>("jle\t{}{}", label, label_id);  break;
+			static uint64 i = 0;
+			return i++;
 		}
 	}
 
-
-	//declarations
-	void x86_64CodeGenerator::Context::DeclareVariable(char const* sym_name, bool is_static, BitMode bitmode, int64* init)
-	{
-		if (!is_static) Emit<None>("public {}", sym_name);
-
-		if(!init) Emit<Data>("{}\t{} ?", sym_name, ConvertToType(bitmode));
-		else Emit<Data>("{}\t{} {}", sym_name, ConvertToType(bitmode), *init);
-	}
-	void x86_64CodeGenerator::Context::DeclareArray(char const* sym_name, size_t size, bool is_static, BitMode bitmode, int64 init_arr[], size_t init_size)
-	{
-		if (!is_static) Emit<None>("public {}", sym_name);
-		if (!init_arr)
-		{
-			Emit<Data>("{}\t{} {} dup (?)", sym_name, ConvertToType(bitmode), size);
-		}
-		else{ /*#todo*/ }
-	}
-	void x86_64CodeGenerator::Context::DeclareExternVariable(char const* sym_name, BitMode bitmode)
-	{
-		Emit<None>("extern {} : {}", sym_name, ConvertToType(bitmode));
-	}
-	void x86_64CodeGenerator::Context::DeclareFunction(char const* sym_name, bool is_static)
-	{
-		current_func_name = sym_name;
-		Emit<Text>("\n{} proc {}", sym_name, is_static ? "private" : "");
-	}
-	void x86_64CodeGenerator::Context::DeclareExternFunction(char const* sym_name)
-	{
-		Emit<None>("extern {} : proc", sym_name);
-	}
-
-	//push    rbp
-	//mov     rbp, rsp
-	//sub     rsp, 16
-	// 
-	// add    rsp, 16
-	// pop    rbp
-	//functions
-	void x86_64CodeGenerator::Context::ReserveStackSpace(uint32 stack_space)
-	{
-		stack_space_used = stack_space;
-		Emit<Text>("push rbp");
-		Emit<Text>("mov rbp, rsp");
-		if(stack_space_used) Emit<Text>("sub rsp, {}", stack_space_used);
-		stack_reg_saved = true;
-	}
-	void x86_64CodeGenerator::Context::CallFunction(char const* sym_name)
-	{
-		Emit<Text>("call {}", sym_name);
-	}
-	void x86_64CodeGenerator::Context::JumpToFunctionEnd()
-	{
-		Emit<Text>("jmp {}_end", current_func_name);
-	}
-	void x86_64CodeGenerator::Context::Return()
-	{
-		if(current_func_name == "main") Emit<Text>("mov rax, 0");
-
-		Emit<Text>("{}_end:", current_func_name);
-		if(stack_reg_saved)
-		{
-			if (stack_space_used) Emit<Text>("add rsp, {}", stack_space_used);
-			Emit<Text>("pop rbp");
-			stack_reg_saved = false;
-		}
-		Emit<Text>("ret");
-		Emit<Text>("{} endp", current_func_name);
-	}
-
-	//helpers
-	template<x86_64CodeGenerator::Context::SegmentType segment, typename... Ts>
+	template<x86_64CodeGenerator::SegmentType segment, typename... Ts>
 	void x86_64CodeGenerator::Context::Emit(std::string_view fmt, Ts&&... args)
 	{
 		std::string output = std::vformat(fmt, std::make_format_args(std::forward<Ts>(args)...));
 		output += "\n";
-		if		constexpr (segment == x86_64CodeGenerator::Context::SegmentType::None)	 output_buffer.no_segment += output;
-		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Data)	 output_buffer.data_segment += output;
-		else if constexpr (segment == x86_64CodeGenerator::Context::SegmentType::Text)	 output_buffer.text_segment += output;
+		if		constexpr (segment == x86_64CodeGenerator::SegmentType::None)	 output_buffer.no_segment += output;
+		else if constexpr (segment == x86_64CodeGenerator::SegmentType::BSS)	 output_buffer.bss_segment += output;
+		else if constexpr (segment == x86_64CodeGenerator::SegmentType::Const)	 output_buffer.rodata_segment += output;
+		else if constexpr (segment == x86_64CodeGenerator::SegmentType::Data)	 output_buffer.data_segment += output;
+		else if constexpr (segment == x86_64CodeGenerator::SegmentType::Text)	 output_buffer.text_segment += output;
 	}
-	uint64 x86_64CodeGenerator::Context::GenerateUniqueInteger()
-	{
-		static uint64 i = 0;
-		return ++i;
-	}
-	std::string x86_64CodeGenerator::Context::ConvertMemRef(mem_ref_t const& args, BitMode mode)
-	{
-		mode = BitMode_64; //for now
-		std::string indirect_result = "[";
-		if (args.base_reg != INVALID_REG)
-		{
-			indirect_result += registers[args.base_reg.id][mode];
-		}
-		if (args.index_reg != INVALID_REG)
-		{
-			if (!indirect_result.empty()) indirect_result += "+";
-			indirect_result += registers[args.base_reg.id][mode];
 
-			if (args.scale != mem_ref_t::Scale_None)
+	std::string x86_64CodeGenerator::Context::ConvertOperand(OperandRef op, BitCount bitcount)
+	{
+		switch (op.form)
+		{
+		case OperandForm::Immediate: return std::format("{}", op.immediate);
+		case OperandForm::Register:  return GetRegisterName(op.reg, bitcount);
+		case OperandForm::Global:    return std::format("{} {}", GetWordCast(bitcount), op.global);
+		case OperandForm::SIB:
+		{
+			bitcount = BitCount_64; //for now
+			std::string indirect_result = "[";
+			if (op.sib.base_reg != InvalidRegister)
 			{
-				indirect_result += "*";
-				switch (args.scale)
+				indirect_result += GetRegisterName(op.sib.base_reg, bitcount);
+			}
+			if (op.sib.index_reg != InvalidRegister)
+			{
+				if (!indirect_result.empty()) indirect_result += "+";
+				indirect_result += GetRegisterName(op.sib.index_reg, bitcount);
+
+				if (op.sib.scale != SIBScale_None)
 				{
-				case mem_ref_t::Scale_x1: indirect_result += "1"; break;
-				case mem_ref_t::Scale_x2: indirect_result += "2"; break;
-				case mem_ref_t::Scale_x4: indirect_result += "4"; break;
-				case mem_ref_t::Scale_x8: indirect_result += "8"; break;
+					indirect_result += "*";
+					switch (op.sib.scale)
+					{
+					case SIBScale_x1: indirect_result += "1"; break;
+					case SIBScale_x2: indirect_result += "2"; break;
+					case SIBScale_x4: indirect_result += "4"; break;
+					case SIBScale_x8: indirect_result += "8"; break;
+					}
 				}
 			}
+			if (op.sib.displacement)
+			{
+				if (!indirect_result.empty() && op.sib.displacement > 0) indirect_result += "+";
+				indirect_result += std::to_string(op.sib.displacement);
+			}
+			indirect_result += "]";
+			return std::format("{} {}", GetWordCast(bitcount), indirect_result);
 		}
-		if (args.displacement)
-		{
-			if (!indirect_result.empty() && args.displacement > 0) indirect_result += "+";
-			indirect_result += std::to_string(args.displacement);
-		}
-		indirect_result += "]";
-		return indirect_result;
-	}
-	std::string x86_64CodeGenerator::Context::ConvertToType(BitMode mode)
-	{
-		switch (mode)
-		{
-		case BitMode_8:  return "byte";
-		case BitMode_16: return "word";
-		case BitMode_32: return "dword";
-		case BitMode_64: return "qword";
 		}
 		return "";
 	}
-	std::string x86_64CodeGenerator::Context::ConvertToCast(BitMode mode)
+
+	x86_64CodeGenerator::Context::Context(OutputBuffer& output_buffer) : output_buffer(output_buffer)
 	{
-		return ConvertToType(mode) + " ptr";
+		Emit<BSS>(".data?");
+		Emit<Const>(".const");
+		Emit<Data>(".data");
+		Emit<Text>(".code");
+		register_mask.fill(true);
+	}
+
+	Register x86_64CodeGenerator::Context::AllocateRegister()
+	{
+		for (int32 i = 0; i < std::size(scratch_registers); i++)
+		{
+			Register reg = scratch_registers[i];
+			if (register_mask[reg])
+			{
+				register_mask[reg] = false;
+				return reg;
+			}
+		}
+		Report(diag::out_of_registers);
+	}
+
+	void x86_64CodeGenerator::Context::FreeRegister(Register reg)
+	{
+		LU_ASSERT(!register_mask[reg]);
+		register_mask[reg] = true;
+	}
+
+	Register x86_64CodeGenerator::Context::GetCallRegister(uint32 arg_index) const
+	{
+		if (arg_index >= ARGUMENTS_PASSED_BY_REGISTERS) Report(diag::out_of_func_arg_registers);
+		static Register call_registers[ARGUMENTS_PASSED_BY_REGISTERS] = { RCX, RDX, R8, R9 };
+		return call_registers[arg_index];
+	}
+
+	void x86_64CodeGenerator::Context::Add(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		Emit<Text>("add\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Sub(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		Emit<Text>("sub\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Imul(Register lhs, OperandRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		Emit<Text>("imul\t{}, {}", GetRegisterName(lhs, bitcount), ConvertOperand(rhs, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Imul(Register lhs, OperandRef rhs, int32 imm, BitCount bitcount)
+	{
+		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		Emit<Text>("imul\t{}, {}, {}", GetRegisterName(lhs, bitcount), ConvertOperand(rhs, bitcount), imm);
+	}
+
+	void x86_64CodeGenerator::Context::Idiv(Register lhs, OperandRef divisor, BitCount bitcount)
+	{
+		LU_ASSERT(divisor.form != OperandForm::Immediate);
+
+	}
+
+	void x86_64CodeGenerator::Context::Neg(OperandRef op, BitCount bitcount)
+	{
+		LU_ASSERT(op.form != OperandForm::Immediate);
+		Emit<Text>("neg\t{}", ConvertOperand(op, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Inc(OperandRef op, BitCount bitcount)
+	{
+		LU_ASSERT(op.form != OperandForm::Immediate);
+		Emit<Text>("inc\t{} {}", ConvertOperand(op, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Dec(OperandRef op, BitCount bitcount)
+	{
+		LU_ASSERT(op.form != OperandForm::Immediate);
+		Emit<Text>("dec\t{} {}", ConvertOperand(op, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::And(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		Emit<Text>("and\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Or(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		Emit<Text>("or\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Xor(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		Emit<Text>("xor\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Not(OperandRef op, BitCount bitcount)
+	{
+		LU_ASSERT(op.form != OperandForm::Immediate);
+		Emit<Text>("not\t{}", ConvertOperand(op, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Push(OperandRef op)
+	{
+		Emit<Text>("push\t{}", ConvertOperand(op, BitCount_64));
+	}
+
+	void x86_64CodeGenerator::Context::Pop(OperandRef op)
+	{
+		Emit<Text>("pop\t{}", ConvertOperand(op, BitCount_64));
+	}
+
+	void x86_64CodeGenerator::Context::Label(char const* label)
+	{
+		Emit<Text>("{}: ", label);
+	}
+
+	void x86_64CodeGenerator::Context::Label(char const* label, uint64 label_id)
+	{
+		Emit<Text>("{}.{}: ", label, label_id);
+	}
+
+	uint64 x86_64CodeGenerator::Context::GenerateLabelId()
+	{
+		return GenerateUniqueInteger();
+	}
+
+	void x86_64CodeGenerator::Context::Cmp(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	{
+		Emit<Text>("cmp\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::Set(OperandRef op, ConditionCode cc)
+	{
+		std::string op_name = ConvertOperand(op, BitCount_8);
+		switch (cc)
+		{
+		case ConditionCode::E:  Emit<Text>("sete {}", op_name);  break;
+		case ConditionCode::NE: Emit<Text>("setne {}", op_name);  break;
+		case ConditionCode::B:  Emit<Text>("setb {}", op_name);  break;
+		case ConditionCode::BE: Emit<Text>("setbe {}", op_name);  break;
+		case ConditionCode::A:  Emit<Text>("seta {}", op_name);  break;
+		case ConditionCode::AE: Emit<Text>("setae {}", op_name);  break;
+		case ConditionCode::L:  Emit<Text>("setl {}", op_name);  break;
+		case ConditionCode::LE: Emit<Text>("setle {}", op_name);  break;
+		case ConditionCode::G:  Emit<Text>("setg {}", op_name);  break;
+		case ConditionCode::GE: Emit<Text>("setge {}", op_name);  break;
+		case ConditionCode::Z:  Emit<Text>("setz {}", op_name);  break;
+		case ConditionCode::NZ: Emit<Text>("setnz {}", op_name);  break;
+		case ConditionCode::S:  Emit<Text>("sets {}", op_name);  break;
+		case ConditionCode::NS: Emit<Text>("setns {}", op_name);  break;
+		case ConditionCode::None:
+		default:
+			LU_ASSERT(false);
+		}
+	}
+
+	void x86_64CodeGenerator::Context::Jmp(char const* label, ConditionCode cc)
+	{
+		switch (cc)
+		{
+		case ConditionCode::E:    Emit<Text>("je {}", label);  break;
+		case ConditionCode::NE:   Emit<Text>("jne {}", label);  break;
+		case ConditionCode::B:    Emit<Text>("jb {}", label);  break;
+		case ConditionCode::BE:   Emit<Text>("jbe {}", label);  break;
+		case ConditionCode::A:    Emit<Text>("ja {}", label);  break;
+		case ConditionCode::AE:   Emit<Text>("jae {}", label);  break;
+		case ConditionCode::L:    Emit<Text>("jl {}", label);  break;
+		case ConditionCode::LE:   Emit<Text>("jle {}", label);  break;
+		case ConditionCode::G:    Emit<Text>("jg {}", label);  break;
+		case ConditionCode::GE:   Emit<Text>("jge {}", label);  break;
+		case ConditionCode::Z:    Emit<Text>("jz {}", label);  break;
+		case ConditionCode::NZ:   Emit<Text>("jnz {}", label);  break;
+		case ConditionCode::S:    Emit<Text>("js {}", label);  break;
+		case ConditionCode::NS:   Emit<Text>("jns {}", label);  break;
+		case ConditionCode::None: Emit<Text>("jmp {}", label);  break;
+		default:
+			LU_ASSERT(false);
+		}
+	}
+
+	void x86_64CodeGenerator::Context::Jmp(char const* label, uint64 label_id, ConditionCode cc)
+	{
+		std::string label_ = std::format("{}.{}", label, label_id);
+		Jmp(label_.c_str(), cc);
+	}
+
+	void x86_64CodeGenerator::Context::Mov(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		Emit<Text>("mov\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
+	}
+
+	void x86_64CodeGenerator::Context::MovOffset(Register lhs, char const* global)
+	{
+		Emit<Text>("mov\t{}, offset {}", GetRegisterName(lhs, BitCount_64), global);
+	}
+
+	void x86_64CodeGenerator::Context::Movabs(Register lhs, int64 value)
+	{
+		Emit<Text>("mov\t{}, {}", GetRegisterName(lhs, BitCount_64), value);
+	}
+
+	void x86_64CodeGenerator::Context::Movzx(Register lhs, OperandRef rhs, BitCount bitcount, bool rhs8bit /*= false*/)
+	{
+		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		Emit<Text>("movzx\t{}, {}", GetRegisterName(lhs, bitcount), ConvertOperand(rhs, rhs8bit ? BitCount_8 : BitCount_16));
+	}
+
+	void x86_64CodeGenerator::Context::Movsx(Register lhs, OperandRef rhs, BitCount bitcount, bool rhs8bit /*= false*/)
+	{
+		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		Emit<Text>("movsx\t{}, {}", GetRegisterName(lhs, bitcount), ConvertOperand(rhs, rhs8bit ? BitCount_8 : BitCount_16));
+	}
+
+	void x86_64CodeGenerator::Context::Movsxd(Register lhs, OperandRef rhs)
+	{
+		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		Emit<Text>("movsx\t{}, {}", GetRegisterName(lhs, BitCount_64), ConvertOperand(rhs, BitCount_32));
+	}
+
+	void x86_64CodeGenerator::Context::Lea(Register reg, OperandRef op)
+	{
+		LU_ASSERT(op.form != OperandForm::Immediate && op.form != OperandForm::Register);
+		Emit<Text>("lea\t{}, {}", GetRegisterName(reg, BitCount_64), ConvertOperand(op, BitCount_64));
+	}
+
+	void x86_64CodeGenerator::Context::DeclareVariable(VarDeclCG const& var_decl)
+	{
+		if (var_decl.is_extern)
+		{
+			Emit<None>("extern {} : {}", var_decl.name, GetWordType(var_decl.bits));
+			return;
+		}
+
+		if (!var_decl.is_static) Emit<None>("public {}", var_decl.name);
+		if (var_decl.init_value)
+		{
+			if(var_decl.is_const) Emit<Const>("{}\t{} {}", var_decl.name, GetWordType(var_decl.bits), *var_decl.init_value);
+			else Emit<Data>("{}\t{} {}", var_decl.name, GetWordType(var_decl.bits), *var_decl.init_value);
+		}
+		else
+		{
+			Emit<BSS>("{}\t{} ?", var_decl.name, GetWordType(var_decl.bits));
+		}
+	}
+
+	void x86_64CodeGenerator::Context::DeclareArray(ArrayDeclCG const& array_decl)
+	{
+		if (array_decl.is_extern)
+		{
+			Emit<None>("extern {} : {}", array_decl.name, GetWordType(array_decl.bits));
+			return;
+		}
+
+		if (!array_decl.is_static) Emit<None>("public {}", array_decl.name);
+		if (array_decl.init_values)
+		{
+			
+		}
+		else
+		{
+			Emit<BSS>("{}\t{} dup (?)", array_decl.name, GetWordType(array_decl.bits));
+		}
+	}
+
+	void x86_64CodeGenerator::Context::DeclareFunction(FunctionDeclCG const& func_decl)
+	{
+		if (func_decl.is_extern)
+		{
+			Emit<None>("extern {} : proc", func_decl.name);
+			return;
+		}
+		current_function = func_decl.name;
+		Emit<Text>("\n{} proc {}", func_decl.name, func_decl.is_static ? "private" : "");
+	}
+
+	void x86_64CodeGenerator::Context::Call(char const* func_name)
+	{
+		Emit<Text>("call {}", func_name);
+	}
+
+	void x86_64CodeGenerator::Context::ReserveStack(uint32 stack)
+	{
+		Emit<Text>("push rbp");
+		Emit<Text>("mov rbp, rsp");
+		if (stack)
+		{
+			Emit<Text>("sub rsp, {}", stack);
+			stack_used = stack;
+		}
+		stack_reg_saved = true;
+	}
+
+	void x86_64CodeGenerator::Context::JumpToReturn()
+	{
+		Emit<Text>("jmp {}_end", current_function);
+	}
+
+	void x86_64CodeGenerator::Context::Return()
+	{
+		if (current_function == "main") Emit<Text>("xor rax, rax");
+
+		Emit<Text>("{}_end:", current_function);
+		if (stack_reg_saved)
+		{
+			if (stack_used) Emit<Text>("add rsp, {}", stack_used);
+			Emit<Text>("pop rbp");
+			stack_reg_saved = false;
+			stack_used = 0;
+		}
+		Emit<Text>("ret");
+		Emit<Text>("{} endp", current_function);
 	}
 
 }

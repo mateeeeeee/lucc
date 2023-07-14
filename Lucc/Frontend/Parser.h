@@ -3,7 +3,7 @@
 #include <memory>
 #include <functional>
 #include "Token.h"
-#include "Diagnostics.h"
+#include "Diagnostics/Diagnostics.h"
 
 namespace lucc
 {

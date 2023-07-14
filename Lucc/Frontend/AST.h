@@ -83,6 +83,8 @@ namespace lucc
 		virtual void Visit(TypedefDeclAST const& node, size_t depth) {}
 	};
 
+	struct register_t {};
+
 	class ICodegenContext;
 	class NodeAST
 	{
@@ -174,10 +176,12 @@ namespace lucc
 		{
 			local_variables.push_back(var_decl);
 		}
+		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
+		{
+			body = std::move(_body);
+		}
 
-		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body);
 		bool IsDefinition() const { return body != nullptr; }
-		void AssignLocalVariableOffsets(uint64 args_in_registers) const;
 
 		template<typename F> requires std::is_invocable_v<F, DeclAST*>
 		void ForAllDeclarations(F&& fn) const
@@ -237,7 +241,11 @@ namespace lucc
 	{
 	public:
 		CompoundStmtAST() : StmtAST(StmtKind::Compound) {}
-		void AddStatement(std::unique_ptr<StmtAST>&& stmt);
+
+		void AddStatement(std::unique_ptr<StmtAST>&& stmt)
+		{
+			statements.push_back(std::move(stmt));
+		}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg = std::nullopt) const override;
@@ -589,7 +597,12 @@ namespace lucc
 		QualifiedType const& GetType() const { return type; }
 		ExprKind GetExprKind() const { return kind; }
 		bool IsLValue() const { return value_category == ExprValueCategory::LValue; }
-		bool IsAssignable() const;
+		bool IsAssignable() const
+		{
+			if (!IsLValue()) return false;
+			if (!type->IsComplete() || type.IsConst() || type->Is(PrimitiveTypeKind::Array)) return false;
+			return true;
+		}
 
 	protected:
 		ExprKind kind;

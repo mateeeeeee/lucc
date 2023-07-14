@@ -4,9 +4,6 @@
     <Filter Include="Frontend">
       <UniqueIdentifier>{267b1c15-7a20-472d-957d-0a7f9f4ad70d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Frontend\Diagnostics">
-      <UniqueIdentifier>{df74f68b-0355-4d36-bfc5-9c87138f0fb8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Frontend\Preprocessor">
       <UniqueIdentifier>{8a882dc3-b983-473a-8fe7-457df02bfe09}</UniqueIdentifier>
     </Filter>
@@ -25,8 +22,8 @@
     <Filter Include="Compiler">
       <UniqueIdentifier>{8cc26ad8-26fe-4b22-8b77-fa36af835f2b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Backend\x86-64">
-      <UniqueIdentifier>{13032ed4-01a1-483b-ae25-2669dae4f389}</UniqueIdentifier>
+    <Filter Include="Diagnostics">
+      <UniqueIdentifier>{df74f68b-0355-4d36-bfc5-9c87138f0fb8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -37,9 +34,6 @@
     </ClCompile>
     <ClCompile Include="Frontend\TokenTypes.cpp">
       <Filter>Frontend</Filter>
-    </ClCompile>
-    <ClCompile Include="Frontend\Diagnostics.cpp">
-      <Filter>Frontend\Diagnostics</Filter>
     </ClCompile>
     <ClCompile Include="Frontend\Preprocessor.cpp">
       <Filter>Frontend\Preprocessor</Filter>
@@ -59,17 +53,20 @@
     <ClCompile Include="Compiler\DebugUtil.cpp">
       <Filter>Compiler</Filter>
     </ClCompile>
-    <ClCompile Include="Backend\x86_64Context.cpp">
-      <Filter>Backend\x86-64</Filter>
-    </ClCompile>
-    <ClCompile Include="Backend\x86_64CodeGenerator.cpp">
-      <Filter>Backend\x86-64</Filter>
-    </ClCompile>
     <ClCompile Include="Frontend\Type.cpp">
       <Filter>Frontend\Parser</Filter>
     </ClCompile>
     <ClCompile Include="Test\test.c">
       <Filter>Compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="Backend\x86_64CodeGenerator.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="Backend\x86_64Context.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="Diagnostics\Diagnostics.cpp">
+      <Filter>Diagnostics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -98,9 +95,6 @@
     <ClInclude Include="Core\Enums.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Frontend\Diagnostics.h">
-      <Filter>Frontend\Diagnostics</Filter>
-    </ClInclude>
     <ClInclude Include="Frontend\Preprocessor.h">
       <Filter>Frontend\Preprocessor</Filter>
     </ClInclude>
@@ -119,22 +113,22 @@
     <ClInclude Include="Frontend\Type.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
-    <ClInclude Include="Backend\ICodeGenerator.h">
-      <Filter>Backend</Filter>
-    </ClInclude>
     <ClInclude Include="Compiler\Compiler.h">
       <Filter>Compiler</Filter>
     </ClInclude>
     <ClInclude Include="Compiler\DebugUtil.h">
       <Filter>Compiler</Filter>
     </ClInclude>
-    <ClInclude Include="Backend\x86_64Context.h">
-      <Filter>Backend\x86-64</Filter>
-    </ClInclude>
     <ClInclude Include="Backend\x86_64CodeGenerator.h">
-      <Filter>Backend\x86-64</Filter>
+      <Filter>Backend</Filter>
     </ClInclude>
-    <ClInclude Include="Backend\ICodegenContext.h">
+    <ClInclude Include="Backend\x86_64Context.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics\Diagnostics.h">
+      <Filter>Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Backend\x86_64.h">
       <Filter>Backend</Filter>
     </ClInclude>
   </ItemGroup>
@@ -142,12 +136,12 @@
     <None Include="Frontend\Tokens.def">
       <Filter>Frontend</Filter>
     </None>
-    <None Include="Frontend\Diagnostics.def">
-      <Filter>Frontend\Diagnostics</Filter>
-    </None>
     <None Include="Test\test.asm">
       <Filter>Compiler</Filter>
     </None>
     <None Include="..\README.md" />
+    <None Include="Diagnostics\Diagnostics.def">
+      <Filter>Diagnostics</Filter>
+    </None>
   </ItemGroup>
 </Project>

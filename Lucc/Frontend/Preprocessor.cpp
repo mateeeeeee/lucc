@@ -1,10 +1,10 @@
 #include "Preprocessor.h"
 #include "SourceBuffer.h"
-#include "Diagnostics.h"
 #include "Token.h"
 #include "Lexer.h"
 #include "Hideset.h"
 #include "Core/Defines.h"
+#include "Diagnostics/Diagnostics.h"
 
 //preprocessor todo list:
 //- macros function

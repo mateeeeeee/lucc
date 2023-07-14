@@ -23,8 +23,8 @@
     <ClCompile Include="Backend\x86_64Context.cpp" />
     <ClCompile Include="Compiler\Compiler.cpp" />
     <ClCompile Include="Compiler\DebugUtil.cpp" />
+    <ClCompile Include="Diagnostics\Diagnostics.cpp" />
     <ClCompile Include="Frontend\AST.cpp" />
-    <ClCompile Include="Frontend\Diagnostics.cpp" />
     <ClCompile Include="Frontend\Lexer.cpp" />
     <ClCompile Include="Frontend\Parser.cpp" />
     <ClCompile Include="Frontend\Preprocessor.cpp" />
@@ -39,18 +39,17 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Backend\ICodegenContext.h" />
-    <ClInclude Include="Backend\ICodeGenerator.h" />
     <ClInclude Include="Backend\x86_64CodeGenerator.h" />
     <ClInclude Include="Backend\x86_64Context.h" />
+    <ClInclude Include="Backend\x86_64.h" />
     <ClInclude Include="Compiler\Compiler.h" />
     <ClInclude Include="Compiler\DebugUtil.h" />
     <ClInclude Include="Core\CLIParser.h" />
     <ClInclude Include="Core\CoreTypes.h" />
     <ClInclude Include="Core\Defines.h" />
     <ClInclude Include="Core\Enums.h" />
+    <ClInclude Include="Diagnostics\Diagnostics.h" />
     <ClInclude Include="Frontend\AST.h" />
-    <ClInclude Include="Frontend\Diagnostics.h" />
     <ClInclude Include="Frontend\Lexer.h" />
     <ClInclude Include="Frontend\Parser.h" />
     <ClInclude Include="Frontend\Preprocessor.h" />
@@ -64,7 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />
-    <None Include="Frontend\Diagnostics.def" />
+    <None Include="Diagnostics\Diagnostics.def" />
     <None Include="Frontend\Tokens.def" />
     <None Include="Test\test.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
