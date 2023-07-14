@@ -1,33 +1,15 @@
 #pragma once
 #include <string>
 #include <iosfwd>
-#include "ICodeGenerator.h"
+#include "x86_64.h"
 
 namespace lucc
 {
+	class x86_64Context;
+	struct AST;
 
-	class x86_64CodeGenerator : public ICodeGenerator
+	class x86_64CodeGenerator 
 	{
-		class Context;
-		enum SegmentType : uint16
-		{
-			None,
-			BSS,
-			Const,
-			Data,
-			Text
-		};
-		struct OutputBuffer
-		{
-			std::string no_segment;
-			std::string bss_segment;
-			std::string rodata_segment;
-			std::string data_segment;
-			std::string text_segment;
-		};
-
-		friend void operator<<(std::ostream& os, OutputBuffer const& buff);
-
 	public:
 		explicit x86_64CodeGenerator(std::string_view output_file);
 		~x86_64CodeGenerator();
@@ -37,7 +19,7 @@ namespace lucc
 	private:
 		std::string output_file;
 		OutputBuffer output_buffer;
-		std::unique_ptr<Context> ctx;
+		std::unique_ptr<x86_64Context> ctx;
 	};
 
 }

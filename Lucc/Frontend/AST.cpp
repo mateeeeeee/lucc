@@ -1,6 +1,7 @@
 #include "AST.h"
-#include "Diagnostics.h"
+#include "Diagnostics/Diagnostics.h"
 #include "Core/Defines.h"
+#include "Backend/x86_64.h"
 
 
 namespace lucc
@@ -343,116 +344,116 @@ namespace lucc
 
 	/// Codegen
 
-	void TranslationUnitAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void TranslationUnitAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		for (auto const& decl : declarations) decl->Codegen(ctx);
 	}
 
-	void VarDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void VarDeclAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void FunctionDeclAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void FunctionDeclAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void UnaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void UnaryExprAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void BinaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void BinaryExprAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void TernaryExprAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void TernaryExprAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void VarDeclRefAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void VarDeclRefAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void IntLiteralAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void IntLiteralAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void ExprStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void ExprStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
-		if(expr) expr->Codegen(ctx, return_reg);
+		if(expr) expr->Codegen(ctx, result);
 	}
 
-	void CompoundStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void CompoundStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		for (auto& stmt : statements) stmt->Codegen(ctx);
 	}
 
-	void IfStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void IfStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void ReturnStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void ReturnStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 	}
 
-	void WhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
-	{
-		
-	}
-
-	void DoWhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void WhileStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void DeclStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void DoWhileStmtAST::Codegen(x86_64Context& ctx, Result* result) const
+	{
+		
+	}
+
+	void DeclStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		for (auto const& decl : decls) decl->Codegen(ctx);
 	}
 
-	void ForStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void ForStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void FunctionCallAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void FunctionCallAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void BreakStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void BreakStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void ContinueStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void ContinueStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void GotoStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void GotoStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void LabelStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void LabelStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void SwitchStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void SwitchStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}
 
-	void CaseStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
+	void CaseStmtAST::Codegen(x86_64Context& ctx, Result* result) const
 	{
 		
 	}

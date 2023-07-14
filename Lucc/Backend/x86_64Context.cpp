@@ -1,4 +1,5 @@
 #include <format>
+#include "x86_64.h"
 #include "x86_64Context.h"
 #include "Diagnostics/Diagnostics.h"
 
@@ -13,26 +14,26 @@ namespace lucc
 		}
 	}
 
-	template<x86_64CodeGenerator::SegmentType segment, typename... Ts>
-	void x86_64CodeGenerator::Context::Emit(std::string_view fmt, Ts&&... args)
+	template<SegmentType segment, typename... Ts>
+	void x86_64Context::Emit(std::string_view fmt, Ts&&... args)
 	{
 		std::string output = std::vformat(fmt, std::make_format_args(std::forward<Ts>(args)...));
 		output += "\n";
-		if		constexpr (segment == x86_64CodeGenerator::SegmentType::None)	 output_buffer.no_segment += output;
-		else if constexpr (segment == x86_64CodeGenerator::SegmentType::BSS)	 output_buffer.bss_segment += output;
-		else if constexpr (segment == x86_64CodeGenerator::SegmentType::Const)	 output_buffer.rodata_segment += output;
-		else if constexpr (segment == x86_64CodeGenerator::SegmentType::Data)	 output_buffer.data_segment += output;
-		else if constexpr (segment == x86_64CodeGenerator::SegmentType::Text)	 output_buffer.text_segment += output;
+		if		constexpr (segment == SegmentType::None)	 output_buffer.no_segment += output;
+		else if constexpr (segment == SegmentType::BSS)		 output_buffer.bss_segment += output;
+		else if constexpr (segment == SegmentType::Const)	 output_buffer.rodata_segment += output;
+		else if constexpr (segment == SegmentType::Data)	 output_buffer.data_segment += output;
+		else if constexpr (segment == SegmentType::Text)	 output_buffer.text_segment += output;
 	}
 
-	std::string x86_64CodeGenerator::Context::ConvertOperand(OperandRef op, BitCount bitcount)
+	std::string x86_64Context::ConvertOperand(ResultRef op, BitCount bitcount)
 	{
-		switch (op.form)
+		switch (op.kind)
 		{
-		case OperandForm::Immediate: return std::format("{}", op.immediate);
-		case OperandForm::Register:  return GetRegisterName(op.reg, bitcount);
-		case OperandForm::Global:    return std::format("{} {}", GetWordCast(bitcount), op.global);
-		case OperandForm::SIB:
+		case ResultKind::Immediate: return std::format("{}", op.immediate);
+		case ResultKind::Register:  return GetRegisterName(op.reg, bitcount);
+		case ResultKind::Global:    return std::format("{} {}", GetWordCast(bitcount), op.global);
+		case ResultKind::SIB:
 		{
 			bitcount = BitCount_64; //for now
 			std::string indirect_result = "[";
@@ -69,7 +70,7 @@ namespace lucc
 		return "";
 	}
 
-	x86_64CodeGenerator::Context::Context(OutputBuffer& output_buffer) : output_buffer(output_buffer)
+	x86_64Context::x86_64Context(OutputBuffer& output_buffer) : output_buffer(output_buffer)
 	{
 		Emit<BSS>(".data?");
 		Emit<Const>(".const");
@@ -78,7 +79,7 @@ namespace lucc
 		register_mask.fill(true);
 	}
 
-	Register x86_64CodeGenerator::Context::AllocateRegister()
+	Register x86_64Context::AllocateRegister()
 	{
 		for (int32 i = 0; i < std::size(scratch_registers); i++)
 		{
@@ -89,125 +90,130 @@ namespace lucc
 				return reg;
 			}
 		}
-		Report(diag::out_of_registers);
+		LU_ASSERT(false);
+		return InvalidRegister;
 	}
 
-	void x86_64CodeGenerator::Context::FreeRegister(Register reg)
+	void x86_64Context::FreeRegister(Register reg)
 	{
 		LU_ASSERT(!register_mask[reg]);
 		register_mask[reg] = true;
 	}
 
-	Register x86_64CodeGenerator::Context::GetCallRegister(uint32 arg_index) const
+	Register x86_64Context::GetCallRegister(uint32 arg_index) const
 	{
-		if (arg_index >= ARGUMENTS_PASSED_BY_REGISTERS) Report(diag::out_of_func_arg_registers);
+		if (arg_index >= ARGUMENTS_PASSED_BY_REGISTERS)
+		{
+			LU_ASSERT(false);
+			return InvalidRegister;
+		}
 		static Register call_registers[ARGUMENTS_PASSED_BY_REGISTERS] = { RCX, RDX, R8, R9 };
 		return call_registers[arg_index];
 	}
 
-	void x86_64CodeGenerator::Context::Add(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	void x86_64Context::Add(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
-		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		LU_ASSERT(lhs.kind != ResultKind::Immediate);
 		Emit<Text>("add\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Sub(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	void x86_64Context::Sub(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
-		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		LU_ASSERT(lhs.kind != ResultKind::Immediate);
 		Emit<Text>("sub\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Imul(Register lhs, OperandRef rhs, BitCount bitcount)
+	void x86_64Context::Imul(Register lhs, ResultRef rhs, BitCount bitcount)
 	{
-		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		LU_ASSERT(rhs.kind != ResultKind::Immediate);
 		Emit<Text>("imul\t{}, {}", GetRegisterName(lhs, bitcount), ConvertOperand(rhs, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Imul(Register lhs, OperandRef rhs, int32 imm, BitCount bitcount)
+	void x86_64Context::Imul(Register lhs, ResultRef rhs, int32 imm, BitCount bitcount)
 	{
-		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		LU_ASSERT(rhs.kind != ResultKind::Immediate);
 		Emit<Text>("imul\t{}, {}, {}", GetRegisterName(lhs, bitcount), ConvertOperand(rhs, bitcount), imm);
 	}
 
-	void x86_64CodeGenerator::Context::Idiv(Register lhs, OperandRef divisor, BitCount bitcount)
+	void x86_64Context::Idiv(Register lhs, ResultRef divisor, BitCount bitcount)
 	{
-		LU_ASSERT(divisor.form != OperandForm::Immediate);
+		LU_ASSERT(divisor.kind != ResultKind::Immediate);
 
 	}
 
-	void x86_64CodeGenerator::Context::Neg(OperandRef op, BitCount bitcount)
+	void x86_64Context::Neg(ResultRef op, BitCount bitcount)
 	{
-		LU_ASSERT(op.form != OperandForm::Immediate);
+		LU_ASSERT(op.kind != ResultKind::Immediate);
 		Emit<Text>("neg\t{}", ConvertOperand(op, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Inc(OperandRef op, BitCount bitcount)
+	void x86_64Context::Inc(ResultRef op, BitCount bitcount)
 	{
-		LU_ASSERT(op.form != OperandForm::Immediate);
+		LU_ASSERT(op.kind != ResultKind::Immediate);
 		Emit<Text>("inc\t{} {}", ConvertOperand(op, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Dec(OperandRef op, BitCount bitcount)
+	void x86_64Context::Dec(ResultRef op, BitCount bitcount)
 	{
-		LU_ASSERT(op.form != OperandForm::Immediate);
+		LU_ASSERT(op.kind != ResultKind::Immediate);
 		Emit<Text>("dec\t{} {}", ConvertOperand(op, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::And(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	void x86_64Context::And(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
-		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		LU_ASSERT(lhs.kind != ResultKind::Immediate);
 		Emit<Text>("and\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Or(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	void x86_64Context::Or(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
-		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		LU_ASSERT(lhs.kind != ResultKind::Immediate);
 		Emit<Text>("or\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Xor(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	void x86_64Context::Xor(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
-		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		LU_ASSERT(lhs.kind != ResultKind::Immediate);
 		Emit<Text>("xor\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Not(OperandRef op, BitCount bitcount)
+	void x86_64Context::Not(ResultRef op, BitCount bitcount)
 	{
-		LU_ASSERT(op.form != OperandForm::Immediate);
+		LU_ASSERT(op.kind != ResultKind::Immediate);
 		Emit<Text>("not\t{}", ConvertOperand(op, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Push(OperandRef op)
+	void x86_64Context::Push(ResultRef op)
 	{
 		Emit<Text>("push\t{}", ConvertOperand(op, BitCount_64));
 	}
 
-	void x86_64CodeGenerator::Context::Pop(OperandRef op)
+	void x86_64Context::Pop(ResultRef op)
 	{
 		Emit<Text>("pop\t{}", ConvertOperand(op, BitCount_64));
 	}
 
-	void x86_64CodeGenerator::Context::Label(char const* label)
+	void x86_64Context::Label(char const* label)
 	{
 		Emit<Text>("{}: ", label);
 	}
 
-	void x86_64CodeGenerator::Context::Label(char const* label, uint64 label_id)
+	void x86_64Context::Label(char const* label, uint64 label_id)
 	{
 		Emit<Text>("{}.{}: ", label, label_id);
 	}
 
-	uint64 x86_64CodeGenerator::Context::GenerateLabelId()
+	uint64 x86_64Context::GenerateLabelId()
 	{
 		return GenerateUniqueInteger();
 	}
 
-	void x86_64CodeGenerator::Context::Cmp(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	void x86_64Context::Cmp(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
 		Emit<Text>("cmp\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::Set(OperandRef op, ConditionCode cc)
+	void x86_64Context::Set(ResultRef op, ConditionCode cc)
 	{
 		std::string op_name = ConvertOperand(op, BitCount_8);
 		switch (cc)
@@ -232,7 +238,7 @@ namespace lucc
 		}
 	}
 
-	void x86_64CodeGenerator::Context::Jmp(char const* label, ConditionCode cc)
+	void x86_64Context::Jmp(char const* label, ConditionCode cc)
 	{
 		switch (cc)
 		{
@@ -256,53 +262,53 @@ namespace lucc
 		}
 	}
 
-	void x86_64CodeGenerator::Context::Jmp(char const* label, uint64 label_id, ConditionCode cc)
+	void x86_64Context::Jmp(char const* label, uint64 label_id, ConditionCode cc)
 	{
 		std::string label_ = std::format("{}.{}", label, label_id);
 		Jmp(label_.c_str(), cc);
 	}
 
-	void x86_64CodeGenerator::Context::Mov(OperandRef lhs, OperandRef rhs, BitCount bitcount)
+	void x86_64Context::Mov(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
-		LU_ASSERT(lhs.form != OperandForm::Immediate);
+		LU_ASSERT(lhs.kind != ResultKind::Immediate);
 		Emit<Text>("mov\t{}, {}", ConvertOperand(lhs, bitcount), ConvertOperand(rhs, bitcount));
 	}
 
-	void x86_64CodeGenerator::Context::MovOffset(Register lhs, char const* global)
+	void x86_64Context::MovOffset(Register lhs, char const* global)
 	{
 		Emit<Text>("mov\t{}, offset {}", GetRegisterName(lhs, BitCount_64), global);
 	}
 
-	void x86_64CodeGenerator::Context::Movabs(Register lhs, int64 value)
+	void x86_64Context::Movabs(Register lhs, int64 value)
 	{
 		Emit<Text>("mov\t{}, {}", GetRegisterName(lhs, BitCount_64), value);
 	}
 
-	void x86_64CodeGenerator::Context::Movzx(Register lhs, OperandRef rhs, BitCount bitcount, bool rhs8bit /*= false*/)
+	void x86_64Context::Movzx(Register lhs, ResultRef rhs, BitCount bitcount, bool rhs8bit /*= false*/)
 	{
-		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		LU_ASSERT(rhs.kind != ResultKind::Immediate);
 		Emit<Text>("movzx\t{}, {}", GetRegisterName(lhs, bitcount), ConvertOperand(rhs, rhs8bit ? BitCount_8 : BitCount_16));
 	}
 
-	void x86_64CodeGenerator::Context::Movsx(Register lhs, OperandRef rhs, BitCount bitcount, bool rhs8bit /*= false*/)
+	void x86_64Context::Movsx(Register lhs, ResultRef rhs, BitCount bitcount, bool rhs8bit /*= false*/)
 	{
-		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		LU_ASSERT(rhs.kind != ResultKind::Immediate);
 		Emit<Text>("movsx\t{}, {}", GetRegisterName(lhs, bitcount), ConvertOperand(rhs, rhs8bit ? BitCount_8 : BitCount_16));
 	}
 
-	void x86_64CodeGenerator::Context::Movsxd(Register lhs, OperandRef rhs)
+	void x86_64Context::Movsxd(Register lhs, ResultRef rhs)
 	{
-		LU_ASSERT(rhs.form != OperandForm::Immediate);
+		LU_ASSERT(rhs.kind != ResultKind::Immediate);
 		Emit<Text>("movsx\t{}, {}", GetRegisterName(lhs, BitCount_64), ConvertOperand(rhs, BitCount_32));
 	}
 
-	void x86_64CodeGenerator::Context::Lea(Register reg, OperandRef op)
+	void x86_64Context::Lea(Register reg, ResultRef op)
 	{
-		LU_ASSERT(op.form != OperandForm::Immediate && op.form != OperandForm::Register);
+		LU_ASSERT(op.kind != ResultKind::Immediate && op.kind != ResultKind::Register);
 		Emit<Text>("lea\t{}, {}", GetRegisterName(reg, BitCount_64), ConvertOperand(op, BitCount_64));
 	}
 
-	void x86_64CodeGenerator::Context::DeclareVariable(VarDeclCG const& var_decl)
+	void x86_64Context::DeclareVariable(VarDeclCG const& var_decl)
 	{
 		if (var_decl.is_extern)
 		{
@@ -322,7 +328,7 @@ namespace lucc
 		}
 	}
 
-	void x86_64CodeGenerator::Context::DeclareArray(ArrayDeclCG const& array_decl)
+	void x86_64Context::DeclareArray(ArrayDeclCG const& array_decl)
 	{
 		if (array_decl.is_extern)
 		{
@@ -333,7 +339,7 @@ namespace lucc
 		if (!array_decl.is_static) Emit<None>("public {}", array_decl.name);
 		if (array_decl.init_values)
 		{
-			
+			//#todo
 		}
 		else
 		{
@@ -341,7 +347,7 @@ namespace lucc
 		}
 	}
 
-	void x86_64CodeGenerator::Context::DeclareFunction(FunctionDeclCG const& func_decl)
+	void x86_64Context::DeclareFunction(FunctionDeclCG const& func_decl)
 	{
 		if (func_decl.is_extern)
 		{
@@ -352,12 +358,12 @@ namespace lucc
 		Emit<Text>("\n{} proc {}", func_decl.name, func_decl.is_static ? "private" : "");
 	}
 
-	void x86_64CodeGenerator::Context::Call(char const* func_name)
+	void x86_64Context::Call(char const* func_name)
 	{
 		Emit<Text>("call {}", func_name);
 	}
 
-	void x86_64CodeGenerator::Context::ReserveStack(uint32 stack)
+	void x86_64Context::ReserveStack(uint32 stack)
 	{
 		Emit<Text>("push rbp");
 		Emit<Text>("mov rbp, rsp");
@@ -369,12 +375,12 @@ namespace lucc
 		stack_reg_saved = true;
 	}
 
-	void x86_64CodeGenerator::Context::JumpToReturn()
+	void x86_64Context::JumpToReturn()
 	{
 		Emit<Text>("jmp {}_end", current_function);
 	}
 
-	void x86_64CodeGenerator::Context::Return()
+	void x86_64Context::Return()
 	{
 		if (current_function == "main") Emit<Text>("xor rax, rax");
 

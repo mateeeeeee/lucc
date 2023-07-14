@@ -7,48 +7,47 @@
 
 namespace lucc
 {
-
-	class x86_64CodeGenerator::Context
+	class x86_64Context
 	{
 	public:
-		explicit Context(OutputBuffer& output_buffer);
+		explicit x86_64Context(OutputBuffer& output_buffer);
 
 		Register AllocateRegister();
 		Register GetCallRegister(uint32 arg_index) const;
 		void FreeRegister(Register reg);
 
-		void Add(OperandRef lhs, OperandRef rhs, BitCount bitcount);
-		void Sub(OperandRef lhs, OperandRef rhs, BitCount bitcount);
-		void Imul(Register  lhs, OperandRef rhs,  BitCount bitcount);
-		void Imul(Register  lhs, OperandRef rhs, int32 imm, BitCount bitcount);
-		void Idiv(Register  lhs, OperandRef rhs, BitCount bitcount);
-		void Neg(OperandRef op, BitCount bitcount);
-		void Inc(OperandRef op, BitCount bitcount);
-		void Dec(OperandRef op, BitCount bitcount);
+		void Add(ResultRef lhs, ResultRef rhs, BitCount bitcount);
+		void Sub(ResultRef lhs, ResultRef rhs, BitCount bitcount);
+		void Imul(Register lhs, ResultRef rhs,  BitCount bitcount);
+		void Imul(Register lhs, ResultRef rhs, int32 imm, BitCount bitcount);
+		void Idiv(Register lhs, ResultRef rhs, BitCount bitcount);
+		void Neg(ResultRef op, BitCount bitcount);
+		void Inc(ResultRef op, BitCount bitcount);
+		void Dec(ResultRef op, BitCount bitcount);
 
-		void And(OperandRef lhs, OperandRef rhs, BitCount bitcount);
-		void Or(OperandRef  lhs, OperandRef rhs, BitCount bitcount);
-		void Xor(OperandRef lhs, OperandRef rhs, BitCount bitcount);
-		void Not(OperandRef op, BitCount bitcount);
+		void And(ResultRef lhs, ResultRef rhs, BitCount bitcount);
+		void Or(ResultRef  lhs, ResultRef rhs, BitCount bitcount);
+		void Xor(ResultRef lhs, ResultRef rhs, BitCount bitcount);
+		void Not(ResultRef op, BitCount bitcount);
 
-		void Push(OperandRef op);
-		void Pop(OperandRef op);
+		void Push(ResultRef op);
+		void Pop(ResultRef op);
 
 		uint64 GenerateLabelId();
 		void Label(char const* label);
 		void Label(char const* label, uint64 label_id);
-		void Cmp(OperandRef lhs, OperandRef rhs, BitCount bitcount);
-		void Set(OperandRef op, ConditionCode cc);
+		void Cmp(ResultRef lhs, ResultRef rhs, BitCount bitcount);
+		void Set(ResultRef op, ConditionCode cc);
 		void Jmp(char const* label, ConditionCode cc = ConditionCode::None);
 		void Jmp(char const* label, uint64 label_id, ConditionCode cc = ConditionCode::None);
 
-		void Mov(OperandRef lhs, OperandRef rhs, BitCount bitcount);
+		void Mov(ResultRef lhs, ResultRef rhs, BitCount bitcount);
 		void MovOffset(Register lhs, char const* global);
 		void Movabs(Register lhs, int64 value);
-		void Movzx(Register lhs, OperandRef rhs, BitCount bitcount, bool rhs8bit = false);
-		void Movsx(Register lhs, OperandRef rhs, BitCount bitcount, bool rhs8bit = false);
-		void Movsxd(Register lhs, OperandRef rhs);
-		void Lea(Register reg, OperandRef op);
+		void Movzx(Register lhs, ResultRef rhs, BitCount bitcount, bool rhs8bit = false);
+		void Movsx(Register lhs, ResultRef rhs, BitCount bitcount, bool rhs8bit = false);
+		void Movsxd(Register lhs, ResultRef rhs);
+		void Lea(Register reg, ResultRef op);
 
 		void DeclareVariable(VarDeclCG const& var_decl);
 		void DeclareArray(ArrayDeclCG const& array_decl);
@@ -70,6 +69,6 @@ namespace lucc
 		template<SegmentType segment, typename... Ts>
 		void Emit(std::string_view fmt, Ts&&... args);
 
-		static std::string ConvertOperand(OperandRef op, BitCount bitcount);
+		static std::string ConvertOperand(ResultRef op, BitCount bitcount);
 	};
 }

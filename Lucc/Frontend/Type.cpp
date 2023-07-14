@@ -1,5 +1,5 @@
 #include "Type.h"
-#include "Diagnostics.h"
+#include "Diagnostics/Diagnostics.h"
 
 namespace lucc
 {

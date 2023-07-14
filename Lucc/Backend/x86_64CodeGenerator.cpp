@@ -6,7 +6,7 @@
 
 namespace lucc
 {
-	void operator<<(std::ostream& os, x86_64CodeGenerator::OutputBuffer const& buff)
+	void operator<<(std::ostream& os, OutputBuffer const& buff)
 	{
 		os << buff.no_segment << "\n";
 		os << buff.rodata_segment << "\n";
@@ -17,7 +17,7 @@ namespace lucc
 
 	x86_64CodeGenerator::x86_64CodeGenerator(std::string_view output_file) : output_file(output_file)
 	{
-		ctx = std::make_unique<Context>(output_buffer);
+		ctx = std::make_unique<x86_64Context>(output_buffer);
 	}
 
 	x86_64CodeGenerator::~x86_64CodeGenerator() = default;

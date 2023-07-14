@@ -141,7 +141,7 @@ namespace lucc
 		}
 	}
 
-	enum class OperandForm
+	enum class ResultKind
 	{
 		Immediate,
 		Register,
@@ -165,15 +165,15 @@ namespace lucc
 		int32 displacement = 0;
 	};
 
-	struct Operand
+	struct Result
 	{
-		constexpr Operand(int64 imm) : immediate(imm), form(OperandForm::Immediate) {}
-		constexpr Operand(Register reg) : reg(reg), form(OperandForm::Register) {}
-		constexpr Operand(char const* global) : global(global), form(OperandForm::Global) {}
-		constexpr Operand(Register base_reg, int32 displacement, Register index_reg = InvalidRegister, SIBScale scale = SIBScale_None) : 
-			sib{ .base_reg = base_reg,.index_reg = index_reg, .scale = scale, .displacement = displacement}, form(OperandForm::SIB) {}
+		constexpr Result(int64 imm) : immediate(imm), kind(ResultKind::Immediate) {}
+		constexpr Result(Register reg) : reg(reg), kind(ResultKind::Register) {}
+		constexpr Result(char const* global) : global(global), kind(ResultKind::Global) {}
+		constexpr Result(Register base_reg, int32 displacement, Register index_reg = InvalidRegister, SIBScale scale = SIBScale_None) : 
+			sib{ .base_reg = base_reg,.index_reg = index_reg, .scale = scale, .displacement = displacement}, kind(ResultKind::SIB) {}
 
-		constexpr OperandForm GetForm() const { return form; }
+		constexpr ResultKind GetKind() const { return kind; }
 
 		union
 		{
@@ -182,9 +182,9 @@ namespace lucc
 			char const* global;
 			SIB sib;
 		};
-		OperandForm form;
+		ResultKind kind;
 	};
-	using OperandRef = Operand const&;
+	using ResultRef = Result const&;
 
 	struct VarDeclCG
 	{
@@ -210,5 +210,22 @@ namespace lucc
 		char const* name;
 		bool is_static;
 		bool is_extern;
+	};
+
+	struct OutputBuffer
+	{
+		std::string no_segment;
+		std::string bss_segment;
+		std::string rodata_segment;
+		std::string data_segment;
+		std::string text_segment;
+	};
+	enum SegmentType : uint16
+	{
+		None,
+		BSS,
+		Const,
+		Data,
+		Text
 	};
 }
