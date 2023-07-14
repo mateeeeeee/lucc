@@ -703,7 +703,7 @@ namespace lucc
 				if (operand->GetExprKind() == ExprKind::IntLiteral)
 				{
 					IntLiteralAST* literal = AstCast<IntLiteralAST>(operand.get());
-					ctx.Mov(*return_reg, literal->GetValue(), bitmode);
+					ctx.Mov(*return_reg, (int32)literal->GetValue(), bitmode);
 					if(op == UnaryExprKind::Minus) ctx.Neg(*return_reg, bitmode);
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
@@ -781,7 +781,7 @@ namespace lucc
 				if (operand->GetExprKind() == ExprKind::IntLiteral)
 				{
 					IntLiteralAST* literal = AstCast<IntLiteralAST>(operand.get());
-					ctx.Mov(*return_reg, literal->GetValue(), bitmode);
+					ctx.Mov(*return_reg, (int32)literal->GetValue(), bitmode);
 					ctx.Not(*return_reg, bitmode);
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
@@ -1202,7 +1202,7 @@ namespace lucc
 	{
 		size_t type_size = GetType()->GetSize();
 		BitMode bitmode = ConvertToBitMode(type_size);
-		if (return_reg) ctx.Mov(*return_reg, value, bitmode);
+		if (return_reg) ctx.Mov(*return_reg, (int32)value, bitmode);
 	}
 
 	void ExprStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
@@ -1234,10 +1234,18 @@ namespace lucc
 
 	void ReturnStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
 	{
-		register_t reg = ctx.AllocateReturnRegister();
-		ret_expr->Codegen(ctx, reg);
-		ctx.JumpToFunctionEnd();
-		ctx.FreeRegister(reg);
+		if (ret_expr->GetExpr()->GetExprKind() == ExprKind::FunctionCall)
+		{
+			ret_expr->Codegen(ctx);
+			ctx.JumpToFunctionEnd();
+		}
+		else
+		{
+			register_t reg = ctx.AllocateReturnRegister();
+			ret_expr->Codegen(ctx, reg);
+			ctx.JumpToFunctionEnd();
+			ctx.FreeRegister(reg);
+		}
 	}
 
 	void WhileStmtAST::Codegen(ICodegenContext& ctx, std::optional<register_t> return_reg) const
