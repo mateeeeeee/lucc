@@ -1,7 +1,10 @@
 
-
+int f(int a, int b)
+{
+	return a + b;
+}
 
 int main(void)
 {
-	return sizeof(int(*)[4]);
+	return f(1, 2);
 }

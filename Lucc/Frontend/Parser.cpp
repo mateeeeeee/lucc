@@ -1267,7 +1267,6 @@ namespace lucc
 				return;
 			}
 		}
-
 		if (current_token->Is(TokenKind::identifier))
 		{
 			declarator.name = current_token->GetIdentifier();
@@ -1363,10 +1362,9 @@ namespace lucc
 		{
 			bool is_variadic = false;
 			std::vector<FunctionParameter> param_types{};
-			bool first = true;
 			while (!Consume(TokenKind::right_round))
 			{
-				if (!first && !Consume(TokenKind::comma)) Report(diag::function_params_missing_coma);
+				if (!param_types.empty() && !Consume(TokenKind::comma)) Report(diag::function_params_missing_coma);
 
 				if (Consume(TokenKind::ellipsis))
 				{
