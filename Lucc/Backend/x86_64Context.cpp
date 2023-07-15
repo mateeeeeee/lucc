@@ -100,15 +100,33 @@ namespace lucc
 		register_mask[reg] = true;
 	}
 
-	Register x86_64Context::GetCallRegister(uint32 arg_index) const
+	void x86_64Context::FreeRegister(ResultRef res)
 	{
-		if (arg_index >= ARGUMENTS_PASSED_BY_REGISTERS)
+		FreeRegister(res.reg);
+	}
+
+	Register x86_64Context::GetCallRegister(uint32 arg_index)
+	{
+		static Register call_registers[ARGUMENTS_PASSED_BY_REGISTERS] = { RCX, RDX, R8, R9 };
+		if (arg_index >= ARGUMENTS_PASSED_BY_REGISTERS || !register_mask[call_registers[arg_index]])
 		{
 			LU_ASSERT(false);
 			return InvalidRegister;
 		}
-		static Register call_registers[ARGUMENTS_PASSED_BY_REGISTERS] = { RCX, RDX, R8, R9 };
+		register_mask[call_registers[arg_index]] = false;
 		return call_registers[arg_index];
+	}
+
+	Register x86_64Context::GetReturnRegister()
+	{
+		static Register return_register = RAX;
+		if (!register_mask[return_register])
+		{
+			LU_ASSERT(false);
+			return InvalidRegister;
+		}
+		register_mask[return_register] = false;
+		return return_register;
 	}
 
 	void x86_64Context::Add(ResultRef lhs, ResultRef rhs, BitCount bitcount)
@@ -157,6 +175,51 @@ namespace lucc
 	{
 		LU_ASSERT(op.kind != ResultKind::Immediate);
 		Emit<Text>("dec\t{} {}", ConvertOperand(op, bitcount));
+	}
+
+	void x86_64Context::Shl(ResultRef lhs, ResultRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(rhs.kind != ResultKind::Global && rhs.kind != ResultKind::SIB);
+		static Register const ShiftRegister = RCX;
+		if (rhs.kind == ResultKind::Immediate)
+		{
+			Emit<Text>("shl\t{}, {}", ConvertOperand(lhs, bitcount), rhs.immediate);
+		}
+		else
+		{
+			if (rhs.reg != ShiftRegister) Mov(ShiftRegister, rhs, BitCount_8);
+			Emit<Text>("shl\t{}, {}", ConvertOperand(lhs, bitcount), GetRegisterName(ShiftRegister, bitcount));
+		}
+	}
+
+	void x86_64Context::Shr(ResultRef lhs, ResultRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(rhs.kind != ResultKind::Global && rhs.kind != ResultKind::SIB);
+		static Register const ShiftRegister = RCX;
+		if (rhs.kind == ResultKind::Immediate)
+		{
+			Emit<Text>("shr\t{}, {}", ConvertOperand(lhs, bitcount), rhs.immediate);
+		}
+		else
+		{
+			if (rhs.reg != ShiftRegister) Mov(ShiftRegister, rhs, BitCount_8);
+			Emit<Text>("shr\t{}, {}", ConvertOperand(lhs, bitcount), GetRegisterName(ShiftRegister, bitcount));
+		}
+	}
+
+	void x86_64Context::Sar(ResultRef lhs, ResultRef rhs, BitCount bitcount)
+	{
+		LU_ASSERT(rhs.kind != ResultKind::Global && rhs.kind != ResultKind::SIB);
+		static Register const ShiftRegister = RCX;
+		if (rhs.kind == ResultKind::Immediate)
+		{
+			Emit<Text>("sar\t{}, {}", ConvertOperand(lhs, bitcount), rhs.immediate);
+		}
+		else
+		{
+			if (rhs.reg != ShiftRegister) Mov(ShiftRegister, rhs, BitCount_8);
+			Emit<Text>("sar\t{}, {}", ConvertOperand(lhs, bitcount), GetRegisterName(ShiftRegister, bitcount));
+		}
 	}
 
 	void x86_64Context::And(ResultRef lhs, ResultRef rhs, BitCount bitcount)
@@ -343,7 +406,7 @@ namespace lucc
 		}
 		else
 		{
-			Emit<BSS>("{}\t{} dup (?)", array_decl.name, GetWordType(array_decl.bits));
+			Emit<BSS>("{}\t{} {} dup (?)", array_decl.name, GetWordType(array_decl.bits), array_decl.array_size);
 		}
 	}
 

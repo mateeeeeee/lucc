@@ -13,8 +13,10 @@ namespace lucc
 		explicit x86_64Context(OutputBuffer& output_buffer);
 
 		Register AllocateRegister();
-		Register GetCallRegister(uint32 arg_index) const;
+		Register GetCallRegister(uint32 arg_index);
+		Register GetReturnRegister();
 		void FreeRegister(Register reg);
+		void FreeRegister(ResultRef reg);
 
 		void Add(ResultRef lhs, ResultRef rhs, BitCount bitcount);
 		void Sub(ResultRef lhs, ResultRef rhs, BitCount bitcount);
@@ -24,6 +26,11 @@ namespace lucc
 		void Neg(ResultRef op, BitCount bitcount);
 		void Inc(ResultRef op, BitCount bitcount);
 		void Dec(ResultRef op, BitCount bitcount);
+
+		//shifts
+		void Shl(ResultRef lhs, ResultRef rhs, BitCount bitcount);
+		void Shr(ResultRef lhs, ResultRef rhs, BitCount bitcount);
+		void Sar(ResultRef lhs, ResultRef rhs, BitCount bitcount);
 
 		void And(ResultRef lhs, ResultRef rhs, BitCount bitcount);
 		void Or(ResultRef  lhs, ResultRef rhs, BitCount bitcount);
@@ -65,6 +72,7 @@ namespace lucc
 		std::string current_function; 
 		bool stack_reg_saved;
 		uint32 stack_used;
+
 	private:
 		template<SegmentType segment, typename... Ts>
 		void Emit(std::string_view fmt, Ts&&... args);

@@ -97,7 +97,7 @@ namespace lucc
 		default: return BitCount_64;
 		}
 	}
-	inline constexpr uint32 ARGUMENTS_PASSED_BY_REGISTERS = 4;
+	inline constexpr size_t ARGUMENTS_PASSED_BY_REGISTERS = 4;
 
 	enum class ConditionCode
 	{
@@ -203,7 +203,7 @@ namespace lucc
 		bool is_extern;
 		BitCount bits;
 		int64* init_values = nullptr;
-		size_t init_values_size = 0;
+		size_t array_size = 0;
 	};
 	struct FunctionDeclCG
 	{
