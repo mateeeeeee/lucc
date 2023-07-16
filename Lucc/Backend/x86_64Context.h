@@ -13,10 +13,13 @@ namespace lucc
 		explicit x86_64Context(OutputBuffer& output_buffer);
 
 		Register AllocateRegister();
+		Register AllocateRegister(Register reg);
 		Register GetCallRegister(uint32 arg_index);
 		Register GetReturnRegister();
 		void FreeRegister(Register reg);
 		void FreeRegister(ResultRef reg);
+		uint32 SaveVolatileRegisters();
+		void RestoreVolatileRegisters();
 
 		void Add(ResultRef lhs, ResultRef rhs, BitCount bitcount);
 		void Sub(ResultRef lhs, ResultRef rhs, BitCount bitcount);
@@ -69,11 +72,12 @@ namespace lucc
 
 	private:
 		OutputBuffer& output_buffer;
-		std::array<bool, RegisterCount> register_mask;
+		std::array<bool, RegisterCount> registers_available;
+		std::array<bool, RegisterCount> registers_pushed;
 
 		std::string current_function; 
-		bool frame_reg_saved;
-		uint32 stack_allocated;
+		bool frame_reg_saved = false;
+		uint32 stack_allocated = 0;
 
 	private:
 		template<SegmentType segment, typename... Ts>

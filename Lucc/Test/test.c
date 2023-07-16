@@ -1,10 +1,6 @@
 
-int f(int a, int b, int c, int d)
-{
-	return a + b + c + d;
-}
 
 int main(void)
 {
-	return f(1, 2, 3, 4);
+	int a[2]; a[0] = 55; a[1] = 67; int* b = a + 1; return *b;
 }

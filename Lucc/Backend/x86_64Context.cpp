@@ -75,17 +75,19 @@ namespace lucc
 		Emit<Const>(".const");
 		Emit<Data>(".data");
 		Emit<Text>(".code");
-		register_mask.fill(true);
+		registers_available.fill(true);
+		registers_pushed.fill(false);
 	}
 
 	Register x86_64Context::AllocateRegister()
 	{
+		static Register const scratch_registers[] = { RBX, R10, R11, R12, R13, R14, R15 };
 		for (int32 i = 0; i < std::size(scratch_registers); i++)
 		{
 			Register reg = scratch_registers[i];
-			if (register_mask[reg])
+			if (registers_available[reg])
 			{
-				register_mask[reg] = false;
+				registers_available[reg] = false;
 				return reg;
 			}
 		}
@@ -93,10 +95,20 @@ namespace lucc
 		return InvalidRegister;
 	}
 
+	Register x86_64Context::AllocateRegister(Register reg)
+	{
+		if (registers_available[reg])
+		{
+			registers_available[reg] = false;
+			return reg;
+		}
+		else return InvalidRegister;
+	}
+
 	void x86_64Context::FreeRegister(Register reg)
 	{
-		LU_ASSERT(!register_mask[reg]);
-		register_mask[reg] = true;
+		LU_ASSERT(!registers_available[reg]);
+		registers_available[reg] = true;
 	}
 
 	void x86_64Context::FreeRegister(ResultRef res)
@@ -104,27 +116,59 @@ namespace lucc
 		FreeRegister(res.reg);
 	}
 
+	uint32 x86_64Context::SaveVolatileRegisters()
+	{
+		static Register const volatile_registers[] = { RAX, RBX, RCX, RDX, R8, R9, R10, R11 };
+
+		uint32 pushed_count = 0;
+		for (int32 i = 0; i < std::size(volatile_registers); i++)
+		{
+			Register reg = volatile_registers[i];
+			if (!registers_available[reg]) 
+			{
+				registers_pushed[reg] = true;
+				pushed_count++;
+				Push(reg);
+			}
+		}
+		return pushed_count;
+	}
+
+	void x86_64Context::RestoreVolatileRegisters()
+	{
+		static Register const volatile_registers[] = { RAX, RBX, RCX, RDX, R8, R9, R10, R11 };
+		for (int32 i = (int32)std::size(volatile_registers) - 1; i >= 0; i--)
+		{
+			Register reg = volatile_registers[i];
+			if (registers_pushed[i])
+			{
+				Pop(reg);
+				registers_pushed[reg] = false;
+			}
+		}
+	}
+
 	Register x86_64Context::GetCallRegister(uint32 arg_index)
 	{
 		static Register call_registers[ARGUMENTS_PASSED_BY_REGISTERS] = { RCX, RDX, R8, R9 };
-		if (arg_index >= ARGUMENTS_PASSED_BY_REGISTERS || !register_mask[call_registers[arg_index]])
+		if (arg_index >= ARGUMENTS_PASSED_BY_REGISTERS || !registers_available[call_registers[arg_index]])
 		{
 			LU_ASSERT(false);
 			return InvalidRegister;
 		}
-		register_mask[call_registers[arg_index]] = false;
+		registers_available[call_registers[arg_index]] = false;
 		return call_registers[arg_index];
 	}
 
 	Register x86_64Context::GetReturnRegister()
 	{
 		static Register return_register = RAX;
-		if (!register_mask[return_register])
+		if (!registers_available[return_register])
 		{
 			LU_ASSERT(false);
 			return InvalidRegister;
 		}
-		register_mask[return_register] = false;
+		registers_available[return_register] = false;
 		return return_register;
 	}
 
@@ -156,10 +200,10 @@ namespace lucc
 	{
 		LU_ASSERT(divisor.kind != ResultKind::Immediate);
 		Xor(RDX, RDX, BitCount_64);
-		static Register const DividendRegister = RAX;
-		if (dividend != DividendRegister) Mov(DividendRegister, dividend, bitcount);
+		static Register const dividend_register = RAX;
+		if (dividend != dividend_register) Mov(dividend_register, dividend, bitcount);
 		Emit<Text>("idiv\t{}", ConvertOperand(divisor, bitcount));
-		if (dividend != DividendRegister) Mov(dividend, DividendRegister, bitcount);
+		if (dividend != dividend_register) Mov(dividend, dividend_register, bitcount);
 	}
 
 	void x86_64Context::Neg(ResultRef op, BitCount bitcount)
@@ -183,45 +227,45 @@ namespace lucc
 	void x86_64Context::Shl(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
 		LU_ASSERT(rhs.kind != ResultKind::Global && rhs.kind != ResultKind::SIB);
-		static Register const ShiftRegister = RCX;
+		static Register const shift_register = RCX;
 		if (rhs.kind == ResultKind::Immediate)
 		{
 			Emit<Text>("shl\t{}, {}", ConvertOperand(lhs, bitcount), rhs.immediate);
 		}
 		else
 		{
-			if (rhs.reg != ShiftRegister) Mov(ShiftRegister, rhs, BitCount_8);
-			Emit<Text>("shl\t{}, {}", ConvertOperand(lhs, bitcount), GetRegisterName(ShiftRegister, bitcount));
+			if (rhs.reg != shift_register) Mov(shift_register, rhs, BitCount_8);
+			Emit<Text>("shl\t{}, {}", ConvertOperand(lhs, bitcount), GetRegisterName(shift_register, bitcount));
 		}
 	}
 
 	void x86_64Context::Shr(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
 		LU_ASSERT(rhs.kind != ResultKind::Global && rhs.kind != ResultKind::SIB);
-		static Register const ShiftRegister = RCX;
+		static Register const shift_register = RCX;
 		if (rhs.kind == ResultKind::Immediate)
 		{
 			Emit<Text>("shr\t{}, {}", ConvertOperand(lhs, bitcount), rhs.immediate);
 		}
 		else
 		{
-			if (rhs.reg != ShiftRegister) Mov(ShiftRegister, rhs, BitCount_8);
-			Emit<Text>("shr\t{}, {}", ConvertOperand(lhs, bitcount), GetRegisterName(ShiftRegister, bitcount));
+			if (rhs.reg != shift_register) Mov(shift_register, rhs, BitCount_8);
+			Emit<Text>("shr\t{}, {}", ConvertOperand(lhs, bitcount), GetRegisterName(shift_register, bitcount));
 		}
 	}
 
 	void x86_64Context::Sar(ResultRef lhs, ResultRef rhs, BitCount bitcount)
 	{
 		LU_ASSERT(rhs.kind != ResultKind::Global && rhs.kind != ResultKind::SIB);
-		static Register const ShiftRegister = RCX;
+		static Register const shift_register = RCX;
 		if (rhs.kind == ResultKind::Immediate)
 		{
 			Emit<Text>("sar\t{}, {}", ConvertOperand(lhs, bitcount), rhs.immediate);
 		}
 		else
 		{
-			if (rhs.reg != ShiftRegister) Mov(ShiftRegister, rhs, BitCount_8);
-			Emit<Text>("sar\t{}, {}", ConvertOperand(lhs, bitcount), GetRegisterName(ShiftRegister, bitcount));
+			if (rhs.reg != shift_register) Mov(shift_register, rhs, BitCount_8);
+			Emit<Text>("sar\t{}, {}", ConvertOperand(lhs, bitcount), GetRegisterName(shift_register, bitcount));
 		}
 	}
 
@@ -252,11 +296,13 @@ namespace lucc
 	void x86_64Context::Push(ResultRef op)
 	{
 		Emit<Text>("push\t{}", ConvertOperand(op, BitCount_64));
+		stack_allocated += 8;
 	}
 
 	void x86_64Context::Pop(ResultRef op)
 	{
 		Emit<Text>("pop\t{}", ConvertOperand(op, BitCount_64));
+		stack_allocated -= 8;
 	}
 
 	void x86_64Context::Label(char const* label)
@@ -438,13 +484,17 @@ namespace lucc
 
 	void x86_64Context::AllocateStack(uint32 size)
 	{
-		Sub(RSP, size, BitCount_64);
-		stack_allocated = size;
+		if (size)
+		{
+			Sub(RSP, size, BitCount_64);
+			stack_allocated += size;
+		}
 	}
 
 	void x86_64Context::FreeStack(uint32 size)
 	{
 		Add(RSP, size, BitCount_64);
+		stack_allocated -= size;
 	}
 
 	void x86_64Context::JumpToReturn()
@@ -460,7 +510,6 @@ namespace lucc
 		if (stack_allocated)
 		{
 			FreeStack(stack_allocated);
-			stack_allocated = 0;
 		}
 		if (frame_reg_saved)
 		{

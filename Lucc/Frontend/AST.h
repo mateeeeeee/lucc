@@ -174,6 +174,10 @@ namespace lucc
 		{
 			local_variables.push_back(var_decl);
 		}
+		void AddFunctionCall(FunctionCallAST const* func_call)
+		{
+			function_calls.push_back(func_call);
+		}
 		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
 		{
 			body = std::move(_body);
@@ -196,6 +200,7 @@ namespace lucc
 		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
 		std::unique_ptr<CompoundStmtAST> body;
 		std::vector<VarDeclAST const*> local_variables;
+		std::vector<FunctionCallAST const*> function_calls;
 		uint32 stack_size = 0;
 
 	private:
@@ -768,7 +773,6 @@ namespace lucc
 		FunctionCallAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
 			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func)) 
 		{
-			//#todo 
 			auto const& type = func_expr->GetType();
 			SetType(RemoveQualifiers(TypeCast<FunctionType>(type).GetReturnType()));
 		}

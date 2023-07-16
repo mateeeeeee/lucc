@@ -31,17 +31,7 @@ namespace lucc
 		InvalidRegister,
 		RegisterCount = InvalidRegister
 	};
-	static Register const scratch_registers[] = { RBX, R10, R11, R12, R13, R14, R15 };
-	static Register const volatile_registers[] = { RAX, RBX, RCX, RDX, R8, R9, R10, R11 };
-
-	inline bool IsScratchRegister(Register reg)
-	{
-		for (int i = 0; i < std::size(scratch_registers); i++)
-		{
-			if (reg == scratch_registers[i]) return true;
-		}
-		return false;
-	}
+	
 	inline char const* GetRegisterName(Register reg, BitCount bits)
 	{
 		static constexpr char const* registers[RegisterCount][4] = {

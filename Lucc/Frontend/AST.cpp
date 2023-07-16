@@ -22,6 +22,19 @@ namespace lucc
 		FunctionDeclAST* func_ref;
 	};
 
+	class FunctionCallVisitorAST : public INodeVisitorAST
+	{
+	public:
+		FunctionCallVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
+		virtual void Visit(FunctionCallAST const& node, size_t depth) override
+		{
+			func_ref->AddFunctionCall(&node);
+		}
+
+	private:
+		FunctionDeclAST* func_ref;
+	};
+
 	class DeclRefVisitorAST : public INodeVisitorAST
 	{
 	public:
@@ -346,6 +359,8 @@ namespace lucc
 	/// Misc
 	void FunctionDeclAST::AssignLocalOffsets()
 	{
+		FunctionCallVisitorAST func_call_visitor(this);
+		body->Accept(func_call_visitor, 0);
 		VarDeclVisitorAST var_decl_visitor(this);
 		body->Accept(var_decl_visitor, 0);
 
@@ -369,16 +384,18 @@ namespace lucc
 			param->SetLocalOffset(-bottom);
 		}
 
+		int32 local_stack_space = 0;
 		for (auto it = local_variables.rbegin(); it != local_variables.rend(); ++it)
 		{
 			VarDeclAST const* local_var = *it;
-			int32 alignment = (int32)local_var->GetSymbol().qtype->GetAlign();
-			bottom += (int32)local_var->GetSymbol().qtype->GetSize();
-			bottom = AlignTo(bottom, alignment);
+			int32 local_var_align = (int32)local_var->GetSymbol().qtype->GetAlign();
+			int32 local_var_size = (int32)local_var->GetSymbol().qtype->GetSize();
+			bottom += local_var_size;
+			local_stack_space += local_var_size;
+			bottom = AlignTo(bottom, local_var_align);
 			local_var->SetLocalOffset(-bottom);
 		}
-		bottom = std::max(bottom, 32);
-		stack_size = AlignTo(bottom, 16);
+		stack_size = AlignTo(local_stack_space, 16);
 
 		DeclRefVisitorAST decl_ref_visitor(this);
 		body->Accept(decl_ref_visitor, 0);
@@ -1310,12 +1327,52 @@ namespace lucc
 
 	void FunctionCallAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
+		//uint32 pushed_regs = 0;
+		//ctx.SaveVolatileRegisters(); 
+		//if (pushed_regs & 1) shadow_space_stack += 8;
+		//ctx.RestoreVolatileRegisters();
+
+		//#todo handle the case when some arg is a function call
+		
+		//shadow space
+		uint32 shadow_space_stack = 0;
 		for (uint16 i = 0; i < func_args.size(); ++i)
+		{
+			if (i < 4)
+			{
+				shadow_space_stack += 8;
+			}
+			else
+			{
+				auto const& type = func_args[i]->GetType();
+				size_t type_size = type->GetSize();
+				size_t type_align = type->GetAlign();
+				shadow_space_stack = AlignTo(shadow_space_stack, (uint32)type_align);
+				shadow_space_stack += (uint32)type_size;
+			}
+		}
+		if (shadow_space_stack < 32) shadow_space_stack = 32;
+		shadow_space_stack = AlignTo(shadow_space_stack, 16u);
+
+		ctx.AllocateStack(shadow_space_stack);
+	
+		for (int32 i = 0; i < std::min(func_args.size(), ARGUMENTS_PASSED_BY_REGISTERS); ++i)
 		{
 			Register arg_reg = ctx.GetCallRegister(i);
 			func_args[i]->Codegen(ctx, &arg_reg);
 			ctx.FreeRegister(arg_reg);
 		}
+
+		uint32 pushed_args = 0;
+		for (int32 i = func_args.size() - 1; i >= std::min(func_args.size(), ARGUMENTS_PASSED_BY_REGISTERS); --i)
+		{
+			Register arg_reg = ctx.AllocateRegister();
+			func_args[i]->Codegen(ctx, &arg_reg);
+			ctx.Push(arg_reg);
+			ctx.FreeRegister(arg_reg);
+			++pushed_args;
+		}
+
 		if (func_expr->GetExprKind() == ExprKind::DeclRef)
 		{
 			LU_ASSERT(IsFunctionType(func_expr->GetType()));
@@ -1332,6 +1389,8 @@ namespace lucc
 			}
 		}
 		else LU_ASSERT(false);
+
+		ctx.FreeStack(shadow_space_stack + (pushed_args & 1 ? 8 : 0));
 	}
 
 	void BreakStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
@@ -1392,5 +1451,3 @@ namespace lucc
 		ctx.Label(label_name.c_str(), switch_id);
 	}
 }
-
-
