@@ -31,16 +31,14 @@ No optimization passes are performed, the assembly is generated from AST travers
   * .dll and .lib using MSVC link.exe/lib.exe
 
 ## Todo
-  * known bugs: pointer arithmetic
   * alignas
   * string literals
   * casts, conversions
   * postprocessor: #if,#elif, macro functions
-  * register spilling
   * tags (structs, unions, enums)
+  * floating point numbers
  
 ## Not planned
-  * floating point numbers
   * variadic functions and macros
   * thread local, atomic
   * bitfields
