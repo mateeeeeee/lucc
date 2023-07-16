@@ -486,15 +486,18 @@ namespace lucc
 		if (!IsDefinition()) return;
 
 		ctx.SaveFrameRegister();
-		ctx.AllocateStack(stack_size);
 		
 		for (uint16 i = 0; i < std::min(ARGUMENTS_PASSED_BY_REGISTERS, param_decls.size()); ++i)
 		{
 			VarDeclAST* param_var = param_decls[i].get();
 			LU_ASSERT(param_var->GetLocalOffset() < 0);
 			BitCount bitcount = GetBitCount(param_var->GetSymbol().qtype->GetSize());
-			ctx.Mov(Result(RBP, param_var->GetLocalOffset()), ctx.GetCallRegister(i), bitcount);
+			Register arg_reg = ctx.GetCallRegister(i);
+			ctx.Mov(Result(RBP, param_var->GetLocalOffset()), arg_reg, bitcount);
+			ctx.FreeRegister(arg_reg);
 		}
+
+		ctx.AllocateStack(stack_size);
 
 		body->Codegen(ctx);
 		ctx.Return();
@@ -1311,6 +1314,7 @@ namespace lucc
 		{
 			Register arg_reg = ctx.GetCallRegister(i);
 			func_args[i]->Codegen(ctx, &arg_reg);
+			ctx.FreeRegister(arg_reg);
 		}
 		if (func_expr->GetExprKind() == ExprKind::DeclRef)
 		{
