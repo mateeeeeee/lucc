@@ -177,6 +177,7 @@ namespace lucc
 		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
 		{
 			body = std::move(_body);
+			AssignLocalOffsets();
 		}
 
 		bool IsDefinition() const { return body != nullptr; }
@@ -195,6 +196,10 @@ namespace lucc
 		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
 		std::unique_ptr<CompoundStmtAST> body;
 		std::vector<VarDeclAST const*> local_variables;
+		uint32 stack_size = 0;
+
+	private:
+		void AssignLocalOffsets();
 	};
 	class TypedefDeclAST final : public DeclAST
 	{

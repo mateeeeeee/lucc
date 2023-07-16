@@ -35,16 +35,15 @@ namespace lucc
 		case ResultKind::Global:    return std::format("{} {}", GetWordCast(bitcount), op.global);
 		case ResultKind::SIB:
 		{
-			bitcount = BitCount_64; //for now
 			std::string indirect_result = "[";
 			if (op.sib.base_reg != InvalidRegister)
 			{
-				indirect_result += GetRegisterName(op.sib.base_reg, bitcount);
+				indirect_result += GetRegisterName(op.sib.base_reg, BitCount_64);
 			}
 			if (op.sib.index_reg != InvalidRegister)
 			{
 				if (!indirect_result.empty()) indirect_result += "+";
-				indirect_result += GetRegisterName(op.sib.index_reg, bitcount);
+				indirect_result += GetRegisterName(op.sib.index_reg, BitCount_64);
 
 				if (op.sib.scale != SIBScale_None)
 				{
@@ -153,10 +152,14 @@ namespace lucc
 		Emit<Text>("imul\t{}, {}, {}", GetRegisterName(lhs, bitcount), ConvertOperand(rhs, bitcount), imm);
 	}
 
-	void x86_64Context::Idiv(Register lhs, ResultRef divisor, BitCount bitcount)
+	void x86_64Context::Idiv(Register dividend, ResultRef divisor, BitCount bitcount)
 	{
 		LU_ASSERT(divisor.kind != ResultKind::Immediate);
-
+		Xor(RDX, RDX, BitCount_64);
+		static Register const DividendRegister = RAX;
+		if (dividend != DividendRegister) Mov(DividendRegister, dividend, bitcount);
+		Emit<Text>("idiv\t{}", ConvertOperand(divisor, bitcount));
+		if (dividend != DividendRegister) Mov(dividend, DividendRegister, bitcount);
 	}
 
 	void x86_64Context::Neg(ResultRef op, BitCount bitcount)
@@ -168,13 +171,13 @@ namespace lucc
 	void x86_64Context::Inc(ResultRef op, BitCount bitcount)
 	{
 		LU_ASSERT(op.kind != ResultKind::Immediate);
-		Emit<Text>("inc\t{} {}", ConvertOperand(op, bitcount));
+		Emit<Text>("inc\t{}", ConvertOperand(op, bitcount));
 	}
 
 	void x86_64Context::Dec(ResultRef op, BitCount bitcount)
 	{
 		LU_ASSERT(op.kind != ResultKind::Immediate);
-		Emit<Text>("dec\t{} {}", ConvertOperand(op, bitcount));
+		Emit<Text>("dec\t{}", ConvertOperand(op, bitcount));
 	}
 
 	void x86_64Context::Shl(ResultRef lhs, ResultRef rhs, BitCount bitcount)
@@ -263,7 +266,7 @@ namespace lucc
 
 	void x86_64Context::Label(char const* label, uint64 label_id)
 	{
-		Emit<Text>("{}.{}: ", label, label_id);
+		Emit<Text>("{}_{}: ", label, label_id);
 	}
 
 	uint64 x86_64Context::GenerateLabelId()
@@ -327,7 +330,7 @@ namespace lucc
 
 	void x86_64Context::Jmp(char const* label, uint64 label_id, ConditionCode cc)
 	{
-		std::string label_ = std::format("{}.{}", label, label_id);
+		std::string label_ = std::format("{}_{}", label, label_id);
 		Jmp(label_.c_str(), cc);
 	}
 
@@ -426,16 +429,22 @@ namespace lucc
 		Emit<Text>("call {}", func_name);
 	}
 
-	void x86_64Context::ReserveStack(uint32 stack)
+	void x86_64Context::SaveFrameRegister()
 	{
 		Emit<Text>("push rbp");
 		Emit<Text>("mov rbp, rsp");
-		if (stack)
-		{
-			Emit<Text>("sub rsp, {}", stack);
-			stack_used = stack;
-		}
-		stack_reg_saved = true;
+		frame_reg_saved = true;
+	}
+
+	void x86_64Context::AllocateStack(uint32 size)
+	{
+		Sub(RSP, size, BitCount_64);
+		stack_allocated = size;
+	}
+
+	void x86_64Context::FreeStack(uint32 size)
+	{
+		Add(RSP, size, BitCount_64);
 	}
 
 	void x86_64Context::JumpToReturn()
@@ -448,12 +457,15 @@ namespace lucc
 		if (current_function == "main") Emit<Text>("xor rax, rax");
 
 		Emit<Text>("{}_end:", current_function);
-		if (stack_reg_saved)
+		if (stack_allocated)
 		{
-			if (stack_used) Emit<Text>("add rsp, {}", stack_used);
+			FreeStack(stack_allocated);
+			stack_allocated = 0;
+		}
+		if (frame_reg_saved)
+		{
 			Emit<Text>("pop rbp");
-			stack_reg_saved = false;
-			stack_used = 0;
+			frame_reg_saved = false;
 		}
 		Emit<Text>("ret");
 		Emit<Text>("{} endp", current_function);

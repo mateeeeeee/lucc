@@ -61,7 +61,9 @@ namespace lucc
 		void DeclareFunction(FunctionDeclCG const& func_decl);
 
 		void Call(char const* func_name);
-		void ReserveStack(uint32 stack);
+		void SaveFrameRegister();
+		void AllocateStack(uint32 size);
+		void FreeStack(uint32 size);
 		void JumpToReturn();
 		void Return();
 
@@ -70,8 +72,8 @@ namespace lucc
 		std::array<bool, RegisterCount> register_mask;
 
 		std::string current_function; 
-		bool stack_reg_saved;
-		uint32 stack_used;
+		bool frame_reg_saved;
+		uint32 stack_allocated;
 
 	private:
 		template<SegmentType segment, typename... Ts>

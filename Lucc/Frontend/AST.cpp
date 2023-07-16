@@ -228,7 +228,7 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
-	//constexpr 
+	/// Constexpr 
 
 	bool UnaryExprAST::IsConstexpr() const
 	{
@@ -343,6 +343,47 @@ namespace lucc
 		return value;
 	}
 
+	/// Misc
+	void FunctionDeclAST::AssignLocalOffsets()
+	{
+		VarDeclVisitorAST var_decl_visitor(this);
+		body->Accept(var_decl_visitor, 0);
+
+		//assign local offsets
+		int32 top = 16;
+		for (uint64 i = ARGUMENTS_PASSED_BY_REGISTERS; i < param_decls.size(); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			top = AlignTo(top, 8);
+			param->SetLocalOffset(top);
+			top += (int32)param->GetSymbol().qtype->GetSize();
+		}
+
+		int32 bottom = 0;
+		for (uint64 i = 0; i < std::min(ARGUMENTS_PASSED_BY_REGISTERS, param_decls.size()); ++i)
+		{
+			VarDeclAST* param = param_decls[i].get();
+			int32 alignment = (int32)param->GetSymbol().qtype->GetAlign();
+			bottom += (int32)param->GetSymbol().qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			param->SetLocalOffset(-bottom);
+		}
+
+		for (auto it = local_variables.rbegin(); it != local_variables.rend(); ++it)
+		{
+			VarDeclAST const* local_var = *it;
+			int32 alignment = (int32)local_var->GetSymbol().qtype->GetAlign();
+			bottom += (int32)local_var->GetSymbol().qtype->GetSize();
+			bottom = AlignTo(bottom, alignment);
+			local_var->SetLocalOffset(-bottom);
+		}
+		bottom = std::max(bottom, 32);
+		stack_size = AlignTo(bottom, 16);
+
+		DeclRefVisitorAST decl_ref_visitor(this);
+		body->Accept(decl_ref_visitor, 0);
+	}
+
 	/// Codegen
 
 	void TranslationUnitAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
@@ -443,44 +484,17 @@ namespace lucc
 		};
 		ctx.DeclareFunction(func_decl);
 		if (!IsDefinition()) return;
- 
-		DeclRefVisitorAST decl_ref_visitor(this);
-		body->Accept(decl_ref_visitor, 0);
 
-		//assign local offsets
-	    uint32 stack_size = 0;
+		ctx.SaveFrameRegister();
+		ctx.AllocateStack(stack_size);
+		
+		for (uint16 i = 0; i < std::min(ARGUMENTS_PASSED_BY_REGISTERS, param_decls.size()); ++i)
 		{
-			int32 top = 16;
-			for (uint64 i = ARGUMENTS_PASSED_BY_REGISTERS; i < param_decls.size(); ++i)
-			{
-				VarDeclAST* param = param_decls[i].get();
-				top = AlignTo(top, 8);
-				param->SetLocalOffset(top);
-				top += (int32)param->GetSymbol().qtype->GetSize();
-			}
-
-			int32 bottom = 0;
-			for (uint64 i = 0; i < std::min(ARGUMENTS_PASSED_BY_REGISTERS, param_decls.size()); ++i)
-			{
-				VarDeclAST* param = param_decls[i].get();
-				int32 alignment = (int32)param->GetSymbol().qtype->GetAlign();
-				bottom += (int32)param->GetSymbol().qtype->GetSize();
-				bottom = AlignTo(bottom, alignment);
-				param->SetLocalOffset(-bottom);
-			}
-
-			for (auto it = local_variables.rbegin(); it != local_variables.rend(); ++it)
-			{
-				VarDeclAST const* local_var = *it;
-				int32 alignment = (int32)local_var->GetSymbol().qtype->GetAlign();
-				bottom += (int32)local_var->GetSymbol().qtype->GetSize();
-				bottom = AlignTo(bottom, alignment);
-				local_var->SetLocalOffset(-bottom);
-			}
-			bottom = std::max(bottom, 32);
-			stack_size = AlignTo(bottom, 16);
+			VarDeclAST* param_var = param_decls[i].get();
+			LU_ASSERT(param_var->GetLocalOffset() < 0);
+			BitCount bitcount = GetBitCount(param_var->GetSymbol().qtype->GetSize());
+			ctx.Mov(Result(RBP, param_var->GetLocalOffset()), ctx.GetCallRegister(i), bitcount);
 		}
-		ctx.ReserveStack(stack_size);
 
 		body->Codegen(ctx);
 		ctx.Return();
@@ -1293,7 +1307,27 @@ namespace lucc
 
 	void FunctionCallAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
-		
+		for (uint16 i = 0; i < func_args.size(); ++i)
+		{
+			Register arg_reg = ctx.GetCallRegister(i);
+			func_args[i]->Codegen(ctx, &arg_reg);
+		}
+		if (func_expr->GetExprKind() == ExprKind::DeclRef)
+		{
+			LU_ASSERT(IsFunctionType(func_expr->GetType()));
+			FunctionType const& func_type = TypeCast<FunctionType>(func_expr->GetType());
+			QualifiedType const& ret_type = func_type.GetReturnType();
+			size_t type_size = ret_type->GetSize();
+			IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get());
+			ctx.Call(func_id->GetName().data());
+			if (result)
+			{
+				Register func_reg = ctx.GetReturnRegister();
+				ctx.Mov(*result, func_reg, GetBitCount(type_size));
+				ctx.FreeRegister(func_reg);
+			}
+		}
+		else LU_ASSERT(false);
 	}
 
 	void BreakStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const

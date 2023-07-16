@@ -75,15 +75,14 @@ namespace lucc
 		default: return "qword";
 		}
 	}
-	inline char const* GetWordCast(size_t size)
+	inline char const* GetWordCast(BitCount bits)
 	{
-		switch (size)
+		switch (bits)
 		{
-		case 1:  return "byte ptr";
-		case 2:  return "word ptr";
-		case 4:  return "dword ptr";
-		case 8:
-		default: return "qword ptr";
+		case BitCount_8:   return "byte ptr";
+		case BitCount_16:  return "word ptr";
+		case BitCount_32:  return "dword ptr";
+		case BitCount_64:  default: return "qword ptr";
 		}
 	}
 	inline BitCount GetBitCount(size_t size)
