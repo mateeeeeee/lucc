@@ -107,7 +107,7 @@ namespace lucc
 			DeclaratorInfo declarator_info{};
 			ParseDeclarator(decl_spec, declarator_info);
 
-			if (decl_spec.align && decl_spec.align >= declarator_info.qtype->GetAlign())
+			if (decl_spec.align)
 			{
 				if (decl_spec.align >= declarator_info.qtype->GetAlign()) declarator_info.qtype->SetAlign(decl_spec.align);
 				else Report(diag::alignas_cannot_reduce_default_align);
@@ -852,7 +852,7 @@ namespace lucc
 			break;
 		case TokenKind::KW_sizeof: return ParseSizeofExpression();
 		case TokenKind::KW__Alignof: return ParseAlignofExpression();
-		//case TokenKind::KW__Alignas: return ParseAlignasExpression();
+		case TokenKind::KW__Alignas: return ParseAlignasExpression();
 		default:
 			return ParsePostFixExpression();
 		}
