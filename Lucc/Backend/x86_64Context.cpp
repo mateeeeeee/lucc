@@ -441,6 +441,14 @@ namespace lucc
 		}
 	}
 
+	std::string x86_64Context::DeclareString(char const* str)
+	{
+		static size_t string_unique_id = 0;
+		std::string str_label = std::format("L_str_{}", string_unique_id++);
+		Emit<Const>("{} byte \"{}\",0", str_label, str);
+		return str_label;
+	}
+
 	void x86_64Context::DeclareArray(ArrayDeclCG const& array_decl)
 	{
 		if (array_decl.is_extern)

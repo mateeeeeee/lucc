@@ -20,7 +20,7 @@ namespace lucc
 		constexpr char const* sdk_lib_path = SDK_PATH;
 		constexpr char const* sdk_libs[] = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "comdlg32.lib", "advapi32.lib", "shell32.lib", "ole32.lib", "oleaut32.lib", "uuid.lib", "odbc32.lib", "odbccp32.lib" };
 		constexpr char const* ucrt_lib_path = UCRT_PATH;
-		constexpr char const* ucrt_libs[] = {"ucrt.lib", "libucrt.lib"};
+		constexpr char const* ucrt_libs[] = {"ucrt.lib" };
 
 		void CompileTranslationUnit(std::string_view source_file, std::string_view assembly_file, bool only_pp, bool ast_dump, bool output_debug)
 		{

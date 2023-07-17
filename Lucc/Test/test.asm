@@ -1,6 +1,8 @@
 extern ExitProcess: proc
+extern puts : proc
 
 .const
+L_str_0 byte "abc",0
 
 .data?
 
@@ -12,6 +14,12 @@ main proc
 push rbp
 mov rbp, rsp
 sub	rsp, 16
+mov	rbx, offset L_str_0
+mov	qword ptr [rbp-16], rbx
+sub	rsp, 32
+mov	rcx, qword ptr [rbp-16]
+call puts
+add	rsp, 32
 mov	dword ptr [rbp-4], 7
 mov	ebx, dword ptr [rbp-4]
 mov	r10d, 3

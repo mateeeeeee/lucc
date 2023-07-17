@@ -241,7 +241,7 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
-	/// Constexpr 
+	/// Constexpr
 
 	bool UnaryExprAST::IsConstexpr() const
 	{
@@ -417,7 +417,7 @@ namespace lucc
 				LU_ASSERT(local_offset != 0);
 				size_t type_size = sym.qtype->GetSize();
 				BitCount bitcount = GetBitCount(type_size);
-				Result var_res(Register::RBP, local_offset);				
+				Result var_res(Register::RBP, local_offset);
 				if (init_expr->GetExprKind() == ExprKind::IntLiteral)
 				{
 					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(init_expr.get());
@@ -455,7 +455,7 @@ namespace lucc
 
 				ArrayType const& arr_type = TypeCast<ArrayType>(symbol.qtype);
 				array_decl.array_size = arr_type.GetArraySize();
-				
+
 				if (init_expr)
 				{
 					//#todo array initialization
@@ -488,7 +488,7 @@ namespace lucc
 				ctx.DeclareVariable(var_decl);
 			}
 		}
-		
+
 	}
 
 	void FunctionDeclAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
@@ -503,7 +503,7 @@ namespace lucc
 		if (!IsDefinition()) return;
 
 		ctx.SaveFrameRegister();
-		
+
 		for (uint16 i = 0; i < std::min(ARGUMENTS_PASSED_BY_REGISTERS, param_decls.size()); ++i)
 		{
 			VarDeclAST* param_var = param_decls[i].get();
@@ -589,7 +589,7 @@ namespace lucc
 						char const* name = decl_ref->GetName().data();
 						if (op == UnaryExprKind::PreIncrement) ctx.Inc(name, bitcount);
 						else ctx.Dec(name, bitcount);
-						if (result) ctx.Mov(*result, name, bitcount); 
+						if (result) ctx.Mov(*result, name, bitcount);
 					}
 					else
 					{
@@ -850,7 +850,7 @@ namespace lucc
 
 		auto CommonArithmeticCodegen = [&](BinaryExprKind kind)
 		{
-			if (!result) return; //#todo doesnt cover cases such as i++ + j 
+			if (!result) return; //#todo doesnt cover cases such as i++ + j
 
 			bool const lhs_is_pointer = IsPointerLikeType(lhs->GetType());
 			bool const rhs_is_pointer = IsPointerLikeType(rhs->GetType());
@@ -965,7 +965,7 @@ namespace lucc
 			case BinaryExprKind::NotEqual:		ctx.Set(*result, ConditionCode::NE); break;
 			}
 			ctx.Movzx(*result, *result, BitCount_64, true);
-			
+
 		};
 		auto CommonShiftCodegen = [&](BinaryExprKind kind)
 		{
@@ -1328,12 +1328,12 @@ namespace lucc
 	void FunctionCallAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		//uint32 pushed_regs = 0;
-		//ctx.SaveVolatileRegisters(); 
+		//ctx.SaveVolatileRegisters();
 		//if (pushed_regs & 1) shadow_space_stack += 8;
 		//ctx.RestoreVolatileRegisters();
 
 		//#todo handle the case when some arg is a function call
-		
+
 		//shadow space
 		uint32 shadow_space_stack = 0;
 		for (uint16 i = 0; i < func_args.size(); ++i)
@@ -1355,7 +1355,7 @@ namespace lucc
 		shadow_space_stack = AlignTo(shadow_space_stack, 16u);
 
 		ctx.AllocateStack(shadow_space_stack);
-	
+
 		for (int32 i = 0; i < std::min(func_args.size(), ARGUMENTS_PASSED_BY_REGISTERS); ++i)
 		{
 			Register arg_reg = ctx.GetCallRegister(i);
@@ -1449,5 +1449,12 @@ namespace lucc
 	void CaseStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		ctx.Label(label_name.c_str(), switch_id);
+	}
+
+	void StringLiteralAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		if (!result) return;
+		std::string str_label = ctx.DeclareString(str.c_str());
+		ctx.MovOffset(*result, str_label.c_str());
 	}
 }

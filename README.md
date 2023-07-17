@@ -21,6 +21,7 @@ No optimization passes are performed, the assembly is generated from AST travers
     - for statement
     - do while statement
     - break & continue
+  * string literals
   * typedefs
   * subset of C Postprocessor
   * static, extern
@@ -32,7 +33,6 @@ No optimization passes are performed, the assembly is generated from AST travers
 
 ## Todo
   * alignas
-  * string literals
   * casts, conversions
   * postprocessor: #if,#elif, macro functions
   * tags (structs, unions, enums)

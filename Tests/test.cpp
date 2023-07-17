@@ -21,7 +21,7 @@ TEST(Arithmetic, AdditiveMultiplicativeOperators)
 	EXPECT_EQ(LUCC_EX(int i = 5; i *= 4; return i - 15;), 5);
 	EXPECT_EQ(LUCC_EX(int i = 7; i /= 3; return i;), 2);
 }
-TEST(Arithmetic, RelationOperations) 
+TEST(Arithmetic, RelationOperations)
 {
 	EXPECT_EQ(LUCC_EX(return 42 == 42;), 1);
 	EXPECT_EQ(LUCC_EX(return 0 != 1;), 1);
@@ -86,7 +86,7 @@ TEST(Arithmetic, Pointers)
 	EXPECT_EQ(LUCC_EX(int x = 3; int* y = &x; *y = 5; return x;), 5);
 	EXPECT_EQ(LUCC_EX(int x = 3; int y = 5; *(&x + 1) = 7; return y;), 7);
 	EXPECT_EQ(LUCC_EX(int x = 3; int y = 5; *(&y - 2 + 1) = 7; return x;), 7);
-	
+
 	//EXPECT_EQ(LUCC_EX(int x = 3; return (&x + 2) - &x + 3;), 5);
 	//EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p + 20 - p;), 20);
 	//EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p + 20 - p > 0;), 1);
@@ -103,7 +103,7 @@ TEST(Arithmetic, Arrays)
 
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[0];), 0);
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*(p--))--; return a[1];), 0);
-	
+
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p)--; p++; return *p;), 2);
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[0]; ), 0);
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[1];), 0);
@@ -171,7 +171,7 @@ TEST(Declaration, Variable)
 	EXPECT_EQ(LUCC_EX(int a = 1; int b = 48 + 2; int c = a + b; return c * 2;), 102);
 	EXPECT_EQ(LUCC_EX(int a[1]; a[0] = 55; int* b = a; return *b;), 55);
 	EXPECT_EQ(LUCC_EX(int a[2]; a[0] = 55; a[1] = 67; int* b = a + 1; return *b;), 67);
-	
+
 }
 TEST(Declaration, Function)
 {

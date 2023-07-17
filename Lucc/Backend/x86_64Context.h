@@ -62,6 +62,8 @@ namespace lucc
 		void DeclareVariable(VarDeclCG const& var_decl);
 		void DeclareArray(ArrayDeclCG const& array_decl);
 		void DeclareFunction(FunctionDeclCG const& func_decl);
+		std::string DeclareString(char const* str);
+
 
 		void Call(char const* func_name);
 		void SaveFrameRegister();
@@ -75,7 +77,7 @@ namespace lucc
 		std::array<bool, RegisterCount> registers_available;
 		std::array<bool, RegisterCount> registers_pushed;
 
-		std::string current_function; 
+		std::string current_function;
 		bool frame_reg_saved = false;
 		uint32 stack_allocated = 0;
 

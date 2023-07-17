@@ -599,7 +599,7 @@ namespace lucc
 
 		virtual bool IsConstexpr() const = 0;
 		virtual int64 EvaluateConstexpr() const = 0;
-		
+
 		SourceLocation const& GetLocation() const { return loc; }
 		QualifiedType const& GetType() const { return type; }
 		ExprKind GetExprKind() const { return kind; }
@@ -639,7 +639,7 @@ namespace lucc
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
-		
+
 		virtual bool IsConstexpr() const override;
 		virtual int64 EvaluateConstexpr() const override;
 
@@ -690,7 +690,7 @@ namespace lucc
 		void SetRHS(std::unique_ptr<ExprAST>&& _rhs) {
 			rhs = std::move(_rhs); SetExpressionType();
 		}
-		
+
 		BinaryExprKind GetBinaryKind() const { return op; }
 		ExprAST* GetLHS() const { return lhs.get(); }
 		ExprAST* GetRHS() const { return rhs.get(); }
@@ -709,20 +709,20 @@ namespace lucc
 		{
 			switch (op)
 			{
-			case BinaryExprKind::Assign: 
+			case BinaryExprKind::Assign:
 				SetType(AsIfByAssignment(rhs->GetType(), lhs->GetType())); break;
 			case BinaryExprKind::Add:
-			case BinaryExprKind::Subtract: 
+			case BinaryExprKind::Subtract:
 				SetType(AdditiveOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Subtract));  break;
 			case BinaryExprKind::Multiply:
 			case BinaryExprKind::Divide:
 			case BinaryExprKind::Modulo:
 				SetType(MultiplicativeOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Modulo));  break;
 			case BinaryExprKind::ShiftLeft:
-			case BinaryExprKind::ShiftRight: 
+			case BinaryExprKind::ShiftRight:
 				SetType(ShiftOperatorType(lhs->GetType(), rhs->GetType())); break;
 			case BinaryExprKind::LogicalAnd:
-			case BinaryExprKind::LogicalOr: 
+			case BinaryExprKind::LogicalOr:
 				SetType(LogicOperatorType(lhs->GetType(), rhs->GetType())); break;
 			case BinaryExprKind::BitAnd:
 			case BinaryExprKind::BitOr:
@@ -749,7 +749,7 @@ namespace lucc
 		explicit TernaryExprAST(SourceLocation const& loc) : ExprAST(ExprKind::Ternary, loc),
 			cond_expr(std::move(cond_expr)),
 			true_expr(std::move(true_expr)),
-			false_expr(std::move(false_expr)) 
+			false_expr(std::move(false_expr))
 		{}
 
 		void SetCondition(std::unique_ptr<ExprAST>&& expr) { cond_expr = std::move(expr); }
@@ -771,7 +771,7 @@ namespace lucc
 	{
 	public:
 		FunctionCallAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
-			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func)) 
+			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func))
 		{
 			auto const& type = func_expr->GetType();
 			SetType(RemoveQualifiers(TypeCast<FunctionType>(type).GetReturnType()));
@@ -811,9 +811,11 @@ namespace lucc
 	{
 	public:
 		StringLiteralAST(std::string_view str, SourceLocation const& loc) : ExprAST(ExprKind::StringLiteral, loc, QualifiedType(ArrayType(builtin_types::Char, str.size()))), str(str) {}
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-
 		std::string_view GetString() const { return str; }
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
+
 		virtual bool IsConstexpr() const override;
 		virtual int64 EvaluateConstexpr() const override;
 
