@@ -11,6 +11,7 @@ namespace lucc
 		template<typename T>
 		inline T AlignTo(T n, T align) { return (n + align - 1) / align * align; }
 
+		//#todo casts: binary expr -> assignment, variable intialization, return statement, function parameters init
 		namespace cast
 		{
 			enum CastTypeId
@@ -410,7 +411,6 @@ namespace lucc
 		VarDeclVisitorAST var_decl_visitor(this);
 		body->Accept(var_decl_visitor, 0);
 
-		//assign local offsets
 		int32 top = 16;
 		for (uint64 i = ARGUMENTS_PASSED_BY_REGISTERS; i < param_decls.size(); ++i)
 		{
@@ -1293,6 +1293,8 @@ namespace lucc
 
 	void ReturnStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
+		//#todo handle cast when return type and type of return expr are not the same
+
 		if (ret_expr->GetExpr()->GetExprKind() == ExprKind::FunctionCall)
 		{
 			ret_expr->Codegen(ctx);

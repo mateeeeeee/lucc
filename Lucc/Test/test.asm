@@ -10,17 +10,33 @@ extern printf : proc
 
 .code
 
+f proc 
+push rbp
+mov rbp, rsp
+mov	word ptr [rbp-2], cx
+mov	dword ptr [rbp-8], edx
+mov	bx, word ptr [rbp-2]
+mov	eax, dword ptr [rbp-8]
+sub	eax, ebx
+jmp f_end
+f_end:
+pop rbp
+ret
+f endp
+
 main proc 
 push rbp
 mov rbp, rsp
 sub	rsp, 16
-mov	ebx, 1
+mov	dword ptr [rbp-8], 5
+mov	ebx, 5
 neg	ebx
-mov	word ptr [rbp-6], bx
-mov	r10w, word ptr [rbp-6]
-movsx	ebx, r10w
-mov	dword ptr [rbp-4], ebx
-mov	eax, dword ptr [rbp-4]
+mov	word ptr [rbp-2], bx
+sub	rsp, 32
+mov	cx, word ptr [rbp-2]
+mov	edx, dword ptr [rbp-8]
+call f
+add	rsp, 32
 jmp main_end
 xor	rax, rax
 main_end:

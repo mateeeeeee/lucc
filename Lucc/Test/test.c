@@ -2,10 +2,14 @@
 extern int puts(char const*);
 extern int printf(char const*, ...);
 
+int f(unsigned short a, int c)
+{
+	return c - a;
+}
 
 int main(void)
 {
-	short a = -1;
-	unsigned int b = (unsigned int)a;
-	return b;
+	int b = 5;
+	short c = -5;
+	return f(c, b);
 }
