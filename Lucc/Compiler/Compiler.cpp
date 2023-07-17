@@ -18,9 +18,11 @@ namespace lucc
 	{
 		constexpr char const* exe_path = EXE_PATH;
 		constexpr char const* sdk_lib_path = SDK_PATH;
-		constexpr char const* sdk_libs[] = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "comdlg32.lib", "advapi32.lib", "shell32.lib", "ole32.lib", "oleaut32.lib", "uuid.lib", "odbc32.lib", "odbccp32.lib" };
 		constexpr char const* ucrt_lib_path = UCRT_PATH;
-		constexpr char const* ucrt_libs[] = {"ucrt.lib" };
+		constexpr char const* vc_lib_path = VC_PATH;
+		constexpr char const* sdk_libs[] = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "comdlg32.lib", "advapi32.lib", "shell32.lib", "ole32.lib", "oleaut32.lib", "uuid.lib", "odbc32.lib", "odbccp32.lib" };
+		constexpr char const* ucrt_libs[] = { "ucrt.lib" };
+		constexpr char const* vc_libs[] = { "legacy_stdio_definitions.lib", "legacy_stdio_wide_specifiers.lib", "msvcrt.lib" };
 
 		void CompileTranslationUnit(std::string_view source_file, std::string_view assembly_file, bool only_pp, bool ast_dump, bool output_debug)
 		{
@@ -56,6 +58,7 @@ namespace lucc
 		bool const only_pp		= input.flags & CompilerFlag_OnlyPreprocessor;
 		bool const no_link		= input.flags & CompilerFlag_NoLinking;
 		bool const no_assembly	= input.flags & CompilerFlag_NoAssembling;
+		bool const no_libs		= input.flags & CompilerFlag_NoDefaultLibs;
 
 		fs::path directory_path = input.input_directory;
 		std::vector<fs::path> object_files(input.sources.size());
@@ -88,8 +91,12 @@ namespace lucc
 			std::string link_cmd = std::format("\"\"{}/link.exe\" /out:{} ", exe_path, output_file.string());
 			link_cmd += std::format("\"/libpath:{}\"", sdk_lib_path);
 			for (auto const& obj_file : object_files) link_cmd += std::format(" {} ", obj_file.string());
-			for (char const* sdk_lib : sdk_libs) link_cmd += std::format("\"{}\\{}\" ", sdk_lib_path, sdk_lib);
-			for (char const* ucrt_lib : ucrt_libs) link_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
+			if (!no_libs)
+			{
+				for (char const* sdk_lib : sdk_libs) link_cmd += std::format("\"{}\\{}\" ", sdk_lib_path, sdk_lib);
+				for (char const* ucrt_lib : ucrt_libs) link_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
+				for (char const* vc_lib : vc_libs) link_cmd += std::format("\"{}\\{}\" ", vc_lib_path, vc_lib);
+			}
 			link_cmd += "/subsystem:console /entry:main\"";
 			system(link_cmd.c_str());
 
@@ -102,8 +109,12 @@ namespace lucc
 			std::string link_cmd = std::format("\"\"{}/link.exe\" /dll /out:{} ", exe_path, output_file.string());
 			link_cmd += std::format("\"/libpath:{}\"", sdk_lib_path);
 			for (auto const& obj_file : object_files) link_cmd += std::format(" {} ", obj_file.string());
-			for (char const* sdk_lib : sdk_libs) link_cmd += std::format("\"{}\\{}\" ", sdk_lib_path, sdk_lib);
-			for (char const* ucrt_lib : ucrt_libs) link_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
+			if (!no_libs)
+			{
+				for (char const* sdk_lib : sdk_libs) link_cmd += std::format("\"{}\\{}\" ", sdk_lib_path, sdk_lib);
+				for (char const* ucrt_lib : ucrt_libs) link_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
+				for (char const* vc_lib : vc_libs) link_cmd += std::format("\"{}\\{}\" ", vc_lib_path, vc_lib);
+			}
 			link_cmd += "/entry:DllMain\"";
 			system(link_cmd.c_str());
 			return 0;
@@ -114,8 +125,12 @@ namespace lucc
 			std::string lib_cmd = std::format("\"\"{}/lib.exe\" /out:{} ", exe_path, output_file.string());
 			lib_cmd += std::format("\"/libpath:{}\"", sdk_lib_path);
 			for (auto const& obj_file : object_files) lib_cmd += std::format(" {} ", obj_file.string());
-			for (char const* sdk_lib : sdk_libs) lib_cmd += std::format(" \"{}\\{}\" ", sdk_lib_path, sdk_lib);
-			for (char const* ucrt_lib : ucrt_libs) lib_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
+			if (!no_libs)
+			{
+				for (char const* sdk_lib : sdk_libs) lib_cmd += std::format(" \"{}\\{}\" ", sdk_lib_path, sdk_lib);
+				for (char const* ucrt_lib : ucrt_libs) lib_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
+				for (char const* vc_lib : vc_libs) lib_cmd += std::format("\"{}\\{}\" ", vc_lib_path, vc_lib);
+			}
 			system(lib_cmd.c_str());
 		}
 		}

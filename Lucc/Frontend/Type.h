@@ -308,6 +308,7 @@ namespace lucc
 
 		QualifiedType GetReturnType() const { return return_qtype; }
 		std::span<FunctionParameter const> GetParamTypes() const { return param_types; }
+		bool IsVariadic() const { return is_variadic; }
 
 		void UpdateParamTypes(std::span<FunctionParameter> _param_types) { param_types.assign(_param_types.begin(), _param_types.end()); }
 

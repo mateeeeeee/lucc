@@ -1,7 +1,9 @@
 extern ExitProcess: proc
 extern puts : proc
+extern printf : proc
 
 .const
+L_str_0 byte "Mate",0
 
 .data?
 
@@ -13,9 +15,13 @@ main proc
 push rbp
 mov rbp, rsp
 sub	rsp, 16
-mov	dword ptr [rbp-8], 12345
-mov	dword ptr [rbp-4], ebx
-mov	eax, dword ptr [rbp-4]
+mov	rbx, offset L_str_0
+mov	qword ptr [rbp-8], rbx
+sub	rsp, 32
+mov	rcx, qword ptr [rbp-8]
+call printf
+add	rsp, 32
+mov	eax, 0
 jmp main_end
 xor	rax, rax
 main_end:

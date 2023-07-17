@@ -154,7 +154,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);EXE_PATH=R"($(VC_ExecutablePath_x64))";SDK_PATH=R"($(WindowsSDK_LibraryPath)\x64)";UCRT_PATH=R"($(UniversalCRTSdkDir)lib\$(TargetUniversalCRTVersion)\ucrt\x64)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);EXE_PATH=R"($(VC_ExecutablePath_x64))";SDK_PATH=R"($(WindowsSDK_LibraryPath)\x64)";UCRT_PATH=R"($(UniversalCRTSdkDir)lib\$(TargetUniversalCRTVersion)\ucrt\x64)";VC_PATH=R"($(VC_LibraryPath_VC_x64_Desktop))"</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -176,7 +176,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);EXE_PATH=R"($(VC_ExecutablePath_x64))";SDK_PATH=R"($(WindowsSDK_LibraryPath)\x64)";UCRT_PATH=R"($(UniversalCRTSdkDir)lib\$(TargetUniversalCRTVersion)\ucrt\x64)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);EXE_PATH=R"($(VC_ExecutablePath_x64))";SDK_PATH=R"($(WindowsSDK_LibraryPath)\x64)";UCRT_PATH=R"($(UniversalCRTSdkDir)lib\$(TargetUniversalCRTVersion)\ucrt\x64)";VC_PATH=R"($(VC_LibraryPath_VC_x64_Desktop))"</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
