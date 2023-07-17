@@ -16,8 +16,10 @@ namespace lucc
 {
 	namespace
 	{
-		char const* _executables_path = EXE_PATH;
-		constexpr char const* _lib_path = LIB_PATH;
+		constexpr char const* exe_path = EXE_PATH;
+		constexpr char const* sdk_lib_path = LU_CONCAT(SDK_PATH, "\\x64");
+		constexpr char const* sdk_libs[] = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "comdlg32.lib", "advapi32.lib", "shell32.lib", "ole32.lib", "oleaut32.lib", "uuid.lib", "odbc32.lib", "odbccp32.lib" };
+
 
 		void CompileTranslationUnit(std::string_view source_file, std::string_view assembly_file, bool only_pp, bool ast_dump, bool output_debug)
 		{
@@ -56,7 +58,7 @@ namespace lucc
 
 		fs::path directory_path = input.input_directory;
 		std::vector<fs::path> object_files(input.sources.size());
-		std::string masm_cmd = std::format("\"{}/ml64.exe\"", _executables_path);
+		std::string masm_cmd = std::format("\"{}/ml64.exe\"", exe_path);
 		for (size_t i = 0; i < input.sources.size(); ++i)
 		{
 			fs::path file_name = fs::path(input.sources[i]).stem();
@@ -82,9 +84,10 @@ namespace lucc
 		case CompilerOutput::Exe:
 		{
 			output_file.replace_extension("exe");
-			std::string link_cmd = std::format("\"\"{}/link.exe\" /out:{} ", _executables_path, output_file.string());
-			for (auto const& obj_file : object_files) link_cmd += obj_file.string() + " ";
-			link_cmd += std::format("\"/libpath:{}\"", _lib_path);
+			std::string link_cmd = std::format("\"\"{}/link.exe\" /out:{} ", exe_path, output_file.string());
+			link_cmd += std::format("\"/libpath:{}\"", sdk_lib_path);
+			for (auto const& obj_file : object_files) link_cmd += std::format(" {} ", obj_file.string());
+			for (char const* sdk_lib : sdk_libs) link_cmd += std::format("\"{}\\{}\" ", sdk_lib_path, sdk_lib);
 			link_cmd += "/subsystem:console /entry:main\"";
 			system(link_cmd.c_str());
 
@@ -94,9 +97,10 @@ namespace lucc
 		case CompilerOutput::Dll:
 		{
 			output_file.replace_extension("dll");
-			std::string link_cmd = std::format("\"\"{}/link.exe\" /dll /out:{} ", _executables_path, output_file.string());
-			for (auto const& obj_file : object_files) link_cmd += obj_file.string() + " ";
-			link_cmd += std::format("\"/libpath:{}\"", _lib_path);
+			std::string link_cmd = std::format("\"\"{}/link.exe\" /dll /out:{} ", exe_path, output_file.string());
+			link_cmd += std::format("\"/libpath:{}\"", sdk_lib_path);
+			for (auto const& obj_file : object_files) link_cmd += std::format(" {} ", obj_file.string());
+			for (char const* sdk_lib : sdk_libs) link_cmd += std::format("\"{}\\{}\" ", sdk_lib_path, sdk_lib);
 			link_cmd += "/entry:DllMain\"";
 			system(link_cmd.c_str());
 			return 0;
@@ -104,9 +108,10 @@ namespace lucc
 		case CompilerOutput::Lib:
 		{
 			output_file.replace_extension("lib");
-			std::string lib_cmd = std::format("\"\"{}/lib.exe\" /out:{} ", _executables_path, output_file.string());
-			for (auto const& obj_file : object_files) lib_cmd += obj_file.string() + " ";
-			lib_cmd += std::format("\"/libpath:{}\"", _lib_path);
+			std::string lib_cmd = std::format("\"\"{}/lib.exe\" /out:{} ", exe_path, output_file.string());
+			lib_cmd += std::format("\"/libpath:{}\"", sdk_lib_path);
+			for (auto const& obj_file : object_files) lib_cmd += std::format(" {} ", obj_file.string());
+			for (char const* sdk_lib : sdk_libs) lib_cmd += std::format(" \"{}\\{}\" ", sdk_lib_path, sdk_lib);
 			system(lib_cmd.c_str());
 		}
 		}
@@ -146,14 +151,16 @@ namespace lucc
 			x86_64CodeGenerator x86_64(assembly_file.string());
 			x86_64.Generate(ast);
 		}
-		std::string masm_cmd = std::format("\"{}/ml64.exe\"  /Fo {} /c {}", _executables_path, object_file.string(), assembly_file.string());
+		std::string masm_cmd = std::format("\"{}/ml64.exe\"  /Fo {} /c {}", exe_path, object_file.string(), assembly_file.string());
 		system(masm_cmd.c_str());
-		std::string link_cmd = std::format("\"{}/link.exe\" /out:{} {} /subsystem:console /entry:main", _executables_path, output_file.string(), object_file.string());
+		std::string link_cmd = std::format("\"\"{}/link.exe\" /out:{} {}", exe_path, output_file.string(), object_file.string());
+		for (char const* sdk_lib : sdk_libs) link_cmd += std::format(" \"{}\\{}\" ", sdk_lib_path, sdk_lib);
+		link_cmd += " /subsystem:console /entry:main \"";
 		system(link_cmd.c_str());
 
 		std::string exe_cmd = std::format("{}", output_file.string());
 		int32 exitcode = system(exe_cmd.c_str());
-		if(!debug) fs::remove_all(tmp_directory);
+		fs::remove_all(tmp_directory);
 		return exitcode;
 	}
 

@@ -18,63 +18,11 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Backend\x86_64CodeGenerator.cpp" />
-    <ClCompile Include="Backend\x86_64Context.cpp" />
-    <ClCompile Include="Compiler\Compiler.cpp" />
-    <ClCompile Include="Compiler\DebugUtil.cpp" />
-    <ClCompile Include="Diagnostics\Diagnostics.cpp" />
-    <ClCompile Include="Frontend\AST.cpp" />
-    <ClCompile Include="Frontend\Lexer.cpp" />
-    <ClCompile Include="Frontend\Parser.cpp" />
-    <ClCompile Include="Frontend\Preprocessor.cpp" />
-    <ClCompile Include="Frontend\SourceBuffer.cpp" />
-    <ClCompile Include="Frontend\TokenTypes.cpp" />
-    <ClCompile Include="Frontend\Type.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="precomp.cpp" />
-    <ClCompile Include="Test\test.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Backend\x86_64CodeGenerator.h" />
-    <ClInclude Include="Backend\x86_64Context.h" />
-    <ClInclude Include="Backend\x86_64.h" />
-    <ClInclude Include="Compiler\Compiler.h" />
-    <ClInclude Include="Compiler\DebugUtil.h" />
-    <ClInclude Include="Core\CLIParser.h" />
-    <ClInclude Include="Core\CoreTypes.h" />
-    <ClInclude Include="Core\Defines.h" />
-    <ClInclude Include="Core\Enums.h" />
-    <ClInclude Include="Diagnostics\Diagnostics.h" />
-    <ClInclude Include="Frontend\AST.h" />
-    <ClInclude Include="Frontend\Lexer.h" />
-    <ClInclude Include="Frontend\Parser.h" />
-    <ClInclude Include="Frontend\Preprocessor.h" />
-    <ClInclude Include="Frontend\SourceBuffer.h" />
-    <ClInclude Include="Frontend\SourceLocation.h" />
-    <ClInclude Include="Frontend\Symbol.h" />
-    <ClInclude Include="Frontend\Token.h" />
-    <ClInclude Include="Frontend\TokenTypes.h" />
-    <ClInclude Include="Frontend\Type.h" />
-    <ClInclude Include="precomp.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\README.md" />
-    <None Include="Diagnostics\Diagnostics.def" />
-    <None Include="Frontend\Tokens.def" />
-    <None Include="Test\test.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </None>
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{ccf04fcc-e2b8-4f8f-aa04-9698ce5c5d84}</ProjectGuid>
-    <RootNamespace>Lucc</RootNamespace>
+    <ProjectGuid>{4edfb2f2-951b-4741-87c9-67eabdac236f}</ProjectGuid>
+    <RootNamespace>MASM</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -106,6 +54,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -154,21 +103,15 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);EXE_PATH=R"($(VC_ExecutablePath_x64))";SDK_PATH=R"($(WindowsSDK_LibraryPath))"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Lucc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>$(SolutionDir)Lucc\precomp.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EntryPointSymbol>main</EntryPointSymbol>
     </Link>
-    <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)$(ProjectName).exe" "$(SolutionDir)Tests\$(ProjectName)d.exe"</Command>
-    </PostBuildEvent>
+    <MASM />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -176,13 +119,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);EXE_PATH=R"($(VC_ExecutablePath_x64))";SDK_PATH=R"($(WindowsSDK_LibraryPath))"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Lucc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>$(SolutionDir)Lucc\precomp.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -190,11 +128,14 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)$(ProjectName).exe" "$(SolutionDir)Tests\$(ProjectName).exe"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <MASM Include="test.asm">
+      <FileType>Document</FileType>
+    </MASM>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>

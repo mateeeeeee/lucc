@@ -71,6 +71,7 @@ namespace lucc
 
 	x86_64Context::x86_64Context(OutputBuffer& output_buffer) : output_buffer(output_buffer)
 	{
+		Emit<None>("extern ExitProcess: proc");
 		Emit<BSS>(".data?");
 		Emit<Const>(".const");
 		Emit<Data>(".data");
@@ -124,7 +125,7 @@ namespace lucc
 		for (int32 i = 0; i < std::size(volatile_registers); i++)
 		{
 			Register reg = volatile_registers[i];
-			if (!registers_available[reg]) 
+			if (!registers_available[reg])
 			{
 				registers_pushed[reg] = true;
 				pushed_count++;
@@ -504,7 +505,7 @@ namespace lucc
 
 	void x86_64Context::Return()
 	{
-		if (current_function == "main") Emit<Text>("xor rax, rax");
+		if (current_function == "main") Xor(RAX, RAX, BitCount_64);
 
 		Emit<Text>("{}_end:", current_function);
 		if (stack_allocated)
@@ -515,6 +516,12 @@ namespace lucc
 		{
 			Emit<Text>("pop rbp");
 			frame_reg_saved = false;
+		}
+		if (current_function == "main")
+		{
+			Mov(RCX, RAX, BitCount_64);
+			Sub(RSP, 32, BitCount_64);
+			Call("ExitProcess");
 		}
 		Emit<Text>("ret");
 		Emit<Text>("{} endp", current_function);
