@@ -33,6 +33,7 @@ namespace lucc
 	class ReturnStmtAST;
 	class BreakStmtAST;
 	class ContinueStmtAST;
+	class CastExprAST;
 	class GotoStmtAST;
 	class LabelStmtAST;
 	class IntLiteralAST;

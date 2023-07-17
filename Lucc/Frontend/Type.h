@@ -37,6 +37,11 @@ namespace lucc
 			else return Is(t1) || IsOneOf(ts...);
 		}
 
+		template<typename T>
+		T const& As() const;
+		template<typename T>
+		T& As();
+
 		virtual bool IsCompatible(Type const& other) const { return true; }
 
 	private:
@@ -63,6 +68,29 @@ namespace lucc
 	{
 		return static_cast<T const&>(t);
 	}
+
+	template<typename T> requires std::derived_from<T, Type>
+	T* DynamicTypeCast(Type& t)
+	{
+		return dynamic_cast<T*>(&t);
+	}
+	template<typename T> requires std::derived_from<T, Type>
+	T const* DynamicTypeCast(Type const& t)
+	{
+		return dynamic_cast<T const*>(&t);
+	}
+
+	template<typename T>
+	T const& Type::As() const
+	{
+		return TypeCast<T>(*this);
+	}
+	template<typename T>
+	T& Type::As()
+	{
+		return TypeCast<T>(*this);
+	}
+
 
 	enum QualifierFlag : uint8
 	{

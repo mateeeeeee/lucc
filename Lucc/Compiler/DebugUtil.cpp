@@ -30,6 +30,11 @@ void lucc::debug::DebugNodeVisitorAST::Visit(LabelStmtAST const& node, size_t de
 }
 
 
+void lucc::debug::DebugNodeVisitorAST::Visit(CastExprAST const& node, size_t depth)
+{
+	std::cout << GetIndentation(depth) << "CastExprAST \n";
+}
+
 void lucc::debug::DebugNodeVisitorAST::Visit(CaseStmtAST const& node, size_t depth)
 {
 	std::cout << GetIndentation(depth) << "CaseStmtAST \n";

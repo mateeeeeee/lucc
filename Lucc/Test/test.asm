@@ -1,29 +1,25 @@
 extern ExitProcess: proc
 extern puts : proc
-public x
-public y
 
 .const
 
 .data?
 
 .data
-align 16
-x	qword ?
-align 16
-y	qword ?
 
 .code
 
-main proc
+main proc 
 push rbp
 mov rbp, rsp
-lea	rax, qword ptr y
-lea	rbx, qword ptr x
-sub	rax, rbx
+sub	rsp, 16
+mov	dword ptr [rbp-8], 12345
+mov	dword ptr [rbp-4], ebx
+mov	eax, dword ptr [rbp-4]
 jmp main_end
 xor	rax, rax
 main_end:
+add	rsp, 16
 pop rbp
 mov	rcx, rax
 sub	rsp, 32

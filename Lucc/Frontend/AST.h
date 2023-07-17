@@ -14,8 +14,8 @@ namespace lucc
 	class UnaryExprAST;
 	class BinaryExprAST;
 	class TernaryExprAST;
+	class CastExprAST;
 	class FunctionCallAST;
-	class ImplicitCastExprAST;
 	class IntLiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
@@ -54,7 +54,7 @@ namespace lucc
 		virtual void Visit(BinaryExprAST const& node, size_t depth) {}
 		virtual void Visit(TernaryExprAST const& node, size_t depth) {}
 		virtual void Visit(FunctionCallAST const& node, size_t depth) {}
-		virtual void Visit(ImplicitCastExprAST const& node, size_t depth) {}
+		virtual void Visit(CastExprAST const& node, size_t depth) {}
 		virtual void Visit(IntLiteralAST const& node, size_t depth) {}
 		virtual void Visit(StringLiteralAST const& node, size_t depth) {}
 		virtual void Visit(IdentifierAST const& node, size_t depth) {}
@@ -565,7 +565,8 @@ namespace lucc
 		FunctionCall,
 		IntLiteral,
 		StringLiteral,
-		DeclRef
+		DeclRef,
+		Cast
 	};
 	enum class UnaryExprKind : uint8
 	{
@@ -573,7 +574,7 @@ namespace lucc
 		PostIncrement, PostDecrement,
 		Plus, Minus, BitNot,
 		LogicalNot,
-		Dereference, AddressOf, Cast
+		Dereference, AddressOf
 	};
 	enum class BinaryExprKind : uint8
 	{
@@ -597,8 +598,8 @@ namespace lucc
 	public:
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
-		virtual bool IsConstexpr() const = 0;
-		virtual int64 EvaluateConstexpr() const = 0;
+		virtual bool IsConstexpr() const { return false; }
+		virtual int64 EvaluateConstexpr() const { return 0; }
 
 		SourceLocation const& GetLocation() const { return loc; }
 		QualifiedType const& GetType() const { return type; }
@@ -786,8 +787,6 @@ namespace lucc
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
-		virtual bool IsConstexpr() const override;
-		virtual int64 EvaluateConstexpr() const override;
 
 	private:
 		std::unique_ptr<ExprAST> func_expr;
@@ -816,11 +815,24 @@ namespace lucc
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
-		virtual bool IsConstexpr() const override;
-		virtual int64 EvaluateConstexpr() const override;
-
 	private:
 		std::string str;
+	};
+
+	class CastExprAST : public ExprAST
+	{
+	public:
+		CastExprAST(SourceLocation const& loc, QualifiedType const& qtype) : ExprAST(ExprKind::Cast, loc, qtype), operand(nullptr) {}
+		void SetOperand(std::unique_ptr<ExprAST>&& _operand)
+		{
+			operand = std::move(_operand);
+		}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
+
+	private:
+		std::unique_ptr<ExprAST> operand;
 	};
 
 	class IdentifierAST : public ExprAST

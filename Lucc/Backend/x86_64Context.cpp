@@ -446,8 +446,8 @@ namespace lucc
 		}
 		else
 		{
-			if (var_decl.align) Emit<Data>("align {}", var_decl.align);
-			Emit<Data>("{}\t{} ?", var_decl.name, GetWordType(var_decl.bits));
+			if (var_decl.align) Emit<BSS>("align {}", var_decl.align);
+			Emit<BSS>("{}\t{} ?", var_decl.name, GetWordType(var_decl.bits));
 		}
 	}
 

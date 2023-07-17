@@ -780,12 +780,30 @@ namespace lucc
 
 	//<cast - expression> :: = <unary - expression>
 	//					   | (<type - name>) < cast - expression >
+	/*
+	Otherwise, if type-name is exactly the type of expression, nothing is done
+	Otherwise, the value of expression is converted to the type named by type-name, as follows:
+
+	Every implicit conversion as if by assignment is allowed.
+
+	In addition to the implicit conversions, the following conversions are allowed:
+	Any integer can be cast to any pointer type. Except for the null pointer constants such as NULL (which doesn't need a cast), the result is implementation-defined, may not be correctly aligned, may not point to an object of the referenced type, and may be a trap representation.
+	Any pointer type can be cast to any integer type. The result is implementation-defined, even for null pointer values (they do not necessarily result in the value zero). If the result cannot be represented in the target type, the behavior is undefined (unsigned integers do not implement modulo arithmetic on a cast from pointer)
+	Any pointer to function can be cast to a pointer to any other function type. If the resulting pointer is converted back to the original type, it compares equal to the original value. If the converted pointer is used to make a function call, the behavior is undefined (unless the function types are compatible)
+	When casting between pointers (either object or function), if the original value is a null pointer value of its type, the result is the correct null pointer value for the target type.
+	*/
 	std::unique_ptr<ExprAST> Parser::ParseCastExpression()
 	{
 		if (current_token->Is(TokenKind::left_round) && IsTokenTypename(1))
 		{
-			//#todo
-			return nullptr;
+			Expect(TokenKind::left_round);
+			QualifiedType cast_type{};
+			ParseTypename(cast_type);
+			Expect(TokenKind::right_round);
+			SourceLocation loc = current_token->GetLocation();
+			std::unique_ptr<CastExprAST> cast_expr = std::make_unique<CastExprAST>(loc, cast_type);
+			cast_expr->SetOperand(ParseCastExpression());
+			return cast_expr;
 		}
 		else return ParseUnaryExpression();
 	}

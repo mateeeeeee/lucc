@@ -6,8 +6,61 @@
 
 namespace lucc
 {
-	template<typename T>
-	inline T AlignTo(T n, T align) { return (n + align - 1) / align * align; }
+	namespace
+	{
+		template<typename T>
+		inline T AlignTo(T n, T align) { return (n + align - 1) / align * align; }
+
+		namespace cast
+		{
+			/*
+
+			enum class CastTypeId
+			{
+				i8, i16, i32, i64, u8, u16, u32, u64
+			}
+			CastTypeId GetCastTypeId(QualifiedType const& type)
+			{
+				LU_ASSERT(IsScalarType(type));
+				if (IsArithmeticType(type))
+				{
+					ArithmeticType const& arith_type = type->As<ArithmeticType>();
+					auto flags = arith_type.GetFlags();
+					switch (flags)
+					{
+					case Bool:
+					case Char:
+					case Short:
+					case Int:
+					case Long:
+					case LongLong:
+					}
+				}
+				return CastTypeId::u64;
+			}
+
+			static char i32i8[] = "movsbl %al, %eax";
+			static char i32u8[] = "movzbl %al, %eax";
+			static char i32i16[] = "movswl %ax, %eax";
+			static char i32u16[] = "movzwl %ax, %eax";
+			static char i32i64[] = "movsxd %eax, %rax";
+			static char u32i64[] = "mov %eax, %eax";
+
+			constexpr char const* cast_table[][8] =
+			{
+				// i8   i16     i32     i64     u8     u16     u32     u64
+				{NULL,  NULL,   NULL,   i32i64, i32u8, i32u16, NULL,   i32i64}, // i8
+				{i32i8, NULL,   NULL,   i32i64, i32u8, i32u16, NULL,   i32i64}, // i16
+				{i32i8, i32i16, NULL,   i32i64, i32u8, i32u16, NULL,   i32i64}, // i32
+				{i32i8, i32i16, NULL,   NULL,   i32u8, i32u16, NULL,   NULL, }, // i64
+
+				{i32i8, NULL,   NULL,   i32i64, NULL,  NULL,   NULL,   i32i64}, // u8
+				{i32i8, i32i16, NULL,   i32i64, i32u8, NULL,   NULL,   i32i64}, // u16
+				{i32i8, i32i16, NULL,   u32i64, i32u8, i32u16, NULL,   u32i64}, // u32
+				{i32i8, i32i16, NULL,   NULL,   i32u8, i32u16, NULL,   NULL, }, // u64
+			};*/
+		}
+	}
 
 	class VarDeclVisitorAST : public INodeVisitorAST
 	{
@@ -210,16 +263,6 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
-	bool StringLiteralAST::IsConstexpr() const
-	{
-		return false;
-	}
-
-	int64 StringLiteralAST::EvaluateConstexpr() const
-	{
-		return 0;
-	}
-
 	void VarDeclRefAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -239,6 +282,12 @@ namespace lucc
 	void LabelStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
+	}
+
+	void CastExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+		operand->Accept(visitor, depth + 1);
 	}
 
 	/// Constexpr
@@ -334,16 +383,6 @@ namespace lucc
 		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
 		if (cond_expr->EvaluateConstexpr()) return true_expr->EvaluateConstexpr();
 		else return false_expr->EvaluateConstexpr();
-	}
-
-	bool FunctionCallAST::IsConstexpr() const
-	{
-		return false;
-	}
-
-	int64 FunctionCallAST::EvaluateConstexpr() const
-	{
-		return 0;
 	}
 
 	bool IntLiteralAST::IsConstexpr() const
@@ -1459,4 +1498,10 @@ namespace lucc
 		std::string str_label = ctx.DeclareString(str.c_str());
 		ctx.MovOffset(*result, str_label.c_str());
 	}
+
+	void CastExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+
+	}
+
 }

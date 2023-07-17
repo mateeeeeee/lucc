@@ -95,8 +95,6 @@ namespace lucc
 					return "*";
 				case UnaryExprKind::AddressOf:
 					return "&";
-				case UnaryExprKind::Cast:
-					return "cast ()";
 				default:
 					return "invalid";
 				}
@@ -111,6 +109,7 @@ namespace lucc
 			virtual void Visit(UnaryExprAST const& node, size_t depth) override;
 			virtual void Visit(BinaryExprAST const& node, size_t depth) override;
 			virtual void Visit(TernaryExprAST const& node, size_t depth) override;
+			virtual void Visit(CastExprAST const& node, size_t depth) override;
 			virtual void Visit(FunctionCallAST const& node, size_t depth) override;
 			virtual void Visit(IntLiteralAST const& node, size_t depth) override;
 			virtual void Visit(StringLiteralAST const& node, size_t depth) override;
