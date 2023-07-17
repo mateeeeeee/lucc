@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lucc", "Lucc\Lucc.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "Tests\Tests.vcxproj", "{8B64242E-005B-4F7B-AF44-6E05B74C89D5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MASM", "MASM\MASM.vcxproj", "{4EDFB2F2-951B-4741-87C9-67EABDAC236F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -33,14 +31,6 @@ Global
 		{8B64242E-005B-4F7B-AF44-6E05B74C89D5}.Release|x64.Build.0 = Release|x64
 		{8B64242E-005B-4F7B-AF44-6E05B74C89D5}.Release|x86.ActiveCfg = Release|Win32
 		{8B64242E-005B-4F7B-AF44-6E05B74C89D5}.Release|x86.Build.0 = Release|Win32
-		{4EDFB2F2-951B-4741-87C9-67EABDAC236F}.Debug|x64.ActiveCfg = Debug|x64
-		{4EDFB2F2-951B-4741-87C9-67EABDAC236F}.Debug|x64.Build.0 = Debug|x64
-		{4EDFB2F2-951B-4741-87C9-67EABDAC236F}.Debug|x86.ActiveCfg = Debug|Win32
-		{4EDFB2F2-951B-4741-87C9-67EABDAC236F}.Debug|x86.Build.0 = Debug|Win32
-		{4EDFB2F2-951B-4741-87C9-67EABDAC236F}.Release|x64.ActiveCfg = Release|x64
-		{4EDFB2F2-951B-4741-87C9-67EABDAC236F}.Release|x64.Build.0 = Release|x64
-		{4EDFB2F2-951B-4741-87C9-67EABDAC236F}.Release|x86.ActiveCfg = Release|Win32
-		{4EDFB2F2-951B-4741-87C9-67EABDAC236F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

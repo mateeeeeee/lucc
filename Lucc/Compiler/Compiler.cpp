@@ -17,9 +17,10 @@ namespace lucc
 	namespace
 	{
 		constexpr char const* exe_path = EXE_PATH;
-		constexpr char const* sdk_lib_path = LU_CONCAT(SDK_PATH, "\\x64");
+		constexpr char const* sdk_lib_path = SDK_PATH;
 		constexpr char const* sdk_libs[] = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "comdlg32.lib", "advapi32.lib", "shell32.lib", "ole32.lib", "oleaut32.lib", "uuid.lib", "odbc32.lib", "odbccp32.lib" };
-
+		constexpr char const* ucrt_lib_path = UCRT_PATH;
+		constexpr char const* ucrt_libs[] = {"ucrt.lib", "libucrt.lib"};
 
 		void CompileTranslationUnit(std::string_view source_file, std::string_view assembly_file, bool only_pp, bool ast_dump, bool output_debug)
 		{
@@ -88,6 +89,7 @@ namespace lucc
 			link_cmd += std::format("\"/libpath:{}\"", sdk_lib_path);
 			for (auto const& obj_file : object_files) link_cmd += std::format(" {} ", obj_file.string());
 			for (char const* sdk_lib : sdk_libs) link_cmd += std::format("\"{}\\{}\" ", sdk_lib_path, sdk_lib);
+			for (char const* ucrt_lib : ucrt_libs) link_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
 			link_cmd += "/subsystem:console /entry:main\"";
 			system(link_cmd.c_str());
 
@@ -101,6 +103,7 @@ namespace lucc
 			link_cmd += std::format("\"/libpath:{}\"", sdk_lib_path);
 			for (auto const& obj_file : object_files) link_cmd += std::format(" {} ", obj_file.string());
 			for (char const* sdk_lib : sdk_libs) link_cmd += std::format("\"{}\\{}\" ", sdk_lib_path, sdk_lib);
+			for (char const* ucrt_lib : ucrt_libs) link_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
 			link_cmd += "/entry:DllMain\"";
 			system(link_cmd.c_str());
 			return 0;
@@ -112,6 +115,7 @@ namespace lucc
 			lib_cmd += std::format("\"/libpath:{}\"", sdk_lib_path);
 			for (auto const& obj_file : object_files) lib_cmd += std::format(" {} ", obj_file.string());
 			for (char const* sdk_lib : sdk_libs) lib_cmd += std::format(" \"{}\\{}\" ", sdk_lib_path, sdk_lib);
+			for (char const* ucrt_lib : ucrt_libs) lib_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
 			system(lib_cmd.c_str());
 		}
 		}
@@ -155,6 +159,7 @@ namespace lucc
 		system(masm_cmd.c_str());
 		std::string link_cmd = std::format("\"\"{}/link.exe\" /out:{} {}", exe_path, output_file.string(), object_file.string());
 		for (char const* sdk_lib : sdk_libs) link_cmd += std::format(" \"{}\\{}\" ", sdk_lib_path, sdk_lib);
+		for (char const* ucrt_lib : ucrt_libs) link_cmd += std::format("\"{}\\{}\" ", ucrt_lib_path, ucrt_lib);
 		link_cmd += " /subsystem:console /entry:main \"";
 		system(link_cmd.c_str());
 

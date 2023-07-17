@@ -1,5 +1,5 @@
 # lucc
-Toy C compiler for x86-64 made for learning purposes. Both lexer and parser are handwritten (i.e. not using generators).
+Toy C compiler for x86-64. Both lexer and parser are handwritten (i.e. not using generators).
 No optimization passes are performed, the assembly is generated from AST traversal. 
 
 ## Features
