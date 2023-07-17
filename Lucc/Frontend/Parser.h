@@ -151,7 +151,8 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseUnaryExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParsePostFixExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseSizeofExpression();
-		[[nodiscard]] std::unique_ptr<ExprAST> ParseAlignofExpression();
+		[[nodiscard]] std::unique_ptr<IntLiteralAST> ParseAlignofExpression();
+		[[nodiscard]] std::unique_ptr<IntLiteralAST> ParseAlignasExpression();
 		[[nodiscard]] std::unique_ptr<ExprAST> ParsePrimaryExpression();
 		[[nodiscard]] std::unique_ptr<IntLiteralAST> ParseIntegerLiteral();
 		[[nodiscard]] std::unique_ptr<StringLiteralAST> ParseStringLiteral();
@@ -164,7 +165,7 @@ namespace lucc
 		void ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
 		void ParseAbstractDeclarator(DeclSpecInfo const& decl_spec, QualifiedType& abstract_declarator);
 		void ParseTypename(QualifiedType& type);
-		
+
 		void ParsePointers(QualifiedType& type);
 		void ParseDeclaratorTail(QualifiedType& type, bool abstract = false);
 		void ParseDeclaratorTailFunction(QualifiedType& type, bool abstract = false);
@@ -172,6 +173,6 @@ namespace lucc
 
 		bool IsTokenTypename(uint32 offset = 0) const;
 	};
-	
+
 
 }

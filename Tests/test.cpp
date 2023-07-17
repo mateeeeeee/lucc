@@ -222,6 +222,11 @@ TEST(Misc, Alignof)
 	EXPECT_EQ(8, LUCC_EX(return _Alignof(long long);));
 	EXPECT_EQ(1, LUCC_EX(return _Alignof(char[3]);));
 	EXPECT_EQ(4, LUCC_EX(return _Alignof(int[3]);));
+
+	EXPECT_EQ(1, LUCC_EX(_Alignas(char) char x, y; return &y - &x;));
+	EXPECT_EQ(4, LUCC_EX(_Alignas(int) char x, y; return &y - &x;));
+	EXPECT_EQ(16, LUCC_EX(_Alignas(16) char x, y; return &y - &x;));
+	//EXPECT_EQ(32, LUCC_EX(_Alignas(32) int* x, *y; ((char*)&y) - ((char*)&x);));
 }
 TEST(Misc, Sizeof)
 {

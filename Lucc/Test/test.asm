@@ -1,38 +1,29 @@
 extern ExitProcess: proc
 extern puts : proc
+public x
+public y
 
 .const
-L_str_0 byte "abc",0
 
 .data?
 
 .data
+align 16
+x	qword ?
+align 16
+y	qword ?
 
 .code
 
-main proc 
+main proc
 push rbp
 mov rbp, rsp
-sub	rsp, 16
-mov	rbx, offset L_str_0
-mov	qword ptr [rbp-16], rbx
-sub	rsp, 32
-mov	rcx, qword ptr [rbp-16]
-call puts
-add	rsp, 32
-mov	dword ptr [rbp-4], 7
-mov	ebx, dword ptr [rbp-4]
-mov	r10d, 3
-xor	rdx, rdx
-mov	eax, ebx
-idiv	r10d
-mov	ebx, eax
-mov	dword ptr [rbp-4], ebx
-mov	eax, dword ptr [rbp-4]
+lea	rax, qword ptr y
+lea	rbx, qword ptr x
+sub	rax, rbx
 jmp main_end
 xor	rax, rax
 main_end:
-add	rsp, 16
 pop rbp
 mov	rcx, rax
 sub	rsp, 32

@@ -450,11 +450,12 @@ namespace lucc
 				array_decl.name = name.c_str();
 				array_decl.is_static = symbol.storage == Storage::Static;
 				array_decl.is_extern = symbol.storage == Storage::Extern;
-				array_decl.bits = GetBitCount(symbol.qtype->GetSize());
 				array_decl.is_const = symbol.qtype.IsConst();
 
 				ArrayType const& arr_type = TypeCast<ArrayType>(symbol.qtype);
 				array_decl.array_size = arr_type.GetArraySize();
+				array_decl.align = arr_type.GetElementType()->GetAlign();
+				array_decl.bits = GetBitCount(arr_type.GetElementType()->GetSize());
 
 				if (init_expr)
 				{
@@ -473,6 +474,7 @@ namespace lucc
 				var_decl.is_extern = symbol.storage == Storage::Extern;
 				var_decl.bits = GetBitCount(symbol.qtype->GetSize());
 				var_decl.is_const = symbol.qtype.IsConst();
+				var_decl.align = symbol.qtype->GetAlign();
 				if (init_expr)
 				{
 					if (init_expr->IsConstexpr())

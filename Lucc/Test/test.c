@@ -1,11 +1,9 @@
 
 extern int puts(char const*);
 
-extern int atoi(const char* str);
+_Alignas(16) char x, y;
 
 int main(void)
 {
-	char const* str = "abc";
-	puts(str);
-	int i = 7; i /= 3; return i;
+	return &y - &x;
 }

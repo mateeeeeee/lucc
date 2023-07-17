@@ -25,14 +25,13 @@ No optimization passes are performed, the assembly is generated from AST travers
   * typedefs
   * subset of C Postprocessor
   * static, extern
-  * sizeof, alignof
+  * sizeof, alignof, alignas
   * constant folding
   * functions
   * scopes
   * .dll and .lib using MSVC link.exe/lib.exe
 
 ## Todo
-  * alignas
   * casts, conversions
   * postprocessor: #if,#elif, macro functions
   * tags (structs, unions, enums)

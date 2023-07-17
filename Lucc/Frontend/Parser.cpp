@@ -28,7 +28,7 @@ namespace lucc
 		Storage storage = Storage::None;
 		FunctionSpecifier func_spec = FunctionSpecifier::None;
 	};
-	
+
 	struct Parser::DeclaratorInfo
 	{
 		std::string name = "";
@@ -82,7 +82,7 @@ namespace lucc
 			auto decls = ParseDeclaration();
 			for(auto&& decl : decls) ast->translation_unit->AddDeclarations(std::move(decl));
 		}
-		
+
 	}
 
 	std::vector<std::unique_ptr<DeclAST>> Parser::ParseDeclaration()
@@ -106,7 +106,15 @@ namespace lucc
 		{
 			DeclaratorInfo declarator_info{};
 			ParseDeclarator(decl_spec, declarator_info);
+
+			if (decl_spec.align && decl_spec.align >= declarator_info.qtype->GetAlign())
+			{
+				if (decl_spec.align >= declarator_info.qtype->GetAlign()) declarator_info.qtype->SetAlign(decl_spec.align);
+				else Report(diag::alignas_cannot_reduce_default_align);
+			}
+
 			LU_ASSERT(declarator_info.qtype.HasRawType());
+
 			DeclarationInfo declaration_info(decl_spec, declarator_info);
 			bool success = ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global);
 			if (!success)
@@ -133,7 +141,7 @@ namespace lucc
 			else
 			{
 				if (declaration_info.qtype->Is(PrimitiveTypeKind::Void)) Report(diag::void_not_expected);
-				
+
 				std::string_view name = declarator_info.name;
 				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
 				var_decl->SetLocation(current_token->GetLocation());
@@ -980,19 +988,63 @@ namespace lucc
 		}
 	}
 
-	std::unique_ptr<ExprAST> Parser::ParseAlignofExpression()
-	{
+	/*
+	Returns the alignment requirement of the type named by type-name.
+	If type-name is an array type, the result is the alignment requirement of the array element type.
+	The type-name cannot be function type or an incomplete type.
+	The result is an integer constant of type size_t.
+	The operand is not evaluated (so external identifiers used in the operand do not have to be defined).
+	*/
+	std::unique_ptr<IntLiteralAST> Parser::ParseAlignofExpression()
+{
 		Expect(TokenKind::KW__Alignof);
 		Expect(TokenKind::left_round);
-		
+
 		if (!IsTokenTypename()) Report(diag::alignof_expects_type_argument);
 		SourceLocation loc = current_token->GetLocation();
 		QualifiedType type{};
 		ParseTypename(type);
 		if (IsFunctionType(type) || !type->IsComplete()) Report(diag::alignof_invalid_argument);
-		std::unique_ptr<ExprAST> alignof_expr = std::make_unique<IntLiteralAST>(type->GetAlign(), loc);
+		std::unique_ptr<IntLiteralAST> alignof_expr = std::make_unique<IntLiteralAST>(type->GetAlign(), loc);
 		Expect(TokenKind::right_round);
 		return alignof_expr;
+	}
+
+	/*
+	The _Alignas (until C23)alignas (since C23) specifier can only be used when declaring objects that are not bit-fields,
+	and don't have the register storage class.
+	It cannot be used in function parameter declarations, and cannot be used in a typedef.
+
+	When used in a declaration, the declared object will have its alignment requirement set to
+	1,2) the result of the expression, unless it is zero
+	3,4) the alignment requirement of type, that is, to _Alignof(type) (until C23)alignof(type) (since C23)
+	except when this would weaken the alignment the type would have had naturally.
+	If expression evaluates to zero, this specifier has no effect.
+	*/
+	std::unique_ptr<IntLiteralAST> Parser::ParseAlignasExpression()
+	{
+		Expect(TokenKind::KW__Alignas);
+		Expect(TokenKind::left_round);
+		SourceLocation loc = current_token->GetLocation();
+		std::unique_ptr<IntLiteralAST> alignas_expr = nullptr;
+		if (IsTokenTypename())
+		{
+			QualifiedType type{};
+			ParseTypename(type);
+			alignas_expr = std::make_unique<IntLiteralAST>(type->GetAlign(), loc);
+		}
+		else
+		{
+			auto IsPowerOfTwo = [](size_t n) {return n > 0 && ((n & (n - 1)) == 0); };
+			std::unique_ptr<ExprAST> expr = ParseExpression();
+			if (!expr->IsConstexpr()) Report(diag::alignas_alignment_not_constexpr);
+			int64 alignment = expr->EvaluateConstexpr();
+			if (!IsPowerOfTwo(alignment)) Report(diag::alignas_alignment_not_power_of_two);
+			alignas_expr = std::make_unique<IntLiteralAST>(alignment, loc);
+		}
+
+		Expect(TokenKind::right_round);
+		return alignas_expr;
 	}
 
 	//<primary - expression> :: = <identifier>
@@ -1099,16 +1151,23 @@ namespace lucc
 				case KW_extern:
 					decl_spec.storage = Storage::Extern;
 					break;
+				case KW_auto:
+					decl_spec.storage = Storage::Auto;
+					break;
 				default:
 					LU_UNREACHABLE();
 				}
 			}
 
-			//ignore for now, later add support: KW__Atomic, KW__Alignas, KW__Thread_local
-			if (Consume(
-				KW_auto, KW_register, KW__Atomic,
-				KW__Alignas, KW__Thread_local))
+			if (Consume(KW__Atomic, KW__Thread_local)) continue;
+
+			if (Consume(KW__Alignas))
+			{
+				--current_token;
+				std::unique_ptr<IntLiteralAST> alignas_expr = ParseAlignasExpression();
+				decl_spec.align = alignas_expr->GetValue();
 				continue;
+			}
 
 			if (Consume(KW_const))
 			{

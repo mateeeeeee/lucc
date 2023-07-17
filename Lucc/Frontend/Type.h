@@ -105,10 +105,10 @@ namespace lucc
 		}
 		void ResetRawType() { type = nullptr; }
 		Type const& RawType() const { return *type; }
+		Type& RawType() { return *type; }
 
-		Type const* operator->() const {
-			return type.get();
-		}
+		Type const* operator->() const { return type.get(); }
+		Type* operator->() { return type.get(); }
 		Type const& operator*() const { return RawType(); }
 		operator Type const& () const { return RawType(); }
 
@@ -248,7 +248,7 @@ namespace lucc
 		}
 
 		virtual bool IsCompatible(Type const& other) const override;
-		
+
 	private:
 		ArithmeticFlags flags;
 		bool is_unsigned = false;

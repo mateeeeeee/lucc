@@ -430,14 +430,24 @@ namespace lucc
 		}
 
 		if (!var_decl.is_static) Emit<None>("public {}", var_decl.name);
+
 		if (var_decl.init_value)
 		{
-			if(var_decl.is_const) Emit<Const>("{}\t{} {}", var_decl.name, GetWordType(var_decl.bits), *var_decl.init_value);
-			else Emit<Data>("{}\t{} {}", var_decl.name, GetWordType(var_decl.bits), *var_decl.init_value);
+			if (var_decl.is_const)
+			{
+				if(var_decl.align) Emit<Const>("align {}", var_decl.align);
+				Emit<Const>("{}\t{} {}", var_decl.name, GetWordType(var_decl.bits), *var_decl.init_value);
+			}
+			else
+			{
+				if (var_decl.align) Emit<Data>("align {}", var_decl.align);
+				Emit<Data>("{}\t{} {}", var_decl.name, GetWordType(var_decl.bits), *var_decl.init_value);
+			}
 		}
 		else
 		{
-			Emit<BSS>("{}\t{} ?", var_decl.name, GetWordType(var_decl.bits));
+			if (var_decl.align) Emit<Data>("align {}", var_decl.align);
+			Emit<Data>("{}\t{} ?", var_decl.name, GetWordType(var_decl.bits));
 		}
 	}
 
@@ -464,6 +474,7 @@ namespace lucc
 		}
 		else
 		{
+			if (array_decl.align) Emit<BSS>("align {}", array_decl.align);
 			Emit<BSS>("{}\t{} {} dup (?)", array_decl.name, GetWordType(array_decl.bits), array_decl.array_size);
 		}
 	}

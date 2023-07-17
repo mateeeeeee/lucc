@@ -31,7 +31,7 @@ namespace lucc
 		InvalidRegister,
 		RegisterCount = InvalidRegister
 	};
-	
+
 	inline char const* GetRegisterName(Register reg, BitCount bits)
 	{
 		static constexpr char const* registers[RegisterCount][4] = {
@@ -54,9 +54,9 @@ namespace lucc
 		};
 		return registers[reg][bits];
 	}
-	inline char const* GetWordType(size_t size) 
+	inline char const* GetWordType(size_t size)
 	{
-		switch (size) 
+		switch (size)
 		{
 		case 1:  return "byte";
 		case 2:  return "word";
@@ -108,7 +108,7 @@ namespace lucc
 	};
 	inline ConditionCode InvertConditionCode(ConditionCode cc)
 	{
-		switch (cc) 
+		switch (cc)
 		{
 		case ConditionCode::E:  return ConditionCode::NE;
 		case ConditionCode::NE: return ConditionCode::E;
@@ -124,8 +124,8 @@ namespace lucc
 		case ConditionCode::NZ: return ConditionCode::Z;
 		case ConditionCode::S:  return ConditionCode::NS;
 		case ConditionCode::NS: return ConditionCode::S;
-		case ConditionCode::None: 
-		default:    
+		case ConditionCode::None:
+		default:
 			return ConditionCode::None;
 		}
 	}
@@ -159,7 +159,7 @@ namespace lucc
 		constexpr Result(int64 imm) : immediate(imm), kind(ResultKind::Immediate) {}
 		constexpr Result(Register reg) : reg(reg), kind(ResultKind::Register) {}
 		constexpr Result(char const* global) : global(global), kind(ResultKind::Global) {}
-		constexpr Result(Register base_reg, int32 displacement, Register index_reg = InvalidRegister, SIBScale scale = SIBScale_None) : 
+		constexpr Result(Register base_reg, int32 displacement, Register index_reg = InvalidRegister, SIBScale scale = SIBScale_None) :
 			sib{ .base_reg = base_reg,.index_reg = index_reg, .scale = scale, .displacement = displacement}, kind(ResultKind::SIB) {}
 
 		constexpr ResultKind GetKind() const { return kind; }
@@ -178,6 +178,7 @@ namespace lucc
 	struct VarDeclCG
 	{
 		char const* name;
+		size_t align;
 		bool is_static;
 		bool is_const;
 		bool is_extern;
@@ -187,6 +188,7 @@ namespace lucc
 	struct ArrayDeclCG
 	{
 		char const* name;
+		size_t align;
 		bool is_static;
 		bool is_const;
 		bool is_extern;
