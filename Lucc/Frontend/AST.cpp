@@ -13,12 +13,10 @@ namespace lucc
 
 		namespace cast
 		{
-			/*
-
-			enum class CastTypeId
+			enum CastTypeId
 			{
-				i8, i16, i32, i64, u8, u16, u32, u64
-			}
+				i8, i16, i32, i64, u8, u16, u32, u64, CastTypeCount
+			};
 			CastTypeId GetCastTypeId(QualifiedType const& type)
 			{
 				LU_ASSERT(IsScalarType(type));
@@ -28,37 +26,46 @@ namespace lucc
 					auto flags = arith_type.GetFlags();
 					switch (flags)
 					{
-					case Bool:
-					case Char:
-					case Short:
-					case Int:
-					case Long:
-					case LongLong:
+					case ArithmeticType::Bool: 
+					case ArithmeticType::Char: return arith_type.IsUnsigned() ? CastTypeId::u8 : CastTypeId::i8;
+					case ArithmeticType::Short: return arith_type.IsUnsigned() ? CastTypeId::u16 : CastTypeId::i16;
+					case ArithmeticType::Int:  
+					case ArithmeticType::Long: return arith_type.IsUnsigned() ? CastTypeId::u32 : CastTypeId::i32;
+					case ArithmeticType::LongLong: return arith_type.IsUnsigned() ? CastTypeId::u64 : CastTypeId::i64;
 					}
 				}
 				return CastTypeId::u64;
 			}
 
-			static char i32i8[] = "movsbl %al, %eax";
-			static char i32u8[] = "movzbl %al, %eax";
-			static char i32i16[] = "movswl %ax, %eax";
-			static char i32u16[] = "movzwl %ax, %eax";
-			static char i32i64[] = "movsxd %eax, %rax";
-			static char u32i64[] = "mov %eax, %eax";
+			enum MovType
+			{
+				NoMov,
+				Mov,
+				Movzx,
+				Movsx,
+				Movsxd
+			};
 
-			constexpr char const* cast_table[][8] =
+			constexpr MovType cast_table[CastTypeCount][CastTypeCount] =
 			{
 				// i8   i16     i32     i64     u8     u16     u32     u64
-				{NULL,  NULL,   NULL,   i32i64, i32u8, i32u16, NULL,   i32i64}, // i8
-				{i32i8, NULL,   NULL,   i32i64, i32u8, i32u16, NULL,   i32i64}, // i16
-				{i32i8, i32i16, NULL,   i32i64, i32u8, i32u16, NULL,   i32i64}, // i32
-				{i32i8, i32i16, NULL,   NULL,   i32u8, i32u16, NULL,   NULL, }, // i64
+				{NoMov, NoMov, NoMov, Movsxd, Movzx, Movzx, NoMov, Movsxd },  // i8
+				{Movsx, NoMov, NoMov, Movsxd, Movzx, Movzx, NoMov, Movsxd },  // i16
+				{Movsx, Movsx, NoMov, Movsxd, Movzx, Movzx, NoMov, Movsxd },  // i32
+				{Movsx, Movsx, NoMov, NoMov,  Movzx, Movzx, NoMov, NoMov  }, // i64
 
-				{i32i8, NULL,   NULL,   i32i64, NULL,  NULL,   NULL,   i32i64}, // u8
-				{i32i8, i32i16, NULL,   i32i64, i32u8, NULL,   NULL,   i32i64}, // u16
-				{i32i8, i32i16, NULL,   u32i64, i32u8, i32u16, NULL,   u32i64}, // u32
-				{i32i8, i32i16, NULL,   NULL,   i32u8, i32u16, NULL,   NULL, }, // u64
-			};*/
+				{Movsx, NoMov, NoMov, Movsxd, NoMov, NoMov, NoMov, Movsxd },  // u8
+				{Movsx, Movsx, NoMov, Movsxd, Movzx, NoMov, NoMov, Movsxd },  // u16
+				{Movsx, Movsx, NoMov, Mov,	  Movzx, Movzx, NoMov, Mov	 },		// u32
+				{Movsx, Movsx, NoMov, NoMov,  Movzx, Movzx, NoMov, NoMov  }, // u64
+			};
+
+			MovType GetCastMovType(QualifiedType const& from, QualifiedType const& to)
+			{
+				CastTypeId from_type = GetCastTypeId(from);
+				CastTypeId to_type = GetCastTypeId(to);
+				return cast_table[to_type][from_type];
+			}
 		}
 	}
 
@@ -1501,7 +1508,33 @@ namespace lucc
 
 	void CastExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
+		if (GetType()->Is(PrimitiveTypeKind::Void))
+		{
+			operand->Codegen(ctx, result);
+			return;
+		}
+		
+		QualifiedType const& from_type = operand->GetType();
+		QualifiedType const& to_type = GetType();
+		BitCount bitcount = GetBitCount(to_type->GetSize());
+		bool rhs8bit = from_type->GetSize() == 1;
 
+		Register cast_reg = result ? *result : ctx.AllocateRegister();
+		Register tmp_reg = ctx.AllocateRegister();
+		operand->Codegen(ctx, &tmp_reg);
+
+		cast::MovType mov_type = cast::GetCastMovType(from_type, to_type);
+		switch (mov_type)
+		{
+		case cast::Mov:   ctx.Mov(cast_reg, tmp_reg, bitcount); break;
+		case cast::Movzx: ctx.Movzx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
+		case cast::Movsx: ctx.Movsx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
+		case cast::Movsxd:ctx.Movsxd(cast_reg, tmp_reg); break;
+		case cast::NoMov:
+		default: break;
+		}
+		ctx.FreeRegister(tmp_reg);
+		if (!result) ctx.FreeRegister(cast_reg);
 	}
 
 }

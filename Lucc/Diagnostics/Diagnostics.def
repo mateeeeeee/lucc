@@ -85,5 +85,6 @@ DIAG(alignas_alignment_not_constexpr, error, "requested alignment is not an inte
 DIAG(alignas_alignment_not_power_of_two, error, "requested alignment is not a positive power of 2")
 DIAG(alignas_cannot_reduce_default_align, error, "_Alignas cannot reduce default alignment")
 DIAG(void_not_first_and_only_parameter, error, "'void' must be the first and only parameter if specified")
+DIAG(cast_invalid_type, error, "cast type has to be either void or scalar")
 
 #undef DIAG

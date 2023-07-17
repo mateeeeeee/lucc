@@ -800,6 +800,9 @@ namespace lucc
 			QualifiedType cast_type{};
 			ParseTypename(cast_type);
 			Expect(TokenKind::right_round);
+
+			if (!IsVoidType(cast_type) && !IsScalarType(cast_type)) Report(diag::cast_invalid_type);
+			//#todo further check cast type compatibility
 			SourceLocation loc = current_token->GetLocation();
 			std::unique_ptr<CastExprAST> cast_expr = std::make_unique<CastExprAST>(loc, cast_type);
 			cast_expr->SetOperand(ParseCastExpression());

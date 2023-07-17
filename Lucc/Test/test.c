@@ -5,7 +5,7 @@ extern int printf(char const*, ...);
 
 int main(void)
 {
-	char const* fmt = "Mate";
-	printf(fmt);
-	return 0;
+	short a = -1;
+	unsigned int b = (unsigned int)a;
+	return b;
 }

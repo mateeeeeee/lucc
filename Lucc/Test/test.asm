@@ -3,7 +3,6 @@ extern puts : proc
 extern printf : proc
 
 .const
-L_str_0 byte "Mate",0
 
 .data?
 
@@ -15,13 +14,13 @@ main proc
 push rbp
 mov rbp, rsp
 sub	rsp, 16
-mov	rbx, offset L_str_0
-mov	qword ptr [rbp-8], rbx
-sub	rsp, 32
-mov	rcx, qword ptr [rbp-8]
-call printf
-add	rsp, 32
-mov	eax, 0
+mov	ebx, 1
+neg	ebx
+mov	word ptr [rbp-6], bx
+mov	r10w, word ptr [rbp-6]
+movsx	ebx, r10w
+mov	dword ptr [rbp-4], ebx
+mov	eax, dword ptr [rbp-4]
 jmp main_end
 xor	rax, rax
 main_end:
