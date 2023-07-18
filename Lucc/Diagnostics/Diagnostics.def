@@ -86,5 +86,9 @@ DIAG(alignas_alignment_not_power_of_two, error, "requested alignment is not a po
 DIAG(alignas_cannot_reduce_default_align, error, "_Alignas cannot reduce default alignment")
 DIAG(void_not_first_and_only_parameter, error, "'void' must be the first and only parameter if specified")
 DIAG(cast_invalid_type, error, "cast type has to be either void or scalar")
+DIAG(unknown_enum, error, "unknown enum type")
+DIAG(not_enum_type, error, "not enum type")
+DIAG(enum_value_no_name, error, "enum value has no name")
+DIAG(enum_value_not_constexpr, error, "enum value is not constexpr")
 
 #undef DIAG

@@ -3,6 +3,7 @@
 #include <memory>
 #include <functional>
 #include "Token.h"
+#include "Symbol.h"
 #include "Diagnostics/Diagnostics.h"
 
 namespace lucc
@@ -12,6 +13,8 @@ namespace lucc
 		enum class Code : uint16;
 	}
 	enum class BinaryExprKind : uint8;
+
+	template<typename>
 	class SymbolTable;
 	class QualifiedType;
 	class FunctionType;
@@ -54,8 +57,8 @@ namespace lucc
 
 		struct Context
 		{
-			std::unique_ptr<SymbolTable> identifier_sym_table;
-			std::unique_ptr<SymbolTable> tag_sym_table; //struct/union/enum
+			std::unique_ptr<SymbolTable<VarSymbol>> identifier_sym_table;
+			std::unique_ptr<SymbolTable<TagSymbol>> tag_sym_table;
 
 			FunctionType const* current_func_type = nullptr;
 			bool return_stmt_encountered = false;
@@ -157,10 +160,12 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<ExprAST> ParsePrimaryExpression();
 		[[nodiscard]] std::unique_ptr<IntLiteralAST> ParseIntegerLiteral();
 		[[nodiscard]] std::unique_ptr<StringLiteralAST> ParseStringLiteral();
-		[[nodiscard]] std::unique_ptr<IdentifierAST> ParseIdentifier();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseIdentifier();
 
 		template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
 		std::unique_ptr<ExprAST> ParseBinaryExpression();
+
+		void ParseEnum(DeclSpecInfo& decl_spec);
 
 		void ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
 		void ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);

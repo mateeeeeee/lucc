@@ -1,6 +1,5 @@
 #include "Parser.h"
 #include "AST.h"
-#include "Symbol.h"
 #include "Core/Defines.h"
 
 namespace lucc
@@ -56,7 +55,8 @@ namespace lucc
 	void Parser::Parse()
 	{
 		ast = std::make_unique<AST>();
-		ctx.identifier_sym_table = std::make_unique<SymbolTable>();
+		ctx.identifier_sym_table = std::make_unique<SymbolTable<VarSymbol>>();
+		ctx.tag_sym_table = std::make_unique<SymbolTable<TagSymbol>>();
 		ParseTranslationUnit();
 	}
 	bool Parser::Expect(TokenKind k)
@@ -102,6 +102,8 @@ namespace lucc
 			return decls;
 		}
 
+		if (Consume(TokenKind::semicolon)) return {};
+
 		do
 		{
 			DeclaratorInfo declarator_info{};
@@ -116,7 +118,7 @@ namespace lucc
 			LU_ASSERT(declarator_info.qtype.HasRawType());
 
 			DeclarationInfo declaration_info(decl_spec, declarator_info);
-			bool success = ctx.identifier_sym_table->Insert(declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global);
+			bool success = ctx.identifier_sym_table->Insert(VarSymbol{ declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global });
 			if (!success)
 			{
 				Report(diag::redefinition_of_identifier);
@@ -178,7 +180,7 @@ namespace lucc
 				return {};
 			}
 			typedefs.push_back(std::make_unique<TypedefDeclAST>(typedef_info.name));
-			bool success = ctx.identifier_sym_table->Insert(typedef_info.name, typedef_info.qtype, Storage::Typedef);
+			bool success = ctx.identifier_sym_table->Insert(VarSymbol{ typedef_info.name, typedef_info.qtype, Storage::Typedef });
 			if (!success)
 			{
 				Report(diag::redefinition_of_identifier);
@@ -204,7 +206,7 @@ namespace lucc
 		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_name);
 		for (auto&& func_param : func_type.GetParamTypes())
 		{
-			bool success = ctx.identifier_sym_table->Insert(func_param.name, func_param.qtype, Storage::None);
+			bool success = ctx.identifier_sym_table->Insert(VarSymbol{ func_param.name, func_param.qtype, Storage::None });
 			if (!success)
 			{
 				Report(diag::redefinition_of_identifier);
@@ -1091,19 +1093,72 @@ namespace lucc
 		return std::make_unique<StringLiteralAST>(str, loc);
 	}
 
-	std::unique_ptr<IdentifierAST> Parser::ParseIdentifier()
+	std::unique_ptr<ExprAST> Parser::ParseIdentifier()
 	{
 		LU_ASSERT(current_token->Is(TokenKind::identifier));
 		std::string_view name = current_token->GetIdentifier();
-		if (Symbol* sym = ctx.identifier_sym_table->LookUp(name))
+		if (VarSymbol* sym = ctx.identifier_sym_table->LookUp(name))
 		{
-			SourceLocation loc = current_token->GetLocation();
-			++current_token;
-			std::unique_ptr<VarDeclRefAST> decl_ref = std::make_unique<VarDeclRefAST>(sym, loc);
-			return decl_ref;
+			if (sym->is_enum)
+			{
+				SourceLocation loc = current_token->GetLocation();
+				++current_token;
+				return std::make_unique<IntLiteralAST>(sym->enum_value, loc);
+			}
+			else
+			{
+				SourceLocation loc = current_token->GetLocation();
+				++current_token;
+				std::unique_ptr<VarDeclRefAST> decl_ref = std::make_unique<VarDeclRefAST>(sym, loc);
+				return decl_ref;
+			}
 		}
 		else Report(diag::variable_not_declared);
 		return nullptr;
+	}
+
+	void Parser::ParseEnum(DeclSpecInfo& decl_spec)
+	{
+		Expect(TokenKind::KW_enum);
+		decl_spec.qtype = builtin_types::Enum;
+
+		std::string enum_tag = "";
+		if (current_token->Is(TokenKind::identifier))
+		{
+			enum_tag = current_token->GetIdentifier();
+			++current_token;
+		}
+
+		if (!enum_tag.empty() && current_token->IsNot(TokenKind::left_brace))
+		{
+			TagSymbol* sym = ctx.tag_sym_table->LookUp(enum_tag);
+			if (!sym) Report(diag::unknown_enum);
+			else if (!sym->enum_type) Report(diag::not_enum_type);
+			decl_spec.qtype = sym->type;
+			return;
+		}
+
+		Expect(TokenKind::left_brace);
+		int32 val = 0;
+		while (true)
+		{
+			std::string enum_value_name;
+			if (current_token->IsNot(TokenKind::identifier)) Report(diag::enum_value_no_name);
+			enum_value_name = current_token->GetIdentifier(); ++current_token;
+
+			if (Consume(TokenKind::equal))
+			{
+				std::unique_ptr<ExprAST> enum_value_expr = ParseAssignmentExpression();
+				if (!enum_value_expr->IsConstexpr()) Report(diag::enum_value_not_constexpr);
+				val = (int32)enum_value_expr->EvaluateConstexpr();
+			}
+
+			ctx.identifier_sym_table->Insert(VarSymbol{ .name = enum_value_name, .is_enum = true, .enum_value = val++ });
+			if (Consume(TokenKind::right_brace)) break;
+			Expect(TokenKind::comma);
+		}
+
+		if (!enum_tag.empty()) ctx.tag_sym_table->Insert(TagSymbol{ enum_tag, decl_spec.qtype, true });
 	}
 
 	//<declaration - specifier> :: = <storage - class - specifier>
@@ -1169,6 +1224,7 @@ namespace lucc
 
 			if (Consume(KW__Alignas))
 			{
+				if (forbid_storage_specs) Report(diag::storage_specifier_forbidden_context);
 				--current_token;
 				std::unique_ptr<IntLiteralAST> alignas_expr = ParseAlignasExpression();
 				decl_spec.align = alignas_expr->GetValue();
@@ -1192,7 +1248,7 @@ namespace lucc
 			QualifiedType* typedef_type = nullptr;
 			if(current_token->Is(identifier))
 			{
-				Symbol* sym = ctx.identifier_sym_table->LookUp(current_token->GetIdentifier());
+				VarSymbol* sym = ctx.identifier_sym_table->LookUp(current_token->GetIdentifier());
 				LU_ASSERT(sym);
 				typedef_type = &sym->qtype;
 			}
@@ -1200,7 +1256,12 @@ namespace lucc
 			if (current_token->IsOneOf(KW_struct, KW_union, KW_enum) || typedef_type)
 			{
 				if (counter) break;
-				if (typedef_type)
+
+				if (current_token->Is(KW_enum))
+				{
+					ParseEnum(decl_spec);
+				}
+				else if (typedef_type)
 				{
 					decl_spec.qtype = *typedef_type;
 					++current_token;
@@ -1493,7 +1554,7 @@ namespace lucc
 	{
 		if ((current_token + offset)->Is(TokenKind::identifier))
 		{
-			Symbol* sym = ctx.identifier_sym_table->LookUp((current_token + offset)->GetIdentifier());
+			VarSymbol* sym = ctx.identifier_sym_table->LookUp((current_token + offset)->GetIdentifier());
 			return sym ? sym->storage == Storage::Typedef : false;
 		}
 		return (current_token + offset)->IsDeclSpec();

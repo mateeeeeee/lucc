@@ -281,11 +281,22 @@ TEST(Misc, Constexpr)
 }
 TEST(Misc, Enum)
 {
+	EXPECT_EQ(0, LUCC_EX(enum { zero, one, two }; return zero;));
+	EXPECT_EQ(1, LUCC_EX(enum { zero, one, two }; return one;));
+	EXPECT_EQ(2, LUCC_EX(enum { zero, one, two }; return two;));
+	EXPECT_EQ(5, LUCC_EX(enum { five = 5, six, seven }; return five;));
+	EXPECT_EQ(6, LUCC_EX(enum { five = 5, six, seven }; return six; ));
+	EXPECT_EQ(0, LUCC_EX(enum { zero, five = 5, three = 3, four }; return zero;));
+	EXPECT_EQ(5, LUCC_EX(enum { zero, five = 5, three = 3, four }; return five;));
+	EXPECT_EQ(3, LUCC_EX(enum { zero, five = 5, three = 3, four }; return three;));
+	EXPECT_EQ(4, LUCC_EX(enum { zero, five = 5, three = 3, four }; return four;));
+	EXPECT_EQ(4, LUCC_EX(enum { zero, one, two } x; return sizeof(x);));
+	EXPECT_EQ(4, LUCC_EX(enum t { zero, one, two }; enum t y; return sizeof(y);));
 
 }
 TEST(Misc, Cast)
 {
-	EXPECT_EQ(0, LUCC_EX(int a = 5; int* b = &a; int c = (int)b; return 0; ));
 	EXPECT_EQ(COMPILATION_FAILED, LUCC_EX(int a = 5; int* b = &a; int c = b; return 0; ));
+	EXPECT_EQ(0, LUCC_EX(int a = 5; int* b = &a; int c = (int)b; return 0; ));
 }
 

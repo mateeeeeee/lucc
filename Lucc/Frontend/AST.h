@@ -122,21 +122,21 @@ namespace lucc
 	{
 	public:
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
-		void SetSymbol(Symbol* _sym) { sym = *_sym; }
+		void SetSymbol(VarSymbol* _sym) { sym = *_sym; }
 
 		std::string_view GetName() const { return name; }
 		SourceLocation const& GetLocation() const { return loc; }
 		QualifiedType const& GetType() const { return sym.qtype;}
 		DeclKind GetDeclKind() const { return kind; }
 		Storage GetStorage() const { return sym.storage; }
-		Symbol const& GetSymbol() const { return sym; }
+		VarSymbol const& GetSymbol() const { return sym; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	protected:
 		std::string name;
 		SourceLocation loc;
-		Symbol sym;
+		VarSymbol sym;
 		DeclKind kind;
 
 	protected:
@@ -810,10 +810,10 @@ namespace lucc
 	class VarDeclRefAST : public IdentifierAST
 	{
 	public:
-		VarDeclRefAST(Symbol* symbol, SourceLocation const& loc) : IdentifierAST(symbol->name, loc, symbol->qtype),
+		VarDeclRefAST(VarSymbol* symbol, SourceLocation const& loc) : IdentifierAST(symbol->name, loc, symbol->qtype),
 			symbol(*symbol), local_offset(0) {}
 
-		Symbol const& GetSymbol() const { return symbol; }
+		VarSymbol const& GetSymbol() const { return symbol; }
 		bool IsGlobal() const { return symbol.global; }
 		void SetLocalOffset(int32 _local_offset) const { local_offset = _local_offset; }
 		int32 GetLocalOffset() const { return local_offset; }
@@ -822,7 +822,7 @@ namespace lucc
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		Symbol symbol;
+		VarSymbol symbol;
 		mutable int32 local_offset;
 	};
 

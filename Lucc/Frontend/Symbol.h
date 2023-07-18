@@ -24,32 +24,38 @@ namespace lucc
 		Invalid
 	};
 
-	struct Symbol
+	struct VarSymbol
 	{
 		std::string name = "";
 		QualifiedType qtype = builtin_types::Int;
 		Storage storage = Storage::None;
 		bool global = false;	
 
-		Symbol() = default;
-		Symbol(Symbol const&) = default;
-		Symbol(std::string const& name, QualifiedType const& qtype, Storage storage = Storage::None, bool global = false)
-			: name(name), qtype(qtype), storage(storage), global(global) {}
+		bool is_enum = false;
+		int32 enum_value = 0;
 
-		friend bool operator==(Symbol const& sym1, Symbol const& sym2)
-		{
-			return sym1.id == sym2.id;
-		}
-		friend bool operator!=(Symbol const& sym1, Symbol const& sym2)
-		{
-			return !(sym1 == sym2);
-		}
-
-	private:
-		friend class ScopeTable;
 		mutable uint64 id = 0;
 	};
 
+	inline bool operator==(VarSymbol const& sym1, VarSymbol const& sym2)
+	{
+		return sym1.id == sym2.id;
+	}
+	inline bool operator!=(VarSymbol const& sym1, VarSymbol const& sym2)
+	{
+		return !(sym1 == sym2);
+	}
+
+	struct TagSymbol
+	{
+		std::string name = "";
+		QualifiedType type;
+		bool enum_type;
+
+		mutable uint64 id = 0;
+	};
+
+	template<typename SymType>
 	class ScopeTable
 	{
 		inline static uint64 id = 0;
@@ -57,20 +63,15 @@ namespace lucc
 		explicit ScopeTable(uint32 scope_id) : scope_id(scope_id) {}
 		uint32 GetScope() const { return scope_id; }
 
-		bool InsertSymbol(Symbol const& symbol)
+		bool Insert(SymType const& symbol)
 		{
 			if (scope_sym_table.contains(symbol.name)) return false;
 			symbol.id = id++;
 			scope_sym_table[symbol.name] = symbol;
 			return true;
 		}
-		template<typename... Args> requires std::is_constructible_v<Symbol,Args...>
-		bool Insert(Args&&... args)
-		{
-			return InsertSymbol(Symbol(std::forward<Args>(args)...));
-		}
 
-		Symbol* LookUp(std::string const& sym_name)
+		SymType* LookUp(std::string const& sym_name)
 		{
 			if (scope_sym_table.contains(sym_name)) return &scope_sym_table[sym_name];
 			else return nullptr;
@@ -79,9 +80,10 @@ namespace lucc
 
 	private:
 		uint32 const scope_id;
-		std::unordered_map<std::string, Symbol> scope_sym_table;
+		std::unordered_map<std::string, SymType> scope_sym_table;
 	};
 
+	template<typename SymType>
 	class SymbolTable
 	{
 	public:
@@ -99,25 +101,20 @@ namespace lucc
 			--scope_id;
 		}
 
-		bool Insert(Symbol const& symbol)
+		bool Insert(SymType const& symbol)
 		{
 			return scopes.back().Insert(symbol);
 		}
-		template <typename... Args> 
-		bool Insert(Args&&... args)
-		{
-			return scopes.back().Insert(std::forward<Args>(args)...);
-		}
 		
-		Symbol* LookUp(std::string const& sym_name)
+		SymType* LookUp(std::string const& sym_name)
 		{
 			for (auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope)
 			{
-				if (Symbol* sym = scope->LookUp(sym_name)) return sym;
+				if (SymType* sym = scope->LookUp(sym_name)) return sym;
 			}
 			return nullptr;
 		}
-		Symbol* LookUp(std::string_view sym_name)
+		SymType* LookUp(std::string_view sym_name)
 		{
 			return LookUp(std::string(sym_name));
 		}
@@ -125,7 +122,7 @@ namespace lucc
 		bool IsGlobal() const { return scopes.size() == 1; }
 
 	private:
-		std::vector<ScopeTable> scopes;
+		std::vector<ScopeTable<SymType>> scopes;
 		uint32 scope_id = 0;
 	};
 }	

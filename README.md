@@ -30,10 +30,11 @@ No optimization passes are performed, the assembly is generated from AST travers
   * functions
   * scopes
   * casts & conversions
+  * enums
 
 ## Todo
   * postprocessor: #if,#elif, macro functions
-  * tags (structs, unions, enums)
+  * tags (structs, unions)
   * floating point numbers
  
 ## Not planned

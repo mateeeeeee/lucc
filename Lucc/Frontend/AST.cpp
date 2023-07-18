@@ -603,7 +603,7 @@ namespace lucc
 		}
 		else
 		{
-			Symbol const& symbol = GetSymbol();
+			VarSymbol const& symbol = GetSymbol();
 			if (IsArrayType(symbol.qtype))
 			{
 				ArrayDeclCG array_decl{};
@@ -617,14 +617,8 @@ namespace lucc
 				array_decl.align = arr_type.GetElementType()->GetAlign();
 				array_decl.bits = GetBitCount(arr_type.GetElementType()->GetSize());
 
-				if (init_expr)
-				{
-					//#todo array initialization
-				}
-				else
-				{
-					ctx.DeclareArray(array_decl);
-				}
+				if (init_expr); //#todo array initialization
+				else ctx.DeclareArray(array_decl);
 			}
 			else
 			{
@@ -642,10 +636,7 @@ namespace lucc
 						int64 init_value = init_expr->EvaluateConstexpr();
 						var_decl.init_value = &init_value;
 					}
-					else
-					{
-						//#todo address of another global variable, dereference of another pointer global variable
-					}
+					else {} //#todo address of another global variable, dereference of another pointer global variable
 				}
 				ctx.DeclareVariable(var_decl);
 			}
@@ -1528,7 +1519,7 @@ namespace lucc
 		}
 
 		uint32 pushed_args = 0;
-		for (int32 i = func_args.size() - 1; i >= std::min(func_args.size(), ARGUMENTS_PASSED_BY_REGISTERS); --i)
+		for (int32 i = (int32)func_args.size() - 1; i >= std::min(func_args.size(), ARGUMENTS_PASSED_BY_REGISTERS); --i)
 		{
 			Register arg_reg = ctx.AllocateRegister();
 			func_args[i]->Codegen(ctx, &arg_reg);
