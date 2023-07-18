@@ -15,6 +15,7 @@ namespace lucc
 	class BinaryExprAST;
 	class TernaryExprAST;
 	class CastExprAST;
+	class ImplicitCastExprAST;
 	class FunctionCallAST;
 	class IntLiteralAST;
 	class StringLiteralAST;
@@ -125,8 +126,10 @@ namespace lucc
 
 		std::string_view GetName() const { return name; }
 		SourceLocation const& GetLocation() const { return loc; }
-		Symbol const& GetSymbol() const { return sym; }
+		QualifiedType const& GetType() const { return sym.qtype;}
 		DeclKind GetDeclKind() const { return kind; }
+		Storage GetStorage() const { return sym.storage; }
+		Symbol const& GetSymbol() const { return sym; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
@@ -649,39 +652,7 @@ namespace lucc
 		std::unique_ptr<ExprAST> operand;
 
 	private:
-		void SetExpressionType()
-		{
-			QualifiedType const& op_type = operand->GetType();
-			switch (op)
-			{
-			case UnaryExprKind::PreIncrement:
-			case UnaryExprKind::PreDecrement:
-			case UnaryExprKind::PostIncrement:
-			case UnaryExprKind::PostDecrement:
-				SetType(IncDecOperatorType(op_type));
-				break;
-			case UnaryExprKind::Plus:
-			case UnaryExprKind::Minus:
-				SetType(PlusMinusOperatorType(op_type));
-				break;
-			case UnaryExprKind::BitNot:
-				SetType(BitNotOperatorType(op_type));
-				break;
-			case UnaryExprKind::LogicalNot:
-				SetType(LogicalNotOperatorType(op_type));
-				break;
-			case UnaryExprKind::Dereference:
-				SetType(DereferenceOperatorType(op_type));
-				if (!IsFunctionType(GetType())) SetValueCategory(ExprValueCategory::LValue);
-				break;
-			case UnaryExprKind::AddressOf:
-				LU_ASSERT(operand->IsLValue() || IsFunctionType(op_type));
-				SetType(AddressOfOperatorType(op_type));
-				break;
-			default:
-				LU_ASSERT(false);
-			}
-		}
+		void SetExpressionType();
 	};
 	class BinaryExprAST : public ExprAST
 	{
@@ -706,43 +677,7 @@ namespace lucc
 		BinaryExprKind op;
 
 	private:
-		void SetExpressionType()
-		{
-			switch (op)
-			{
-			case BinaryExprKind::Assign:
-				SetType(AsIfByAssignment(rhs->GetType(), lhs->GetType())); break;
-			case BinaryExprKind::Add:
-			case BinaryExprKind::Subtract:
-				SetType(AdditiveOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Subtract));  break;
-			case BinaryExprKind::Multiply:
-			case BinaryExprKind::Divide:
-			case BinaryExprKind::Modulo:
-				SetType(MultiplicativeOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Modulo));  break;
-			case BinaryExprKind::ShiftLeft:
-			case BinaryExprKind::ShiftRight:
-				SetType(ShiftOperatorType(lhs->GetType(), rhs->GetType())); break;
-			case BinaryExprKind::LogicalAnd:
-			case BinaryExprKind::LogicalOr:
-				SetType(LogicOperatorType(lhs->GetType(), rhs->GetType())); break;
-			case BinaryExprKind::BitAnd:
-			case BinaryExprKind::BitOr:
-			case BinaryExprKind::BitXor:
-				SetType(BitLogicOperatorType(lhs->GetType(), rhs->GetType())); break;
-			case BinaryExprKind::Equal:
-			case BinaryExprKind::NotEqual:
-				SetType(EqualityOperatorType(lhs->GetType(), rhs->GetType())); break;
-			case BinaryExprKind::Less:
-			case BinaryExprKind::Greater:
-			case BinaryExprKind::LessEqual:
-			case BinaryExprKind::GreaterEqual:
-				SetType(RelationOperatorType(lhs->GetType(), rhs->GetType())); break;
-			case BinaryExprKind::Comma:
-				SetType(ValueTransformation(rhs->GetType())); break;
-			default:
-				LU_ASSERT(false);
-			}
-		}
+		void SetExpressionType();
 	};
 	class TernaryExprAST : public ExprAST
 	{
@@ -822,10 +757,15 @@ namespace lucc
 	class CastExprAST : public ExprAST
 	{
 	public:
-		CastExprAST(SourceLocation const& loc, QualifiedType const& qtype) : ExprAST(ExprKind::Cast, loc, qtype), operand(nullptr) {}
+		CastExprAST(SourceLocation const& loc, QualifiedType const& qtype) 
+			: ExprAST(ExprKind::Cast, loc, qtype), operand(nullptr) 
+		{
+			SetValueCategory(ExprValueCategory::RValue);
+		}
 		void SetOperand(std::unique_ptr<ExprAST>&& _operand)
 		{
 			operand = std::move(_operand);
+			SetCastType();
 		}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
@@ -833,6 +773,22 @@ namespace lucc
 
 	private:
 		std::unique_ptr<ExprAST> operand;
+
+	private:
+		//// C11 6.5.4 Cast operators
+		/*
+		Otherwise, if type-name is exactly the type of expression, nothing is done
+		Otherwise, the value of expression is converted to the type named by type-name, as follows:
+
+		Every implicit conversion as if by assignment is allowed.
+
+		In addition to the implicit conversions, the following conversions are allowed:
+		Any integer can be cast to any pointer type. Except for the null pointer constants such as NULL (which doesn't need a cast), the result is implementation-defined, may not be correctly aligned, may not point to an object of the referenced type, and may be a trap representation.
+		Any pointer type can be cast to any integer type. The result is implementation-defined, even for null pointer values (they do not necessarily result in the value zero). If the result cannot be represented in the target type, the behavior is undefined (unsigned integers do not implement modulo arithmetic on a cast from pointer)
+		Any pointer to function can be cast to a pointer to any other function type. If the resulting pointer is converted back to the original type, it compares equal to the original value. If the converted pointer is used to make a function call, the behavior is undefined (unless the function types are compatible)
+		When casting between pointers (either object or function), if the original value is a null pointer value of its type, the result is the correct null pointer value for the target type.
+		*/
+		void SetCastType();
 	};
 
 	class IdentifierAST : public ExprAST
@@ -893,5 +849,27 @@ namespace lucc
 	To const* AstCast(From const* from)
 	{
 		return static_cast<To const*>(from);
+	}
+
+	inline std::unique_ptr<ExprAST> GetAssignExpr(std::unique_ptr<ExprAST>&& init_expr, QualifiedType const& type)
+	{
+		QualifiedType expr_type = ValueTransformation(init_expr->GetType());
+		QualifiedType ret_type = RemoveQualifiers(type);
+		if (expr_type->IsCompatible(ret_type)) return init_expr;
+		QualifiedType assign_type = AsIfByAssignment(expr_type, ret_type);
+		std::unique_ptr<CastExprAST> cast_expr = std::make_unique<CastExprAST>(init_expr->GetLocation(), assign_type);
+		cast_expr->SetOperand(std::move(init_expr));
+		return cast_expr;
+	}
+	inline std::unique_ptr<ExprStmtAST> GetAssignExprStmt(std::unique_ptr<ExprStmtAST>&& init_expr, QualifiedType const& type)
+	{
+		QualifiedType expr_type = ValueTransformation(init_expr->GetExpr()->GetType());
+		QualifiedType ret_type = RemoveQualifiers(type);
+		if (expr_type->IsCompatible(ret_type)) return init_expr;
+		QualifiedType assign_type = AsIfByAssignment(expr_type, ret_type);
+		std::unique_ptr<CastExprAST> cast_expr = std::make_unique<CastExprAST>(init_expr->GetExpr()->GetLocation(), assign_type);
+		std::unique_ptr<ExprAST> expr(init_expr.release()->GetExpr());
+		cast_expr->SetOperand(std::move(expr));
+		return std::make_unique<ExprStmtAST>(std::move(cast_expr));
 	}
 }

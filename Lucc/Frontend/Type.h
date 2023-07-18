@@ -232,7 +232,7 @@ namespace lucc
 
 	public:
 		constexpr explicit ArithmeticType(ArithmeticFlags flags, bool is_unsigned = false)
-			: Type(PrimitiveTypeKind::Arithmetic, true), flags(flags)
+			: Type(PrimitiveTypeKind::Arithmetic, true), flags(flags), is_unsigned(is_unsigned)
 		{
 			if ((flags & Short) || (flags & Long) || (flags & LongLong)) flags &= ~Int;
 			switch (flags)
@@ -283,7 +283,6 @@ namespace lucc
 
 	private:
 	};
-	using EnumType = ArithmeticType;
 
 	struct FunctionParameter
 	{
@@ -397,7 +396,7 @@ namespace lucc
 	{
 		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(PrimitiveTypeKind::Function);;
 	}
-	inline bool IsObjPtrType(Type const& type)
+	inline bool IsObjectPointerType(Type const& type)
 	{
 		return !IsFunctionPointerType(type);
 	}
@@ -432,6 +431,7 @@ namespace lucc
 		static constexpr ArithmeticType Float = ArithmeticType(ArithmeticType::Float);
 		static constexpr ArithmeticType Double = ArithmeticType(ArithmeticType::Double);
 		static constexpr ArithmeticType LongDouble = ArithmeticType(ArithmeticType::Double | ArithmeticType::Long);
+		static constexpr ArithmeticType Enum = Int;
 	}
 
 	inline QualifiedType RemoveQualifiers(QualifiedType const& qtype)

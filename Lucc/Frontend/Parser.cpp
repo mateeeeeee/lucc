@@ -149,15 +149,9 @@ namespace lucc
 				if (Consume(TokenKind::equal))
 				{
 					std::unique_ptr<ExprAST> init_expr = ParseExpression();
-					if (is_global)
-					{
-						if (init_expr->GetExprKind() != ExprKind::IntLiteral) //#todo
-						{
-							Report(diag::initializer_element_is_not_constant);
-							return {};
-						}
-					}
-					var_decl->SetInitExpression(std::move(init_expr));
+					if (is_global && init_expr->GetExprKind() != ExprKind::IntLiteral) Report(diag::initializer_element_is_not_constant);
+					std::unique_ptr<ExprAST> init_expr_casted = GetAssignExpr(std::move(init_expr), declaration_info.qtype);
+					var_decl->SetInitExpression(std::move(init_expr_casted));
 				}
 				decls.push_back(std::move(var_decl));
 			}
@@ -231,7 +225,7 @@ namespace lucc
 			std::unique_ptr<CompoundStmtAST> compound_stmt = ParseCompoundStatement();
 			func_decl->SetFunctionBody(std::move(compound_stmt));
 
-			if (ctx.current_func_type->GetReturnType()->IsNot(PrimitiveTypeKind::Void) && !ctx.return_stmt_encountered)
+			if (func_name != "main" && ctx.current_func_type->GetReturnType()->IsNot(PrimitiveTypeKind::Void) && !ctx.return_stmt_encountered)
 			{
 				Report(diag::return_not_found);
 				return nullptr;
@@ -398,14 +392,9 @@ namespace lucc
 		std::unique_ptr<ExprStmtAST> ret_expr_stmt = ParseExpressionStatement();
 		ExprAST* ret_expr = ret_expr_stmt->GetExpr();
 		QualifiedType ret_type = ctx.current_func_type->GetReturnType();
-
-		if (!ret_type->IsCompatible(ret_expr->GetType()))
-		{
-			Report(diag::return_type_mismatch);
-			return nullptr;
-		}
 		ctx.return_stmt_encountered = true;
-		return std::make_unique<ReturnStmtAST>(std::move(ret_expr_stmt));
+		std::unique_ptr<ExprStmtAST> ret_expr_cast = GetAssignExprStmt(std::move(ret_expr_stmt), ret_type);
+		return std::make_unique<ReturnStmtAST>(std::move(ret_expr_cast));
 	}
 
 	std::unique_ptr<BreakStmtAST> Parser::ParseBreakStatement()
@@ -780,18 +769,6 @@ namespace lucc
 
 	//<cast - expression> :: = <unary - expression>
 	//					   | (<type - name>) < cast - expression >
-	/*
-	Otherwise, if type-name is exactly the type of expression, nothing is done
-	Otherwise, the value of expression is converted to the type named by type-name, as follows:
-
-	Every implicit conversion as if by assignment is allowed.
-
-	In addition to the implicit conversions, the following conversions are allowed:
-	Any integer can be cast to any pointer type. Except for the null pointer constants such as NULL (which doesn't need a cast), the result is implementation-defined, may not be correctly aligned, may not point to an object of the referenced type, and may be a trap representation.
-	Any pointer type can be cast to any integer type. The result is implementation-defined, even for null pointer values (they do not necessarily result in the value zero). If the result cannot be represented in the target type, the behavior is undefined (unsigned integers do not implement modulo arithmetic on a cast from pointer)
-	Any pointer to function can be cast to a pointer to any other function type. If the resulting pointer is converted back to the original type, it compares equal to the original value. If the converted pointer is used to make a function call, the behavior is undefined (unless the function types are compatible)
-	When casting between pointers (either object or function), if the original value is a null pointer value of its type, the result is the correct null pointer value for the target type.
-	*/
 	std::unique_ptr<ExprAST> Parser::ParseCastExpression()
 	{
 		if (current_token->Is(TokenKind::left_round) && IsTokenTypename(1))
@@ -919,21 +896,29 @@ namespace lucc
 			uint32 arg_index = 0;
 			if (!Consume(TokenKind::right_round))
 			{
+				bool variadic_args = false;
 				while (true)
 				{
 					std::unique_ptr<ExprAST> arg_expr = ParseAssignmentExpression();
-					if (arg_index >= func_params.size() || !arg_expr->GetType()->IsCompatible(func_params[arg_index].qtype))
+					if (arg_index >= func_params.size())
 					{
-						Report(diag::invalid_function_call);
-						return nullptr;
+						if (!func_type.IsVariadic())
+						{
+							Report(diag::invalid_function_call);
+							return nullptr;
+						}
+						else variadic_args = true;
 					}
+
+					if (!variadic_args) arg_expr = GetAssignExpr(std::move(arg_expr), func_params[arg_index].qtype);
 					func_call_expr->AddArgument(std::move(arg_expr));
 					++arg_index;
+
 					if (Consume(TokenKind::right_round)) break;
 					Expect(TokenKind::comma);
 				}
 			}
-			if (func_params.size() != arg_index)
+			if (!func_type.IsVariadic() && func_params.size() != arg_index)
 			{
 				Report(diag::invalid_function_call);
 				return nullptr;
@@ -1407,6 +1392,7 @@ namespace lucc
 		{
 			PointerType ptr_type(type);
 			type.SetRawType(ptr_type);
+			type.RemoveQualifiers();
 			if (current_token->Is(TokenKind::KW_const))
 			{
 				type.AddConst();

@@ -6,7 +6,7 @@ namespace lucc
 
 	bool ArithmeticType::IsCompatible(Type const& other) const
 	{
-		return IsArithmeticType(other) ? true : false;
+		return IsArithmeticType(other) ? flags == other.As<ArithmeticType>().flags && is_unsigned == other.As<ArithmeticType>().is_unsigned : false;
 	}
 
 	bool FunctionType::IsCompatible(Type const& other) const

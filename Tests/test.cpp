@@ -251,6 +251,8 @@ TEST(Misc, Sizeof)
 TEST(Misc, Const)
 {
 	EXPECT_EQ(LUCC_EX(const int i = 0; i = 5; return i;), COMPILATION_FAILED);
+	EXPECT_EQ(LUCC_EX(int a = 5; int b = 10; int const* c = &a; c = &b; return *c;), 10);
+	EXPECT_EQ(LUCC_EX(int a = 5; int b = 10; int* const c = &a; c = &b; return *c;), COMPILATION_FAILED);
 }
 TEST(Misc, Constexpr)
 {
@@ -283,9 +285,7 @@ TEST(Misc, Enum)
 }
 TEST(Misc, Cast)
 {
-
+	EXPECT_EQ(0, LUCC_EX(int a = 5; int* b = &a; int c = (int)b; return 0; ));
+	EXPECT_EQ(COMPILATION_FAILED, LUCC_EX(int a = 5; int* b = &a; int c = b; return 0; ));
 }
-TEST(Misc, Conversion)
-{
 
-}

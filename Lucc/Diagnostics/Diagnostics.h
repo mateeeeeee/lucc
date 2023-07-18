@@ -27,4 +27,5 @@ namespace lucc::diag
 
 	void Report(Code code, SourceLocation const& loc);
 	void Report(Code code);
+	void SetLocation(SourceLocation const& loc);
 }

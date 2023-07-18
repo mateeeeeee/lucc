@@ -38,6 +38,7 @@ namespace lucc::diag
 
 		bool error_reported = false;
 		DiagSettings settings;
+		SourceLocation loc;
 		std::vector<std::ostream*> output_streams;
 	}
 
@@ -64,10 +65,13 @@ namespace lucc::diag
 
 	void Report(Code code)
 	{
-		DiagKind dclass = diag_kinds[code];
-		std::string output = std::format("[Diagnostics][{}]: {}\n", ToString(dclass), diag_msgs[code]);
-		for (auto* os : output_streams) *os << output;
-		if (dclass == DiagKind::error) std::exit(COMPILATION_FAILED);
+		Report(code, loc);
 	}
+
+	void SetLocation(SourceLocation const& _loc)
+	{
+		loc = _loc;
+	}
+
 }
 

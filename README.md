@@ -29,10 +29,9 @@ No optimization passes are performed, the assembly is generated from AST travers
   * constant folding
   * functions
   * scopes
-  * .dll and .lib using MSVC link.exe/lib.exe
+  * casts & conversions
 
 ## Todo
-  * casts, conversions
   * postprocessor: #if,#elif, macro functions
   * tags (structs, unions, enums)
   * floating point numbers

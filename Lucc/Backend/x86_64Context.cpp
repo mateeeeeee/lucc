@@ -412,7 +412,7 @@ namespace lucc
 	void x86_64Context::Movsxd(Register lhs, ResultRef rhs)
 	{
 		LU_ASSERT(rhs.kind != ResultKind::Immediate);
-		Emit<Text>("movsx\t{}, {}", GetRegisterName(lhs, BitCount_64), ConvertOperand(rhs, BitCount_32));
+		Emit<Text>("movsxd\t{}, {}", GetRegisterName(lhs, BitCount_64), ConvertOperand(rhs, BitCount_32));
 	}
 
 	void x86_64Context::Lea(Register reg, ResultRef op)

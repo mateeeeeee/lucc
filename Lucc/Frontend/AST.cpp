@@ -11,14 +11,14 @@ namespace lucc
 		template<typename T>
 		inline T AlignTo(T n, T align) { return (n + align - 1) / align * align; }
 
-		//#todo casts: binary expr -> assignment, variable intialization, return statement, function parameters init
+		//#todo casts: binary expr -> assignment, variable intialization, function parameters init
 		namespace cast
 		{
-			enum CastTypeId
+			enum CastTableIdx
 			{
 				i8, i16, i32, i64, u8, u16, u32, u64, CastTypeCount
 			};
-			CastTypeId GetCastTypeId(QualifiedType const& type)
+			CastTableIdx _GetCastTableIdx(QualifiedType const& type)
 			{
 				LU_ASSERT(IsScalarType(type));
 				if (IsArithmeticType(type))
@@ -28,14 +28,14 @@ namespace lucc
 					switch (flags)
 					{
 					case ArithmeticType::Bool: 
-					case ArithmeticType::Char: return arith_type.IsUnsigned() ? CastTypeId::u8 : CastTypeId::i8;
-					case ArithmeticType::Short: return arith_type.IsUnsigned() ? CastTypeId::u16 : CastTypeId::i16;
+					case ArithmeticType::Char: return arith_type.IsUnsigned() ? CastTableIdx::u8 : CastTableIdx::i8;
+					case ArithmeticType::Short: return arith_type.IsUnsigned() ? CastTableIdx::u16 : CastTableIdx::i16;
 					case ArithmeticType::Int:  
-					case ArithmeticType::Long: return arith_type.IsUnsigned() ? CastTypeId::u32 : CastTypeId::i32;
-					case ArithmeticType::LongLong: return arith_type.IsUnsigned() ? CastTypeId::u64 : CastTypeId::i64;
+					case ArithmeticType::Long: return arith_type.IsUnsigned() ? CastTableIdx::u32 : CastTableIdx::i32;
+					case ArithmeticType::LongLong: return arith_type.IsUnsigned() ? CastTableIdx::u64 : CastTableIdx::i64;
 					}
 				}
-				return CastTypeId::u64;
+				return CastTableIdx::u64;
 			}
 
 			enum MovType
@@ -53,18 +53,18 @@ namespace lucc
 				{NoMov, NoMov, NoMov, Movsxd, Movzx, Movzx, NoMov, Movsxd },  // i8
 				{Movsx, NoMov, NoMov, Movsxd, Movzx, Movzx, NoMov, Movsxd },  // i16
 				{Movsx, Movsx, NoMov, Movsxd, Movzx, Movzx, NoMov, Movsxd },  // i32
-				{Movsx, Movsx, NoMov, NoMov,  Movzx, Movzx, NoMov, NoMov  }, // i64
+				{Movsx, Movsx, NoMov, NoMov,  Movzx, Movzx, NoMov, NoMov  },  // i64
 
 				{Movsx, NoMov, NoMov, Movsxd, NoMov, NoMov, NoMov, Movsxd },  // u8
 				{Movsx, Movsx, NoMov, Movsxd, Movzx, NoMov, NoMov, Movsxd },  // u16
-				{Movsx, Movsx, NoMov, Mov,	  Movzx, Movzx, NoMov, Mov	 },		// u32
-				{Movsx, Movsx, NoMov, NoMov,  Movzx, Movzx, NoMov, NoMov  }, // u64
+				{Movsx, Movsx, NoMov, Mov,	  Movzx, Movzx, NoMov, Mov	 },	  // u32
+				{Movsx, Movsx, NoMov, NoMov,  Movzx, Movzx, NoMov, NoMov  },  // u64
 			};
 
 			MovType GetCastMovType(QualifiedType const& from, QualifiedType const& to)
 			{
-				CastTypeId from_type = GetCastTypeId(from);
-				CastTypeId to_type = GetCastTypeId(to);
+				CastTableIdx from_type = _GetCastTableIdx(from);
+				CastTableIdx to_type = _GetCastTableIdx(to);
 				return cast_table[to_type][from_type];
 			}
 		}
@@ -403,6 +403,120 @@ namespace lucc
 		return value;
 	}
 
+	/// Expression types
+
+	void UnaryExprAST::SetExpressionType()
+	{
+		diag::SetLocation(loc);
+		QualifiedType const& op_type = operand->GetType();
+		switch (op)
+		{
+		case UnaryExprKind::PreIncrement:
+		case UnaryExprKind::PreDecrement:
+		case UnaryExprKind::PostIncrement:
+		case UnaryExprKind::PostDecrement:
+			SetType(IncDecOperatorType(op_type));
+			break;
+		case UnaryExprKind::Plus:
+		case UnaryExprKind::Minus:
+			SetType(PlusMinusOperatorType(op_type));
+			break;
+		case UnaryExprKind::BitNot:
+			SetType(BitNotOperatorType(op_type));
+			break;
+		case UnaryExprKind::LogicalNot:
+			SetType(LogicalNotOperatorType(op_type));
+			break;
+		case UnaryExprKind::Dereference:
+			SetType(DereferenceOperatorType(op_type));
+			if (!IsFunctionType(GetType())) SetValueCategory(ExprValueCategory::LValue);
+			break;
+		case UnaryExprKind::AddressOf:
+			LU_ASSERT(operand->IsLValue() || IsFunctionType(op_type));
+			SetType(AddressOfOperatorType(op_type));
+			break;
+		default:
+			LU_ASSERT(false);
+		}
+	}
+
+	void BinaryExprAST::SetExpressionType()
+	{
+		diag::SetLocation(loc);
+		switch (op)
+		{
+		case BinaryExprKind::Assign:
+		{
+			rhs = GetAssignExpr(std::move(rhs), lhs->GetType());
+			SetType(rhs->GetType()); break;
+		}
+		case BinaryExprKind::Add:
+		case BinaryExprKind::Subtract:
+			SetType(AdditiveOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Subtract));  break;
+		case BinaryExprKind::Multiply:
+		case BinaryExprKind::Divide:
+		case BinaryExprKind::Modulo:
+			SetType(MultiplicativeOperatorType(lhs->GetType(), rhs->GetType(), op == BinaryExprKind::Modulo));  break;
+		case BinaryExprKind::ShiftLeft:
+		case BinaryExprKind::ShiftRight:
+			SetType(ShiftOperatorType(lhs->GetType(), rhs->GetType())); break;
+		case BinaryExprKind::LogicalAnd:
+		case BinaryExprKind::LogicalOr:
+			SetType(LogicOperatorType(lhs->GetType(), rhs->GetType())); break;
+		case BinaryExprKind::BitAnd:
+		case BinaryExprKind::BitOr:
+		case BinaryExprKind::BitXor:
+			SetType(BitLogicOperatorType(lhs->GetType(), rhs->GetType())); break;
+		case BinaryExprKind::Equal:
+		case BinaryExprKind::NotEqual:
+			SetType(EqualityOperatorType(lhs->GetType(), rhs->GetType())); break;
+		case BinaryExprKind::Less:
+		case BinaryExprKind::Greater:
+		case BinaryExprKind::LessEqual:
+		case BinaryExprKind::GreaterEqual:
+			SetType(RelationOperatorType(lhs->GetType(), rhs->GetType())); break;
+		case BinaryExprKind::Comma:
+			SetType(ValueTransformation(rhs->GetType())); break;
+		default:
+			LU_ASSERT(false);
+		}
+	}
+
+	void CastExprAST::SetCastType()
+	{
+		QualifiedType operand_type = ValueTransformation(operand->GetType());
+		if (IsVoidType(GetType()))
+		{
+			// If the target type is void, then expression is evaluated for its
+			// side-effects and its returned value is discarded.
+		}
+		else if (!IsScalarType(GetType()))
+		{
+			Report(diag::cast_invalid_type);
+		}
+		else if (!IsScalarType(operand_type))
+		{
+			Report(diag::cast_invalid_type);
+		}
+		else if (IsPointerType(GetType()) && IsFloatingType(operand_type))
+		{
+			Report(diag::cast_invalid_type);
+		}
+		else if (IsPointerType(operand_type) && IsFloatingType(GetType()))
+		{
+			Report(diag::cast_invalid_type);
+		}
+		else
+		{
+			if ((IsObjectPointerType(GetType()) && IsFunctionPointerType(operand_type)) ||
+				(IsObjectPointerType(operand_type) && IsFunctionPointerType(GetType())))
+			{
+
+			}
+			SetType(RemoveQualifiers(GetType()));
+		}
+	}
+
 	/// Misc
 	void FunctionDeclAST::AssignLocalOffsets()
 	{
@@ -706,7 +820,7 @@ namespace lucc
 						int32 local_offset = decl_ref->GetLocalOffset();
 						Result res(Register::RBP, local_offset);
 						Register tmp_reg = ctx.AllocateRegister();
-						ctx.Lea(tmp_reg, tmp_reg);
+						ctx.Lea(tmp_reg, res);
 						if (op == UnaryExprKind::PreIncrement)	    ctx.Add(tmp_reg, type_size, BitCount_64);
 						else if (op == UnaryExprKind::PreDecrement) ctx.Sub(tmp_reg, type_size, BitCount_64);
 						if (result) ctx.Mov(*result, tmp_reg, BitCount_64);
@@ -1528,15 +1642,14 @@ namespace lucc
 		cast::MovType mov_type = cast::GetCastMovType(from_type, to_type);
 		switch (mov_type)
 		{
+		case cast::NoMov:
 		case cast::Mov:   ctx.Mov(cast_reg, tmp_reg, bitcount); break;
 		case cast::Movzx: ctx.Movzx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
 		case cast::Movsx: ctx.Movsx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
 		case cast::Movsxd:ctx.Movsxd(cast_reg, tmp_reg); break;
-		case cast::NoMov:
 		default: break;
 		}
 		ctx.FreeRegister(tmp_reg);
 		if (!result) ctx.FreeRegister(cast_reg);
 	}
-
 }
