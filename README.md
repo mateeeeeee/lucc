@@ -33,6 +33,7 @@ The assembly is generated from AST traversal. The name stands for "**L**ittle an
   * enums
 
 ## Todo
+  * local static variables
   * postprocessor: #if,#elif, macro functions
   * tags (structs, unions)
   * floating point numbers
