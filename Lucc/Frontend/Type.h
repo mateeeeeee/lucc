@@ -7,7 +7,7 @@
 
 namespace lucc
 {
-	enum class PrimitiveTypeKind : uint8
+	enum class TypeKind : uint8
 	{
 		Void,
 		Arithmetic,
@@ -27,11 +27,11 @@ namespace lucc
 		constexpr size_t GetAlign() const { return align; }
 		constexpr void SetAlign(size_t _align) { align = _align; }
 
-		PrimitiveTypeKind GetKind() const { return kind; }
-		bool Is(PrimitiveTypeKind t) const { return kind == t; }
-		bool IsNot(PrimitiveTypeKind t) const { return kind != t; }
+		TypeKind GetKind() const { return kind; }
+		bool Is(TypeKind t) const { return kind == t; }
+		bool IsNot(TypeKind t) const { return kind != t; }
 		template <typename... Ts>
-		bool IsOneOf(PrimitiveTypeKind t1, Ts... ts) const
+		bool IsOneOf(TypeKind t1, Ts... ts) const
 		{
 			if constexpr (sizeof...(Ts) == 0) return Is(t1);
 			else return Is(t1) || IsOneOf(ts...);
@@ -50,13 +50,13 @@ namespace lucc
 		virtual bool IsCompatible(Type const& other) const { return true; }
 
 	private:
-		PrimitiveTypeKind kind;
+		TypeKind kind;
 		size_t size;
 		size_t align;
 		mutable bool is_complete;
 
 	protected:
-		constexpr Type(PrimitiveTypeKind kind, bool is_complete,
+		constexpr Type(TypeKind kind, bool is_complete,
 			size_t size = 0, size_t align = 0)
 			: kind(kind), is_complete(is_complete), size(size), align(align) {}
 		constexpr void SetComplete() const { is_complete = true; }
@@ -164,10 +164,10 @@ namespace lucc
 	class VoidType : public Type
 	{
 	public:
-		constexpr VoidType() : Type{ PrimitiveTypeKind::Void, false } {}
+		constexpr VoidType() : Type{ TypeKind::Void, false } {}
 		virtual bool IsCompatible(Type const& other) const override
 		{
-			return other.Is(PrimitiveTypeKind::Void);
+			return other.Is(TypeKind::Void);
 		}
 	};
 
@@ -175,13 +175,13 @@ namespace lucc
 	{
 	public:
 		PointerType(QualifiedType const& pointee_qtype)
-			: Type{ PrimitiveTypeKind::Pointer, true, 8, 8 },
+			: Type{ TypeKind::Pointer, true, 8, 8 },
 			pointee_qtype{ pointee_qtype } {}
 
 		QualifiedType PointeeType() const { return pointee_qtype; }
 		virtual bool IsCompatible(Type const& other) const override
 		{
-			if (other.IsNot(PrimitiveTypeKind::Pointer)) return false;
+			if (other.IsNot(TypeKind::Pointer)) return false;
 			auto const& other_ptr = TypeCast<PointerType>(other);
 			return pointee_qtype->IsCompatible(other_ptr.pointee_qtype);
 		}
@@ -194,11 +194,11 @@ namespace lucc
 	{
 	public:
 		explicit ArrayType(QualifiedType const& base_qtype)
-			: Type(PrimitiveTypeKind::Array, false, 0, base_qtype->GetAlign()),
+			: Type(TypeKind::Array, false, 0, base_qtype->GetAlign()),
 			elem_type(base_qtype) {}
 
 		ArrayType(QualifiedType const& base_qtype, size_t arr_size)
-			: Type(PrimitiveTypeKind::Array, true, base_qtype->GetSize() * arr_size, base_qtype->GetAlign()),
+			: Type(TypeKind::Array, true, base_qtype->GetSize() * arr_size, base_qtype->GetAlign()),
 			elem_type(base_qtype), arr_size(arr_size) {}
 
 		QualifiedType GetElementType() const { return elem_type; }
@@ -212,7 +212,7 @@ namespace lucc
 
 		virtual bool IsCompatible(Type const& other) const override
 		{
-			if (other.IsNot(PrimitiveTypeKind::Array)) return false;
+			if (other.IsNot(TypeKind::Array)) return false;
 			auto const& other_arr = TypeCast<ArrayType>(other);
 			return (elem_type->IsCompatible(other_arr.elem_type) &&
 				(IsComplete() != elem_type->IsComplete() || arr_size == other_arr.arr_size));
@@ -246,7 +246,7 @@ namespace lucc
 
 	public:
 		constexpr explicit ArithmeticType(ArithmeticFlags flags, bool is_unsigned = false)
-			: Type(PrimitiveTypeKind::Arithmetic, true), flags(flags), is_unsigned(is_unsigned)
+			: Type(TypeKind::Arithmetic, true), flags(flags), is_unsigned(is_unsigned)
 		{
 			if ((flags & Short) || (flags & Long) || (flags & LongLong)) flags &= ~Int;
 			switch (flags)
@@ -313,7 +313,7 @@ namespace lucc
 	public:
 
 		FunctionType(QualifiedType const& return_qtype, std::span<FunctionParameter> param_types = {}, bool is_variadic = false)
-			: Type(PrimitiveTypeKind::Function, false),
+			: Type(TypeKind::Function, false),
 			return_qtype(return_qtype), param_types(param_types.begin(), param_types.end()), is_variadic(is_variadic), has_prototype(false) {}
 
 		bool IsInline() const { return specifier == FunctionSpecifier::Inline; }
@@ -340,19 +340,19 @@ namespace lucc
 		FunctionSpecifier specifier = FunctionSpecifier::None;
 	};
 
-	template<PrimitiveTypeKind K>
+	template<TypeKind K>
 	inline bool IsType(Type const& type)
 	{
 		return type.Is(K);
 	}
 
-	inline bool (*IsVoidType)(Type const& type)			= IsType<PrimitiveTypeKind::Void>;
-	inline bool (*IsArrayType)(Type const& type)		= IsType<PrimitiveTypeKind::Array>;
-	inline bool (*IsPointerType)(Type const& type)		= IsType<PrimitiveTypeKind::Pointer>;
-	inline bool (*IsArithmeticType)(Type const& type)	= IsType<PrimitiveTypeKind::Arithmetic>;
-	inline bool (*IsFunctionType)(Type const& type)		= IsType<PrimitiveTypeKind::Function>;
-	inline bool (*IsStructType)(Type const& type)		= IsType<PrimitiveTypeKind::Struct>;
-	inline bool (*IsUnionType)(Type const& type)		= IsType<PrimitiveTypeKind::Union>;
+	inline bool (*IsVoidType)(Type const& type)			= IsType<TypeKind::Void>;
+	inline bool (*IsArrayType)(Type const& type)		= IsType<TypeKind::Array>;
+	inline bool (*IsPointerType)(Type const& type)		= IsType<TypeKind::Pointer>;
+	inline bool (*IsArithmeticType)(Type const& type)	= IsType<TypeKind::Arithmetic>;
+	inline bool (*IsFunctionType)(Type const& type)		= IsType<TypeKind::Function>;
+	inline bool (*IsStructType)(Type const& type)		= IsType<TypeKind::Struct>;
+	inline bool (*IsUnionType)(Type const& type)		= IsType<TypeKind::Union>;
 
 	inline bool IsPointerLikeType(Type const& type)
 	{
@@ -360,7 +360,7 @@ namespace lucc
 	}
 	inline bool IsScalarType(Type const& type)
 	{
-		return type.IsOneOf(PrimitiveTypeKind::Arithmetic, PrimitiveTypeKind::Pointer);
+		return type.IsOneOf(TypeKind::Arithmetic, TypeKind::Pointer);
 	}
 	inline bool IsBoolType(ArithmeticType const& arithmetic_type)
 	{
@@ -368,7 +368,7 @@ namespace lucc
 	}
 	inline bool IsBoolType(Type const& type)
 	{
-		return type.Is(PrimitiveTypeKind::Arithmetic) ? IsBoolType(TypeCast<ArithmeticType>(type)) : false;
+		return type.Is(TypeKind::Arithmetic) ? IsBoolType(TypeCast<ArithmeticType>(type)) : false;
 	}
 	inline bool IsFloatingType(ArithmeticType const& arithmetic_type)
 	{
@@ -377,14 +377,14 @@ namespace lucc
 	}
 	inline bool IsFloatingType(Type const& type)
 	{
-		return type.Is(PrimitiveTypeKind::Arithmetic) ? IsFloatingType(TypeCast<ArithmeticType>(type)) : false;
+		return type.Is(TypeKind::Arithmetic) ? IsFloatingType(TypeCast<ArithmeticType>(type)) : false;
 	}
 	inline bool IsIntegerType(ArithmeticType const& arithmetic_type)
 	{
 		return !IsFloatingType(arithmetic_type);
 	}
 	inline bool IsIntegerType(Type const& type) {
-		return type.Is(PrimitiveTypeKind::Arithmetic) && !IsFloatingType(type);
+		return type.Is(TypeKind::Arithmetic) && !IsFloatingType(type);
 	}
 	inline bool IsSignedType(ArithmeticType const& arithmetic_type)
 	{
@@ -392,7 +392,7 @@ namespace lucc
 	}
 	inline bool IsSignedType(Type const& type)
 	{
-		return type.Is(PrimitiveTypeKind::Arithmetic) ? IsSignedType(TypeCast<ArithmeticType>(type)) : false;
+		return type.Is(TypeKind::Arithmetic) ? IsSignedType(TypeCast<ArithmeticType>(type)) : false;
 	}
 	inline bool IsUnsignedType(ArithmeticType const& arithmetic_type)
 	{
@@ -404,11 +404,11 @@ namespace lucc
 	}
 	inline bool IsObjectType(Type const& type)
 	{
-		return type.Is(PrimitiveTypeKind::Function);
+		return !type.Is(TypeKind::Function);
 	}
 	inline bool IsFunctionPointerType(Type const& type)
 	{
-		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(PrimitiveTypeKind::Function);;
+		return type.Is(TypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(TypeKind::Function);;
 	}
 	inline bool IsObjectPointerType(Type const& type)
 	{
@@ -416,13 +416,13 @@ namespace lucc
 	}
 	inline bool IsVoidPointerType(Type const& type)
 	{
-		return type.Is(PrimitiveTypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(PrimitiveTypeKind::Void);
+		return type.Is(TypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(TypeKind::Void);
 	}
 	inline bool IsCharArrayType(Type const& type)
 	{
-		if (type.IsNot(PrimitiveTypeKind::Array)) return false;
+		if (type.IsNot(TypeKind::Array)) return false;
 		auto elem_type = TypeCast<ArrayType>(type).GetElementType();
-		if (elem_type->IsNot(PrimitiveTypeKind::Arithmetic)) return false;
+		if (elem_type->IsNot(TypeKind::Arithmetic)) return false;
 		ArithmeticType const& elem_arithmetic_type = TypeCast<ArithmeticType>(elem_type);
 		auto elem_arithmetic_flags = elem_arithmetic_type.GetFlags();
 		return (elem_arithmetic_flags & ArithmeticType::Char);

@@ -611,7 +611,7 @@ namespace lucc
 		bool IsAssignable() const
 		{
 			if (!IsLValue()) return false;
-			if (!type->IsComplete() || type.IsConst() || type->Is(PrimitiveTypeKind::Array)) return false;
+			if (!type->IsComplete() || type.IsConst() || type->Is(TypeKind::Array)) return false;
 			return true;
 		}
 
@@ -710,7 +710,20 @@ namespace lucc
 			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func))
 		{
 			auto const& type = func_expr->GetType();
-			SetType(RemoveQualifiers(TypeCast<FunctionType>(type).GetReturnType()));
+			if (FunctionType const* func_type = type->TryAs<FunctionType>())
+			{
+				SetType(RemoveQualifiers(func_type->GetReturnType()));
+			}
+			else if (PointerType const* func_ptr_type = type->TryAs<PointerType>())
+			{
+				if (func_ptr_type->PointeeType()->Is(TypeKind::Function))
+				{
+					FunctionType const& func_type = func_ptr_type->PointeeType()->As<FunctionType>();
+					SetType(RemoveQualifiers(func_type.GetReturnType()));
+				}
+				else LU_ASSERT(false);
+			}
+			else LU_ASSERT(false);
 		}
 		void AddArgument(std::unique_ptr<ExprAST>&& arg)
 		{

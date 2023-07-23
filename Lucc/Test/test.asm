@@ -1,9 +1,6 @@
 extern ExitProcess: proc
-public a
 
 .const
-align 4
-a	word 5
 
 .data?
 
@@ -11,13 +8,27 @@ a	word 5
 
 .code
 
+f proc 
+push rbp
+mov rbp, rsp
+mov	dword ptr [rbp-4], ecx
+mov	eax, 16
+jmp f_end
+f_end:
+pop rbp
+ret
+f endp
+
 main proc 
 push rbp
 mov rbp, rsp
 sub	rsp, 16
-mov	dword ptr [rbp-4], 9
-mov	dword ptr [rbp-4], 10
-mov	eax, dword ptr [rbp-4]
+mov	rbx, qword ptr f
+mov	qword ptr [rbp-8], rbx
+sub	rsp, 32
+mov	ecx, 1
+call pf
+add	rsp, 32
 jmp main_end
 xor	rax, rax
 main_end:

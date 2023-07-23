@@ -1529,10 +1529,8 @@ namespace lucc
 
 		if (func_expr->GetExprKind() == ExprKind::DeclRef)
 		{
-			LU_ASSERT(IsFunctionType(func_expr->GetType()));
-			FunctionType const& func_type = TypeCast<FunctionType>(func_expr->GetType());
-			QualifiedType const& ret_type = func_type.GetReturnType();
-			size_t type_size = ret_type->GetSize();
+			QualifiedType const& type = GetType();
+			size_t type_size = type->GetSize();
 			IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get());
 			ctx.Call(func_id->GetName().data());
 			if (result)
@@ -1614,7 +1612,7 @@ namespace lucc
 
 	void CastExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
-		if (GetType()->Is(PrimitiveTypeKind::Void))
+		if (GetType()->Is(TypeKind::Void))
 		{
 			operand->Codegen(ctx, result);
 			return;

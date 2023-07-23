@@ -80,12 +80,12 @@ namespace lucc
 	*/
 	QualifiedType ValueTransformation(QualifiedType const& qtype)
 	{
-		if (qtype->Is(PrimitiveTypeKind::Array))
+		if (qtype->Is(TypeKind::Array))
 		{
 			auto const& arr_type = TypeCast<ArrayType>(qtype);
 			return PointerType(arr_type.GetElementType());
 		}
-		else if (qtype->Is(PrimitiveTypeKind::Function))
+		else if (qtype->Is(TypeKind::Function))
 		{
 			return PointerType(qtype);
 		}
@@ -148,7 +148,10 @@ namespace lucc
 			else if ((IsObjectType(expr_pte_qty) && IsObjectType(dst_pte_qty)) ||
 					 (IsFunctionType(expr_pte_qty) && IsFunctionType(dst_pte_qty)))
 			{
-				Report(diag::incompatible_pointer_types_conversion);
+				if (!expr_pte_qty->IsCompatible(dst_pte_qty))
+				{
+					Report(diag::incompatible_pointer_types_conversion);
+				}
 			}
 		}
 		return ret_type;

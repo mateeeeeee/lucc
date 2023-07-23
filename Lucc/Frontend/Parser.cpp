@@ -260,7 +260,7 @@ namespace lucc
 			std::unique_ptr<CompoundStmtAST> compound_stmt = ParseCompoundStatement();
 			func_decl->SetFunctionBody(std::move(compound_stmt));
 
-			if (func_name != "main" && ctx.current_func_type->GetReturnType()->IsNot(PrimitiveTypeKind::Void) && !ctx.return_stmt_encountered)
+			if (func_name != "main" && ctx.current_func_type->GetReturnType()->IsNot(TypeKind::Void) && !ctx.return_stmt_encountered)
 			{
 				Report(diag::return_not_found);
 				return nullptr;
@@ -917,7 +917,7 @@ namespace lucc
 		case TokenKind::left_round:
 		{
 			QualifiedType const& type = expr->GetType();
-			if (type->IsNot(PrimitiveTypeKind::Function))
+			if (!IsFunctionPointerType(type) && !IsFunctionType(type))
 			{
 				Report(diag::invalid_function_call);
 				return nullptr;
@@ -926,8 +926,16 @@ namespace lucc
 			std::unique_ptr<FunctionCallAST> func_call_expr = std::make_unique<FunctionCallAST>(std::move(expr), current_token->GetLocation());
 			++current_token;
 
-			FunctionType const& func_type = TypeCast<FunctionType>(type);
-			std::span<FunctionParameter const> func_params = func_type.GetParamTypes();
+			FunctionType const* func_type = nullptr;
+			if (IsFunctionType(type)) func_type = &type->As<FunctionType>();
+			else if (IsFunctionPointerType(type))
+			{
+				PointerType const& pointer_type = type->As<PointerType>();
+				func_type = &pointer_type.PointeeType()->As<FunctionType>();
+			}
+			LU_ASSERT(func_type);
+
+			std::span<FunctionParameter const> func_params = func_type->GetParamTypes();
 			uint32 arg_index = 0;
 			if (!Consume(TokenKind::right_round))
 			{
@@ -937,7 +945,7 @@ namespace lucc
 					std::unique_ptr<ExprAST> arg_expr = ParseAssignmentExpression();
 					if (arg_index >= func_params.size())
 					{
-						if (!func_type.IsVariadic())
+						if (!func_type->IsVariadic())
 						{
 							Report(diag::invalid_function_call);
 							return nullptr;
@@ -953,7 +961,7 @@ namespace lucc
 					Expect(TokenKind::comma);
 				}
 			}
-			if (!func_type.IsVariadic() && func_params.size() != arg_index)
+			if (!func_type->IsVariadic() && func_params.size() != arg_index)
 			{
 				Report(diag::invalid_function_call);
 				return nullptr;
@@ -1413,8 +1421,8 @@ namespace lucc
 			else
 			{
 				TokenPtr start = current_token;
-				QualifiedType dummy{};
-				ParseAbstractDeclarator(decl_spec, dummy);
+				DeclaratorInfo dummy{};
+				ParseDeclarator(decl_spec, dummy);
 				Expect(TokenKind::right_round);
 				ParseDeclaratorTail(declarator.qtype);
 				TokenPtr end = current_token;
@@ -1538,15 +1546,15 @@ namespace lucc
 				DeclaratorInfo param_declarator{};
 				abstract ? ParseAbstractDeclarator(param_decl_spec, param_declarator.qtype) : ParseDeclarator(param_decl_spec, param_declarator);
 				QualifiedType& qtype = param_declarator.qtype;
-				if (qtype->Is(PrimitiveTypeKind::Void)) Report(diag::void_not_first_and_only_parameter);
-				else if (qtype->Is(PrimitiveTypeKind::Array))
+				if (qtype->Is(TypeKind::Void)) Report(diag::void_not_first_and_only_parameter);
+				else if (qtype->Is(TypeKind::Array))
 				{
 					ArrayType const& array_type = TypeCast<ArrayType>(*qtype);
 					QualifiedType base_type = array_type.GetElementType();
 					PointerType decayed_param_type(base_type);
 					qtype = QualifiedType(decayed_param_type);
 				}
-				else if (qtype->Is(PrimitiveTypeKind::Function))
+				else if (qtype->Is(TypeKind::Function))
 				{
 					FunctionType const& function_type = TypeCast<FunctionType>(*qtype);
 					PointerType decayed_param_type(function_type);
