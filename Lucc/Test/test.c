@@ -1,6 +1,2 @@
 
-int f(int a, int b);
-
-int main(void) { int i; i = f(1,2); return i; }
-
-int f(int a, int b) { return a + b; }
+int main(void) { int i = 2; i += 5; return i; }

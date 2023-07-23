@@ -82,7 +82,6 @@ namespace lucc
 			auto decls = ParseDeclaration();
 			for(auto&& decl : decls) ast->translation_unit->AddDeclarations(std::move(decl));
 		}
-
 	}
 
 	std::vector<std::unique_ptr<DeclAST>> Parser::ParseDeclaration()

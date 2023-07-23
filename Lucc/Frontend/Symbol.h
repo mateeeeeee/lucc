@@ -35,32 +35,18 @@ namespace lucc
 		int32 enum_value = 0;
 
 		class DeclAST* decl_ast = nullptr;
-
-		mutable uint64 id = 0;
 	};
-
-	inline bool operator==(VarSymbol const& sym1, VarSymbol const& sym2)
-	{
-		return sym1.id == sym2.id;
-	}
-	inline bool operator!=(VarSymbol const& sym1, VarSymbol const& sym2)
-	{
-		return !(sym1 == sym2);
-	}
 
 	struct TagSymbol
 	{
 		std::string name = "";
 		QualifiedType type;
 		bool enum_type;
-
-		mutable uint64 id = 0;
 	};
 
 	template<typename SymType>
 	class ScopeTable
 	{
-		inline static uint64 id = 0;
 	public:
 		explicit ScopeTable(uint32 scope_id) : scope_id(scope_id) {}
 		uint32 GetScope() const { return scope_id; }
@@ -68,7 +54,6 @@ namespace lucc
 		bool Insert(SymType const& symbol)
 		{
 			if (scope_sym_table.contains(symbol.name)) return false;
-			symbol.id = id++;
 			scope_sym_table[symbol.name] = symbol;
 			return true;
 		}

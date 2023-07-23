@@ -95,30 +95,6 @@ namespace lucc
 		FunctionDeclAST* func_ref;
 	};
 
-	class DeclRefVisitorAST : public INodeVisitorAST
-	{
-	public:
-		DeclRefVisitorAST(FunctionDeclAST const* func_ref) : func_ref(func_ref) {}
-		virtual void Visit(DeclRefAST const& node, size_t depth) override
-		{
-			func_ref->ForAllDeclarations([&](DeclAST const* decl)
-			{
-				if (decl->GetDeclKind() == DeclKind::Var)
-				{
-					VarDeclAST const* var_decl = AstCast<VarDeclAST>(decl);
-					if (var_decl->GetSymbol() == node.GetSymbol())
-					{
-						node.SetLocalOffset(var_decl->GetLocalOffset());
-					}
-				}
-			}
-			);
-		}
-
-	private:
-		FunctionDeclAST const* func_ref;
-	};
-
 	/// Accept
 
 	void TranslationUnitAST::Accept(INodeVisitorAST& visitor, size_t depth) const
@@ -555,9 +531,6 @@ namespace lucc
 			local_var->SetLocalOffset(-bottom);
 		}
 		stack_size = AlignTo(local_stack_space, 16);
-
-		DeclRefVisitorAST decl_ref_visitor(this);
-		body->Accept(decl_ref_visitor, 0);
 	}
 
 	/// Codegen
@@ -1346,12 +1319,12 @@ namespace lucc
 		{
 			if (IsArrayType(GetType()))
 			{
-				Result res(RBP, local_offset);
+				Result res(RBP, GetLocalOffset());
 				ctx.Lea(*result, res);
 			}
 			else
 			{
-				Result res(RBP, local_offset);
+				Result res(RBP, GetLocalOffset());
 				ctx.Mov(*result, res, bitmode);
 			}
 			return;

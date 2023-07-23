@@ -131,6 +131,7 @@ namespace lucc
 		Storage GetStorage() const { return sym.storage; }
 		VarSymbol const& GetSymbol() const { return sym; }
 
+		virtual int32 GetLocalOffset() const { return 0; }
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 
 	protected:
@@ -154,7 +155,7 @@ namespace lucc
 		void SetLocalOffset(int32 _local_offset) const { local_offset = _local_offset; }
 
 		bool IsGlobal() const { return GetSymbol().global; }
-		int32 GetLocalOffset() const { return local_offset; }
+		virtual int32 GetLocalOffset() const override { return local_offset; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
@@ -824,19 +825,20 @@ namespace lucc
 	{
 	public:
 		DeclRefAST(DeclAST* decl_ast, SourceLocation const& loc) : IdentifierAST(decl_ast->GetName(), loc, decl_ast->GetType()),
-			decl_ast(decl_ast), local_offset(0) {}
+			decl_ast(decl_ast) {}
 
 		VarSymbol const& GetSymbol() const { return decl_ast->GetSymbol(); }
 		bool IsGlobal() const { return GetSymbol().global; }
-		void SetLocalOffset(int32 _local_offset) const { local_offset = _local_offset; }
-		int32 GetLocalOffset() const { return local_offset; }
+		int32 GetLocalOffset() const 
+		{  
+			return decl_ast->GetLocalOffset();
+		}
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
 		DeclAST* decl_ast;
-		mutable int32 local_offset;
 	};
 
 	struct AST
