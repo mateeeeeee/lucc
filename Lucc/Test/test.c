@@ -1,11 +1,6 @@
 
-int f(int)
-{
-	return 16;
-}
+int f(int a, int b);
 
-int main()
-{
-	int (*pf)(int) = f;
-	return pf(1);
-}
+int main(void) { int i; i = f(1,2); return i; }
+
+int f(int a, int b) { return a + b; }

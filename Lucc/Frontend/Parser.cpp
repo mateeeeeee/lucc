@@ -160,6 +160,9 @@ namespace lucc
 				std::unique_ptr<FunctionDeclAST> func_decl = ParseFunctionDeclaration(declaration_info);
 				func_decl->SetLocation(current_token->GetLocation());
 				func_decl->SetSymbol(&var_symbol);
+
+				VarSymbol* sym = ctx.identifier_sym_table->LookUp(declaration_info.name);
+				sym->decl_ast = func_decl.get();
 				if (func_decl->IsDefinition())
 				{
 					if(check_redefinition) 
@@ -181,6 +184,9 @@ namespace lucc
 				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
 				var_decl->SetLocation(current_token->GetLocation());
 				var_decl->SetSymbol(&var_symbol);
+
+				VarSymbol* sym = ctx.identifier_sym_table->LookUp(declaration_info.name);
+				sym->decl_ast = var_decl.get();
 				if (Consume(TokenKind::equal))
 				{
 					std::unique_ptr<ExprAST> init_expr = ParseExpression();
@@ -246,7 +252,9 @@ namespace lucc
 				return nullptr;
 			}
 			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name);
-			param_decl->SetSymbol(ctx.identifier_sym_table->LookUp(func_param.name));
+			VarSymbol* sym = ctx.identifier_sym_table->LookUp(func_param.name);
+			param_decl->SetSymbol(sym);
+			sym->decl_ast = param_decl.get();
 			func_decl->AddParamDeclaration(std::move(param_decl));
 		}
 		func_type.EncounterPrototype();
@@ -326,6 +334,7 @@ namespace lucc
 	std::unique_ptr<CompoundStmtAST> Parser::ParseCompoundStatement()
 	{
 		Expect(TokenKind::left_brace);
+		ctx.identifier_sym_table->EnterScope();
 		std::unique_ptr<CompoundStmtAST> compound_stmt = std::make_unique<CompoundStmtAST>();
 		while (current_token->IsNot(TokenKind::right_brace))
 		{
@@ -340,6 +349,7 @@ namespace lucc
 				compound_stmt->AddStatement(std::move(stmt));
 			}
 		}
+		ctx.identifier_sym_table->ExitScope();
 		Expect(TokenKind::right_brace);
 		return compound_stmt;
 	}
@@ -1150,7 +1160,7 @@ namespace lucc
 			{
 				SourceLocation loc = current_token->GetLocation();
 				++current_token;
-				std::unique_ptr<VarDeclRefAST> decl_ref = std::make_unique<VarDeclRefAST>(sym, loc);
+				std::unique_ptr<DeclRefAST> decl_ref = std::make_unique<DeclRefAST>(sym->decl_ast, loc);
 				return decl_ref;
 			}
 		}

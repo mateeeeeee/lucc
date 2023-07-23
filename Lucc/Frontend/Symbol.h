@@ -34,6 +34,8 @@ namespace lucc
 		bool is_enum = false;
 		int32 enum_value = 0;
 
+		class DeclAST* decl_ast = nullptr;
+
 		mutable uint64 id = 0;
 	};
 

@@ -20,7 +20,7 @@ namespace lucc
 	class IntLiteralAST;
 	class StringLiteralAST;
 	class IdentifierAST;
-	class VarDeclRefAST;
+	class DeclRefAST;
 
 	class StmtAST;
 	class CompoundStmtAST;
@@ -59,7 +59,7 @@ namespace lucc
 		virtual void Visit(IntLiteralAST const& node, size_t depth) {}
 		virtual void Visit(StringLiteralAST const& node, size_t depth) {}
 		virtual void Visit(IdentifierAST const& node, size_t depth) {}
-		virtual void Visit(VarDeclRefAST const& node, size_t depth) {}
+		virtual void Visit(DeclRefAST const& node, size_t depth) {}
 		virtual void Visit(StmtAST const& node, size_t depth) {}
 		virtual void Visit(CompoundStmtAST const& node, size_t depth) {}
 		virtual void Visit(DeclStmtAST const& node, size_t depth) {}
@@ -820,14 +820,14 @@ namespace lucc
 	private:
 		std::string name;
 	};
-	class VarDeclRefAST : public IdentifierAST
+	class DeclRefAST : public IdentifierAST
 	{
 	public:
-		VarDeclRefAST(VarSymbol* symbol, SourceLocation const& loc) : IdentifierAST(symbol->name, loc, symbol->qtype),
-			symbol(*symbol), local_offset(0) {}
+		DeclRefAST(DeclAST* decl_ast, SourceLocation const& loc) : IdentifierAST(decl_ast->GetName(), loc, decl_ast->GetType()),
+			decl_ast(decl_ast), local_offset(0) {}
 
-		VarSymbol const& GetSymbol() const { return symbol; }
-		bool IsGlobal() const { return symbol.global; }
+		VarSymbol const& GetSymbol() const { return decl_ast->GetSymbol(); }
+		bool IsGlobal() const { return GetSymbol().global; }
 		void SetLocalOffset(int32 _local_offset) const { local_offset = _local_offset; }
 		int32 GetLocalOffset() const { return local_offset; }
 
@@ -835,7 +835,7 @@ namespace lucc
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		VarSymbol symbol;
+		DeclAST* decl_ast;
 		mutable int32 local_offset;
 	};
 

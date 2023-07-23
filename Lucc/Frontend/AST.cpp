@@ -99,7 +99,7 @@ namespace lucc
 	{
 	public:
 		DeclRefVisitorAST(FunctionDeclAST const* func_ref) : func_ref(func_ref) {}
-		virtual void Visit(VarDeclRefAST const& node, size_t depth) override
+		virtual void Visit(DeclRefAST const& node, size_t depth) override
 		{
 			func_ref->ForAllDeclarations([&](DeclAST const* decl)
 			{
@@ -270,7 +270,7 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
-	void VarDeclRefAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void DeclRefAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
@@ -702,7 +702,7 @@ namespace lucc
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -735,7 +735,7 @@ namespace lucc
 			{
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -793,7 +793,7 @@ namespace lucc
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -826,7 +826,7 @@ namespace lucc
 				BitCount bitcount = GetBitCount(type_size);
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -876,7 +876,7 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -919,7 +919,7 @@ namespace lucc
 			{
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -953,7 +953,7 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(operand.get());
+					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -1183,7 +1183,7 @@ namespace lucc
 			LU_ASSERT_MSG(lhs->IsLValue(), "Cannot assign to rvalue!");
 			if (lhs->GetExprKind() == ExprKind::DeclRef)
 			{
-				VarDeclRefAST* decl_ref = AstCast<VarDeclRefAST>(lhs.get());
+				DeclRefAST* decl_ref = AstCast<DeclRefAST>(lhs.get());
 				char const* var_name = decl_ref->GetName().data();
 				int32 local_offset = decl_ref->GetLocalOffset();
 				Result mem_ref(RBP, local_offset);
@@ -1335,14 +1335,14 @@ namespace lucc
 		ctx.Label(end_label, label_id);
 	}
 
-	void VarDeclRefAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void DeclRefAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!result) return;
 
 		size_t type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
 
-		if (!symbol.global)
+		if (!IsGlobal())
 		{
 			if (IsArrayType(GetType()))
 			{
