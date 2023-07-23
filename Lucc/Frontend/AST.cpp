@@ -11,7 +11,6 @@ namespace lucc
 		template<typename T>
 		inline T AlignTo(T n, T align) { return (n + align - 1) / align * align; }
 
-		//#todo casts: binary expr -> assignment, variable intialization, function parameters init
 		namespace cast
 		{
 			enum CastTableIdx
@@ -652,8 +651,8 @@ namespace lucc
 			.is_static = sym.storage == Storage::Static,
 			.is_extern = sym.storage == Storage::Extern
 		};
-		ctx.DeclareFunction(func_decl);
 		if (!IsDefinition()) return;
+		ctx.DeclareFunction(func_decl);
 
 		ctx.SaveFrameRegister();
 

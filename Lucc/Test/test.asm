@@ -1,13 +1,11 @@
 extern ExitProcess: proc
-extern puts : proc
-extern printf : proc
-public c
+public a
 
 .const
+align 4
+a	word 5
 
 .data?
-align 4
-c	word ?
 
 .data
 
@@ -17,10 +15,9 @@ main proc
 push rbp
 mov rbp, rsp
 sub	rsp, 16
-mov	dword ptr c, 10
-mov	ebx, dword ptr c
-mov	dword ptr [rbp-4], ebx
-mov	eax, 4
+mov	dword ptr [rbp-4], 9
+mov	dword ptr [rbp-4], 10
+mov	eax, dword ptr [rbp-4]
 jmp main_end
 xor	rax, rax
 main_end:

@@ -118,22 +118,55 @@ namespace lucc
 			LU_ASSERT(declarator_info.qtype.HasRawType());
 
 			DeclarationInfo declaration_info(decl_spec, declarator_info);
-			bool success = ctx.identifier_sym_table->Insert(VarSymbol{ declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global });
-			if (!success)
+			VarSymbol var_symbol{ declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global };
+
+			bool check_redefinition = false;
+			if (VarSymbol* sym = ctx.identifier_sym_table->LookUpCurrentScope(declaration_info.name))
 			{
-				Report(diag::redefinition_of_identifier);
-				return {};
+				if (!IsFunctionType(declaration_info.qtype))
+				{
+					Report(diag::redefinition_of_identifier);
+					return {};
+				}
+				if (IsFunctionType(sym->qtype))
+				{
+					FunctionType& func_type = sym->qtype->As<FunctionType>();
+					if (!func_type.IsCompatible(declaration_info.qtype))
+					{
+						Report(diag::redefinition_of_identifier);
+						return {};
+					}
+					if (func_type.HasDefinition())
+					{
+						check_redefinition = true;
+					}
+				}
+				else
+				{
+					Report(diag::redefinition_of_identifier);
+					return {};
+				}
+			}
+			else
+			{
+				bool success = ctx.identifier_sym_table->Insert(var_symbol);
+				LU_ASSERT(success);
 			}
 
-			if (declarator_info.qtype->Is(PrimitiveTypeKind::Function))
+			if (IsFunctionType(declarator_info.qtype))
 			{
 				if (!is_global) Report(diag::local_functions_not_allowed);
 
 				std::unique_ptr<FunctionDeclAST> func_decl = ParseFunctionDeclaration(declaration_info);
 				func_decl->SetLocation(current_token->GetLocation());
-				func_decl->SetSymbol(ctx.identifier_sym_table->LookUp(declaration_info.name));
+				func_decl->SetSymbol(&var_symbol);
 				if (func_decl->IsDefinition())
 				{
+					if(check_redefinition) 
+					{
+						Report(diag::redefinition_of_identifier);
+						return {};
+					}
 					LU_ASSERT(decls.empty());
 					decls.push_back(std::move(func_decl));
 					return decls;
@@ -142,12 +175,12 @@ namespace lucc
 			}
 			else
 			{
-				if (declaration_info.qtype->Is(PrimitiveTypeKind::Void)) Report(diag::void_not_expected);
+				if (IsVoidType(declaration_info.qtype)) Report(diag::void_not_expected);
 
 				std::string_view name = declarator_info.name;
 				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
 				var_decl->SetLocation(current_token->GetLocation());
-				var_decl->SetSymbol(ctx.identifier_sym_table->LookUp(name));
+				var_decl->SetSymbol(&var_symbol);
 				if (Consume(TokenKind::equal))
 				{
 					std::unique_ptr<ExprAST> init_expr = ParseExpression();

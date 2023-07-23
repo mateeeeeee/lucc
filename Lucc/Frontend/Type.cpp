@@ -11,6 +11,15 @@ namespace lucc
 
 	bool FunctionType::IsCompatible(Type const& other) const
 	{
+		if (!IsFunctionType(other)) return false;
+		FunctionType const& other_func_type = other.As<FunctionType>();
+		if (!return_qtype->IsCompatible(other_func_type.return_qtype)) return false;
+		if (param_types.size() != other_func_type.param_types.size()) return false;
+
+		for (size_t i = 0; i < param_types.size(); ++i)
+		{
+			if (!param_types[i].qtype->IsCompatible(other_func_type.param_types[i].qtype)) return false;
+		}
 		return true;
 	}
 

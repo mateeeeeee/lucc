@@ -42,6 +42,11 @@ namespace lucc
 		template<typename T>
 		T& As();
 
+		template<typename T>
+		T const* TryAs() const;
+		template<typename T>
+		T* TryAs();
+
 		virtual bool IsCompatible(Type const& other) const { return true; }
 
 	private:
@@ -90,7 +95,16 @@ namespace lucc
 	{
 		return TypeCast<T>(*this);
 	}
-
+	template<typename T>
+	T const* Type::TryAs() const
+	{
+		return DynamicTypeCast<T>(*this);
+	}
+	template<typename T>
+	T* Type::TryAs()
+	{
+		return DynamicTypeCast<T>(*this);
+	}
 
 	enum QualifierFlag : uint8
 	{

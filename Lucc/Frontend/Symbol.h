@@ -118,6 +118,11 @@ namespace lucc
 		{
 			return LookUp(std::string(sym_name));
 		}
+		SymType* LookUpCurrentScope(std::string_view sym_name)
+		{
+			if (SymType* sym = scopes.back().LookUp(std::string(sym_name))) return sym;
+			return nullptr;
+		}
 
 		bool IsGlobal() const { return scopes.size() == 1; }
 

@@ -2,18 +2,11 @@
 extern int puts(char const*);
 extern int printf(char const*, ...);
 
-enum color
-{
-	Red,
-	Green = 10, 
-	Blue
-} c;
+const int a = 5;
 
-typedef enum color color_t;
-
-int main(void)
+int main()
 {
-	c = Green;
-	int a = c;
-	return sizeof(c);
+	int a = 9;
+	a = 10;
+	return a;
 }
