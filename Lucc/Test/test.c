@@ -1,2 +1,11 @@
 
-int main(void) { int i = 2; i += 5; return i; }
+int f(void)
+{
+	return 10;
+}
+
+int main(void)
+{
+	int (*pf)(void) = f;
+	return pf();
+}

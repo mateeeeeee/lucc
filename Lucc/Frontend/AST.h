@@ -156,7 +156,7 @@ namespace lucc
 
 		bool IsGlobal() const { return GetSymbol().global; }
 		virtual int32 GetLocalOffset() const override { return local_offset; }
-
+		ExprAST const* GetInitExpr() const { return init_expr.get(); }
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
@@ -833,6 +833,8 @@ namespace lucc
 		{  
 			return decl_ast->GetLocalOffset();
 		}
+
+		DeclAST const* GetDeclaration() const { return decl_ast; }
 
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;

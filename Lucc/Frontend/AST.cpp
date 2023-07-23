@@ -1491,7 +1491,7 @@ namespace lucc
 		}
 
 		uint32 pushed_args = 0;
-		for (int32 i = (int32)func_args.size() - 1; i >= std::min(func_args.size(), ARGUMENTS_PASSED_BY_REGISTERS); --i)
+		for (int32 i = (int32)func_args.size() - 1; i >= std::min((int32)func_args.size(), (int32)ARGUMENTS_PASSED_BY_REGISTERS); --i)
 		{
 			Register arg_reg = ctx.AllocateRegister();
 			func_args[i]->Codegen(ctx, &arg_reg);
@@ -1504,14 +1504,36 @@ namespace lucc
 		{
 			QualifiedType const& type = GetType();
 			size_t type_size = type->GetSize();
-			IdentifierAST* func_id = AstCast<IdentifierAST>(func_expr.get());
-			ctx.Call(func_id->GetName().data());
-			if (result)
+			DeclRefAST* func_ref = AstCast<DeclRefAST>(func_expr.get());
+			if (IsFunctionType(func_ref->GetType()))
 			{
-				Register func_reg = ctx.GetReturnRegister();
-				ctx.Mov(*result, func_reg, GetBitCount(type_size));
-				ctx.FreeRegister(func_reg);
+				ctx.Call(func_ref->GetDeclaration()->GetName().data());
+				if (result)
+				{
+					Register func_reg = ctx.GetReturnRegister();
+					ctx.Mov(*result, func_reg, GetBitCount(type_size));
+					ctx.FreeRegister(func_reg);
+				}
 			}
+			else if (IsFunctionPointerType(func_ref->GetType()))
+			{
+				VarDeclAST const* func_var_decl = DynamicAstCast<const VarDeclAST>(func_ref->GetDeclaration());
+				LU_ASSERT(func_var_decl);
+				ExprAST const* func_init_expr = func_var_decl->GetInitExpr();
+				if (func_init_expr->GetExprKind() == ExprKind::DeclRef)
+				{
+					DeclRefAST const* decl_func_init_expr = AstCast<DeclRefAST>(func_init_expr);
+					ctx.Call(decl_func_init_expr->GetName().data());
+					if (result)
+					{
+						Register func_reg = ctx.GetReturnRegister();
+						ctx.Mov(*result, func_reg, GetBitCount(type_size));
+						ctx.FreeRegister(func_reg);
+					}
+				}
+				else LU_ASSERT(false);
+			}
+			else LU_ASSERT(false);
 		}
 		else LU_ASSERT(false);
 
