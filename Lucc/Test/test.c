@@ -1,4 +1,6 @@
 
+#define PFN f
+
 int f(void)
 {
 	return 10;
@@ -6,6 +8,7 @@ int f(void)
 
 int main(void)
 {
-	int (*pf)(void) = f;
-	return pf();
+	int* a = NULL;
+	if (a) return 10;
+	else return 20;
 }

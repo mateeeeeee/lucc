@@ -16,6 +16,8 @@ namespace lucc
 		SourceBuffer& operator=(SourceBuffer&&) = default;
 		~SourceBuffer() = default;
 
+		void Prepend(char const* str);
+
 		char const* GetBufferStart() const { return data_buffer.c_str(); }
 		char const* GetBufferEnd() const { return GetBufferStart() + data_buffer.size(); }
 		size_t		GetBufferSize() const {	return data_buffer.size(); }

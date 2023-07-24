@@ -22,12 +22,19 @@ main proc
 push rbp
 mov rbp, rsp
 sub	rsp, 16
-mov	rbx, qword ptr f
+mov	r10d, 0
+mov	rbx, r10
 mov	qword ptr [rbp-8], rbx
-sub	rsp, 32
-call f
-add	rsp, 32
+mov	rbx, qword ptr [rbp-8]
+cmp	bl, 0
+je L_else_0
+mov	eax, 10
 jmp main_end
+jmp L_end_0
+L_else_0: 
+mov	eax, 20
+jmp main_end
+L_end_0: 
 xor	rax, rax
 main_end:
 add	rsp, 16

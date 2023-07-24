@@ -24,9 +24,15 @@ namespace lucc
 		constexpr char const* ucrt_libs[] = { "ucrt.lib" };
 		constexpr char const* vc_libs[] = { "legacy_stdio_definitions.lib", "legacy_stdio_wide_specifiers.lib", "msvcrt.lib" };
 
+		void AddBuiltins(SourceBuffer& src)
+		{
+			src.Prepend("#define NULL (void*)0\n");
+		}
+
 		void CompileTranslationUnit(std::string_view source_file, std::string_view assembly_file, bool only_pp, bool ast_dump, bool output_debug)
 		{
 			SourceBuffer src(source_file);
+			AddBuiltins(src);
 			Lexer lex(src);
 			lex.Lex();
 			if (output_debug) debug::PrintTokens("After lexer:", lex.GetTokens());
@@ -153,6 +159,7 @@ namespace lucc
 		//compilation
 		{
 			SourceBuffer src(code.data(), code.size());
+			AddBuiltins(src);
 			Lexer lex(src);
 			lex.Lex();
 			if (debug) debug::PrintTokens("After lexer:", lex.GetTokens());

@@ -22,5 +22,10 @@ namespace lucc
 		: ref_name(refname), data_buffer(buffer_start, buffer_size)
 	{}
 
+	void SourceBuffer::Prepend(char const* str)
+	{
+		data_buffer = str + data_buffer;
+	}
+
 }
 

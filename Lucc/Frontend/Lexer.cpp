@@ -8,7 +8,8 @@ namespace lucc
 
 	Lexer::Lexer(SourceBuffer const& source) : buf_ptr(source.GetBufferStart()), cur_ptr(buf_ptr),
 											   loc{ .filename = std::string(source.GetRefName().data(), source.GetRefName().size())}
-	{}
+	{
+	}
 
 	void Lexer::Lex()
 	{
