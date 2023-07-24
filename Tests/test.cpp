@@ -87,11 +87,11 @@ TEST(Arithmetic, Pointers)
 	EXPECT_EQ(LUCC_EX(int x = 3; int y = 5; *(&x + 1) = 7; return y;), 7);
 	EXPECT_EQ(LUCC_EX(int x = 3; int y = 5; *(&y - 2 + 1) = 7; return x;), 7);
 
-	//EXPECT_EQ(LUCC_EX(int x = 3; return (&x + 2) - &x + 3;), 5);
-	//EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p + 20 - p;), 20);
-	//EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p + 20 - p > 0;), 1);
-	//EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p - 20 - p;), -20);
-	//EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p - 20 - p < 0;), 1);
+	EXPECT_EQ(LUCC_EX(int x = 3; return (&x + 2) - &x + 3;), 5);
+	EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p + 20 - p;), 20);
+	EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p + 20 - p > 0;), 1);
+	EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p - 20 - p;), -20);
+	EXPECT_EQ(LUCC_EX(int x; int* p = &x; return p - 20 - p < 0;), 1);
 }
 TEST(Arithmetic, Arrays)
 {
@@ -100,14 +100,12 @@ TEST(Arithmetic, Arrays)
 	EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; return --*p;), 0);
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; return *p--;), 1);
 	EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p)--; return a[2];), 2);
-
-	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[0];), 0);
+	EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[0];), 0);
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*(p--))--; return a[1];), 0);
 
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p)--; p++; return *p;), 2);
-	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[0]; ), 0);
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[1];), 0);
-	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[2];), 2);
+	EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return a[2];), 2);
 	//EXPECT_EQ(LUCC_EX(int a[3]; a[0] = 0; a[1] = 1; a[2] = 2; int* p = a + 1; (*p++)--; return *p;), 2);
 }
 
@@ -181,7 +179,7 @@ TEST(Declaration, Function)
 	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d) { return a + b + c + d; }; int main(void) { int i = f(1, 2, 3, 4); return i; }), 10);
 	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e) { return a + b + c + d + e; }; int main(void) { int i = f(1, 2, 3, 4, 5); return i; }), 15);
 	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e, int f) { return a + b + c + d + e + f; }; int main(void) { int i = f(1, 2, 3, 4, 5, 6); return i; }), 21);
-	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e, int f, int g) { return a + b + c + d + e + f + g; }; int main(void) { int i = f(1, 2, 3, 4, 5, 6, 7); return i; }), 28);
+	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e, int f, int g) { return  e + f + g + a + b + c + d; }; int main(void) { int i = f(1, 2, 3, 4, 5, 6, 7); return i; }), 28);
 
 	EXPECT_EQ(LUCC(int a = 5; int ptr_to_int(int* ptr) { return *ptr; } int main(void) { int* aptr = &a; return ptr_to_int(aptr); }), 5);
 }

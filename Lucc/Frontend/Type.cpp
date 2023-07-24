@@ -145,8 +145,7 @@ namespace lucc
 					Report(diag::incompatible_pointer_types_conversion_discards_qualifiers);
 				}
 			}
-			else if ((IsObjectType(expr_pte_qty) && IsObjectType(dst_pte_qty)) ||
-					 (IsFunctionType(expr_pte_qty) && IsFunctionType(dst_pte_qty)))
+			else if ((IsObjectType(expr_pte_qty) && IsObjectType(dst_pte_qty)) || (IsFunctionType(expr_pte_qty) && IsFunctionType(dst_pte_qty)))
 			{
 				if (!expr_pte_qty->IsCompatible(dst_pte_qty))
 				{
@@ -205,7 +204,11 @@ namespace lucc
 			}
 			else if (!IsIntegerType(lhs_qtype) && !IsIntegerType(rhs_qtype))
 			{
-				Report(diag::additive_operator_invalid_operands); //ErrInExpr("invalid operands to additive operators");
+				Report(diag::additive_operator_invalid_operands); 
+			}
+			else if (IsIntegerType(lhs_qtype) && IsPointerType(rhs_qtype) && subtract)
+			{
+				Report(diag::additive_operator_invalid_operands);
 			}
 			else
 			{

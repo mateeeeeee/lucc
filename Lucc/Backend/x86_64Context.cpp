@@ -92,24 +92,26 @@ namespace lucc
 				return reg;
 			}
 		}
-		LU_ASSERT(false);
-		return InvalidRegister;
-	}
-
-	Register x86_64Context::AllocateRegister(Register reg)
-	{
-		if (registers_available[reg])
-		{
-			registers_available[reg] = false;
-			return reg;
-		}
-		else return InvalidRegister;
+		last_spilled_reg_index = (last_spilled_reg_index) % std::size(scratch_registers);
+		Register reg = scratch_registers[last_spilled_reg_index++];
+		spilled_scratched_registers.push_back(reg);
+		Push(reg);
+		return reg;
 	}
 
 	void x86_64Context::FreeRegister(Register reg)
 	{
 		LU_ASSERT(!registers_available[reg]);
-		registers_available[reg] = true;
+		bool still_spilled = false;
+		for (auto spilled_reg : spilled_scratched_registers)  if (spilled_reg == reg) { still_spilled = true; break; }
+		if (!still_spilled) registers_available[reg] = true;
+		if (!spilled_scratched_registers.empty() && reg == spilled_scratched_registers.back())
+		{
+			last_spilled_reg_index = (last_spilled_reg_index - 1) % 7;
+
+			spilled_scratched_registers.pop_back();
+			Pop(reg);
+		}
 	}
 
 	void x86_64Context::FreeRegister(ResultRef res)
@@ -199,7 +201,7 @@ namespace lucc
 
 	void x86_64Context::Idiv(Register dividend, ResultRef divisor, BitCount bitcount)
 	{
-		LU_ASSERT(divisor.kind != ResultKind::Immediate);
+		//LU_ASSERT(divisor.kind != ResultKind::Immediate);
 		Xor(RDX, RDX, BitCount_64);
 		static Register const dividend_register = RAX;
 		if (dividend != dividend_register) Mov(dividend_register, dividend, bitcount);

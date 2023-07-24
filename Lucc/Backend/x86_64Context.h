@@ -12,8 +12,8 @@ namespace lucc
 	public:
 		explicit x86_64Context(OutputBuffer& output_buffer);
 
+		
 		Register AllocateRegister();
-		Register AllocateRegister(Register reg);
 		Register GetCallRegister(uint32 arg_index);
 		Register GetReturnRegister();
 		void FreeRegister(Register reg);
@@ -77,6 +77,9 @@ namespace lucc
 		OutputBuffer& output_buffer;
 		std::array<bool, RegisterCount> registers_available;
 		std::array<bool, RegisterCount> registers_pushed;
+
+		std::vector<Register> spilled_scratched_registers;
+		size_t last_spilled_reg_index = 0;
 
 		std::string current_function;
 		bool frame_reg_saved = false;

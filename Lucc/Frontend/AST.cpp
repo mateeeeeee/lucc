@@ -984,38 +984,67 @@ namespace lucc
 			{
 				LU_ASSERT(kind == BinaryExprKind::Add || kind == BinaryExprKind::Subtract);
 
-				Register tmp_reg = ctx.AllocateRegister();
-				if (lhs_is_pointer && rhs_is_pointer)
+				if (kind == BinaryExprKind::Subtract)
 				{
-					LU_ASSERT(kind == BinaryExprKind::Subtract);
-					lhs->Codegen(ctx, result);
-					rhs->Codegen(ctx, &tmp_reg);
+					if (lhs_is_pointer && rhs_is_pointer) 
+					{
+						QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
+						LU_ASSERT(IsPointerType(decayed_type));
+						PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+						Register tmp_reg = ctx.AllocateRegister();
+						lhs->Codegen(ctx, result);
+						rhs->Codegen(ctx, &tmp_reg);
+						ctx.Sub(*result, tmp_reg, bitmode);
+						ctx.Mov(tmp_reg, pointer_type.PointeeType()->GetSize(), BitCount_64);
+						ctx.Idiv(*result, tmp_reg, BitCount_64);
+						ctx.FreeRegister(tmp_reg);
+					}
+					else if (lhs_is_pointer)
+					{
+						QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
+						LU_ASSERT(IsPointerType(decayed_type));
+						PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+						Register tmp_reg = ctx.AllocateRegister();
+						lhs->Codegen(ctx, result);
+						rhs->Codegen(ctx, &tmp_reg);
+						ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
+						ctx.Sub(*result, tmp_reg, bitmode);
+						ctx.FreeRegister(tmp_reg);
+					}
+					else LU_ASSERT(false);
 				}
-				else if (lhs_is_pointer)
+				else if (kind == BinaryExprKind::Add)
 				{
-					QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
-					LU_ASSERT(IsPointerType(decayed_type));
-					PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
-					lhs->Codegen(ctx, result);
-					rhs->Codegen(ctx, &tmp_reg);
-					ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
-				}
-				else
-				{
-					QualifiedType const& decayed_type = ValueTransformation(rhs->GetType());
-					LU_ASSERT(IsPointerType(decayed_type));
-					PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
-					rhs->Codegen(ctx, result);
-					lhs->Codegen(ctx, &tmp_reg);
-					ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
-				}
+					LU_ASSERT(!(lhs_is_pointer && rhs_is_pointer));
+					if (lhs_is_pointer)
+					{
+						QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
+						LU_ASSERT(IsPointerType(decayed_type));
+						PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
 
-				switch (kind)
-				{
-				case BinaryExprKind::Add:		ctx.Add(*result, tmp_reg, bitmode); break;
-				case BinaryExprKind::Subtract:  ctx.Sub(*result, tmp_reg, bitmode); break;
+						Register tmp_reg = ctx.AllocateRegister();
+						lhs->Codegen(ctx, result);
+						rhs->Codegen(ctx, &tmp_reg);
+						ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
+						ctx.Add(*result, tmp_reg, bitmode);
+						ctx.FreeRegister(tmp_reg);
+					}
+					else if (rhs_is_pointer)
+					{
+						QualifiedType const& decayed_type = ValueTransformation(rhs->GetType());
+						LU_ASSERT(IsPointerType(decayed_type));
+						PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+
+						Register tmp_reg = ctx.AllocateRegister();
+						rhs->Codegen(ctx, result);
+						lhs->Codegen(ctx, &tmp_reg);
+						ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
+						ctx.Add(*result, tmp_reg, bitmode);
+						ctx.FreeRegister(tmp_reg);
+					}
+					else LU_ASSERT(false);
 				}
-				ctx.FreeRegister(tmp_reg);
+				
 			}
 			else
 			{
@@ -1042,9 +1071,9 @@ namespace lucc
 				}
 				else
 				{
+					rhs->Codegen(ctx, result);
 					Register tmp_reg = ctx.AllocateRegister();
-					rhs->Codegen(ctx, &tmp_reg);
-					lhs->Codegen(ctx, result);
+					lhs->Codegen(ctx, &tmp_reg);
 					switch (kind)
 					{
 					case BinaryExprKind::Add:		ctx.Add(*result, tmp_reg, bitmode);  break;
@@ -1103,12 +1132,12 @@ namespace lucc
 			}
 			else
 			{
-				Register reg2 = ctx.AllocateRegister();
-				rhs->Codegen(ctx, &reg2);
-				lhs->Codegen(ctx, result);
-				if (kind == BinaryExprKind::ShiftLeft)  ctx.Shl(*result, reg2, bitmode);
-				if (kind == BinaryExprKind::ShiftRight) ctx.Sar(*result, reg2, bitmode); //#todo check if unsigned
-				ctx.FreeRegister(reg2);
+				rhs->Codegen(ctx, result);
+				Register tmp_reg = ctx.AllocateRegister();
+				lhs->Codegen(ctx, &tmp_reg);
+				if (kind == BinaryExprKind::ShiftLeft)  ctx.Shl(*result, tmp_reg, bitmode);
+				if (kind == BinaryExprKind::ShiftRight) ctx.Sar(*result, tmp_reg, bitmode); //#todo check if unsigned
+				ctx.FreeRegister(tmp_reg);
 			}
 		};
 		auto CommonBitCodegen = [&](BinaryExprKind kind)
@@ -1135,9 +1164,9 @@ namespace lucc
 			}
 			else
 			{
+				rhs->Codegen(ctx, result);
 				Register tmp_reg = ctx.AllocateRegister();
-				rhs->Codegen(ctx, &tmp_reg);
-				lhs->Codegen(ctx, result);
+				lhs->Codegen(ctx, &tmp_reg);
 				switch (kind)
 				{
 				case BinaryExprKind::BitAnd:		ctx.And(*result, tmp_reg, bitmode); break;
@@ -1378,8 +1407,10 @@ namespace lucc
 		}
 		else
 		{
+			Register tmp_reg = ctx.AllocateRegister();
+			ret_expr->Codegen(ctx, &tmp_reg);
 			Register return_reg = ctx.GetReturnRegister();
-			ret_expr->Codegen(ctx, &return_reg);
+			ctx.Mov(return_reg, tmp_reg, GetBitCount(ret_expr->GetExpr()->GetType()->GetSize()));
 			ctx.JumpToReturn();
 			ctx.FreeRegister(return_reg);
 		}
@@ -1453,13 +1484,6 @@ namespace lucc
 
 	void FunctionCallAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
-		//uint32 pushed_regs = 0;
-		//ctx.SaveVolatileRegisters();
-		//if (pushed_regs & 1) shadow_space_stack += 8;
-		//ctx.RestoreVolatileRegisters();
-
-		//#todo handle the case when some arg is a function call
-
 		//shadow space
 		uint32 shadow_space_stack = 0;
 		for (uint16 i = 0; i < func_args.size(); ++i)
@@ -1479,6 +1503,9 @@ namespace lucc
 		}
 		if (shadow_space_stack < 32) shadow_space_stack = 32;
 		shadow_space_stack = AlignTo(shadow_space_stack, 16u);
+
+		//uint32 pushed_regs = ctx.SaveVolatileRegisters();
+		//if (pushed_regs & 1) shadow_space_stack += 8;
 
 		ctx.AllocateStack(shadow_space_stack);
 
@@ -1530,6 +1557,7 @@ namespace lucc
 		}
 		else LU_ASSERT(false);
 
+		//ctx.RestoreVolatileRegisters();
 		ctx.FreeStack(shadow_space_stack + (pushed_args & 1 ? 8 : 0));
 	}
 

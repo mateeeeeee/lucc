@@ -1,18 +1,9 @@
 
-int f(void)
+int f(int a, int b, int c, int d, int e, int f, int g) {
+	return a + b + c + d + e + f + g;
+};
+int main(void) 
 {
-	return 10;
-}
-
-int g(void)
-{
-	return 20;
-}
-
-
-
-int main()
-{
-	int (*pf)(void) = NULL;
-	return pf ? pf() : 6;
+	int i = f(1, 2, 3, 4, 5, 6, 7);
+	return i;
 }

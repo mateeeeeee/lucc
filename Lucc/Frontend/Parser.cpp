@@ -189,7 +189,7 @@ namespace lucc
 				if (Consume(TokenKind::equal))
 				{
 					std::unique_ptr<ExprAST> init_expr = ParseExpression();
-					if (is_global && init_expr->GetExprKind() != ExprKind::IntLiteral) Report(diag::initializer_element_is_not_constant);
+					if (is_global && !IsFunctionPointerType(declarator_info.qtype) && init_expr->GetExprKind() != ExprKind::IntLiteral) Report(diag::initializer_element_is_not_constant);
 					std::unique_ptr<ExprAST> init_expr_casted = GetAssignExpr(std::move(init_expr), declaration_info.qtype);
 					var_decl->SetInitExpression(std::move(init_expr_casted));
 				}
