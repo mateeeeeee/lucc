@@ -495,6 +495,11 @@ namespace lucc
 		Emit<Text>("call {}", func_name);
 	}
 
+	void x86_64Context::Call(Register reg)
+	{
+		Emit<Text>("call {}", GetRegisterName(reg, BitCount_64));
+	}
+
 	void x86_64Context::SaveFrameRegister()
 	{
 		Emit<Text>("push rbp");

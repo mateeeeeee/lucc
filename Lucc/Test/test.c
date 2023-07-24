@@ -1,14 +1,18 @@
 
-#define PFN f
-
 int f(void)
 {
 	return 10;
 }
 
-int main(void)
+int g(void)
 {
-	int* a = NULL;
-	if (a) return 10;
-	else return 20;
+	return 20;
+}
+
+
+
+int main()
+{
+	int (*pf)(void) = NULL;
+	return pf ? pf() : 6;
 }

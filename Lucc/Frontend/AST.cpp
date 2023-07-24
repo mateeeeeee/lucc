@@ -613,7 +613,6 @@ namespace lucc
 				ctx.DeclareVariable(var_decl);
 			}
 		}
-
 	}
 
 	void FunctionDeclAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
@@ -1329,7 +1328,7 @@ namespace lucc
 			}
 			return;
 		}
-		if (IsArrayType(GetType())) ctx.MovOffset(*result, GetName().data());
+		if (IsArrayType(GetType()) || IsFunctionType(GetType())) ctx.MovOffset(*result, GetName().data());
 		else ctx.Mov(*result, GetName().data(), bitmode);
 	}
 
@@ -1517,23 +1516,17 @@ namespace lucc
 			}
 			else if (IsFunctionPointerType(func_ref->GetType()))
 			{
-				VarDeclAST const* func_var_decl = DynamicAstCast<const VarDeclAST>(func_ref->GetDeclaration());
-				LU_ASSERT(func_var_decl);
-				ExprAST const* func_init_expr = func_var_decl->GetInitExpr();
-				if (func_init_expr->GetExprKind() == ExprKind::DeclRef)
+				Register reg = ctx.AllocateRegister();
+				func_ref->Codegen(ctx, &reg);
+				ctx.Call(reg);
+				ctx.FreeRegister(reg);
+				if (result)
 				{
-					DeclRefAST const* decl_func_init_expr = AstCast<DeclRefAST>(func_init_expr);
-					ctx.Call(decl_func_init_expr->GetName().data());
-					if (result)
-					{
-						Register func_reg = ctx.GetReturnRegister();
-						ctx.Mov(*result, func_reg, GetBitCount(type_size));
-						ctx.FreeRegister(func_reg);
-					}
+					Register func_reg = ctx.GetReturnRegister();
+					ctx.Mov(*result, func_reg, GetBitCount(type_size));
+					ctx.FreeRegister(func_reg);
 				}
-				else LU_ASSERT(false);
 			}
-			else LU_ASSERT(false);
 		}
 		else LU_ASSERT(false);
 

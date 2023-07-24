@@ -66,6 +66,7 @@ namespace lucc
 
 
 		void Call(char const* func_name);
+		void Call(Register reg);
 		void SaveFrameRegister();
 		void AllocateStack(uint32 size);
 		void FreeStack(uint32 size);
