@@ -509,16 +509,15 @@ namespace lucc
 			top += (int32)param->GetSymbol().qtype->GetSize();
 		}
 
-		int32 bottom = 0;
 		for (uint64 i = 0; i < std::min(ARGUMENTS_PASSED_BY_REGISTERS, param_decls.size()); ++i)
 		{
 			VarDeclAST* param = param_decls[i].get();
-			int32 alignment = (int32)param->GetSymbol().qtype->GetAlign();
-			bottom += (int32)param->GetSymbol().qtype->GetSize();
-			bottom = AlignTo(bottom, alignment);
-			param->SetLocalOffset(-bottom);
+			top = AlignTo(top, 8);
+			param->SetLocalOffset(top);
+			top += (int32)param->GetSymbol().qtype->GetSize();
 		}
 
+		int32 bottom = 0;
 		int32 local_stack_space = 0;
 		for (auto it = local_variables.rbegin(); it != local_variables.rend(); ++it)
 		{
@@ -631,7 +630,6 @@ namespace lucc
 		for (uint16 i = 0; i < std::min(ARGUMENTS_PASSED_BY_REGISTERS, param_decls.size()); ++i)
 		{
 			VarDeclAST* param_var = param_decls[i].get();
-			LU_ASSERT(param_var->GetLocalOffset() < 0);
 			BitCount bitcount = GetBitCount(param_var->GetSymbol().qtype->GetSize());
 			Register arg_reg = ctx.GetCallRegister(i);
 			ctx.Mov(Result(RBP, param_var->GetLocalOffset()), arg_reg, bitcount);

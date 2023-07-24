@@ -173,13 +173,13 @@ TEST(Declaration, Variable)
 }
 TEST(Declaration, Function)
 {
-	EXPECT_EQ(LUCC(int f(int a) { return a; }; int main(void) { int i = f(1); return i; }), 1);
-	EXPECT_EQ(LUCC(int f(int a, int b) { return a + b; }; int main(void) { int i = f(1, 2); return i; }), 3);
-	EXPECT_EQ(LUCC(int f(int a, int b, int c) { return a + b + c; }; int main(void) { int i = f(1, 2, 3); return i; }), 6);
-	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d) { return a + b + c + d; }; int main(void) { int i = f(1, 2, 3, 4); return i; }), 10);
-	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e) { return a + b + c + d + e; }; int main(void) { int i = f(1, 2, 3, 4, 5); return i; }), 15);
-	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e, int f) { return a + b + c + d + e + f; }; int main(void) { int i = f(1, 2, 3, 4, 5, 6); return i; }), 21);
-	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e, int f, int g) { return  e + f + g + a + b + c + d; }; int main(void) { int i = f(1, 2, 3, 4, 5, 6, 7); return i; }), 28);
+	EXPECT_EQ(LUCC(int f(int a) { return a; } int main(void) { int i = f(1); return i; }), 1);
+	EXPECT_EQ(LUCC(int f(int a, int b) { return a + b; } int main(void) { int i = f(1, 2); return i; }), 3);
+	EXPECT_EQ(LUCC(int f(int a, int b, int c) { return a + b + c; } int main(void) { int i = f(1, 2, 3); return i; }), 6);
+	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d) { return a + b + c + d; } int main(void) { int i = f(1, 2, 3, 4); return i; }), 10);
+	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e) { return a + b + c + d + e; } int main(void) { int i = f(1, 2, 3, 4, 5); return i; }), 15);
+	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e, int f) { return a + b + c + d + e + f; } int main(void) { int i = f(1, 2, 3, 4, 5, 6); return i; }), 21);
+	EXPECT_EQ(LUCC(int f(int a, int b, int c, int d, int e, int f, int g) { return a + b + c + d + e + f + g; } int main(void) { int i = f(1, 2, 3, 4, 5, 6, 7); return i; }), 28);
 
 	EXPECT_EQ(LUCC(int a = 5; int ptr_to_int(int* ptr) { return *ptr; } int main(void) { int* aptr = &a; return ptr_to_int(aptr); }), 5);
 }
