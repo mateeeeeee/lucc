@@ -488,6 +488,8 @@ namespace lucc
 			Emit<None>("extern {} : proc", func_decl.name);
 			return;
 		}
+		if (!func_decl.is_definition) return;
+
 		current_function = func_decl.name;
 		Emit<Text>("\n{} proc {}", func_decl.name, func_decl.is_static ? "private" : "");
 	}

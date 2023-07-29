@@ -8,9 +8,6 @@ namespace lucc
 {
 	namespace
 	{
-		template<typename T>
-		inline T AlignTo(T n, T align) { return (n + align - 1) / align * align; }
-
 		namespace cast
 		{
 			enum CastTableIdx
@@ -39,7 +36,6 @@ namespace lucc
 
 			enum MovType
 			{
-				NoMov,
 				Mov,
 				Movzx,
 				Movsx,
@@ -48,16 +44,16 @@ namespace lucc
 
 			constexpr MovType cast_table[CastTypeCount][CastTypeCount] =
 			{
-				// i8   i16     i32     i64     u8     u16     u32     u64
-				{NoMov, NoMov, NoMov, Movsxd, Movzx, Movzx, NoMov, Movsxd },  // i8
-				{Movsx, NoMov, NoMov, Movsxd, Movzx, Movzx, NoMov, Movsxd },  // i16
-				{Movsx, Movsx, NoMov, Movsxd, Movzx, Movzx, NoMov, Movsxd },  // i32
-				{Movsx, Movsx, NoMov, NoMov,  Movzx, Movzx, NoMov, NoMov  },  // i64
+		   //from    i8    i16   i32    i64      u8     u16   u32      u64     //to
+				  {Mov,   Mov,   Mov,    Mov, Mov,   Mov,   Mov, Mov },  // i8  
+				  {Movsx, Mov,   Mov,    Mov, Movzx, Mov,   Mov, Mov },  // i16
+				  {Movsx, Movsx, Mov,    Mov, Movzx, Movzx, Mov, Mov },  // i32
+				  {Movsx, Movsx, Movsxd, Mov, Movzx, Movzx, Mov, Mov },  // i64
 
-				{Movsx, NoMov, NoMov, Movsxd, NoMov, NoMov, NoMov, Movsxd },  // u8
-				{Movsx, Movsx, NoMov, Movsxd, Movzx, NoMov, NoMov, Movsxd },  // u16
-				{Movsx, Movsx, NoMov, Mov,	  Movzx, Movzx, NoMov, Mov	 },	  // u32
-				{Movsx, Movsx, NoMov, NoMov,  Movzx, Movzx, NoMov, NoMov  },  // u64
+				  {Mov,   Mov,   Mov,    Mov, Mov,   Mov,   Mov, Mov },  // u8
+				  {Movsx, Mov,   Mov,    Mov, Movzx, Mov,   Mov, Mov },  // u16
+				  {Movsx, Movsx, Mov,    Mov, Movzx, Movzx, Mov, Mov },  // u32
+				  {Movsx, Movsx, Movsxd, Mov, Movzx, Movzx, Mov, Mov },  // u64
 			};
 
 			MovType GetCastMovType(QualifiedType const& from, QualifiedType const& to)
@@ -67,6 +63,9 @@ namespace lucc
 				return cast_table[to_type][from_type];
 			}
 		}
+
+		template<typename T>
+		inline T AlignTo(T n, T align) { return (n + align - 1) / align * align; }
 	}
 
 	class VarDeclVisitorAST : public INodeVisitorAST
@@ -271,6 +270,12 @@ namespace lucc
 	{
 		visitor.Visit(*this, depth);
 		operand->Accept(visitor, depth + 1);
+	}
+
+	void MemberAccessExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+		struct_expr->Accept(visitor, depth + 1);
 	}
 
 	/// Constexpr
@@ -620,10 +625,11 @@ namespace lucc
 		{
 			.name = name.c_str(),
 			.is_static = sym.storage == Storage::Static,
-			.is_extern = sym.storage == Storage::Extern
+			.is_extern = sym.storage == Storage::Extern,
+			.is_definition = IsDefinition()
 		};
-		if (!IsDefinition()) return;
 		ctx.DeclareFunction(func_decl);
+		if (!IsDefinition()) return;
 
 		ctx.SaveFrameRegister();
 
@@ -1644,7 +1650,6 @@ namespace lucc
 		cast::MovType mov_type = cast::GetCastMovType(from_type, to_type);
 		switch (mov_type)
 		{
-		case cast::NoMov:
 		case cast::Mov:   ctx.Mov(cast_reg, tmp_reg, bitcount); break;
 		case cast::Movzx: ctx.Movzx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
 		case cast::Movsx: ctx.Movsx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
@@ -1654,4 +1659,11 @@ namespace lucc
 		ctx.FreeRegister(tmp_reg);
 		if (!result) ctx.FreeRegister(cast_reg);
 	}
+
+	void MemberAccessExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		if (!result) return;
+
+	}
+
 }

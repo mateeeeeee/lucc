@@ -912,13 +912,7 @@ namespace lucc
 	//							| <postfix - expression> --
 	std::unique_ptr<ExprAST> Parser::ParsePostFixExpression()
 	{
-		std::unique_ptr<ExprAST> expr;
-		//if (current_token->Is(TokenKind::left_round) && (current_token + 1)->IsDeclSpec())
-		//{
-		//	//expr = ParseCompoundLiteral();
-		//}
-		//else
-		expr = ParsePrimaryExpression();
+		std::unique_ptr<ExprAST> expr = ParsePrimaryExpression();
 
 		SourceLocation loc = current_token->GetLocation();
 		switch (current_token->GetKind())
@@ -1009,6 +1003,62 @@ namespace lucc
 			add_expr->SetRHS(std::move(bracket_expr));
 			dereference_expr->SetOperand(std::move(add_expr));
 			return dereference_expr;
+		}
+		case TokenKind::period:
+		{
+			++current_token;
+			QualifiedType const& type = expr->GetType();
+			if (!IsStructType(type))
+			{
+				Report(diag::invalid_member_access);
+				return nullptr;
+			}
+			if (current_token->IsNot(TokenKind::identifier))
+			{
+				Report(diag::invalid_member_access);
+				return nullptr;
+			}
+			std::string_view member_name = current_token->GetIdentifier();
+
+			StructType const& struct_type = type->As<StructType>();
+			if (!struct_type.HasMember(member_name))
+			{
+				Report(diag::invalid_member_access);
+				return nullptr;
+			}
+			std::unique_ptr<MemberAccessExprAST> member_access_expr = std::make_unique<MemberAccessExprAST>(std::move(expr), current_token->GetIdentifier(), loc);
+			return member_access_expr;
+		}
+		case TokenKind::arrow:
+		{
+			++current_token;
+			QualifiedType const& type = expr->GetType();
+			if (!IsStructPointerType(type))
+			{
+				Report(diag::invalid_member_access);
+				return nullptr;
+			}
+			if (current_token->IsNot(TokenKind::identifier))
+			{
+				Report(diag::invalid_member_access);
+				return nullptr;
+			}
+			std::string_view member_name = current_token->GetIdentifier();
+			StructType const& struct_type = type->As<PointerType>().PointeeType()->As<StructType>();
+			if (!struct_type.HasMember(member_name))
+			{
+				Report(diag::invalid_member_access);
+				return nullptr;
+			}
+
+			std::unique_ptr<UnaryExprAST> dereference_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
+			
+			std::unique_ptr<MemberAccessExprAST> member_access_expr = std::make_unique<MemberAccessExprAST>(std::move(expr), current_token->GetIdentifier(), loc);
+			return member_access_expr;
+			//	// x->y is short for (*x).y
+			//	node = new_unary(ND_DEREF, node, tok);
+			//	node = struct_ref(node, tok->next);
+			return nullptr;
 		}
 		}
 		return expr;
@@ -1211,6 +1261,81 @@ namespace lucc
 		if (!enum_tag.empty()) ctx.tag_sym_table->Insert(TagSymbol{ enum_tag, decl_spec.qtype, true });
 	}
 
+	void Parser::ParseStruct(DeclSpecInfo& decl_spec)
+	{
+		Expect(TokenKind::KW_struct);
+
+		std::string tag_name = "";
+		if (current_token->Is(TokenKind::identifier))
+		{
+			tag_name = current_token->GetIdentifier();
+			++current_token;
+		}
+
+		if (!tag_name.empty() && !current_token->Is(TokenKind::left_brace))
+		{
+			TagSymbol* tag = ctx.tag_sym_table->LookUp(tag_name);
+			if (tag)
+			{
+				decl_spec.qtype = tag->type;
+				return;
+			}
+
+			decl_spec.qtype = StructType(tag_name);
+			ctx.tag_sym_table->Insert(TagSymbol(tag_name, decl_spec.qtype, false));
+			return;
+		}
+
+		Expect(TokenKind::left_brace);
+
+		decl_spec.qtype = StructType(tag_name);
+		ParseStructMembers(decl_spec);
+
+		if (!tag_name.empty()) 
+		{
+			TagSymbol* tag = ctx.tag_sym_table->LookUpCurrentScope(tag_name);
+			if (tag)
+			{
+				tag->type = decl_spec.qtype;
+				return;
+			}
+			ctx.tag_sym_table->Insert(TagSymbol(tag_name, decl_spec.qtype, false));
+		}
+	}
+
+	// struct-members ::= (declspec declarator (","  declarator)* ";")*
+	void Parser::ParseStructMembers(DeclSpecInfo& decl_spec)
+	{
+		LU_ASSERT(IsStructType(decl_spec.qtype));
+		StructType& struct_type = decl_spec.qtype->As<StructType>();
+		
+		while (!Consume(TokenKind::right_brace)) 
+		{
+			DeclSpecInfo decl_spec_mem{};
+			ParseDeclSpec(decl_spec_mem, false);
+			bool first = true;
+
+			// Anonymous struct member
+			if ((IsStructType(decl_spec_mem.qtype) && Consume(TokenKind::semicolon)))
+			{
+				struct_type.AddMember("", decl_spec_mem.qtype);
+				continue;
+			}
+
+			// Regular struct members
+			while (!Consume(TokenKind::semicolon)) 
+			{
+				if (!first) Expect(TokenKind::comma);
+				first = false;
+
+				DeclaratorInfo declarator_mem{};
+				ParseDeclarator(decl_spec_mem, declarator_mem);
+				struct_type.AddMember(declarator_mem.name, declarator_mem.qtype);
+			}
+		}
+		struct_type.Finalize();
+	}
+
 	//<declaration - specifier> :: = <storage - class - specifier>
 	//							 | <type - specifier>
 	//							 | <type - qualifier>
@@ -1310,6 +1435,10 @@ namespace lucc
 				if (current_token->Is(KW_enum))
 				{
 					ParseEnum(decl_spec);
+				}
+				else if (current_token->Is(KW_struct))
+				{
+					ParseStruct(decl_spec);
 				}
 				else if (typedef_type)
 				{

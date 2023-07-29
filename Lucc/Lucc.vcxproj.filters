@@ -144,4 +144,7 @@
       <Filter>Diagnostics</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\todo.txt" />
+  </ItemGroup>
 </Project>

@@ -264,6 +264,11 @@ namespace lucc
 				++cur_ptr;
 				t.SetKind(TokenKind::minus_equal);
 			}
+			else if (*cur_ptr == '>')
+			{
+				++cur_ptr;
+				t.SetKind(TokenKind::arrow);
+			}
 			else t.SetKind(TokenKind::minus);
 			break;
 		case '*':

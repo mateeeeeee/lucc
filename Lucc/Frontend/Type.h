@@ -340,6 +340,48 @@ namespace lucc
 		FunctionSpecifier specifier = FunctionSpecifier::None;
 	};
 
+	struct StructMember
+	{
+		std::string name = "";
+		QualifiedType qtype;
+		size_t offset;
+	};
+
+	class StructType : public Type
+	{
+	public:
+		explicit StructType(std::string_view name) : Type(TypeKind::Struct, false), name(name), has_const_member(false) {}
+
+		std::string_view GetName() const { return name; }
+
+		void AddMember(std::string const& name, QualifiedType const& qtype)
+		{
+			members.emplace_back(name, qtype);
+			if (qtype.IsConst()) has_const_member = true;
+		}
+		void Finalize();
+
+		void EncounteredDefinition() const { SetComplete(); }
+		bool HasDefinition() const { return IsComplete(); }
+
+		virtual bool IsCompatible(Type const& other) const override
+		{
+			StructType const* struct_type = other.TryAs<StructType>();
+			return struct_type && struct_type->name == name;
+		}
+		bool HasConstMember() const { return has_const_member; }
+		bool HasMember(std::string_view name) const { return member_map.contains(std::string(name)); }
+		StructMember const& GetMember(std::string_view name) const
+		{
+			return member_map[std::string(name)];
+		}
+	private:
+		std::string name;
+		std::vector<StructMember> members;
+		mutable std::unordered_map<std::string, StructMember> member_map;
+		bool has_const_member;
+	};
+
 	template<TypeKind K>
 	inline bool IsType(Type const& type)
 	{
@@ -417,6 +459,10 @@ namespace lucc
 	inline bool IsVoidPointerType(Type const& type)
 	{
 		return type.Is(TypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(TypeKind::Void);
+	}
+	inline bool IsStructPointerType(Type const& type)
+	{
+		return type.Is(TypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(TypeKind::Struct);
 	}
 	inline bool IsCharArrayType(Type const& type)
 	{

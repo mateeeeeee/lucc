@@ -201,6 +201,7 @@ namespace lucc
 		char const* name;
 		bool is_static;
 		bool is_extern;
+		bool is_definition;
 	};
 
 	struct OutputBuffer

@@ -166,6 +166,8 @@ namespace lucc
 		std::unique_ptr<ExprAST> ParseBinaryExpression();
 
 		void ParseEnum(DeclSpecInfo& decl_spec);
+		void ParseStruct(DeclSpecInfo& decl_spec);
+		void ParseStructMembers(DeclSpecInfo& decl_spec);
 
 		void ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
 		void ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);

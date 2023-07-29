@@ -570,7 +570,8 @@ namespace lucc
 		IntLiteral,
 		StringLiteral,
 		DeclRef,
-		Cast
+		Cast,
+		MemberAccess
 	};
 	enum class UnaryExprKind : uint8
 	{
@@ -803,6 +804,35 @@ namespace lucc
 		When casting between pointers (either object or function), if the original value is a null pointer value of its type, the result is the correct null pointer value for the target type.
 		*/
 		void SetCastType();
+	};
+	class MemberAccessExprAST : public ExprAST
+	{
+	public:
+		MemberAccessExprAST(std::unique_ptr<ExprAST>&& expr, std::string_view member_name, SourceLocation const& loc)
+			: ExprAST(ExprKind::MemberAccess, loc), struct_expr(std::move(expr)), member_name(member_name)
+		{
+			SetValueCategory(ExprValueCategory::LValue);
+			SetStructType();
+		}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
+
+	private:
+		std::unique_ptr<ExprAST> struct_expr;
+		std::string member_name;
+
+	private:
+		void SetStructType()
+		{
+			QualifiedType const& qtype = struct_expr->GetType();
+			LU_ASSERT(type->Is(TypeKind::Struct));
+			StructType const& struct_type = type->As<StructType>();
+
+			LU_ASSERT(struct_type.HasMember(member_name));
+			auto const& member = struct_type.GetMember(member_name);
+			SetType(member.qtype);
+		}
 	};
 
 	class IdentifierAST : public ExprAST
