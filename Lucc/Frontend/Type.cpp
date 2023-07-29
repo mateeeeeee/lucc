@@ -329,13 +329,18 @@ namespace lucc
 		return PointerType(op_type);
 	}
 
-	void StructType::Finalize()
+	bool StructType::Finalize()
 	{
 		auto AlignTo = []<typename T>(T n, T align) { return (n + align - 1) / align * align; };
 
 		size_t offset = 0;
 		for (auto& member : members) 
 		{
+			if (member_map.contains(member.name))
+			{
+				return false;
+			}
+			member_map[member.name] = member;
 			QualifiedType& mem_type = member.qtype;
 			offset = AlignTo(offset, mem_type->GetAlign());
 			member.offset = offset;

@@ -1,9 +1,14 @@
 
 extern int printf(char const* fmt, ...);
 
+struct S
+{
+	int a;
+	short b;
+};
+
 int main(void) 
 { 
-	int   x = 65535;
-	unsigned char c = (unsigned char)x;
-	return c;
+	struct S s;
+	return s.a;
 }

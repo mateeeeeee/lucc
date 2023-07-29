@@ -90,7 +90,8 @@ DIAG(unknown_enum, error, "unknown enum type")
 DIAG(not_enum_type, error, "not enum type")
 DIAG(enum_value_no_name, error, "enum value has no name")
 DIAG(enum_value_not_constexpr, error, "enum value is not constexpr")
-DIAG(invalid_member_access, error, "Invalid access member")
+DIAG(invalid_member_access, error, "Invalid member access")
+DIAG(invalid_member_declaration, error, "Invalid member declaration")
 
 
 #undef DIAG

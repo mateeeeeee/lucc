@@ -1019,6 +1019,7 @@ namespace lucc
 				return nullptr;
 			}
 			std::string_view member_name = current_token->GetIdentifier();
+			++current_token;
 
 			StructType const& struct_type = type->As<StructType>();
 			if (!struct_type.HasMember(member_name))
@@ -1026,7 +1027,7 @@ namespace lucc
 				Report(diag::invalid_member_access);
 				return nullptr;
 			}
-			std::unique_ptr<MemberAccessExprAST> member_access_expr = std::make_unique<MemberAccessExprAST>(std::move(expr), current_token->GetIdentifier(), loc);
+			std::unique_ptr<MemberAccessExprAST> member_access_expr = std::make_unique<MemberAccessExprAST>(std::move(expr), member_name, loc);
 			return member_access_expr;
 		}
 		case TokenKind::arrow:
@@ -1044,6 +1045,8 @@ namespace lucc
 				return nullptr;
 			}
 			std::string_view member_name = current_token->GetIdentifier();
+			++current_token;
+
 			StructType const& struct_type = type->As<PointerType>().PointeeType()->As<StructType>();
 			if (!struct_type.HasMember(member_name))
 			{
@@ -1052,13 +1055,8 @@ namespace lucc
 			}
 
 			std::unique_ptr<UnaryExprAST> dereference_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
-			
-			std::unique_ptr<MemberAccessExprAST> member_access_expr = std::make_unique<MemberAccessExprAST>(std::move(expr), current_token->GetIdentifier(), loc);
+			std::unique_ptr<MemberAccessExprAST> member_access_expr = std::make_unique<MemberAccessExprAST>(std::move(expr), member_name, loc);
 			return member_access_expr;
-			//	// x->y is short for (*x).y
-			//	node = new_unary(ND_DEREF, node, tok);
-			//	node = struct_ref(node, tok->next);
-			return nullptr;
 		}
 		}
 		return expr;
@@ -1333,7 +1331,8 @@ namespace lucc
 				struct_type.AddMember(declarator_mem.name, declarator_mem.qtype);
 			}
 		}
-		struct_type.Finalize();
+		bool success = struct_type.Finalize();
+		if (!success) Report(diag::invalid_member_declaration);
 	}
 
 	//<declaration - specifier> :: = <storage - class - specifier>

@@ -13,12 +13,6 @@ main proc
 push rbp
 mov rbp, rsp
 sub	rsp, 16
-mov	dword ptr [rbp-8], 65535
-mov	r10d, dword ptr [rbp-8]
-mov	bl, r10b
-mov	byte ptr [rbp-1], bl
-mov	r10b, byte ptr [rbp-1]
-movzx	ebx, r10b
 mov	eax, ebx
 jmp main_end
 xor	rax, rax

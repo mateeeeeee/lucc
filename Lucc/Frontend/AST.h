@@ -826,8 +826,8 @@ namespace lucc
 		void SetStructType()
 		{
 			QualifiedType const& qtype = struct_expr->GetType();
-			LU_ASSERT(type->Is(TypeKind::Struct));
-			StructType const& struct_type = type->As<StructType>();
+			LU_ASSERT(qtype->Is(TypeKind::Struct));
+			StructType const& struct_type = qtype->As<StructType>();
 
 			LU_ASSERT(struct_type.HasMember(member_name));
 			auto const& member = struct_type.GetMember(member_name);

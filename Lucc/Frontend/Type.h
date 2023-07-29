@@ -359,7 +359,7 @@ namespace lucc
 			members.emplace_back(name, qtype);
 			if (qtype.IsConst()) has_const_member = true;
 		}
-		void Finalize();
+		bool Finalize();
 
 		void EncounteredDefinition() const { SetComplete(); }
 		bool HasDefinition() const { return IsComplete(); }
