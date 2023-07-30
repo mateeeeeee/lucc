@@ -1094,6 +1094,10 @@ namespace lucc
 		{
 			if (!result) return;
 
+			bool const lhs_is_unsigned = IsUnsignedType(lhs->GetType());
+			bool const rhs_is_unsigned = IsUnsignedType(rhs->GetType());
+			bool const is_unsigned = lhs_is_unsigned || rhs_is_unsigned;
+
 			if (rhs->GetExprKind() == ExprKind::IntLiteral)
 			{
 				IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
@@ -1112,14 +1116,30 @@ namespace lucc
 				ctx.FreeRegister(reg2);
 				ctx.FreeRegister(reg1);
 			}
-			switch (kind)
+
+			if (is_unsigned)
 			{
-			case BinaryExprKind::Less:			ctx.Set(*result, ConditionCode::L); break;
-			case BinaryExprKind::LessEqual:		ctx.Set(*result, ConditionCode::LE); break;
-			case BinaryExprKind::Greater:		ctx.Set(*result, ConditionCode::G); break;
-			case BinaryExprKind::GreaterEqual:	ctx.Set(*result, ConditionCode::GE); break;
-			case BinaryExprKind::Equal:			ctx.Set(*result, ConditionCode::E); break;
-			case BinaryExprKind::NotEqual:		ctx.Set(*result, ConditionCode::NE); break;
+				switch (kind)
+				{
+				case BinaryExprKind::Less:			ctx.Set(*result, ConditionCode::B); break;
+				case BinaryExprKind::LessEqual:		ctx.Set(*result, ConditionCode::BE); break;
+				case BinaryExprKind::Greater:		ctx.Set(*result, ConditionCode::A); break;
+				case BinaryExprKind::GreaterEqual:	ctx.Set(*result, ConditionCode::AE); break;
+				case BinaryExprKind::Equal:			ctx.Set(*result, ConditionCode::E); break;
+				case BinaryExprKind::NotEqual:		ctx.Set(*result, ConditionCode::NE); break;
+				}
+			}
+			else
+			{
+				switch (kind)
+				{
+				case BinaryExprKind::Less:			ctx.Set(*result, ConditionCode::L); break;
+				case BinaryExprKind::LessEqual:		ctx.Set(*result, ConditionCode::LE); break;
+				case BinaryExprKind::Greater:		ctx.Set(*result, ConditionCode::G); break;
+				case BinaryExprKind::GreaterEqual:	ctx.Set(*result, ConditionCode::GE); break;
+				case BinaryExprKind::Equal:			ctx.Set(*result, ConditionCode::E); break;
+				case BinaryExprKind::NotEqual:		ctx.Set(*result, ConditionCode::NE); break;
+				}
 			}
 			ctx.Movzx(*result, *result, BitCount_64, true);
 
@@ -1132,7 +1152,11 @@ namespace lucc
 				IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
 				lhs->Codegen(ctx, result);
 				if (kind == BinaryExprKind::ShiftLeft) ctx.Shl(*result, (uint8)int_literal->GetValue(), bitmode);
-				else if (kind == BinaryExprKind::ShiftRight) ctx.Sar(*result, (uint8)int_literal->GetValue(), bitmode);
+				else if (kind == BinaryExprKind::ShiftRight)
+				{
+					bool lhs_unsigned = IsUnsignedType(lhs->GetType());
+					lhs_unsigned ? ctx.Shr(*result, (uint8)int_literal->GetValue(), bitmode) : ctx.Sar(*result, (uint8)int_literal->GetValue(), bitmode);
+				}
 			}
 			else
 			{
@@ -1140,7 +1164,11 @@ namespace lucc
 				Register tmp_reg = ctx.AllocateRegister();
 				lhs->Codegen(ctx, &tmp_reg);
 				if (kind == BinaryExprKind::ShiftLeft)  ctx.Shl(*result, tmp_reg, bitmode);
-				if (kind == BinaryExprKind::ShiftRight) ctx.Sar(*result, tmp_reg, bitmode); //#todo check if unsigned
+				if (kind == BinaryExprKind::ShiftRight)
+				{
+					bool lhs_unsigned = IsUnsignedType(lhs->GetType());
+					lhs_unsigned ? ctx.Shr(*result, tmp_reg, bitmode) : ctx.Sar(*result, tmp_reg, bitmode);
+				}
 				ctx.FreeRegister(tmp_reg);
 			}
 		};
