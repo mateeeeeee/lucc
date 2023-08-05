@@ -41,7 +41,7 @@ namespace lucc
 	class LabelStmtAST;
 	class IntLiteralAST;
 	class StringLiteralAST;
-	class IdentifierAST;
+	class IdentifierExprAST;
 	class Parser;
 
 	using ExprParseFn = std::unique_ptr<ExprAST>(Parser::*)();

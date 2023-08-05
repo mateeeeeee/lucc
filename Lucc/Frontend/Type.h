@@ -371,9 +371,13 @@ namespace lucc
 		}
 		bool HasConstMember() const { return has_const_member; }
 		bool HasMember(std::string_view name) const { return member_map.contains(std::string(name)); }
-		StructMember const& GetMember(std::string_view name) const
+		size_t GetMemberOffset(std::string_view name) const
 		{
-			return member_map[std::string(name)];
+			return member_map[std::string(name)].offset;
+		}
+		auto const& GetMemberType(std::string_view name) const
+		{
+			return member_map[std::string(name)].qtype;
 		}
 	private:
 		std::string name;

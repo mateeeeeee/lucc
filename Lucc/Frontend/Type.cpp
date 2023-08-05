@@ -340,11 +340,12 @@ namespace lucc
 			{
 				return false;
 			}
-			member_map[member.name] = member;
+			StructMember& map_member = member_map[member.name];
 			QualifiedType& mem_type = member.qtype;
 			offset = AlignTo(offset, mem_type->GetAlign());
 			member.offset = offset;
 			offset += mem_type->GetSize();
+			map_member = member;
 
 			if (GetAlign() < mem_type->GetAlign()) SetAlign(mem_type->GetAlign());
 		}

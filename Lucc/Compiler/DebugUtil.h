@@ -110,10 +110,10 @@ namespace lucc
 			virtual void Visit(BinaryExprAST const& node, size_t depth) override;
 			virtual void Visit(TernaryExprAST const& node, size_t depth) override;
 			virtual void Visit(CastExprAST const& node, size_t depth) override;
-			virtual void Visit(FunctionCallAST const& node, size_t depth) override;
+			virtual void Visit(FunctionCallExprAST const& node, size_t depth) override;
 			virtual void Visit(IntLiteralAST const& node, size_t depth) override;
 			virtual void Visit(StringLiteralAST const& node, size_t depth) override;
-			virtual void Visit(IdentifierAST const& node, size_t depth) override;
+			virtual void Visit(IdentifierExprAST const& node, size_t depth) override;
 			virtual void Visit(StmtAST const& node, size_t depth) override;
 			virtual void Visit(CompoundStmtAST const& node, size_t depth) override;
 			virtual void Visit(DeclStmtAST const& node, size_t depth) override;
@@ -134,6 +134,8 @@ namespace lucc
 			virtual void Visit(LabelStmtAST const& node, size_t depth) override;
 			virtual void Visit(BreakStmtAST const& node, size_t depth) override;
 			virtual void Visit(ContinueStmtAST const& node, size_t depth) override;
+			virtual void Visit(DeclRefExprAST const& node, size_t depth) override;
+			virtual void Visit(MemberRefExprAST const& node, size_t depth) override;
 		};
 	}
 }

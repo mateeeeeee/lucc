@@ -16,11 +16,12 @@ namespace lucc
 	class TernaryExprAST;
 	class CastExprAST;
 	class ImplicitCastExprAST;
-	class FunctionCallAST;
+	class FunctionCallExprAST;
 	class IntLiteralAST;
 	class StringLiteralAST;
-	class IdentifierAST;
-	class DeclRefAST;
+	class IdentifierExprAST;
+	class DeclRefExprAST;
+	class MemberRefExprAST;
 
 	class StmtAST;
 	class CompoundStmtAST;
@@ -54,12 +55,13 @@ namespace lucc
 		virtual void Visit(UnaryExprAST const& node, size_t depth) {}
 		virtual void Visit(BinaryExprAST const& node, size_t depth) {}
 		virtual void Visit(TernaryExprAST const& node, size_t depth) {}
-		virtual void Visit(FunctionCallAST const& node, size_t depth) {}
+		virtual void Visit(FunctionCallExprAST const& node, size_t depth) {}
 		virtual void Visit(CastExprAST const& node, size_t depth) {}
 		virtual void Visit(IntLiteralAST const& node, size_t depth) {}
 		virtual void Visit(StringLiteralAST const& node, size_t depth) {}
-		virtual void Visit(IdentifierAST const& node, size_t depth) {}
-		virtual void Visit(DeclRefAST const& node, size_t depth) {}
+		virtual void Visit(IdentifierExprAST const& node, size_t depth) {}
+		virtual void Visit(DeclRefExprAST const& node, size_t depth) {}
+		virtual void Visit(MemberRefExprAST const& node, size_t depth) {}
 		virtual void Visit(StmtAST const& node, size_t depth) {}
 		virtual void Visit(CompoundStmtAST const& node, size_t depth) {}
 		virtual void Visit(DeclStmtAST const& node, size_t depth) {}
@@ -178,7 +180,7 @@ namespace lucc
 		{
 			local_variables.push_back(var_decl);
 		}
-		void AddFunctionCall(FunctionCallAST const* func_call)
+		void AddFunctionCall(FunctionCallExprAST const* func_call)
 		{
 			function_calls.push_back(func_call);
 		}
@@ -204,7 +206,7 @@ namespace lucc
 		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
 		std::unique_ptr<CompoundStmtAST> body;
 		std::vector<VarDeclAST const*> local_variables;
-		std::vector<FunctionCallAST const*> function_calls;
+		std::vector<FunctionCallExprAST const*> function_calls;
 		uint32 stack_size = 0;
 
 	private:
@@ -705,10 +707,10 @@ namespace lucc
 		std::unique_ptr<ExprAST> false_expr;
 	};
 
-	class FunctionCallAST : public ExprAST
+	class FunctionCallExprAST : public ExprAST
 	{
 	public:
-		FunctionCallAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
+		FunctionCallExprAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
 			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func))
 		{
 			auto const& type = func_expr->GetType();
@@ -805,43 +807,14 @@ namespace lucc
 		*/
 		void SetCastType();
 	};
-	class MemberAccessExprAST : public ExprAST
-	{
-	public:
-		MemberAccessExprAST(std::unique_ptr<ExprAST>&& expr, std::string_view member_name, SourceLocation const& loc)
-			: ExprAST(ExprKind::MemberAccess, loc), struct_expr(std::move(expr)), member_name(member_name)
-		{
-			SetValueCategory(ExprValueCategory::LValue);
-			SetStructType();
-		}
 
-		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
-		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
-
-	private:
-		std::unique_ptr<ExprAST> struct_expr;
-		std::string member_name;
-
-	private:
-		void SetStructType()
-		{
-			QualifiedType const& qtype = struct_expr->GetType();
-			LU_ASSERT(qtype->Is(TypeKind::Struct));
-			StructType const& struct_type = qtype->As<StructType>();
-
-			LU_ASSERT(struct_type.HasMember(member_name));
-			auto const& member = struct_type.GetMember(member_name);
-			SetType(member.qtype);
-		}
-	};
-
-	class IdentifierAST : public ExprAST
+	class IdentifierExprAST : public ExprAST
 	{
 	public:
 		std::string_view GetName() const { return name; }
 
 	protected:
-		explicit IdentifierAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(ExprKind::DeclRef, loc, type), name(name)
+		explicit IdentifierExprAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(ExprKind::DeclRef, loc, type), name(name)
 		{
 			SetValueCategory(ExprValueCategory::LValue);
 		}
@@ -851,15 +824,15 @@ namespace lucc
 	private:
 		std::string name;
 	};
-	class DeclRefAST : public IdentifierAST
+	class DeclRefExprAST : public IdentifierExprAST
 	{
 	public:
-		DeclRefAST(DeclAST* decl_ast, SourceLocation const& loc) : IdentifierAST(decl_ast->GetName(), loc, decl_ast->GetType()),
+		DeclRefExprAST(DeclAST* decl_ast, SourceLocation const& loc) : IdentifierExprAST(decl_ast->GetName(), loc, decl_ast->GetType()),
 			decl_ast(decl_ast) {}
 
 		VarSymbol const& GetSymbol() const { return decl_ast->GetSymbol(); }
 		bool IsGlobal() const { return GetSymbol().global; }
-		int32 GetLocalOffset() const 
+		virtual int32 GetLocalOffset() const 
 		{  
 			return decl_ast->GetLocalOffset();
 		}
@@ -869,9 +842,46 @@ namespace lucc
 		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
-	private:
+	protected:
 		DeclAST* decl_ast;
 	};
+	class MemberRefExprAST : public DeclRefExprAST
+	{
+	public:
+		MemberRefExprAST(DeclAST* decl_ast, std::string_view member_name, SourceLocation const& loc)
+			: DeclRefExprAST(decl_ast, loc), member_name(member_name)
+		{
+			SetValueCategory(ExprValueCategory::LValue);
+			SetMemberType();
+		}
+
+		virtual int32 GetLocalOffset() const
+		{
+			LU_ASSERT(IsStructType(decl_ast->GetType()));
+			StructType const& struct_type = decl_ast->GetType()->As<StructType>();
+			size_t member_offset = struct_type.GetMemberOffset(member_name);
+			return decl_ast->GetLocalOffset() + member_offset;
+		}
+
+		virtual void Accept(INodeVisitorAST& visitor, size_t depth) const override;
+		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
+
+	private:
+		std::string member_name;
+
+	private:
+		void SetMemberType()
+		{
+			QualifiedType const& qtype = decl_ast->GetType();
+			LU_ASSERT(qtype->Is(TypeKind::Struct));
+			StructType const& struct_type = qtype->As<StructType>();
+
+			LU_ASSERT(struct_type.HasMember(member_name));
+			auto const& member_type = struct_type.GetMemberType(member_name);
+			SetType(member_type);
+		}
+	};
+
 
 	struct AST
 	{

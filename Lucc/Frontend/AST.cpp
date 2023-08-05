@@ -85,7 +85,7 @@ namespace lucc
 	{
 	public:
 		FunctionCallVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
-		virtual void Visit(FunctionCallAST const& node, size_t depth) override
+		virtual void Visit(FunctionCallExprAST const& node, size_t depth) override
 		{
 			func_ref->AddFunctionCall(&node);
 		}
@@ -222,7 +222,7 @@ namespace lucc
 		false_expr->Accept(visitor, depth + 1);
 	}
 
-	void FunctionCallAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void FunctionCallExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 		func_expr->Accept(visitor, depth + 1);
@@ -245,7 +245,12 @@ namespace lucc
 		visitor.Visit(*this, depth);
 	}
 
-	void DeclRefAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void DeclRefExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+
+	void MemberRefExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
@@ -270,12 +275,6 @@ namespace lucc
 	{
 		visitor.Visit(*this, depth);
 		operand->Accept(visitor, depth + 1);
-	}
-
-	void MemberAccessExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
-	{
-		visitor.Visit(*this, depth);
-		struct_expr->Accept(visitor, depth + 1);
 	}
 
 	/// Constexpr
@@ -678,7 +677,7 @@ namespace lucc
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -711,7 +710,7 @@ namespace lucc
 			{
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -769,7 +768,7 @@ namespace lucc
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -802,7 +801,7 @@ namespace lucc
 				BitCount bitcount = GetBitCount(type_size);
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -852,7 +851,7 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -895,7 +894,7 @@ namespace lucc
 			{
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -929,7 +928,7 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefAST* decl_ref = AstCast<DeclRefAST>(operand.get());
+					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -1216,7 +1215,7 @@ namespace lucc
 			LU_ASSERT_MSG(lhs->IsLValue(), "Cannot assign to rvalue!");
 			if (lhs->GetExprKind() == ExprKind::DeclRef)
 			{
-				DeclRefAST* decl_ref = AstCast<DeclRefAST>(lhs.get());
+				DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(lhs.get());
 				char const* var_name = decl_ref->GetName().data();
 				int32 local_offset = decl_ref->GetLocalOffset();
 				Result mem_ref(RBP, local_offset);
@@ -1230,7 +1229,7 @@ namespace lucc
 				}
 				else if (rhs->GetExprKind() == ExprKind::FunctionCall)
 				{
-					FunctionCallAST* func_call = AstCast<FunctionCallAST>(rhs.get());
+					FunctionCallExprAST* func_call = AstCast<FunctionCallExprAST>(rhs.get());
 					Register ret_reg = ctx.GetReturnRegister();
 					func_call->Codegen(ctx);
 					if (global) ctx.Mov(var_name, ret_reg, bitmode);
@@ -1368,7 +1367,7 @@ namespace lucc
 		ctx.Label(end_label, label_id);
 	}
 
-	void DeclRefAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void DeclRefExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!result) return;
 
@@ -1514,7 +1513,7 @@ namespace lucc
 		ctx.FreeRegister(cond_reg);
 	}
 
-	void FunctionCallAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void FunctionCallExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		//shadow space
 		uint32 shadow_space_stack = 0;
@@ -1562,7 +1561,7 @@ namespace lucc
 		{
 			QualifiedType const& type = GetType();
 			size_t type_size = type->GetSize();
-			DeclRefAST* func_ref = AstCast<DeclRefAST>(func_expr.get());
+			DeclRefExprAST* func_ref = AstCast<DeclRefExprAST>(func_expr.get());
 			if (IsFunctionType(func_ref->GetType()))
 			{
 				ctx.Call(func_ref->GetDeclaration()->GetName().data());
@@ -1688,10 +1687,36 @@ namespace lucc
 		if (!result) ctx.FreeRegister(cast_reg);
 	}
 
-	void MemberAccessExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void MemberRefExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!result) return;
 
+		size_t type_size = GetType()->GetSize();
+		BitCount bitmode = GetBitCount(type_size);
+
+		if (!decl_ast->GetSymbol().global)
+		{
+			if (IsArrayType(GetType()))
+			{
+				Result res(RBP, GetLocalOffset());
+				ctx.Lea(*result, res);
+			}
+			else
+			{
+				Result res(RBP, GetLocalOffset());
+				ctx.Mov(*result, res, bitmode);
+			}
+			return;
+		}
+		
+		if (IsArrayType(GetType()) || IsFunctionType(GetType()))
+		{
+			
+		}
+		else
+		{
+			
+		}
 	}
 
 }

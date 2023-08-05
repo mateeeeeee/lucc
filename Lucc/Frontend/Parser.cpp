@@ -926,7 +926,7 @@ namespace lucc
 				return nullptr;
 			}
 
-			std::unique_ptr<FunctionCallAST> func_call_expr = std::make_unique<FunctionCallAST>(std::move(expr), current_token->GetLocation());
+			std::unique_ptr<FunctionCallExprAST> func_call_expr = std::make_unique<FunctionCallExprAST>(std::move(expr), current_token->GetLocation());
 			++current_token;
 
 			FunctionType const* func_type = nullptr;
@@ -1006,13 +1006,22 @@ namespace lucc
 		}
 		case TokenKind::period:
 		{
-			++current_token;
-			QualifiedType const& type = expr->GetType();
-			if (!IsStructType(type))
+			--current_token; 
+			if (current_token->IsNot(TokenKind::identifier))
 			{
 				Report(diag::invalid_member_access);
 				return nullptr;
 			}
+			std::string_view struct_name = current_token->GetIdentifier();
+			VarSymbol* var = ctx.identifier_sym_table->LookUp(struct_name);
+			if (!var || var->is_enum || !IsStructType(var->qtype))
+			{
+				Report(diag::invalid_member_access);
+				return nullptr;
+			}
+			DeclAST* decl_ast = var->decl_ast;
+
+			current_token += 2;
 			if (current_token->IsNot(TokenKind::identifier))
 			{
 				Report(diag::invalid_member_access);
@@ -1021,42 +1030,18 @@ namespace lucc
 			std::string_view member_name = current_token->GetIdentifier();
 			++current_token;
 
-			StructType const& struct_type = type->As<StructType>();
+			StructType const& struct_type = var->qtype->As<StructType>();
 			if (!struct_type.HasMember(member_name))
 			{
 				Report(diag::invalid_member_access);
 				return nullptr;
 			}
-			std::unique_ptr<MemberAccessExprAST> member_access_expr = std::make_unique<MemberAccessExprAST>(std::move(expr), member_name, loc);
+			std::unique_ptr<MemberRefExprAST> member_access_expr = std::make_unique<MemberRefExprAST>(decl_ast, member_name, loc);
 			return member_access_expr;
 		}
 		case TokenKind::arrow:
 		{
-			++current_token;
-			QualifiedType const& type = expr->GetType();
-			if (!IsStructPointerType(type))
-			{
-				Report(diag::invalid_member_access);
-				return nullptr;
-			}
-			if (current_token->IsNot(TokenKind::identifier))
-			{
-				Report(diag::invalid_member_access);
-				return nullptr;
-			}
-			std::string_view member_name = current_token->GetIdentifier();
-			++current_token;
-
-			StructType const& struct_type = type->As<PointerType>().PointeeType()->As<StructType>();
-			if (!struct_type.HasMember(member_name))
-			{
-				Report(diag::invalid_member_access);
-				return nullptr;
-			}
-
-			std::unique_ptr<UnaryExprAST> dereference_expr = std::make_unique<UnaryExprAST>(UnaryExprKind::Dereference, loc);
-			std::unique_ptr<MemberAccessExprAST> member_access_expr = std::make_unique<MemberAccessExprAST>(std::move(expr), member_name, loc);
-			return member_access_expr;
+		//#todo
 		}
 		}
 		return expr;
@@ -1207,7 +1192,7 @@ namespace lucc
 			{
 				SourceLocation loc = current_token->GetLocation();
 				++current_token;
-				std::unique_ptr<DeclRefAST> decl_ref = std::make_unique<DeclRefAST>(sym->decl_ast, loc);
+				std::unique_ptr<DeclRefExprAST> decl_ref = std::make_unique<DeclRefExprAST>(sym->decl_ast, loc);
 				return decl_ref;
 			}
 		}

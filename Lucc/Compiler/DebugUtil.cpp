@@ -30,6 +30,16 @@ void lucc::debug::DebugNodeVisitorAST::Visit(LabelStmtAST const& node, size_t de
 }
 
 
+void lucc::debug::DebugNodeVisitorAST::Visit(MemberRefExprAST const& node, size_t depth)
+{
+	std::cout << GetIndentation(depth) << "MemberRefExprAST \n";
+}
+
+void lucc::debug::DebugNodeVisitorAST::Visit(DeclRefExprAST const& node, size_t depth)
+{
+	std::cout << GetIndentation(depth) << "DeclRefExprAST \n";
+}
+
 void lucc::debug::DebugNodeVisitorAST::Visit(CastExprAST const& node, size_t depth)
 {
 	std::cout << GetIndentation(depth) << "CastExprAST \n";
@@ -60,7 +70,7 @@ void lucc::debug::DebugNodeVisitorAST::Visit(BreakStmtAST const& node, size_t de
 	std::cout << GetIndentation(depth) << "BreakStmtAST \n";
 }
 
-void lucc::debug::DebugNodeVisitorAST::Visit(FunctionCallAST const& node, size_t depth)
+void lucc::debug::DebugNodeVisitorAST::Visit(FunctionCallExprAST const& node, size_t depth)
 {
 	std::cout << GetIndentation(depth) << "FunctionCallAST \n";
 }
@@ -105,7 +115,7 @@ void lucc::debug::DebugNodeVisitorAST::Visit(StringLiteralAST const& node, size_
 	std::cout << GetIndentation(depth) << "StringLiteralAST, Value:" << node.GetString() << "\n";
 }
 
-void lucc::debug::DebugNodeVisitorAST::Visit(IdentifierAST const& node, size_t depth)
+void lucc::debug::DebugNodeVisitorAST::Visit(IdentifierExprAST const& node, size_t depth)
 {
 	std::cout << GetIndentation(depth) << "IdentifierAST, Name:" << node.GetName() << "\n";
 }
