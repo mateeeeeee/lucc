@@ -107,9 +107,6 @@
     <ClInclude Include="Backend\x86_64.h">
       <Filter>Backend</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\CLIParser.h">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="Utility\DebugUtil.h">
       <Filter>Utility</Filter>
     </ClInclude>

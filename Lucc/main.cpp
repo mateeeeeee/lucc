@@ -1,5 +1,5 @@
 #include "Compiler/Compiler.h"
-#include "Utility/CLIParser.h"
+#include "CLI/CLI.hpp"
 
 using namespace lucc;
 
@@ -7,22 +7,39 @@ void PrintHelp();
 
 int main(int argc, char** argv)
 {
-	CLIParser parser{};
-	CLIArg& help = parser.AddArg(false, "-h", "--help");
-	CLIArg& input_files = parser.AddArg(true);
-	CLIArg& output_name = parser.AddArg(true, "-o");
-	CLIArg& no_linking = parser.AddArg(false, "-c", "--nolink");
-	CLIArg& no_assembling = parser.AddArg(false, "-S", "--noassembly");
-	CLIArg& only_preprocessor = parser.AddArg(false, "-E", "--only-pp");
-	CLIArg& ast_dump = parser.AddArg(false, "-ast-dump");
-	CLIArg& file_directory = parser.AddArg(true, "-d");
-	CLIArg& output_debug_data = parser.AddArg(false, "-debug");
-	CLIArg& test = parser.AddArg(false, "-test");
-	CLIArg& test_input = parser.AddArg(true, "-i");
-	CLIArg& dll = parser.AddArg(false, "-dll");
-	CLIArg& lib = parser.AddArg(false, "-lib");
+	CLI::App cli_parser{ "lucc - little & useless C compiler" };
+	cli_parser.remove_option(cli_parser.get_help_ptr());
+	bool help = false;
+	cli_parser.add_flag("-h,--help", help);
+	CLI::Option* debug = cli_parser.add_flag("--debug");
+	CLI::Option* no_linking = cli_parser.add_flag("-c");
+	CLI::Option* no_assembling = cli_parser.add_flag("-S");
+	CLI::Option* only_preprocessor = cli_parser.add_flag("-E");
+	CLI::Option* ast_dump = cli_parser.add_flag("--astdump");
+	CLI::Option* dll = cli_parser.add_flag("--dll");
+	CLI::Option* lib = cli_parser.add_flag("--lib");
+	CLI::Option* test = cli_parser.add_flag("--test");
 
-	parser.Parse(argc, argv);
+	std::vector<std::string> input_files;
+	CLI::Option* input_files_opt = cli_parser.add_option("-i", input_files, "Files to be compiled");
+
+	std::string output_file;
+	CLI::Option* output_file_opt = cli_parser.add_option("-o", output_file);
+	
+	std::string file_directory;
+	CLI::Option* file_directory_opt = cli_parser.add_option("-d", file_directory);
+	
+	std::string test_input;
+	CLI::Option* test_input_opt = cli_parser.add_option("-t", test_input);
+	{
+		dll->excludes(lib);
+		lib->excludes(dll);
+		ast_dump->excludes(only_preprocessor);
+		output_file_opt->default_val("a");
+		file_directory_opt->default_val("");
+		test_input_opt->needs(test);
+	}
+	CLI11_PARSE(cli_parser, argc, argv);
 
 	if (help)
 	{
@@ -32,23 +49,22 @@ int main(int argc, char** argv)
 
 	if (test)
 	{
-		int exit_code = CompileTest(test_input.AsStringOr(""), output_debug_data);
+		int32 exit_code = CompileTest(test_input, debug);
 		return exit_code;
 	}
-
 
 	CompilerFlags flags = CompilerFlag_None;
 	if (no_linking) flags |= CompilerFlag_NoLinking;
 	if (no_assembling) flags |= CompilerFlag_NoAssembling;
 	if (only_preprocessor) flags |= CompilerFlag_OnlyPreprocessor;
 	if (ast_dump) flags |= CompilerFlag_DumpAST;
-	if (output_debug_data) flags |= CompilerFlag_OutputDebugInfo;
+	if (debug) flags |= CompilerFlag_OutputDebugInfo;
 
 	CompilerInput compiler_input{};
 	compiler_input.flags = flags;
-	compiler_input.input_directory = file_directory.AsStringOr("");
-	compiler_input.sources = input_files.AsVector();
-	compiler_input.output_file = output_name.AsStringOr("a");
+	compiler_input.input_directory = file_directory;
+	compiler_input.sources = input_files;
+	compiler_input.output_file = output_file;
 	if (dll) compiler_input.output_type = CompilerOutput::Dll;
 	else if (lib) compiler_input.output_type = CompilerOutput::Lib;
 	else compiler_input.output_type = CompilerOutput::Exe;

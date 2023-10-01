@@ -1,4 +1,4 @@
-# lucc
+# lucc - little & useless C compiler
 Toy C compiler for x86-64. Both lexer and parser are handwritten (i.e. not using generators).
 The assembly is generated from AST traversal. 
 
@@ -44,16 +44,17 @@ The assembly is generated from AST traversal.
 
 ## Command line options
   * -h, --help: for displaying available compile options
-  * -c, --nolink: no linking is preformed, only .obj files are produced
-  * -S, --noassembly: no assembling is preformed, only .asm files are produced
-  * -E, --only-pp: Only preprocessor is run
+  * -c: no linking is preformed, only .obj files are produced
+  * -S: no assembling is preformed, only .asm files are produced
+  * -E: Only preprocessor is run
   * -d: Directory where the source files are located
-  * -o: The name of the output file
-  * -dll: builds a dll
-  *	-lib: builds a lib
-  * -ast-dump: Dump AST to console
-  * -test: used for running g-tests
-  * -i: input test code (used for g-tests)
+  * -i: Input files
+  * -o: Output file
+  * --dll: builds a dll
+  *	--lib: builds a lib
+  * --astdump: Dump AST to console
+  * --test: used for running g-tests
+  * --ti: input test code (used for g-tests)
 
 ## Dependencies
   * MASM (included with Visual Studio) is used as an assembler.
