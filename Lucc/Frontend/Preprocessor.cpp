@@ -3,8 +3,7 @@
 #include "Token.h"
 #include "Lexer.h"
 #include "Hideset.h"
-#include "Core/Defines.h"
-#include "Diagnostics/Diagnostics.h"
+#include "Diagnostics.h"
 
 //preprocessor todo list:
 //- macros function

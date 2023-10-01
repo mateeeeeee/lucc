@@ -1,6 +1,5 @@
 #include "Parser.h"
 #include "AST.h"
-#include "Core/Defines.h"
 
 namespace lucc
 {

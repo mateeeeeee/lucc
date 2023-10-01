@@ -1,8 +1,7 @@
-#include <fstream>
 #include <iostream>
-#include "Frontend/AST.h"
+#include <iostream>
 #include "x86_64Context.h"
-
+#include "Frontend/AST.h"
 
 namespace lucc
 {

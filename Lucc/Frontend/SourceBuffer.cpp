@@ -4,8 +4,6 @@
 
 namespace lucc
 {
-
-
 	SourceBuffer::SourceBuffer(std::string_view source_file)
 		: ref_name(source_file)
 	{

@@ -2,8 +2,7 @@
 #include <memory>
 #include <span>
 #include "SourceLocation.h"
-#include "Core/Enums.h"
-#include "Core/Defines.h"
+#include "Utility/Enums.h"
 
 namespace lucc
 {

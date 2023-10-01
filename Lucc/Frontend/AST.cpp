@@ -1,6 +1,5 @@
 #include "AST.h"
-#include "Diagnostics/Diagnostics.h"
-#include "Core/Defines.h"
+#include "Diagnostics.h"
 #include "Backend/x86_64Context.h"
 
 

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "TestMacros.h"
 #include "../Lucc/Compiler/Compiler.h"
-#include "../Lucc/Diagnostics/Diagnostics.h"
+#include "../Lucc/Frontend/Diagnostics.h"
 
 using namespace lucc;
 using namespace diag;

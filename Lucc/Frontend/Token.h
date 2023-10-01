@@ -2,7 +2,7 @@
 #include <string_view>
 #include "TokenTypes.h"
 #include "SourceLocation.h"
-#include "Core/Enums.h"
+#include "Utility/Enums.h"
 
 namespace lucc
 {

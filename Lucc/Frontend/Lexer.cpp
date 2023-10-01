@@ -1,6 +1,6 @@
 #include "Lexer.h"
 #include "SourceBuffer.h"
-#include "Diagnostics/Diagnostics.h"
+#include "Diagnostics.h"
 
 
 namespace lucc

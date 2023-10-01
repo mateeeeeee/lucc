@@ -22,19 +22,16 @@
     <Filter Include="Compiler">
       <UniqueIdentifier>{8cc26ad8-26fe-4b22-8b77-fa36af835f2b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Diagnostics">
-      <UniqueIdentifier>{df74f68b-0355-4d36-bfc5-9c87138f0fb8}</UniqueIdentifier>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{9ecd8e6b-8549-4f4a-a0fb-f8ce5675a702}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Frontend\Diagnostics">
+      <UniqueIdentifier>{1c709f51-aaa9-4559-a84a-630ee8da40e5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="precomp.cpp" />
-    <ClCompile Include="Frontend\SourceBuffer.cpp">
-      <Filter>Frontend</Filter>
-    </ClCompile>
-    <ClCompile Include="Frontend\TokenTypes.cpp">
-      <Filter>Frontend</Filter>
-    </ClCompile>
     <ClCompile Include="Frontend\Preprocessor.cpp">
       <Filter>Frontend\Preprocessor</Filter>
     </ClCompile>
@@ -50,14 +47,8 @@
     <ClCompile Include="Compiler\Compiler.cpp">
       <Filter>Compiler</Filter>
     </ClCompile>
-    <ClCompile Include="Compiler\DebugUtil.cpp">
-      <Filter>Compiler</Filter>
-    </ClCompile>
     <ClCompile Include="Frontend\Type.cpp">
       <Filter>Frontend\Parser</Filter>
-    </ClCompile>
-    <ClCompile Include="Test\test.c">
-      <Filter>Compiler</Filter>
     </ClCompile>
     <ClCompile Include="Backend\x86_64CodeGenerator.cpp">
       <Filter>Backend</Filter>
@@ -65,34 +56,25 @@
     <ClCompile Include="Backend\x86_64Context.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="Diagnostics\Diagnostics.cpp">
-      <Filter>Diagnostics</Filter>
+    <ClCompile Include="Utility\DebugUtil.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Frontend\Diagnostics.cpp">
+      <Filter>Frontend\Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="Frontend\TokenTypes.cpp">
+      <Filter>Frontend\Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="Frontend\SourceBuffer.cpp">
+      <Filter>Frontend\Lexer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="Frontend\SourceBuffer.h">
-      <Filter>Frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="Frontend\SourceLocation.h">
-      <Filter>Frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="Frontend\Token.h">
-      <Filter>Frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="Frontend\TokenTypes.h">
-      <Filter>Frontend</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\CLIParser.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\CoreTypes.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Defines.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Enums.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Frontend\Preprocessor.h">
@@ -116,32 +98,47 @@
     <ClInclude Include="Compiler\Compiler.h">
       <Filter>Compiler</Filter>
     </ClInclude>
-    <ClInclude Include="Compiler\DebugUtil.h">
-      <Filter>Compiler</Filter>
-    </ClInclude>
     <ClInclude Include="Backend\x86_64CodeGenerator.h">
       <Filter>Backend</Filter>
     </ClInclude>
     <ClInclude Include="Backend\x86_64Context.h">
       <Filter>Backend</Filter>
     </ClInclude>
-    <ClInclude Include="Diagnostics\Diagnostics.h">
-      <Filter>Diagnostics</Filter>
-    </ClInclude>
     <ClInclude Include="Backend\x86_64.h">
       <Filter>Backend</Filter>
     </ClInclude>
+    <ClInclude Include="Utility\CLIParser.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\DebugUtil.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\Enums.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\Diagnostics.h">
+      <Filter>Frontend\Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\TokenTypes.h">
+      <Filter>Frontend\Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\Token.h">
+      <Filter>Frontend\Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\SourceLocation.h">
+      <Filter>Frontend\Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\SourceBuffer.h">
+      <Filter>Frontend\Lexer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Frontend\Tokens.def">
-      <Filter>Frontend</Filter>
-    </None>
-    <None Include="Test\test.asm">
-      <Filter>Compiler</Filter>
-    </None>
     <None Include="..\README.md" />
-    <None Include="Diagnostics\Diagnostics.def">
-      <Filter>Diagnostics</Filter>
+    <None Include="Frontend\Diagnostics.def">
+      <Filter>Frontend\Diagnostics</Filter>
+    </None>
+    <None Include="Frontend\Tokens.def">
+      <Filter>Frontend\Lexer</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

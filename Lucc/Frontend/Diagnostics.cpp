@@ -2,7 +2,7 @@
 #include <iostream>
 #include <format>
 #include "Diagnostics.h"
-#include "Frontend/SourceLocation.h"
+#include "SourceLocation.h"
 
 namespace lucc::diag
 {

@@ -1,7 +1,6 @@
 #include <format>
 #include "x86_64.h"
 #include "x86_64Context.h"
-#include "Diagnostics/Diagnostics.h"
 
 namespace lucc
 {
@@ -556,62 +555,3 @@ namespace lucc
 	}
 
 }
-
-/*
-Various combinations of the four (including all four) are valid. Here are the valid combinations, in roughly increasing order of complexity:
-Displacement
-Base
-Base + Index
-Base + Displacement
-Base + Index + Displacement
-Base + (Index * Scale)
-(Index * Scale) + Displacement
-Base + (Index * Scale) + Displacement
-----------------------------------------------------------------------------------------------------------------------------------------------
-1. Displacement
-This is arguably the simplest addressing mechanism in the x86 family: the displacement field is treated as an absolute memory address.
-	--------------------------------------------------------------------------------
-	; store the qword at 0x00000000000000ff into rax
-	mov rax, [0xff]
-
-	--------------------------------------------------------------------------------
-	extern long var;				|				f: mov     rax, rdi
-									|----------->      movabs  QWORD PTR [var], rax
-	void f(long x) { var = x; }		|				   ret
-
-2. Base
-Addressing via the base register adds one layer of indirection over absolute addressing: instead of an absolute address encoded into the
-instruction’s displacement field, an address is loaded from the specified general-purpose register.
-	--------------------------------------------------------------------------------
-	;store the immediate (not displacement) into rbx
-	mov rbx, 0xacabacabacabacab
-	;store the qword at the address stored in rbx into rcx
-	mov rcx, [rbx]
-	--------------------------------------------------------------------------------
-
-3. Base + Index
-This is just like addressing via the base register, except that we also add in the value of the index register.
-	--------------------------------------------------------------------------------
-	; store the qword in rcx into the memory address computed as the sum of the values in rax and rbx
-	mov [rax + rbx], rcx
-
-	--------------------------------------------------------------------------------
-	int foo(char * buf, int index) { return buf[index]; } |-------> movsx   eax, byte ptr [rax + rcx] ; store buf[index] into eax
-
-4. Base + Displacement
-	--------------------------------------------------------------------------------
-	;add 0xcafe to the value stored in rax, then store the qword at the computed address into rbx
-	mov rbx, [rax + 0xcafe]
-
-5. Base + Index + Displacement
-	--------------------------------------------------------------------------------
-	; add 0xcafe to the values stores in rax and rcx, then store the qword at the computer address into rbx
-	mov rbx, [rax + rcx + 0xcafe]
-
-6. Base + (Index * Scale)
-As the name implies, the scale field is used to scale (i.e., multiply) another field. In particular, it always scales the index register — scale cannot be used without index.
-
-	mov     rax, qword ptr [rdi + 8*rsi] ;
-
-*/
-

@@ -1,9 +1,8 @@
 #include <filesystem>
 #include <format>
 #include "Compiler.h"
-#include "DebugUtil.h"
-#include "Core/Enums.h"
-#include "Diagnostics/Diagnostics.h"
+#include "Utility/DebugUtil.h"
+#include "Frontend/Diagnostics.h"
 #include "Frontend/SourceBuffer.h"
 #include "Frontend/Preprocessor.h"
 #include "Frontend/Lexer.h"
@@ -56,7 +55,7 @@ namespace lucc
 		}
 	}
 
-	int Compile(CompilerInput const& input)
+	int32 Compile(CompilerInput const& input)
 	{
 		diag::Initialize();
 		bool const output_debug = input.flags & CompilerFlag_OutputDebugInfo;
@@ -69,7 +68,7 @@ namespace lucc
 		fs::path directory_path = input.input_directory;
 		std::vector<fs::path> object_files(input.sources.size());
 		std::string masm_cmd = std::format("\"{}/ml64.exe\"", exe_path);
-		for (size_t i = 0; i < input.sources.size(); ++i)
+		for (uint64 i = 0; i < input.sources.size(); ++i)
 		{
 			fs::path file_name = fs::path(input.sources[i]).stem();
 			fs::path file_ext  = fs::path(input.sources[i]).extension();
@@ -143,7 +142,7 @@ namespace lucc
 		return 0;
 	}
 
-	int CompileTest(std::string_view test_code, bool debug)
+	int32 CompileTest(std::string_view test_code, bool debug)
 	{
 		std::string code(test_code);
 		diag::Initialize();

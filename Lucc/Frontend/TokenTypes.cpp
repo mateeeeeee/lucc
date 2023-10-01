@@ -36,7 +36,7 @@ namespace lucc
 
 	std::string_view GetTokenName(TokenKind t)
 	{
-		return token_names[(size_t)t];
+		return token_names[(uint16)t];
 	}
 
 	bool IsKeyword(std::string_view identifer)

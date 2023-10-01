@@ -4,7 +4,7 @@
 #include <functional>
 #include "Token.h"
 #include "Symbol.h"
-#include "Diagnostics/Diagnostics.h"
+#include "Diagnostics.h"
 
 namespace lucc
 {

@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "Core/Enums.h"
+#include "Utility/Enums.h"
 
 namespace lucc
 {
@@ -33,6 +33,6 @@ namespace lucc
 		CompilerOutput output_type = CompilerOutput::Exe;
 	};
 
-	int Compile(CompilerInput const&);
-	int CompileTest(std::string_view, bool debug = false);
+	int32 Compile(CompilerInput const&);
+	int32 CompileTest(std::string_view, bool debug = false);
 }

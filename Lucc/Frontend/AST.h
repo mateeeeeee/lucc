@@ -859,7 +859,7 @@ namespace lucc
 		{
 			LU_ASSERT(IsStructType(decl_ast->GetType()));
 			StructType const& struct_type = decl_ast->GetType()->As<StructType>();
-			size_t member_offset = struct_type.GetMemberOffset(member_name);
+			int32 member_offset = (int32)struct_type.GetMemberOffset(member_name);
 			return decl_ast->GetLocalOffset() + member_offset;
 		}
 

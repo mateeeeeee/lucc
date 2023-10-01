@@ -1,5 +1,5 @@
 #include "Type.h"
-#include "Diagnostics/Diagnostics.h"
+#include "Diagnostics.h"
 
 namespace lucc
 {
@@ -350,6 +350,7 @@ namespace lucc
 			if (GetAlign() < mem_type->GetAlign()) SetAlign(mem_type->GetAlign());
 		}
 		SetSize(AlignTo(offset, GetAlign()));
+		return true;
 	}
 
 }
