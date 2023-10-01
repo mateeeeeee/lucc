@@ -76,16 +76,17 @@ int main(int argc, char** argv)
 void PrintHelp()
 {
 	printf("The following options are available:\n");
-	printf("-h, --help: for displaying available compile options\n");
-	printf("-c, --nolink: no linking is preformed, only .obj files are produced\n");
-	printf("-S, --noassembly: no assembling is preformed, only .asm files are produced \n");
-	printf("-E, --only-pp: Only preprocessor is run\n");
+	printf("-h: for displaying available compile options\n");
+	printf("-c: no linking is preformed, only .obj files are produced\n");
+	printf("-S: no assembling is preformed, only .asm files are produced \n");
+	printf("-E: Only preprocessor is run\n");
 	printf("-d: Directory where the source files are located \n");
-	printf("-o: The name of the output file \n");
-	printf("-dll: builds a dll \n");
-	printf("-lib: builds a lib \n");
-	printf("-ast-dump: Dump AST to console\n");
-	printf("-test: used for running g-tests\n");
-	printf("-i: input test code (used for g-tests)\n");
+	printf("-o: Output file \n");
+	printf("-i: Input files \n");
+	printf("--dll: builds a dll \n");
+	printf("--lib: builds a lib \n");
+	printf("--astdump: Dump AST to console\n");
+	printf("--test: used for running g-tests\n");
+	printf("--ti: input test code (used for g-tests)\n");
 }
 
