@@ -25,26 +25,26 @@ namespace lucc::diag
 			return "";
 		}
 
-		std::unordered_map<Code, std::string_view> diag_msgs =
+		std::unordered_map<DiagCode, std::string_view> diag_msgs =
 		{
-			#define DIAG(diag_code, diag_class, diag_msg) {Code::##diag_code, diag_msg},
+			#define DIAG(diag_code, diag_class, diag_msg) {DiagCode::##diag_code, diag_msg},
 			#include "Diagnostics.def"
 		};
-		std::unordered_map<Code, DiagKind> diag_kinds =
+		std::unordered_map<DiagCode, DiagKind> diag_kinds =
 		{
-			#define DIAG(diag_code, diag_class, diag_msg) {Code::##diag_code, DiagKind::##diag_class},
+			#define DIAG(diag_code, diag_class, diag_msg) {DiagCode::##diag_code, DiagKind::##diag_class},
 			#include "Diagnostics.def"
 		};
 
 		bool error_reported = false;
-		DiagSettings settings;
+		bool warnings_as_errors = false;
 		SourceLocation loc;
 		std::vector<std::ostream*> output_streams;
 	}
 
-	void Initialize(DiagSettings const& _settings)
+	void Initialize(bool _warnings_as_errors)
 	{
-		settings = _settings;
+		warnings_as_errors = _warnings_as_errors;
 		RegisterOutput(std::cout);
 	}
 
@@ -53,17 +53,17 @@ namespace lucc::diag
 		output_streams.push_back(&os);
 	}
 
-	void Report(Code code, SourceLocation const& loc)
+	void Report(DiagCode code, SourceLocation const& loc)
 	{
-		DiagKind dclass = diag_kinds[code];
+		DiagKind diag_kind = diag_kinds[code];
 		std::string output = std::format("[Diagnostics][{}]: {} in file {} at line: {}, col: {}\n",
-										 ToString(dclass), diag_msgs[code], loc.filename, loc.line, loc.column);
+										 ToString(diag_kind), diag_msgs[code], loc.filename, loc.line, loc.column);
 		
-		for (auto* os : output_streams) *os << output;
-		if (dclass == DiagKind::error) std::exit(COMPILATION_FAILED);
+		for (std::ostream* os : output_streams) *os << output;
+		if (diag_kind == DiagKind::error) std::exit(EXIT_CODE_COMPILATION_FAILED);
 	}
 
-	void Report(Code code)
+	void Report(DiagCode code)
 	{
 		Report(code, loc);
 	}

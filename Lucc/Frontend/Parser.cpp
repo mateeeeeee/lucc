@@ -67,7 +67,7 @@ namespace lucc
 		}
 		return true;
 	}
-	void Parser::Report(diag::Code code)
+	void Parser::Report(diag::DiagCode code)
 	{
 		--current_token;
 		diag::Report(code, current_token->GetLocation());

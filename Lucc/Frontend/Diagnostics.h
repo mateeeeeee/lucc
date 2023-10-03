@@ -7,25 +7,18 @@ namespace lucc
 }
 namespace lucc::diag
 {
-	inline constexpr int32 COMPILATION_FAILED = INT32_MAX;
+	inline constexpr int32 EXIT_CODE_COMPILATION_FAILED = INT32_MAX;
 
-	enum class Code : uint16
+	enum DiagCode : uint32
 	{
-#define DIAG(diag_code, diag_class, diag_msg) diag_code,
-#include "Diagnostics.def"
-	};
-	using enum Code;
-
-	struct DiagSettings
-	{
-		bool treat_warnings_as_errors = false;
-		bool multithreaded_support = false;
+		#define DIAG(diag_code, diag_kind, diag_msg) diag_code,
+		#include "Diagnostics.def"
 	};
 
-	void Initialize(DiagSettings const& settings = {});
+	void Initialize(bool warnings_as_errors = false);
 	void RegisterOutput(std::ostream& os);
 
-	void Report(Code code, SourceLocation const& loc);
-	void Report(Code code);
+	void Report(DiagCode code, SourceLocation const& loc);
+	void Report(DiagCode code);
 	void SetLocation(SourceLocation const& loc);
 }

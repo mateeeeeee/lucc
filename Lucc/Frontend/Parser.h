@@ -10,7 +10,7 @@ namespace lucc
 {
 	namespace diag
 	{
-		enum class Code : uint16;
+		enum DiagCode : uint32;
 	}
 	enum class BinaryExprKind : uint8;
 
@@ -113,7 +113,7 @@ namespace lucc
 			}
 			return true;
 		}
-		void Report(diag::Code);
+		void Report(diag::DiagCode);
 
 		[[nodiscard]] void ParseTranslationUnit();
 
