@@ -78,8 +78,8 @@ namespace lucc
 	{
 		while (current_token->IsNot(TokenKind::eof))
 		{
-			auto decls = ParseDeclaration();
-			for(auto&& decl : decls) ast->translation_unit->AddDeclarations(std::move(decl));
+			auto declarations = ParseDeclaration();
+			for(auto&& declaration : declarations) ast->translation_unit->AddDeclaration(std::move(declaration));
 		}
 	}
 

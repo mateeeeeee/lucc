@@ -101,7 +101,7 @@ namespace lucc
 	{
 	public:
 		TranslationUnitAST() = default;
-		void AddDeclarations(std::unique_ptr<DeclAST>&& stmt)
+		void AddDeclaration(std::unique_ptr<DeclAST>&& stmt)
 		{
 			declarations.push_back(std::move(stmt));
 		}
