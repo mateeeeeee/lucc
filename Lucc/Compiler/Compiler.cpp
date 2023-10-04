@@ -8,6 +8,11 @@
 #include "Frontend/Lexer.h"
 #include "Frontend/Parser.h"
 #include "Backend/x86_64CodeGenerator.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/basic_file_sink.h"
+
+
 
 namespace fs = std::filesystem;
 
@@ -23,6 +28,20 @@ namespace lucc
 		constexpr char const* ucrt_libs[] = { "ucrt.lib" };
 		constexpr char const* vc_libs[] = { "legacy_stdio_definitions.lib", "legacy_stdio_wide_specifiers.lib", "msvcrt.lib" };
 
+		void InitLogger()
+		{
+			auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+			console_sink->set_level(spdlog::level::trace);
+			console_sink->set_pattern("[%^%l%$] %v");
+
+			auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("lu_log.txt", true);
+			file_sink->set_level(spdlog::level::trace);
+
+			std::shared_ptr<spdlog::logger> lu_logger = std::make_shared<spdlog::logger>(std::string("lucc logger"), spdlog::sinks_init_list{ console_sink, file_sink });
+			lu_logger->set_level(spdlog::level::trace);
+			spdlog::set_default_logger(lu_logger);
+
+		}
 		void AddBuiltins(SourceBuffer& src)
 		{
 			src.Prepend("#define NULL (void*)0\n");
@@ -57,6 +76,7 @@ namespace lucc
 
 	int32 Compile(CompilerInput const& input)
 	{
+		InitLogger();
 		diag::Initialize();
 		bool const output_debug = input.flags & CompilerFlag_OutputDebugInfo;
 		bool const ast_dump		= input.flags & CompilerFlag_DumpAST;
@@ -144,8 +164,10 @@ namespace lucc
 
 	int32 CompileTest(std::string_view test_code, bool debug)
 	{
-		std::string code(test_code);
+		InitLogger();
 		diag::Initialize();
+	
+		std::string code(test_code);
 
 		fs::path tmp_directory = std::filesystem::current_path() / "Temp";
 		fs::create_directory(tmp_directory);

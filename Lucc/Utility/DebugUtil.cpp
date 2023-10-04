@@ -1,191 +1,190 @@
 #include <iostream>
 #include "DebugUtil.h"
+#include "Core/Logger.h"
 
 void lucc::debug::PrintOutput(char const* str)
 {
-	std::cout << str << "\n";
+	LU_DEBUG("{}\n", str);
 }
 
 void lucc::debug::PrintTokens(char const* name, std::vector<Token> const& tokens)
 {
-	std::cout << name << "\n";
+	LU_DEBUG("{}\n", name);
 	for (auto&& token : tokens)
 	{
-		std::cout << "Type: " << GetTokenName(token.GetKind()) << "\t";
-		std::cout << "Value: " << token.GetIdentifier() << "\t";
-		std::cout << "\n";
+		LU_DEBUG("Type: {}\tValue: {}\n", GetTokenName(token.GetKind()), token.GetIdentifier());
 	}
-	std::cout << "\n\n";
+	LU_DEBUG("\n\n");
 }
 
 lucc::debug::DebugNodeVisitorAST::DebugNodeVisitorAST(AST* ast)
 {
-	std::cout << "AST Traversal:\n";
+	LU_DEBUG("AST Traversal:\n");
 	ast->translation_unit->Accept(*this, 0);
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(LabelStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "LabelStmtAST \n";
+	LU_DEBUG("{}LabelStmtAST \n", GetIndentation(depth));
 }
 
 
 void lucc::debug::DebugNodeVisitorAST::Visit(MemberRefExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "MemberRefExprAST \n";
+	LU_DEBUG("{}MemberRefExprAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(DeclRefExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "DeclRefExprAST \n";
+	LU_DEBUG("{}DeclRefExprAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(CastExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "CastExprAST \n";
+	LU_DEBUG("{}CastExprAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(CaseStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "CaseStmtAST \n";
+	LU_DEBUG("{}CaseStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(SwitchStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "SwitchStmtAST \n";
+	LU_DEBUG("{}SwitchStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(DoWhileStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "DoWhileStmtAST \n";
+	LU_DEBUG("{}DoWhileStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(ContinueStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "ContinueStmtAST \n";
+	LU_DEBUG("{}ContinueStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(BreakStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "BreakStmtAST \n";
+	LU_DEBUG("{}BreakStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(FunctionCallExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "FunctionCallAST \n";
+	LU_DEBUG("{}FunctionCallAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(TranslationUnitAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "TranslationUnitAST \n";
+	LU_DEBUG("{}TranslationUnitAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(NodeAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "DoWhileStmtAST \n";
+	LU_DEBUG("{}DoWhileStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(ExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "ExprAST \n";
+	LU_DEBUG("{}ExprAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(UnaryExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "UnaryExprAST, Op:" << UnaryExprKindToString(node.GetUnaryKind()) << "\n";
+	LU_DEBUG("{}UnaryExprAST, Op: {}\n", GetIndentation(depth), UnaryExprKindToString(node.GetUnaryKind()));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(BinaryExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "BinaryExprAST, Op:" << BinaryExprKindToString(node.GetBinaryKind()) << "\n";
+	LU_DEBUG("{}BinaryExprAST, Op: {}\n", GetIndentation(depth), BinaryExprKindToString(node.GetBinaryKind()));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(TernaryExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "TernaryExprAST \n";
+	LU_DEBUG("{}TernaryExprAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(IntLiteralAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "IntegerLiteralAST, Value:" << std::to_string(node.GetValue()) << "\n";
+	LU_DEBUG("{}IntegerLiteralAST, Value: {}\n", GetIndentation(depth), std::to_string(node.GetValue()));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(StringLiteralAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "StringLiteralAST, Value:" << node.GetString() << "\n";
+	LU_DEBUG("{}StringLiteralAST, Value: {}\n", GetIndentation(depth), node.GetString());
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(IdentifierExprAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "IdentifierAST, Name:" << node.GetName() << "\n";
+	LU_DEBUG("{}IdentifierAST, Name: {}\n", GetIndentation(depth), node.GetName());
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(StmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "StmtAST \n";
+	LU_DEBUG("{}StmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(CompoundStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "CompoundStmtAST \n";
+	LU_DEBUG("{}CompoundStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(DeclStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "DeclStmtAST \n";
+	LU_DEBUG("{}DeclStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(ExprStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "ExprStmtAST \n";
+	LU_DEBUG("{}ExprStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(NullStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "NullStmtAST \n";
+	LU_DEBUG("{}NullStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(DeclAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "DeclAST \n";
+	LU_DEBUG("{}DeclAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(VarDeclAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "VarDeclAST, name: " << node.GetName() << "\n";
+	LU_DEBUG("{}VarDeclAST, name: {}\n", GetIndentation(depth), node.GetName());
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(FunctionDeclAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "FunctionDeclAST, type: " << node.GetName() << "\n";
+	LU_DEBUG("{}FunctionDeclAST, type: {}\n", GetIndentation(depth), node.GetName());
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(TypedefDeclAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "TypedefDeclAST, name: " << node.GetName() << "\n";
+	LU_DEBUG("{}TypedefDeclAST, name: {}\n", GetIndentation(depth), node.GetName());
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(IfStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "IfStmtAST \n";
+	LU_DEBUG("{}IfStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(WhileStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "WhileStmtAST \n";
+	LU_DEBUG("{}WhileStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(ForStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "ForStmtAST \n";
+	LU_DEBUG("{}ForStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(ReturnStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "ReturnStmtAST \n";
+	LU_DEBUG("{}ReturnStmtAST \n", GetIndentation(depth));
 }
 
 void lucc::debug::DebugNodeVisitorAST::Visit(GotoStmtAST const& node, size_t depth)
 {
-	std::cout << GetIndentation(depth) << "GotoStmtAST \n";
+	LU_DEBUG("{}GotoStmtAST \n", GetIndentation(depth));
 }

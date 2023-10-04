@@ -15,8 +15,7 @@ namespace lucc::diag
 		#include "Diagnostics.def"
 	};
 
-	void Initialize(bool warnings_as_errors = false);
-	void RegisterOutput(std::ostream& os);
+	void Initialize(bool warnings_as_errors = false, bool exit_on_error = true);
 
 	void Report(DiagCode code, SourceLocation const& loc);
 	void Report(DiagCode code);
