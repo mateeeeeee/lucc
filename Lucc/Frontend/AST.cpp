@@ -2,12 +2,11 @@
 #include "Diagnostics.h"
 #include "Backend/x86_64Context.h"
 
-
 namespace lucc
 {
 	namespace
 	{
-		namespace cast
+		namespace mov_cast
 		{
 			enum CastTableIdx
 			{
@@ -40,7 +39,6 @@ namespace lucc
 				Movsx,
 				Movsxd
 			};
-
 			constexpr MovType cast_table[CastTypeCount][CastTypeCount] =
 			{
 		   //from    i8    i16   i32    i64      u8     u16   u32      u64     //to
@@ -61,6 +59,31 @@ namespace lucc
 				CastTableIdx to_type = _GetCastTableIdx(to);
 				return cast_table[to_type][from_type];
 			}
+		}
+
+		template<typename To, typename From>
+		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+		To* DynamicAstCast(From* from)
+		{
+			return dynamic_cast<To*>(from);
+		}
+		template<typename To, typename From>
+		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+		To const* DynamicAstCast(From const* from)
+		{
+			return dynamic_cast<To const*>(from);
+		}
+		template<typename To, typename From>
+		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+		To* AstCast(From* from)
+		{
+			return static_cast<To*>(from);
+		}
+		template<typename To, typename From>
+		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+		To const* AstCast(From const* from)
+		{
+			return static_cast<To const*>(from);
 		}
 
 		template<typename T>
@@ -1673,13 +1696,13 @@ namespace lucc
 		Register tmp_reg = ctx.AllocateRegister();
 		operand->Codegen(ctx, &tmp_reg);
 
-		cast::MovType mov_type = cast::GetCastMovType(from_type, to_type);
+		mov_cast::MovType mov_type = mov_cast::GetCastMovType(from_type, to_type);
 		switch (mov_type)
 		{
-		case cast::Mov:   ctx.Mov(cast_reg, tmp_reg, bitcount); break;
-		case cast::Movzx: ctx.Movzx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
-		case cast::Movsx: ctx.Movsx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
-		case cast::Movsxd:ctx.Movsxd(cast_reg, tmp_reg); break;
+		case mov_cast::Mov:   ctx.Mov(cast_reg, tmp_reg, bitcount); break;
+		case mov_cast::Movzx: ctx.Movzx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
+		case mov_cast::Movsx: ctx.Movsx(cast_reg, tmp_reg, bitcount, rhs8bit); break;
+		case mov_cast::Movsxd:ctx.Movsxd(cast_reg, tmp_reg); break;
 		default: break;
 		}
 		ctx.FreeRegister(tmp_reg);

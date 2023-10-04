@@ -889,25 +889,6 @@ namespace lucc
 		std::unique_ptr<TranslationUnitAST> translation_unit;
 	};
 
-	template<typename To, typename From>
-	requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
-	To* DynamicAstCast(From* from)
-	{
-		return dynamic_cast<To*>(from);
-	}
-	template<typename To, typename From>
-	requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
-	To* AstCast(From* from)
-	{
-		return static_cast<To*>(from);
-	}
-	template<typename To, typename From>
-	requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
-	To const* AstCast(From const* from)
-	{
-		return static_cast<To const*>(from);
-	}
-
 	inline std::unique_ptr<ExprAST> GetAssignExpr(std::unique_ptr<ExprAST>&& init_expr, QualifiedType const& type)
 	{
 		QualifiedType expr_type = ValueTransformation(init_expr->GetType());
