@@ -479,7 +479,7 @@ namespace lucc
 
 	namespace builtin_types
 	{
-		static constexpr Type Void = VoidType();
+		static constexpr VoidType Void = VoidType();
 		static constexpr ArithmeticType Bool = ArithmeticType(ArithmeticType::Bool);
 		static constexpr ArithmeticType Char = ArithmeticType(ArithmeticType::Char);
 		static constexpr ArithmeticType UnsignedChar = ArithmeticType(ArithmeticType::Char, true);

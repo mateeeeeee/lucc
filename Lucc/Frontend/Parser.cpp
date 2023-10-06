@@ -19,7 +19,7 @@ namespace lucc
 		};
 	}
 
-	struct Parser::DeclSpecInfo
+	struct Parser::DeclarationSpecifier
 	{
 		size_t align = 0;
 		QualifiedType qtype = builtin_types::Int;
@@ -36,7 +36,7 @@ namespace lucc
 	struct Parser::DeclarationInfo
 	{
 		DeclarationInfo() {}
-		DeclarationInfo(DeclSpecInfo const& decl_spec, DeclaratorInfo const& declarator)
+		DeclarationInfo(DeclarationSpecifier const& decl_spec, DeclaratorInfo const& declarator)
 			: name(declarator.name), qtype(declarator.qtype), loc(declarator.loc),
 			align(decl_spec.align), storage(decl_spec.storage), func_spec(decl_spec.func_spec)
 		{}
@@ -90,8 +90,8 @@ namespace lucc
 
 		std::vector<std::unique_ptr<DeclAST>> decls;
 
-		DeclSpecInfo decl_spec{};
-		ParseDeclSpec(decl_spec);
+		DeclarationSpecifier decl_spec{};
+		ParseDeclarationSpecifier(decl_spec);
 
 		if (decl_spec.storage == Storage::Typedef)
 		{
@@ -199,7 +199,7 @@ namespace lucc
 		return decls;
 	}
 
-	std::vector<std::unique_ptr<TypedefDeclAST>> Parser::ParseTypedefDeclaration(DeclSpecInfo const& decl_spec)
+	std::vector<std::unique_ptr<TypedefDeclAST>> Parser::ParseTypedefDeclaration(DeclarationSpecifier const& decl_spec)
 	{
 		bool first = true;
 		std::vector<std::unique_ptr<TypedefDeclAST>> typedefs{};
@@ -1199,7 +1199,7 @@ namespace lucc
 		return nullptr;
 	}
 
-	void Parser::ParseEnum(DeclSpecInfo& decl_spec)
+	void Parser::ParseEnum(DeclarationSpecifier& decl_spec)
 	{
 		Expect(TokenKind::KW_enum);
 		decl_spec.qtype = builtin_types::Enum;
@@ -1243,7 +1243,7 @@ namespace lucc
 		if (!enum_tag.empty()) ctx.tag_sym_table->Insert(TagSymbol{ enum_tag, decl_spec.qtype, true });
 	}
 
-	void Parser::ParseStruct(DeclSpecInfo& decl_spec)
+	void Parser::ParseStruct(DeclarationSpecifier& decl_spec)
 	{
 		Expect(TokenKind::KW_struct);
 
@@ -1286,15 +1286,15 @@ namespace lucc
 	}
 
 	// struct-members ::= (declspec declarator (","  declarator)* ";")*
-	void Parser::ParseStructMembers(DeclSpecInfo& decl_spec)
+	void Parser::ParseStructMembers(DeclarationSpecifier& decl_spec)
 	{
 		LU_ASSERT(IsStructType(decl_spec.qtype));
 		StructType& struct_type = decl_spec.qtype->As<StructType>();
 		
 		while (!Consume(TokenKind::right_brace)) 
 		{
-			DeclSpecInfo decl_spec_mem{};
-			ParseDeclSpec(decl_spec_mem, false);
+			DeclarationSpecifier decl_spec_mem{};
+			ParseDeclarationSpecifier(decl_spec_mem, false);
 			bool first = true;
 
 			// Anonymous struct member
@@ -1322,10 +1322,10 @@ namespace lucc
 	//<declaration - specifier> :: = <storage - class - specifier>
 	//							 | <type - specifier>
 	//							 | <type - qualifier>
-	void Parser::ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs /*= false*/)
+	void Parser::ParseDeclarationSpecifier(DeclarationSpecifier& decl_spec, bool forbid_storage_specs /*= false*/)
 	{
 		using enum TokenKind;
-		decl_spec = DeclSpecInfo{};
+		decl_spec = DeclarationSpecifier{};
 		decl_spec.qtype = builtin_types::Int;
 
 		enum TypeFlags
@@ -1528,7 +1528,7 @@ namespace lucc
 	//						 | <direct - declarator>[{<constant - expression>} ? ]
 	//						 | <direct - declarator> (<parameter - type - list>)
 	//						 | <direct - declarator> ({ <identifier> }*)
-	void Parser::ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator)
+	void Parser::ParseDeclarator(DeclarationSpecifier const& decl_spec, DeclaratorInfo& declarator)
 	{
 		declarator.qtype = decl_spec.qtype;
 		ParsePointers(declarator.qtype);
@@ -1548,7 +1548,7 @@ namespace lucc
 				ParseDeclaratorTail(declarator.qtype);
 				TokenPtr end = current_token;
 				current_token = start;
-				DeclSpecInfo decl_spec2{ decl_spec };
+				DeclarationSpecifier decl_spec2{ decl_spec };
 				decl_spec2.qtype = declarator.qtype;
 				ParseDeclarator(decl_spec2, declarator);
 				current_token = end;
@@ -1570,7 +1570,7 @@ namespace lucc
 	//<direct-abstract-declarator> ::=  ( <abstract-declarator> )
 	//                               | {<direct-abstract-declarator>}? [ {<constant-expression>}? ]
 	//                               | {<direct-abstract-declarator>}? ( {<parameter-type-list>}? )
-	void Parser::ParseAbstractDeclarator(DeclSpecInfo const& decl_spec, QualifiedType& abstract_declarator)
+	void Parser::ParseAbstractDeclarator(DeclarationSpecifier const& decl_spec, QualifiedType& abstract_declarator)
 	{
 		abstract_declarator = decl_spec.qtype;
 		ParsePointers(abstract_declarator);
@@ -1590,7 +1590,7 @@ namespace lucc
 				ParseDeclaratorTail(abstract_declarator, true);
 				TokenPtr end = current_token;
 				current_token = start;
-				DeclSpecInfo decl_spec2{ decl_spec };
+				DeclarationSpecifier decl_spec2{ decl_spec };
 				decl_spec2.qtype = abstract_declarator;
 				ParseAbstractDeclarator(decl_spec2, abstract_declarator);
 				current_token = end;
@@ -1602,8 +1602,8 @@ namespace lucc
 
 	void Parser::ParseTypename(QualifiedType& type)
 	{
-		DeclSpecInfo decl_spec{};
-		ParseDeclSpec(decl_spec, true);
+		DeclarationSpecifier decl_spec{};
+		ParseDeclarationSpecifier(decl_spec, true);
 		ParseAbstractDeclarator(decl_spec, type);
 	}
 
@@ -1662,8 +1662,8 @@ namespace lucc
 					else break;
 				}
 
-				DeclSpecInfo param_decl_spec{};
-				ParseDeclSpec(param_decl_spec);
+				DeclarationSpecifier param_decl_spec{};
+				ParseDeclarationSpecifier(param_decl_spec);
 				DeclaratorInfo param_declarator{};
 				abstract ? ParseAbstractDeclarator(param_decl_spec, param_declarator.qtype) : ParseDeclarator(param_decl_spec, param_declarator);
 				QualifiedType& qtype = param_declarator.qtype;

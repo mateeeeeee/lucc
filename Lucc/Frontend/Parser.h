@@ -48,7 +48,7 @@ namespace lucc
 
 	class Parser
 	{
-		struct DeclSpecInfo;
+		struct DeclarationSpecifier;
 		struct DeclaratorInfo;
 		struct DeclarationInfo;
 		using TokenPtr = std::vector<Token>::iterator;
@@ -118,7 +118,7 @@ namespace lucc
 		[[nodiscard]] void ParseTranslationUnit();
 
 		[[nodiscard]] std::vector<std::unique_ptr<DeclAST>> ParseDeclaration();
-		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclSpecInfo const& decl_spec);
+		[[nodiscard]] std::vector<std::unique_ptr<TypedefDeclAST>> ParseTypedefDeclaration(DeclarationSpecifier const& decl_spec);
 		[[nodiscard]] std::unique_ptr<FunctionDeclAST> ParseFunctionDeclaration(DeclarationInfo const& decl_spec);
 
 		[[nodiscard]] std::unique_ptr<StmtAST> ParseStatement();
@@ -165,13 +165,13 @@ namespace lucc
 		template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
 		std::unique_ptr<ExprAST> ParseBinaryExpression();
 
-		void ParseEnum(DeclSpecInfo& decl_spec);
-		void ParseStruct(DeclSpecInfo& decl_spec);
-		void ParseStructMembers(DeclSpecInfo& decl_spec);
+		void ParseEnum(DeclarationSpecifier& decl_spec);
+		void ParseStruct(DeclarationSpecifier& decl_spec);
+		void ParseStructMembers(DeclarationSpecifier& decl_spec);
 
-		void ParseDeclSpec(DeclSpecInfo& decl_spec, bool forbid_storage_specs = false);
-		void ParseDeclarator(DeclSpecInfo const& decl_spec, DeclaratorInfo& declarator);
-		void ParseAbstractDeclarator(DeclSpecInfo const& decl_spec, QualifiedType& abstract_declarator);
+		void ParseDeclarationSpecifier(DeclarationSpecifier& decl_spec, bool forbid_storage_specs = false);
+		void ParseDeclarator(DeclarationSpecifier const& decl_spec, DeclaratorInfo& declarator);
+		void ParseAbstractDeclarator(DeclarationSpecifier const& decl_spec, QualifiedType& abstract_declarator);
 		void ParseTypename(QualifiedType& type);
 
 		void ParsePointers(QualifiedType& type);
