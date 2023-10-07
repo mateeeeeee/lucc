@@ -44,9 +44,10 @@ namespace lucc
 		bool enum_type;
 	};
 
-	template<typename SymType>
+	template<typename _Ty>
 	class ScopeTable
 	{
+		using SymType = _Ty;
 	public:
 		explicit ScopeTable(uint32 scope_id) : scope_id(scope_id) {}
 		uint32 GetScope() const { return scope_id; }
@@ -70,9 +71,11 @@ namespace lucc
 		std::unordered_map<std::string, SymType> scope_sym_table;
 	};
 
-	template<typename SymType>
+	template<typename _Ty>
 	class SymbolTable
 	{
+	public:
+		using SymType = _Ty;
 	public:
 		SymbolTable()
 		{
@@ -117,4 +120,19 @@ namespace lucc
 		std::vector<ScopeTable<SymType>> scopes;
 		uint32 scope_id = 0;
 	};
+
+	template<typename T>
+	struct ScopedSymbolTable
+	{
+		ScopedSymbolTable(SymbolTable<T>& sym_table) : sym_table(sym_table)
+		{
+			sym_table.EnterScope();
+		}
+		~ScopedSymbolTable()
+		{
+			sym_table.ExitScope();
+		}
+		SymbolTable<T>& sym_table;
+	};
+	#define SCOPED_SYMBOL_TABLE(sym_table) ScopedSymbolTable<std::remove_reference_t<decltype(*sym_table)>::SymType> LU_CONCAT(_scoped_sym_table,__COUNTER__)(*sym_table)
 }	

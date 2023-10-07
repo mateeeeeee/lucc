@@ -230,7 +230,7 @@ namespace lucc
 	std::unique_ptr<FunctionDeclAST> Parser::ParseFunctionDeclaration(DeclarationInfo const& decl_info)
 	{
 		LU_ASSERT(ctx.identifier_sym_table->IsGlobal());
-		ctx.identifier_sym_table->EnterScope();
+		SCOPED_SYMBOL_TABLE(ctx.identifier_sym_table);
 
 		std::string_view func_name = decl_info.name;
 		if (func_name.empty())
@@ -258,7 +258,7 @@ namespace lucc
 		func_type.EncounterPrototype();
 		if (current_token->Is(TokenKind::left_brace))
 		{
-			ctx.identifier_sym_table->EnterScope();
+			SCOPED_SYMBOL_TABLE(ctx.identifier_sym_table);
 			ctx.current_func_type = &func_type;
 
 			func_type.EncounteredDefinition();
@@ -273,9 +273,7 @@ namespace lucc
 			}
 
 			ctx.current_func_type = nullptr;
-			ctx.identifier_sym_table->ExitScope();
 		}
-		ctx.identifier_sym_table->ExitScope();
 
 		for (std::string_view goto_label : ctx.gotos)
 		{
@@ -332,7 +330,7 @@ namespace lucc
 	std::unique_ptr<CompoundStmtAST> Parser::ParseCompoundStatement()
 	{
 		Expect(TokenKind::left_brace);
-		ctx.identifier_sym_table->EnterScope();
+		SCOPED_SYMBOL_TABLE(ctx.identifier_sym_table);
 		std::unique_ptr<CompoundStmtAST> compound_stmt = std::make_unique<CompoundStmtAST>();
 		while (current_token->IsNot(TokenKind::right_brace))
 		{
@@ -347,7 +345,6 @@ namespace lucc
 				compound_stmt->AddStatement(std::move(stmt));
 			}
 		}
-		ctx.identifier_sym_table->ExitScope();
 		Expect(TokenKind::right_brace);
 		return compound_stmt;
 	}
