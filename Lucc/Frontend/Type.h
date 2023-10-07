@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include <span>
-#include "SourceLocation.h"
 #include "Utility/Enums.h"
 
 namespace lucc
@@ -22,9 +21,9 @@ namespace lucc
 	{
 	public:
 		constexpr bool IsComplete() const { return is_complete; }
-		constexpr size_t GetSize() const { return size; }
-		constexpr size_t GetAlign() const { return align; }
-		constexpr void SetAlign(size_t _align) { align = _align; }
+		constexpr uint32 GetSize() const { return size; }
+		constexpr uint32 GetAlign() const { return align; }
+		constexpr void SetAlign(uint32 _align) { align = _align; }
 
 		TypeKind GetKind() const { return kind; }
 		bool Is(TypeKind t) const { return kind == t; }
@@ -50,16 +49,16 @@ namespace lucc
 
 	private:
 		TypeKind kind;
-		size_t size;
-		size_t align;
+		uint32 size;
+		uint32 align;
 		mutable bool is_complete;
 
 	protected:
 		constexpr Type(TypeKind kind, bool is_complete,
-			size_t size = 0, size_t align = 0)
+			uint32 size = 0, uint32 align = 0)
 			: kind(kind), is_complete(is_complete), size(size), align(align) {}
 		constexpr void SetComplete() const { is_complete = true; }
-		constexpr void SetSize(size_t _size) { size = _size; }
+		constexpr void SetSize(uint32 _size) { size = _size; }
 	};
 
 	template<typename T> requires std::derived_from<T, Type>
@@ -116,15 +115,14 @@ namespace lucc
 
 	class QualifiedType
 	{
-	public:
 		friend class Type;
-
+	public:
 		explicit QualifiedType(Qualifiers qualifiers = QualifierNone) : qualifiers(qualifiers) {}
 
-		template<std::derived_from<Type> DType>
-		QualifiedType(DType const& _type, Qualifiers qualifiers = QualifierNone) : qualifiers(qualifiers)
+		template<typename _Ty> requires std::derived_from<_Ty, Type>
+		QualifiedType(_Ty const& _type, Qualifiers qualifiers = QualifierNone) : qualifiers(qualifiers)
 		{
-			type = std::make_shared<DType>(_type);
+			type = std::make_shared<_Ty>(_type);
 		}
 
 		Qualifiers GetQualifiers() const { return qualifiers; }
@@ -139,10 +137,10 @@ namespace lucc
 
 		bool HasRawType() const { return type != nullptr; }
 
-		template<std::derived_from<Type> DType>
-		void SetRawType(DType const& _type)
+		template<typename _Ty> requires std::derived_from<_Ty, Type>
+		void SetRawType(_Ty const& _type)
 		{
-			type = std::make_shared<DType>(_type);
+			type = std::make_shared<_Ty>(_type);
 		}
 		void ResetRawType() { type = nullptr; }
 		Type const& RawType() const { return *type; }
@@ -196,13 +194,13 @@ namespace lucc
 			: Type(TypeKind::Array, false, 0, base_qtype->GetAlign()),
 			elem_type(base_qtype) {}
 
-		ArrayType(QualifiedType const& base_qtype, size_t arr_size)
+		ArrayType(QualifiedType const& base_qtype, uint32 arr_size)
 			: Type(TypeKind::Array, true, base_qtype->GetSize() * arr_size, base_qtype->GetAlign()),
 			elem_type(base_qtype), arr_size(arr_size) {}
 
 		QualifiedType GetElementType() const { return elem_type; }
-		size_t GetArraySize() const { return arr_size; }
-		void SetArraySize(size_t _arr_size)
+		uint32 GetArraySize() const { return arr_size; }
+		void SetArraySize(uint32 _arr_size)
 		{
 			arr_size = _arr_size;
 			SetSize(arr_size * (*elem_type).GetSize());
@@ -219,16 +217,16 @@ namespace lucc
 
 	private:
 		QualifiedType elem_type;
-		size_t arr_size = 0;
+		uint32 arr_size = 0;
 	};
 
 	class ArithmeticType : public Type
 	{
-		static constexpr size_t CHAR_SIZE = 1;
-		static constexpr size_t SHORT_SIZE = 2;
-		static constexpr size_t INT_SIZE = 4;
-		static constexpr size_t LONG_LONG_SIZE = 8;
-		static constexpr size_t LONG_DOUBLE_SIZE = 16;
+		static constexpr uint32 CHAR_SIZE = 1;
+		static constexpr uint32 SHORT_SIZE = 2;
+		static constexpr uint32 INT_SIZE = 4;
+		static constexpr uint32 LONG_LONG_SIZE = 8;
+		static constexpr uint32 LONG_DOUBLE_SIZE = 16;
 	public:
 		enum ArithmeticFlag : uint32
 		{
@@ -271,7 +269,7 @@ namespace lucc
 		bool IsUnsigned() const { return is_unsigned; }
 		uint32 ConversionRank() const
 		{
-			int rank = 0;
+			uint32 rank = 0;
 			switch (flags)
 			{
 			case Bool: rank = 1; break;
@@ -293,8 +291,6 @@ namespace lucc
 	private:
 		ArithmeticFlags flags;
 		bool is_unsigned = false;
-
-	private:
 	};
 
 	struct FunctionParameter
@@ -343,7 +339,7 @@ namespace lucc
 	{
 		std::string name = "";
 		QualifiedType qtype;
-		size_t offset;
+		uint32 offset;
 	};
 
 	class StructType : public Type
@@ -370,7 +366,7 @@ namespace lucc
 		}
 		bool HasConstMember() const { return has_const_member; }
 		bool HasMember(std::string_view name) const { return member_map.contains(std::string(name)); }
-		size_t GetMemberOffset(std::string_view name) const
+		uint32 GetMemberOffset(std::string_view name) const
 		{
 			return member_map[std::string(name)].offset;
 		}

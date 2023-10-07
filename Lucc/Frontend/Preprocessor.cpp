@@ -363,24 +363,3 @@ namespace lucc
 	}
 
 }
-
-/*
-The ‘#if’ directive allows you to test the value of an arithmetic expression, rather than the mere existence of one macro. Its syntax is
-
-#if expression
-
-controlled text
-
-#endif // expression
-expression is a C expression of integer type, subject to stringent restrictions.It may contain
-
-- Integer constants.
-- Character constants, which are interpreted as they would be in normal code.
-- Arithmetic operators for addition, subtraction, multiplication, division, bitwise operations, shifts, comparisons, and logical operations(&& and|| ).The latter two obey the usual short - circuiting rules of standard C.
-- Macros.All macros in the expression are expanded before actual computation of the expression’s value begins.
-- Uses of the defined operator, which lets you check whether macros are defined in the middle of an ‘#if’.
-- Identifiers that are not macros, which are all considered to be the number zero.This allows you to write #if MACRO instead of #ifdef MACRO, if you know that MACRO, when defined, will always have a nonzero value.Function - like macros used without their function call parentheses are also treated as zero.
-
-preprocessor does not know anything about types in the language.Therefore, sizeof operators are not recognized in ‘#if’, and neither are enum constants.They will be taken as identifiers which are not macros, and replaced by zero.In the case of sizeof, this is likely to cause the expression to be invalid.
-The preprocessor calculates the value of expression.It carries out all calculations in the widest integer type known to the compiler; on most machines supported by GCC this is 64 bits.This is not the same rule as the compiler uses to calculate the value of a constant expression, and may give different results in some cases.If the value comes out to be nonzero, the ‘#if’ succeedsand the controlled text is included; otherwise it is skipped.
-*/

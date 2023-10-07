@@ -2,7 +2,6 @@
 #include <stack>
 #include <string>
 #include <list>
-#include <unordered_set>
 #include "Token.h"
 
 namespace lucc
@@ -39,7 +38,7 @@ namespace lucc
 		};
 
 	public:	
-		Preprocessor(Lexer&);
+		explicit Preprocessor(Lexer&);
 		Preprocessor(Preprocessor const&) = delete;
 		Preprocessor& operator=(Preprocessor const&) = delete;
 

@@ -79,7 +79,7 @@ namespace lucc
 		std::array<bool, RegisterCount> registers_pushed;
 
 		std::vector<Register> spilled_scratched_registers;
-		size_t last_spilled_reg_index = 0;
+		uint32 last_spilled_reg_index = 0;
 
 		std::string current_function;
 		bool frame_reg_saved = false;

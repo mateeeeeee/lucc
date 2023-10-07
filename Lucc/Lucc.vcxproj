@@ -32,7 +32,7 @@
     <ClCompile Include="Frontend\Type.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="precomp.cpp" />
-    <ClCompile Include="Utility\DebugUtil.cpp" />
+    <ClCompile Include="Utility\Debug.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Backend\x86_64CodeGenerator.h" />
@@ -54,9 +54,8 @@
     <ClInclude Include="Frontend\TokenTypes.h" />
     <ClInclude Include="Frontend\Type.h" />
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="Utility\DebugUtil.h" />
+    <ClInclude Include="Utility\Debug.h" />
     <ClInclude Include="Utility\Enums.h" />
-    <ClInclude Include="Utility\Singleton.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />

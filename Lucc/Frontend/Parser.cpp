@@ -21,7 +21,7 @@ namespace lucc
 
 	struct Parser::DeclarationSpecifier
 	{
-		size_t align = 0;
+		uint32 align = 0;
 		QualifiedType qtype = builtin_types::Int;
 		Storage storage = Storage::None;
 		FunctionSpecifier func_spec = FunctionSpecifier::None;
@@ -43,7 +43,7 @@ namespace lucc
 		std::string name = "";
 		QualifiedType qtype{};
 		SourceLocation loc;
-		size_t align = 0;
+		uint32 align = 0;
 		Storage storage = Storage::None;
 		FunctionSpecifier func_spec = FunctionSpecifier::None;
 	};
@@ -1122,7 +1122,7 @@ namespace lucc
 		}
 		else
 		{
-			auto IsPowerOfTwo = [](size_t n) {return n > 0 && ((n & (n - 1)) == 0); };
+			auto IsPowerOfTwo = [](int64 n) {return n > 0 && ((n & (n - 1)) == 0); };
 			std::unique_ptr<ExprAST> expr = ParseExpression();
 			if (!expr->IsConstexpr()) Report(diag::alignas_alignment_not_constexpr);
 			int64 alignment = expr->EvaluateConstexpr();
@@ -1382,7 +1382,7 @@ namespace lucc
 				if (forbid_storage_specs) Report(diag::storage_specifier_forbidden_context);
 				--current_token;
 				std::unique_ptr<IntLiteralAST> alignas_expr = ParseAlignasExpression();
-				decl_spec.align = alignas_expr->GetValue();
+				decl_spec.align = (uint32)alignas_expr->GetValue();
 				continue;
 			}
 
@@ -1702,7 +1702,7 @@ namespace lucc
 			int64 array_size = dimensions_expr->EvaluateConstexpr();
 			if (array_size == 0) Report(diag::zero_size_array_not_allowed);
 
-			ArrayType arr_type(type, array_size);
+			ArrayType arr_type(type, (uint32)array_size);
 			type.SetRawType(arr_type);
 			if (!Consume(TokenKind::right_square)) Report(diag::array_brackets_not_closed);
 			else return ParseDeclaratorTail(type, abstract);

@@ -54,7 +54,7 @@ namespace lucc
 		};
 		return registers[reg][bits];
 	}
-	inline char const* GetWordType(size_t size)
+	inline char const* GetWordType(uint32 size)
 	{
 		switch (size)
 		{
@@ -75,7 +75,7 @@ namespace lucc
 		case BitCount_64:  default: return "qword ptr";
 		}
 	}
-	inline BitCount GetBitCount(size_t size)
+	inline BitCount GetBitCount(uint32 size)
 	{
 		switch (size)
 		{
@@ -86,7 +86,7 @@ namespace lucc
 		default: return BitCount_64;
 		}
 	}
-	inline constexpr size_t ARGUMENTS_PASSED_BY_REGISTERS = 4;
+	inline constexpr uint32 ARGUMENTS_PASSED_BY_REGISTERS = 4;
 
 	enum class ConditionCode
 	{
@@ -178,7 +178,7 @@ namespace lucc
 	struct VarDeclCG
 	{
 		char const* name;
-		size_t align;
+		uint32 align;
 		bool is_static;
 		bool is_const;
 		bool is_extern;
@@ -188,13 +188,13 @@ namespace lucc
 	struct ArrayDeclCG
 	{
 		char const* name;
-		size_t align;
+		uint32 align;
 		bool is_static;
 		bool is_const;
 		bool is_extern;
 		BitCount bits;
 		int64* init_values = nullptr;
-		size_t array_size = 0;
+		uint32 array_size = 0;
 	};
 	struct FunctionDeclCG
 	{

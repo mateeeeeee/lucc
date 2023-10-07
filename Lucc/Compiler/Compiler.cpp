@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <format>
 #include "Compiler.h"
-#include "Utility/DebugUtil.h"
+#include "Utility/Debug.h"
 #include "Frontend/Diagnostics.h"
 #include "Frontend/SourceBuffer.h"
 #include "Frontend/Preprocessor.h"

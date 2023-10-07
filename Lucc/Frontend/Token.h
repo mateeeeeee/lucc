@@ -113,7 +113,7 @@ namespace lucc
 			flags = _flags;
 		}
 		
-		void SetIdentifier(char const* p_data, size_t count)
+		void SetIdentifier(char const* p_data, uint64 count)
 		{
 			data = std::string(p_data, count);
 		}

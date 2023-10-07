@@ -333,7 +333,7 @@ namespace lucc
 	{
 		auto AlignTo = []<typename T>(T n, T align) { return (n + align - 1) / align * align; };
 
-		size_t offset = 0;
+		uint32 offset = 0;
 		for (auto& member : members) 
 		{
 			if (member_map.contains(member.name))

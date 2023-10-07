@@ -94,7 +94,7 @@ namespace lucc
 	{
 	public:
 		VarDeclVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
-		virtual void Visit(VarDeclAST const& node, size_t depth) override
+		virtual void Visit(VarDeclAST const& node, uint32 depth) override
 		{
 			func_ref->AddLocalDeclaration(&node);
 		}
@@ -107,7 +107,7 @@ namespace lucc
 	{
 	public:
 		FunctionCallVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
-		virtual void Visit(FunctionCallExprAST const& node, size_t depth) override
+		virtual void Visit(FunctionCallExprAST const& node, uint32 depth) override
 		{
 			func_ref->AddFunctionCall(&node);
 		}
@@ -118,76 +118,76 @@ namespace lucc
 
 	/// Accept
 
-	void TranslationUnitAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void TranslationUnitAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& decl : declarations) decl->Accept(visitor, depth + 1);
 	}
 
-	void StmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void StmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void ExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void ExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void BinaryExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void BinaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		lhs->Accept(visitor, depth + 1);
 		rhs->Accept(visitor, depth + 1);
 	}
 
-	void NullStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void NullStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void ExprStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void ExprStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (expr) expr->Accept(visitor, depth + 1);
 	}
 
-	void DeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void DeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void VarDeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void VarDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (init_expr) init_expr->Accept(visitor, depth + 1);
 	}
 
-	void FunctionDeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void FunctionDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& param : param_decls) param->Accept(visitor, depth + 1);
 		if (body) body->Accept(visitor, depth + 1);
 	}
 
-	void TypedefDeclAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void TypedefDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void CompoundStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void CompoundStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& stmt : statements) stmt->Accept(visitor, depth + 1);
 	}
 
-	void DeclStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void DeclStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for(auto&& decl : decls) decl->Accept(visitor, depth + 1);
 	}
 
-	void IfStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void IfStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && then_stmt);
 		visitor.Visit(*this, depth);
@@ -196,7 +196,7 @@ namespace lucc
 		if (else_stmt) else_stmt->Accept(visitor, depth + 1);
 	}
 
-	void WhileStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void WhileStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
@@ -204,7 +204,7 @@ namespace lucc
 		body_stmt->Accept(visitor, depth + 1);
 	}
 
-	void DoWhileStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void DoWhileStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
@@ -212,7 +212,7 @@ namespace lucc
 		body_stmt->Accept(visitor, depth + 1);
 	}
 
-	void SwitchStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void SwitchStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
@@ -220,12 +220,12 @@ namespace lucc
 		body_stmt->Accept(visitor, depth + 1);
 	}
 
-	void CaseStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void CaseStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void ForStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void ForStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(body_stmt);
 		visitor.Visit(*this, depth);
@@ -235,7 +235,7 @@ namespace lucc
 		body_stmt->Accept(visitor, depth + 1);
 	}
 
-	void TernaryExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void TernaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(cond_expr && true_expr && false_expr);
 		visitor.Visit(*this, depth);
@@ -244,56 +244,56 @@ namespace lucc
 		false_expr->Accept(visitor, depth + 1);
 	}
 
-	void FunctionCallExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void FunctionCallExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		func_expr->Accept(visitor, depth + 1);
 		for (auto const& arg : func_args) arg->Accept(visitor, depth + 1);
 	}
 
-	void UnaryExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void UnaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		operand->Accept(visitor, depth + 1);
 	}
 
-	void IntLiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void IntLiteralAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void StringLiteralAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void StringLiteralAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void DeclRefExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void DeclRefExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void MemberRefExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void MemberRefExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void ReturnStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void ReturnStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (ret_expr) ret_expr->Accept(visitor, depth + 1);
 	}
 
-	void GotoStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void GotoStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void LabelStmtAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void LabelStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void CastExprAST::Accept(INodeVisitorAST& visitor, size_t depth) const
+	void CastExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		operand->Accept(visitor, depth + 1);
@@ -527,7 +527,7 @@ namespace lucc
 		body->Accept(var_decl_visitor, 0);
 
 		int32 top = 16;
-		for (uint64 i = ARGUMENTS_PASSED_BY_REGISTERS; i < param_decls.size(); ++i)
+		for (uint32 i = ARGUMENTS_PASSED_BY_REGISTERS; i < (uint32)param_decls.size(); ++i)
 		{
 			VarDeclAST* param = param_decls[i].get();
 			top = AlignTo(top, 8);
@@ -535,7 +535,7 @@ namespace lucc
 			top += (int32)param->GetSymbol().qtype->GetSize();
 		}
 
-		for (uint64 i = 0; i < std::min(ARGUMENTS_PASSED_BY_REGISTERS, param_decls.size()); ++i)
+		for (uint32 i = 0; i < std::min<uint32>(ARGUMENTS_PASSED_BY_REGISTERS, (uint32)param_decls.size()); ++i)
 		{
 			VarDeclAST* param = param_decls[i].get();
 			top = AlignTo(top, 8);
@@ -572,7 +572,7 @@ namespace lucc
 			if (init_expr)
 			{
 				LU_ASSERT(local_offset != 0);
-				size_t type_size = sym.qtype->GetSize();
+				uint32 type_size = sym.qtype->GetSize();
 				BitCount bitcount = GetBitCount(type_size);
 				Result var_res(Register::RBP, local_offset);
 				if (init_expr->GetExprKind() == ExprKind::IntLiteral)
@@ -654,7 +654,7 @@ namespace lucc
 
 		ctx.SaveFrameRegister();
 
-		for (uint16 i = 0; i < std::min(ARGUMENTS_PASSED_BY_REGISTERS, param_decls.size()); ++i)
+		for (uint32 i = 0; i < std::min<uint32>(ARGUMENTS_PASSED_BY_REGISTERS, (uint32)param_decls.size()); ++i)
 		{
 			VarDeclAST* param_var = param_decls[i].get();
 			BitCount bitcount = GetBitCount(param_var->GetSymbol().qtype->GetSize());
@@ -672,7 +672,7 @@ namespace lucc
 
 	void UnaryExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
-		size_t type_size = GetType()->GetSize();
+		uint32 type_size = GetType()->GetSize();
 		BitCount bitcount = GetBitCount(type_size);
 
 		switch (op)
@@ -684,7 +684,7 @@ namespace lucc
 			bool const is_pointer_arithmetic = IsPointerLikeType(operand->GetType());
 			if (is_pointer_arithmetic)
 			{
-				size_t type_size = 0;
+				uint32 type_size = 0;
 				if (IsPointerType(operand->GetType()))
 				{
 					PointerType const& ptr_type = TypeCast<PointerType>(operand->GetType());
@@ -775,7 +775,7 @@ namespace lucc
 			bool const is_pointer_arithmetic = IsPointerLikeType(operand->GetType());
 			if (is_pointer_arithmetic)
 			{
-				size_t type_size = 0;
+				uint32 type_size = 0;
 				if (IsPointerType(operand->GetType()))
 				{
 					PointerType const& ptr_type = TypeCast<PointerType>(operand->GetType());
@@ -819,7 +819,7 @@ namespace lucc
 			}
 			else
 			{
-				size_t type_size = operand->GetType()->GetSize();
+				uint32 type_size = operand->GetType()->GetSize();
 				BitCount bitcount = GetBitCount(type_size);
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
@@ -994,7 +994,7 @@ namespace lucc
 
 	void BinaryExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
-		size_t type_size = GetType()->GetSize();
+		uint32 type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
 
 		auto CommonArithmeticCodegen = [&](BinaryExprKind kind)
@@ -1318,11 +1318,11 @@ namespace lucc
 
 				Register cond_reg = ctx.AllocateRegister();
 				lhs->Codegen(ctx, &cond_reg);
-				size_t lhs_type_size = lhs->GetType()->GetSize();
+				uint32 lhs_type_size = lhs->GetType()->GetSize();
 				ctx.Cmp(cond_reg, int64(0), GetBitCount(lhs_type_size));
 				ctx.Jmp("L_false", label_id, ConditionCode::E);
 				rhs->Codegen(ctx, &cond_reg);
-				size_t rhs_type_size = rhs->GetType()->GetSize();
+				uint32 rhs_type_size = rhs->GetType()->GetSize();
 				ctx.Cmp(cond_reg, int64(0), GetBitCount(rhs_type_size));
 				ctx.Jmp("L_false", label_id, ConditionCode::E);
 				ctx.Mov(*result, int64(1), BitCount_64);
@@ -1341,11 +1341,11 @@ namespace lucc
 
 				Register cond_reg = ctx.AllocateRegister();
 				lhs->Codegen(ctx, &cond_reg);
-				size_t lhs_type_size = lhs->GetType()->GetSize();
+				uint32 lhs_type_size = lhs->GetType()->GetSize();
 				ctx.Cmp(cond_reg, int64(0), GetBitCount(lhs_type_size));
 				ctx.Jmp("L_true", label_id, ConditionCode::NE);
 				rhs->Codegen(ctx, &cond_reg);
-				size_t rhs_type_size = rhs->GetType()->GetSize();
+				uint32 rhs_type_size = rhs->GetType()->GetSize();
 				ctx.Cmp(cond_reg, int64(0), GetBitCount(rhs_type_size));
 				ctx.Jmp("L_true", label_id, ConditionCode::NE);
 				ctx.Mov(*result, int64(0), BitCount_64);
@@ -1393,7 +1393,7 @@ namespace lucc
 	{
 		if (!result) return;
 
-		size_t type_size = GetType()->GetSize();
+		uint32 type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
 
 		if (!IsGlobal())
@@ -1416,7 +1416,7 @@ namespace lucc
 
 	void IntLiteralAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
-		size_t type_size = GetType()->GetSize();
+		uint32 type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
 		if (result) ctx.Mov(*result, value, bitmode);
 	}
@@ -1548,8 +1548,8 @@ namespace lucc
 			else
 			{
 				auto const& type = func_args[i]->GetType();
-				size_t type_size = type->GetSize();
-				size_t type_align = type->GetAlign();
+				uint32 type_size = type->GetSize();
+				uint32 type_align = type->GetAlign();
 				shadow_space_stack = AlignTo(shadow_space_stack, (uint32)type_align);
 				shadow_space_stack += (uint32)type_size;
 			}
@@ -1562,7 +1562,7 @@ namespace lucc
 
 		ctx.AllocateStack(shadow_space_stack);
 
-		for (int32 i = 0; i < std::min(func_args.size(), ARGUMENTS_PASSED_BY_REGISTERS); ++i)
+		for (uint32 i = 0; i < std::min<uint32>((uint32)func_args.size(), ARGUMENTS_PASSED_BY_REGISTERS); ++i)
 		{
 			Register arg_reg = ctx.GetCallRegister(i);
 			func_args[i]->Codegen(ctx, &arg_reg);
@@ -1582,7 +1582,7 @@ namespace lucc
 		if (func_expr->GetExprKind() == ExprKind::DeclRef)
 		{
 			QualifiedType const& type = GetType();
-			size_t type_size = type->GetSize();
+			uint32 type_size = type->GetSize();
 			DeclRefExprAST* func_ref = AstCast<DeclRefExprAST>(func_expr.get());
 			if (IsFunctionType(func_ref->GetType()))
 			{
@@ -1713,7 +1713,7 @@ namespace lucc
 	{
 		if (!result) return;
 
-		size_t type_size = GetType()->GetSize();
+		uint32 type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
 
 		if (!decl_ast->GetSymbol().global)
