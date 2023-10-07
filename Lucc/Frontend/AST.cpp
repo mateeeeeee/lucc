@@ -94,7 +94,7 @@ namespace lucc
 	{
 	public:
 		VarDeclVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
-		virtual void Visit(VarDeclAST const& node, uint32 depth) override
+		virtual void Visit(VariableDeclAST const& node, uint32 depth) override
 		{
 			func_ref->AddLocalDeclaration(&node);
 		}
@@ -124,69 +124,49 @@ namespace lucc
 		for (auto&& decl : declarations) decl->Accept(visitor, depth + 1);
 	}
 
-	void StmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
-	{
-		visitor.Visit(*this, depth);
-	}
-
-	void ExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
-	{
-		visitor.Visit(*this, depth);
-	}
-
-	void BinaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
-	{
-		visitor.Visit(*this, depth);
-		lhs->Accept(visitor, depth + 1);
-		rhs->Accept(visitor, depth + 1);
-	}
-
-	void NullStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
-	{
-		visitor.Visit(*this, depth);
-	}
-
-	void ExprStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
-	{
-		visitor.Visit(*this, depth);
-		if (expr) expr->Accept(visitor, depth + 1);
-	}
-
 	void DeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-
-	void VarDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void VariableDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (init_expr) init_expr->Accept(visitor, depth + 1);
 	}
-
 	void FunctionDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& param : param_decls) param->Accept(visitor, depth + 1);
 		if (body) body->Accept(visitor, depth + 1);
 	}
-
 	void TypedefDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
+	void StmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	{
+		LU_ASSERT(false);
+	}
+	void NullStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+	void ExprStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	{
+		visitor.Visit(*this, depth);
+		if (expr) expr->Accept(visitor, depth + 1);
+	}
 	void CompoundStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& stmt : statements) stmt->Accept(visitor, depth + 1);
 	}
-
 	void DeclStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for(auto&& decl : decls) decl->Accept(visitor, depth + 1);
 	}
-
 	void IfStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && then_stmt);
@@ -195,7 +175,6 @@ namespace lucc
 		then_stmt->Accept(visitor, depth + 1);
 		if (else_stmt) else_stmt->Accept(visitor, depth + 1);
 	}
-
 	void WhileStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
@@ -203,7 +182,6 @@ namespace lucc
 		condition->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-
 	void DoWhileStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
@@ -211,7 +189,6 @@ namespace lucc
 		condition->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-
 	void SwitchStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
@@ -219,12 +196,10 @@ namespace lucc
 		condition->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-
 	void CaseStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-
 	void ForStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(body_stmt);
@@ -234,7 +209,35 @@ namespace lucc
 		if (iter_expr) iter_expr->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
+	void ReturnStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	{
+		visitor.Visit(*this, depth);
+		if (ret_expr) ret_expr->Accept(visitor, depth + 1);
+	}
+	void GotoStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+	void LabelStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
 
+	void ExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	{
+		LU_ASSERT(false);
+	}
+	void UnaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	{
+		visitor.Visit(*this, depth);
+		operand->Accept(visitor, depth + 1);
+	}
+	void BinaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	{
+		visitor.Visit(*this, depth);
+		lhs->Accept(visitor, depth + 1);
+		rhs->Accept(visitor, depth + 1);
+	}
 	void TernaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(cond_expr && true_expr && false_expr);
@@ -243,56 +246,28 @@ namespace lucc
 		true_expr->Accept(visitor, depth + 1);
 		false_expr->Accept(visitor, depth + 1);
 	}
-
 	void FunctionCallExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		func_expr->Accept(visitor, depth + 1);
 		for (auto const& arg : func_args) arg->Accept(visitor, depth + 1);
 	}
-
-	void UnaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
-	{
-		visitor.Visit(*this, depth);
-		operand->Accept(visitor, depth + 1);
-	}
-
 	void IntLiteralAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-
 	void StringLiteralAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-
 	void DeclRefExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-
 	void MemberRefExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-
-	void ReturnStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
-	{
-		visitor.Visit(*this, depth);
-		if (ret_expr) ret_expr->Accept(visitor, depth + 1);
-	}
-
-	void GotoStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
-	{
-		visitor.Visit(*this, depth);
-	}
-
-	void LabelStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
-	{
-		visitor.Visit(*this, depth);
-	}
-
 	void CastExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
@@ -305,7 +280,6 @@ namespace lucc
 	{
 		return operand->IsConstexpr();
 	}
-
 	int64 UnaryExprAST::EvaluateConstexpr() const
 	{
 		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
@@ -329,7 +303,6 @@ namespace lucc
 	{
 		return lhs->IsConstexpr() && rhs->IsConstexpr();
 	}
-
 	int64 BinaryExprAST::EvaluateConstexpr() const
 	{
 		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
@@ -386,7 +359,6 @@ namespace lucc
 		if (cond_expr->EvaluateConstexpr()) return true_expr->IsConstexpr();
 		else return false_expr->IsConstexpr();
 	}
-
 	int64 TernaryExprAST::EvaluateConstexpr() const
 	{
 		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
@@ -398,7 +370,6 @@ namespace lucc
 	{
 		return true;
 	}
-
 	int64 IntLiteralAST::EvaluateConstexpr() const
 	{
 		return value;
@@ -440,7 +411,6 @@ namespace lucc
 			LU_ASSERT(false);
 		}
 	}
-
 	void BinaryExprAST::SetExpressionType()
 	{
 		diag::SetLocation(loc);
@@ -482,7 +452,6 @@ namespace lucc
 			LU_ASSERT(false);
 		}
 	}
-
 	void CastExprAST::SetCastType()
 	{
 		QualifiedType operand_type = ValueTransformation(operand->GetType());
@@ -529,7 +498,7 @@ namespace lucc
 		int32 top = 16;
 		for (uint32 i = ARGUMENTS_PASSED_BY_REGISTERS; i < (uint32)param_decls.size(); ++i)
 		{
-			VarDeclAST* param = param_decls[i].get();
+			VariableDeclAST* param = param_decls[i].get();
 			top = AlignTo(top, 8);
 			param->SetLocalOffset(top);
 			top += (int32)param->GetSymbol().qtype->GetSize();
@@ -537,7 +506,7 @@ namespace lucc
 
 		for (uint32 i = 0; i < std::min<uint32>(ARGUMENTS_PASSED_BY_REGISTERS, (uint32)param_decls.size()); ++i)
 		{
-			VarDeclAST* param = param_decls[i].get();
+			VariableDeclAST* param = param_decls[i].get();
 			top = AlignTo(top, 8);
 			param->SetLocalOffset(top);
 			top += (int32)param->GetSymbol().qtype->GetSize();
@@ -547,7 +516,7 @@ namespace lucc
 		int32 local_stack_space = 0;
 		for (auto it = local_variables.rbegin(); it != local_variables.rend(); ++it)
 		{
-			VarDeclAST const* local_var = *it;
+			VariableDeclAST const* local_var = *it;
 			int32 local_var_align = (int32)local_var->GetSymbol().qtype->GetAlign();
 			int32 local_var_size = (int32)local_var->GetSymbol().qtype->GetSize();
 			bottom += local_var_size;
@@ -565,7 +534,7 @@ namespace lucc
 		for (auto const& decl : declarations) decl->Codegen(ctx);
 	}
 
-	void VarDeclAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void VariableDeclAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!IsGlobal())
 		{
@@ -639,7 +608,6 @@ namespace lucc
 			}
 		}
 	}
-
 	void FunctionDeclAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		FunctionDeclCG func_decl
@@ -656,7 +624,7 @@ namespace lucc
 
 		for (uint32 i = 0; i < std::min<uint32>(ARGUMENTS_PASSED_BY_REGISTERS, (uint32)param_decls.size()); ++i)
 		{
-			VarDeclAST* param_var = param_decls[i].get();
+			VariableDeclAST* param_var = param_decls[i].get();
 			BitCount bitcount = GetBitCount(param_var->GetSymbol().qtype->GetSize());
 			Register arg_reg = ctx.GetCallRegister(i);
 			ctx.Mov(Result(RBP, param_var->GetLocalOffset()), arg_reg, bitcount);
@@ -668,6 +636,165 @@ namespace lucc
 		body->Codegen(ctx);
 		ctx.Return();
 		return;
+	}
+
+	void ExprStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		if(expr) expr->Codegen(ctx, result);
+	}
+	void CompoundStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		for (auto& stmt : statements) stmt->Codegen(ctx);
+	}
+	void IfStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		static char const* else_label = "L_else";
+		static char const* end_label = "L_end";
+		uint64 label_id = ctx.GenerateLabelId();
+
+		Register cond_reg = ctx.AllocateRegister();
+		condition->Codegen(ctx, &cond_reg);
+		ctx.Cmp(cond_reg, int64(0), BitCount_8);
+		ctx.Jmp(else_label, label_id, ConditionCode::E);
+		then_stmt->Codegen(ctx);
+		ctx.Jmp(end_label, label_id);
+		ctx.Label(else_label, label_id);
+		if (else_stmt) else_stmt->Codegen(ctx);
+		ctx.Label(end_label, label_id);
+		ctx.FreeRegister(cond_reg);
+	}
+	void ReturnStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		//#todo handle cast when return type and type of return expr are not the same
+
+		if (ret_expr->GetExpr()->GetExprKind() == ExprKind::FunctionCall)
+		{
+			ret_expr->Codegen(ctx);
+			ctx.JumpToReturn();
+		}
+		else
+		{
+			Register tmp_reg = ctx.AllocateRegister();
+			ret_expr->Codegen(ctx, &tmp_reg);
+			Register return_reg = ctx.GetReturnRegister();
+			ctx.Mov(return_reg, tmp_reg, GetBitCount(ret_expr->GetExpr()->GetType()->GetSize()));
+			ctx.JumpToReturn();
+			ctx.FreeRegister(return_reg);
+		}
+	}
+	void WhileStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		static char const* start_label = "L_start";
+		static char const* end_label = "L_end";
+		uint64 label_id = ctx.GenerateLabelId();
+		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
+		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+
+		ctx.Label(start_label, label_id);
+		Register cond_reg = ctx.AllocateRegister();
+		condition->Codegen(ctx, &cond_reg);
+		ctx.Cmp(cond_reg, (int64)0, BitCount_8);
+		ctx.Jmp(end_label, label_id, ConditionCode::E);
+		body_stmt->Codegen(ctx);
+		ctx.Jmp(start_label, label_id);
+		ctx.Label(end_label, label_id);
+		ctx.FreeRegister(cond_reg);
+	}
+	void DoWhileStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		static char const* start_label = "L_start";
+		static char const* end_label = "L_end";
+		uint64 label_id = ctx.GenerateLabelId();
+		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
+		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+
+		ctx.Label(start_label, label_id);
+		body_stmt->Codegen(ctx);
+		Register cond_reg = ctx.AllocateRegister();
+		condition->Codegen(ctx, &cond_reg);
+		ctx.Cmp(cond_reg, int64(0), BitCount_8);
+		ctx.Jmp(end_label, label_id, ConditionCode::E);
+		ctx.Jmp(start_label, label_id);
+		ctx.Label(end_label, label_id);
+		ctx.FreeRegister(cond_reg);
+	}
+	void DeclStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		for (auto const& decl : decls) decl->Codegen(ctx);
+	}
+	void ForStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		static char const* start_label = "L_start";
+		static char const* end_label = "L_end";
+		static char const* iter_label = "L_iter";
+		uint64 label_id = ctx.GenerateLabelId();
+		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(iter_label, label_id);
+		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+
+		if (init_stmt) init_stmt->Codegen(ctx);
+		ctx.Label(start_label, label_id);
+		Register cond_reg = ctx.AllocateRegister();
+		if (cond_expr) cond_expr->Codegen(ctx, &cond_reg);
+		ctx.Cmp(cond_reg, int64(0), BitCount_8);
+		ctx.Jmp(end_label, label_id, ConditionCode::E);
+		if (body_stmt) body_stmt->Codegen(ctx);
+		ctx.Label(iter_label, label_id);
+		if (iter_expr) iter_expr->Codegen(ctx);
+		ctx.Jmp(start_label, label_id);
+		ctx.Label(end_label, label_id);
+		ctx.FreeRegister(cond_reg);
+	}
+	void BreakStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		ctx.Jmp(label_name.c_str(), label_id);
+	}
+	void ContinueStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		ctx.Jmp(label_name.c_str(), label_id);
+	}
+	void GotoStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		ctx.Jmp(goto_label.c_str());
+	}
+	void LabelStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		ctx.Label(label_name.c_str());
+	}
+	void SwitchStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		static char const* end_label = "L_end";
+		uint64 label_id = ctx.GenerateLabelId();
+		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+		for (CaseStmtAST* case_stmt : case_stmts) case_stmt->SetSwitchId(label_id);
+
+		Register cond_reg = ctx.AllocateRegister();
+		condition->Codegen(ctx, &cond_reg);
+
+		BitCount bitmode = GetBitCount(condition->GetType()->GetSize());
+
+		CaseStmtAST* default_case = nullptr;
+		for (CaseStmtAST* case_stmt : case_stmts)
+		{
+			if (!case_stmt->IsDefault())
+			{
+				ctx.Cmp(cond_reg, case_stmt->GetValue(), bitmode);
+				ctx.Jmp(case_stmt->GetLabel().data(), label_id, ConditionCode::E);
+			}
+			else
+			{
+				LU_ASSERT(!default_case);
+				default_case = case_stmt;
+			}
+		}
+		if (default_case) ctx.Jmp(default_case->GetLabel().data(), label_id);
+		ctx.Jmp(end_label, label_id);
+		body_stmt->Codegen(ctx);
+		ctx.Label(end_label, label_id);
+		ctx.FreeRegister(cond_reg);
+	}
+	void CaseStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	{
+		ctx.Label(label_name.c_str(), switch_id);
 	}
 
 	void UnaryExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
@@ -991,88 +1118,216 @@ namespace lucc
 			LU_ASSERT(false);
 		}
 	}
-
 	void BinaryExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		uint32 type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
 
 		auto CommonArithmeticCodegen = [&](BinaryExprKind kind)
-		{
-			if (!result) return; //#todo doesnt cover cases such as i++ + j
-
-			bool const lhs_is_pointer = IsPointerLikeType(lhs->GetType());
-			bool const rhs_is_pointer = IsPointerLikeType(rhs->GetType());
-			bool const is_pointer_arithmetic = lhs_is_pointer || rhs_is_pointer;
-
-			if (is_pointer_arithmetic)
 			{
-				LU_ASSERT(kind == BinaryExprKind::Add || kind == BinaryExprKind::Subtract);
+				if (!result) return; //#todo doesnt cover cases such as i++ + j
 
-				if (kind == BinaryExprKind::Subtract)
+				bool const lhs_is_pointer = IsPointerLikeType(lhs->GetType());
+				bool const rhs_is_pointer = IsPointerLikeType(rhs->GetType());
+				bool const is_pointer_arithmetic = lhs_is_pointer || rhs_is_pointer;
+
+				if (is_pointer_arithmetic)
 				{
-					if (lhs_is_pointer && rhs_is_pointer) 
+					LU_ASSERT(kind == BinaryExprKind::Add || kind == BinaryExprKind::Subtract);
+
+					if (kind == BinaryExprKind::Subtract)
 					{
-						QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
-						LU_ASSERT(IsPointerType(decayed_type));
-						PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
-						Register tmp_reg = ctx.AllocateRegister();
-						lhs->Codegen(ctx, result);
-						rhs->Codegen(ctx, &tmp_reg);
-						ctx.Sub(*result, tmp_reg, bitmode);
-						ctx.Mov(tmp_reg, pointer_type.PointeeType()->GetSize(), BitCount_64);
-						ctx.Idiv(*result, tmp_reg, BitCount_64);
-						ctx.FreeRegister(tmp_reg);
+						if (lhs_is_pointer && rhs_is_pointer)
+						{
+							QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
+							LU_ASSERT(IsPointerType(decayed_type));
+							PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+							Register tmp_reg = ctx.AllocateRegister();
+							lhs->Codegen(ctx, result);
+							rhs->Codegen(ctx, &tmp_reg);
+							ctx.Sub(*result, tmp_reg, bitmode);
+							ctx.Mov(tmp_reg, pointer_type.PointeeType()->GetSize(), BitCount_64);
+							ctx.Idiv(*result, tmp_reg, BitCount_64);
+							ctx.FreeRegister(tmp_reg);
+						}
+						else if (lhs_is_pointer)
+						{
+							QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
+							LU_ASSERT(IsPointerType(decayed_type));
+							PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+							Register tmp_reg = ctx.AllocateRegister();
+							lhs->Codegen(ctx, result);
+							rhs->Codegen(ctx, &tmp_reg);
+							ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
+							ctx.Sub(*result, tmp_reg, bitmode);
+							ctx.FreeRegister(tmp_reg);
+						}
+						else LU_ASSERT(false);
 					}
-					else if (lhs_is_pointer)
+					else if (kind == BinaryExprKind::Add)
 					{
-						QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
-						LU_ASSERT(IsPointerType(decayed_type));
-						PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
-						Register tmp_reg = ctx.AllocateRegister();
-						lhs->Codegen(ctx, result);
-						rhs->Codegen(ctx, &tmp_reg);
-						ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
-						ctx.Sub(*result, tmp_reg, bitmode);
-						ctx.FreeRegister(tmp_reg);
+						LU_ASSERT(!(lhs_is_pointer && rhs_is_pointer));
+						if (lhs_is_pointer)
+						{
+							QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
+							LU_ASSERT(IsPointerType(decayed_type));
+							PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+
+							Register tmp_reg = ctx.AllocateRegister();
+							lhs->Codegen(ctx, result);
+							rhs->Codegen(ctx, &tmp_reg);
+							ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
+							ctx.Add(*result, tmp_reg, bitmode);
+							ctx.FreeRegister(tmp_reg);
+						}
+						else if (rhs_is_pointer)
+						{
+							QualifiedType const& decayed_type = ValueTransformation(rhs->GetType());
+							LU_ASSERT(IsPointerType(decayed_type));
+							PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+
+							Register tmp_reg = ctx.AllocateRegister();
+							rhs->Codegen(ctx, result);
+							lhs->Codegen(ctx, &tmp_reg);
+							ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
+							ctx.Add(*result, tmp_reg, bitmode);
+							ctx.FreeRegister(tmp_reg);
+						}
+						else LU_ASSERT(false);
 					}
-					else LU_ASSERT(false);
+
 				}
-				else if (kind == BinaryExprKind::Add)
+				else
 				{
-					LU_ASSERT(!(lhs_is_pointer && rhs_is_pointer));
-					if (lhs_is_pointer)
+					if (rhs->GetExprKind() == ExprKind::IntLiteral)
 					{
-						QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
-						LU_ASSERT(IsPointerType(decayed_type));
-						PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
-
-						Register tmp_reg = ctx.AllocateRegister();
+						IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
+						int32 value = (int32)int_literal->GetValue();
 						lhs->Codegen(ctx, result);
-						rhs->Codegen(ctx, &tmp_reg);
-						ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
-						ctx.Add(*result, tmp_reg, bitmode);
-						ctx.FreeRegister(tmp_reg);
-					}
-					else if (rhs_is_pointer)
-					{
-						QualifiedType const& decayed_type = ValueTransformation(rhs->GetType());
-						LU_ASSERT(IsPointerType(decayed_type));
-						PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
 
-						Register tmp_reg = ctx.AllocateRegister();
+						switch (kind)
+						{
+						case BinaryExprKind::Add:		ctx.Add(*result, value, bitmode); break;
+						case BinaryExprKind::Subtract:  ctx.Sub(*result, value, bitmode); break;
+						case BinaryExprKind::Multiply:  ctx.Imul(*result, *result, value, bitmode); break;
+						case BinaryExprKind::Divide:
+						{
+							Register tmp_reg = ctx.AllocateRegister();
+							ctx.Mov(tmp_reg, value, bitmode);
+							ctx.Idiv(*result, tmp_reg, bitmode);
+						}
+						break;
+						case BinaryExprKind::Modulo:	LU_ASSERT_MSG(false, "Not yet implemented"); break;
+						}
+					}
+					else
+					{
 						rhs->Codegen(ctx, result);
+						Register tmp_reg = ctx.AllocateRegister();
 						lhs->Codegen(ctx, &tmp_reg);
-						ctx.Imul(tmp_reg, tmp_reg, (int32)pointer_type.PointeeType()->GetSize(), bitmode);
-						ctx.Add(*result, tmp_reg, bitmode);
+						switch (kind)
+						{
+						case BinaryExprKind::Add:		ctx.Add(*result, tmp_reg, bitmode);  break;
+						case BinaryExprKind::Subtract:  ctx.Sub(*result, tmp_reg, bitmode);  break;
+						case BinaryExprKind::Multiply:  ctx.Imul(*result, tmp_reg, bitmode); break;
+						case BinaryExprKind::Divide:	ctx.Idiv(*result, tmp_reg, bitmode); break;
+						case BinaryExprKind::Modulo:	LU_ASSERT_MSG(false, "Not yet implemented"); break;
+						}
 						ctx.FreeRegister(tmp_reg);
 					}
-					else LU_ASSERT(false);
 				}
-				
-			}
-			else
+			};
+		auto CommonComparisonCodegen = [&](BinaryExprKind kind)
 			{
+				if (!result) return;
+
+				bool const lhs_is_unsigned = IsUnsignedType(lhs->GetType());
+				bool const rhs_is_unsigned = IsUnsignedType(rhs->GetType());
+				bool const is_unsigned = lhs_is_unsigned || rhs_is_unsigned;
+
+				if (rhs->GetExprKind() == ExprKind::IntLiteral)
+				{
+					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
+					Register reg = ctx.AllocateRegister();
+					lhs->Codegen(ctx, &reg);
+					ctx.Cmp(reg, int_literal->GetValue(), bitmode);
+					ctx.FreeRegister(reg);
+				}
+				else
+				{
+					Register reg1 = ctx.AllocateRegister();
+					Register reg2 = ctx.AllocateRegister();
+					rhs->Codegen(ctx, &reg2);
+					lhs->Codegen(ctx, &reg1);
+					ctx.Cmp(reg1, reg2, bitmode);
+					ctx.FreeRegister(reg2);
+					ctx.FreeRegister(reg1);
+				}
+
+				if (is_unsigned)
+				{
+					switch (kind)
+					{
+					case BinaryExprKind::Less:			ctx.Set(*result, ConditionCode::B); break;
+					case BinaryExprKind::LessEqual:		ctx.Set(*result, ConditionCode::BE); break;
+					case BinaryExprKind::Greater:		ctx.Set(*result, ConditionCode::A); break;
+					case BinaryExprKind::GreaterEqual:	ctx.Set(*result, ConditionCode::AE); break;
+					case BinaryExprKind::Equal:			ctx.Set(*result, ConditionCode::E); break;
+					case BinaryExprKind::NotEqual:		ctx.Set(*result, ConditionCode::NE); break;
+					}
+				}
+				else
+				{
+					switch (kind)
+					{
+					case BinaryExprKind::Less:			ctx.Set(*result, ConditionCode::L); break;
+					case BinaryExprKind::LessEqual:		ctx.Set(*result, ConditionCode::LE); break;
+					case BinaryExprKind::Greater:		ctx.Set(*result, ConditionCode::G); break;
+					case BinaryExprKind::GreaterEqual:	ctx.Set(*result, ConditionCode::GE); break;
+					case BinaryExprKind::Equal:			ctx.Set(*result, ConditionCode::E); break;
+					case BinaryExprKind::NotEqual:		ctx.Set(*result, ConditionCode::NE); break;
+					}
+				}
+				ctx.Movzx(*result, *result, BitCount_64, true);
+
+			};
+		auto CommonShiftCodegen = [&](BinaryExprKind kind)
+			{
+				if (!result) return;
+				if (rhs->GetExprKind() == ExprKind::IntLiteral)
+				{
+					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
+					lhs->Codegen(ctx, result);
+					if (kind == BinaryExprKind::ShiftLeft) ctx.Shl(*result, (uint8)int_literal->GetValue(), bitmode);
+					else if (kind == BinaryExprKind::ShiftRight)
+					{
+						bool lhs_unsigned = IsUnsignedType(lhs->GetType());
+						lhs_unsigned ? ctx.Shr(*result, (uint8)int_literal->GetValue(), bitmode) : ctx.Sar(*result, (uint8)int_literal->GetValue(), bitmode);
+					}
+				}
+				else
+				{
+					rhs->Codegen(ctx, result);
+					Register tmp_reg = ctx.AllocateRegister();
+					lhs->Codegen(ctx, &tmp_reg);
+					if (kind == BinaryExprKind::ShiftLeft)  ctx.Shl(*result, tmp_reg, bitmode);
+					if (kind == BinaryExprKind::ShiftRight)
+					{
+						bool lhs_unsigned = IsUnsignedType(lhs->GetType());
+						lhs_unsigned ? ctx.Shr(*result, tmp_reg, bitmode) : ctx.Sar(*result, tmp_reg, bitmode);
+					}
+					ctx.FreeRegister(tmp_reg);
+				}
+			};
+		auto CommonBitCodegen = [&](BinaryExprKind kind)
+			{
+				if (!result) return;
+
+				bool const lhs_is_pointer = IsPointerLikeType(lhs->GetType());
+				bool const rhs_is_pointer = IsPointerLikeType(rhs->GetType());
+				bool const is_pointer_arithmetic = lhs_is_pointer || rhs_is_pointer;
+				LU_ASSERT(!is_pointer_arithmetic);
+
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
 					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
@@ -1081,17 +1336,9 @@ namespace lucc
 
 					switch (kind)
 					{
-					case BinaryExprKind::Add:		ctx.Add(*result, value, bitmode); break;
-					case BinaryExprKind::Subtract:  ctx.Sub(*result, value, bitmode); break;
-					case BinaryExprKind::Multiply:  ctx.Imul(*result, *result, value, bitmode); break;
-					case BinaryExprKind::Divide:
-					{
-						Register tmp_reg = ctx.AllocateRegister();
-						ctx.Mov(tmp_reg, value, bitmode);
-						ctx.Idiv(*result, tmp_reg, bitmode);
-					}
-					break;
-					case BinaryExprKind::Modulo:	LU_ASSERT_MSG(false, "Not yet implemented"); break;
+					case BinaryExprKind::BitAnd: ctx.And(*result, value, bitmode); break;
+					case BinaryExprKind::BitOr:	 ctx.Or(*result, value, bitmode); break;
+					case BinaryExprKind::BitXor: ctx.Xor(*result, value, bitmode); break;
 					}
 				}
 				else
@@ -1101,134 +1348,13 @@ namespace lucc
 					lhs->Codegen(ctx, &tmp_reg);
 					switch (kind)
 					{
-					case BinaryExprKind::Add:		ctx.Add(*result, tmp_reg, bitmode);  break;
-					case BinaryExprKind::Subtract:  ctx.Sub(*result, tmp_reg, bitmode);  break;
-					case BinaryExprKind::Multiply:  ctx.Imul(*result, tmp_reg, bitmode); break;
-					case BinaryExprKind::Divide:	ctx.Idiv(*result, tmp_reg, bitmode); break;
-					case BinaryExprKind::Modulo:	LU_ASSERT_MSG(false, "Not yet implemented"); break;
+					case BinaryExprKind::BitAnd:		ctx.And(*result, tmp_reg, bitmode); break;
+					case BinaryExprKind::BitOr:			ctx.Or(*result, tmp_reg, bitmode); break;
+					case BinaryExprKind::BitXor:		ctx.Xor(*result, tmp_reg, bitmode); break;
 					}
 					ctx.FreeRegister(tmp_reg);
 				}
-			}
-		};
-		auto CommonComparisonCodegen = [&](BinaryExprKind kind)
-		{
-			if (!result) return;
-
-			bool const lhs_is_unsigned = IsUnsignedType(lhs->GetType());
-			bool const rhs_is_unsigned = IsUnsignedType(rhs->GetType());
-			bool const is_unsigned = lhs_is_unsigned || rhs_is_unsigned;
-
-			if (rhs->GetExprKind() == ExprKind::IntLiteral)
-			{
-				IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
-				Register reg = ctx.AllocateRegister();
-				lhs->Codegen(ctx, &reg);
-				ctx.Cmp(reg, int_literal->GetValue(), bitmode);
-				ctx.FreeRegister(reg);
-			}
-			else
-			{
-				Register reg1 = ctx.AllocateRegister();
-				Register reg2 = ctx.AllocateRegister();
-				rhs->Codegen(ctx, &reg2);
-				lhs->Codegen(ctx, &reg1);
-				ctx.Cmp(reg1, reg2, bitmode);
-				ctx.FreeRegister(reg2);
-				ctx.FreeRegister(reg1);
-			}
-
-			if (is_unsigned)
-			{
-				switch (kind)
-				{
-				case BinaryExprKind::Less:			ctx.Set(*result, ConditionCode::B); break;
-				case BinaryExprKind::LessEqual:		ctx.Set(*result, ConditionCode::BE); break;
-				case BinaryExprKind::Greater:		ctx.Set(*result, ConditionCode::A); break;
-				case BinaryExprKind::GreaterEqual:	ctx.Set(*result, ConditionCode::AE); break;
-				case BinaryExprKind::Equal:			ctx.Set(*result, ConditionCode::E); break;
-				case BinaryExprKind::NotEqual:		ctx.Set(*result, ConditionCode::NE); break;
-				}
-			}
-			else
-			{
-				switch (kind)
-				{
-				case BinaryExprKind::Less:			ctx.Set(*result, ConditionCode::L); break;
-				case BinaryExprKind::LessEqual:		ctx.Set(*result, ConditionCode::LE); break;
-				case BinaryExprKind::Greater:		ctx.Set(*result, ConditionCode::G); break;
-				case BinaryExprKind::GreaterEqual:	ctx.Set(*result, ConditionCode::GE); break;
-				case BinaryExprKind::Equal:			ctx.Set(*result, ConditionCode::E); break;
-				case BinaryExprKind::NotEqual:		ctx.Set(*result, ConditionCode::NE); break;
-				}
-			}
-			ctx.Movzx(*result, *result, BitCount_64, true);
-
-		};
-		auto CommonShiftCodegen = [&](BinaryExprKind kind)
-		{
-			if (!result) return;
-			if (rhs->GetExprKind() == ExprKind::IntLiteral)
-			{
-				IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
-				lhs->Codegen(ctx, result);
-				if (kind == BinaryExprKind::ShiftLeft) ctx.Shl(*result, (uint8)int_literal->GetValue(), bitmode);
-				else if (kind == BinaryExprKind::ShiftRight)
-				{
-					bool lhs_unsigned = IsUnsignedType(lhs->GetType());
-					lhs_unsigned ? ctx.Shr(*result, (uint8)int_literal->GetValue(), bitmode) : ctx.Sar(*result, (uint8)int_literal->GetValue(), bitmode);
-				}
-			}
-			else
-			{
-				rhs->Codegen(ctx, result);
-				Register tmp_reg = ctx.AllocateRegister();
-				lhs->Codegen(ctx, &tmp_reg);
-				if (kind == BinaryExprKind::ShiftLeft)  ctx.Shl(*result, tmp_reg, bitmode);
-				if (kind == BinaryExprKind::ShiftRight)
-				{
-					bool lhs_unsigned = IsUnsignedType(lhs->GetType());
-					lhs_unsigned ? ctx.Shr(*result, tmp_reg, bitmode) : ctx.Sar(*result, tmp_reg, bitmode);
-				}
-				ctx.FreeRegister(tmp_reg);
-			}
-		};
-		auto CommonBitCodegen = [&](BinaryExprKind kind)
-		{
-			if (!result) return;
-
-			bool const lhs_is_pointer = IsPointerLikeType(lhs->GetType());
-			bool const rhs_is_pointer = IsPointerLikeType(rhs->GetType());
-			bool const is_pointer_arithmetic = lhs_is_pointer || rhs_is_pointer;
-			LU_ASSERT(!is_pointer_arithmetic);
-
-			if (rhs->GetExprKind() == ExprKind::IntLiteral)
-			{
-				IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
-				int32 value = (int32)int_literal->GetValue();
-				lhs->Codegen(ctx, result);
-
-				switch (kind)
-				{
-				case BinaryExprKind::BitAnd: ctx.And(*result, value, bitmode); break;
-				case BinaryExprKind::BitOr:	 ctx.Or(*result, value, bitmode); break;
-				case BinaryExprKind::BitXor: ctx.Xor(*result, value, bitmode); break;
-				}
-			}
-			else
-			{
-				rhs->Codegen(ctx, result);
-				Register tmp_reg = ctx.AllocateRegister();
-				lhs->Codegen(ctx, &tmp_reg);
-				switch (kind)
-				{
-				case BinaryExprKind::BitAnd:		ctx.And(*result, tmp_reg, bitmode); break;
-				case BinaryExprKind::BitOr:			ctx.Or(*result, tmp_reg, bitmode); break;
-				case BinaryExprKind::BitXor:		ctx.Xor(*result, tmp_reg, bitmode); break;
-				}
-				ctx.FreeRegister(tmp_reg);
-			}
-		};
+			};
 
 		switch (op)
 		{
@@ -1371,7 +1497,6 @@ namespace lucc
 		break;
 		}
 	}
-
 	void TernaryExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		static char const* false_label = "L_false";
@@ -1388,7 +1513,6 @@ namespace lucc
 		false_expr->Codegen(ctx, result);
 		ctx.Label(end_label, label_id);
 	}
-
 	void DeclRefExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!result) return;
@@ -1413,128 +1537,12 @@ namespace lucc
 		if (IsArrayType(GetType()) || IsFunctionType(GetType())) ctx.MovOffset(*result, GetName().data());
 		else ctx.Mov(*result, GetName().data(), bitmode);
 	}
-
 	void IntLiteralAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		uint32 type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
 		if (result) ctx.Mov(*result, value, bitmode);
 	}
-
-	void ExprStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		if(expr) expr->Codegen(ctx, result);
-	}
-
-	void CompoundStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		for (auto& stmt : statements) stmt->Codegen(ctx);
-	}
-
-	void IfStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		static char const* else_label = "L_else";
-		static char const* end_label = "L_end";
-		uint64 label_id = ctx.GenerateLabelId();
-
-		Register cond_reg = ctx.AllocateRegister();
-		condition->Codegen(ctx, &cond_reg);
-		ctx.Cmp(cond_reg, int64(0), BitCount_8);
-		ctx.Jmp(else_label, label_id, ConditionCode::E);
-		then_stmt->Codegen(ctx);
-		ctx.Jmp(end_label, label_id);
-		ctx.Label(else_label, label_id);
-		if (else_stmt) else_stmt->Codegen(ctx);
-		ctx.Label(end_label, label_id);
-		ctx.FreeRegister(cond_reg);
-	}
-
-	void ReturnStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		//#todo handle cast when return type and type of return expr are not the same
-
-		if (ret_expr->GetExpr()->GetExprKind() == ExprKind::FunctionCall)
-		{
-			ret_expr->Codegen(ctx);
-			ctx.JumpToReturn();
-		}
-		else
-		{
-			Register tmp_reg = ctx.AllocateRegister();
-			ret_expr->Codegen(ctx, &tmp_reg);
-			Register return_reg = ctx.GetReturnRegister();
-			ctx.Mov(return_reg, tmp_reg, GetBitCount(ret_expr->GetExpr()->GetType()->GetSize()));
-			ctx.JumpToReturn();
-			ctx.FreeRegister(return_reg);
-		}
-	}
-
-	void WhileStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		static char const* start_label = "L_start";
-		static char const* end_label = "L_end";
-		uint64 label_id = ctx.GenerateLabelId();
-		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
-		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
-
-		ctx.Label(start_label, label_id);
-		Register cond_reg = ctx.AllocateRegister();
-		condition->Codegen(ctx, &cond_reg);
-		ctx.Cmp(cond_reg, (int64)0, BitCount_8);
-		ctx.Jmp(end_label, label_id, ConditionCode::E);
-		body_stmt->Codegen(ctx);
-		ctx.Jmp(start_label, label_id);
-		ctx.Label(end_label, label_id);
-		ctx.FreeRegister(cond_reg);
-	}
-
-	void DoWhileStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		static char const* start_label = "L_start";
-		static char const* end_label = "L_end";
-		uint64 label_id = ctx.GenerateLabelId();
-		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
-		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
-
-		ctx.Label(start_label, label_id);
-		body_stmt->Codegen(ctx);
-		Register cond_reg = ctx.AllocateRegister();
-		condition->Codegen(ctx, &cond_reg);
-		ctx.Cmp(cond_reg, int64(0), BitCount_8);
-		ctx.Jmp(end_label, label_id, ConditionCode::E);
-		ctx.Jmp(start_label, label_id);
-		ctx.Label(end_label, label_id);
-		ctx.FreeRegister(cond_reg);
-	}
-
-	void DeclStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		for (auto const& decl : decls) decl->Codegen(ctx);
-	}
-
-	void ForStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		static char const* start_label = "L_start";
-		static char const* end_label = "L_end";
-		static char const* iter_label = "L_iter";
-		uint64 label_id = ctx.GenerateLabelId();
-		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(iter_label, label_id);
-		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
-
-		if (init_stmt) init_stmt->Codegen(ctx);
-		ctx.Label(start_label, label_id);
-		Register cond_reg = ctx.AllocateRegister();
-		if (cond_expr) cond_expr->Codegen(ctx, &cond_reg);
-		ctx.Cmp(cond_reg, int64(0), BitCount_8);
-		ctx.Jmp(end_label, label_id, ConditionCode::E);
-		if (body_stmt) body_stmt->Codegen(ctx);
-		ctx.Label(iter_label, label_id);
-		if (iter_expr) iter_expr->Codegen(ctx);
-		ctx.Jmp(start_label, label_id);
-		ctx.Label(end_label, label_id);
-		ctx.FreeRegister(cond_reg);
-	}
-
 	void FunctionCallExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		//shadow space
@@ -1613,72 +1621,12 @@ namespace lucc
 		//ctx.RestoreVolatileRegisters();
 		ctx.FreeStack(shadow_space_stack + (pushed_args & 1 ? 8 : 0));
 	}
-
-	void BreakStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		ctx.Jmp(label_name.c_str(), label_id);
-	}
-
-	void ContinueStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		ctx.Jmp(label_name.c_str(), label_id);
-	}
-
-	void GotoStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		ctx.Jmp(goto_label.c_str());
-	}
-
-	void LabelStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		ctx.Label(label_name.c_str());
-	}
-
-	void SwitchStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		static char const* end_label = "L_end";
-		uint64 label_id = ctx.GenerateLabelId();
-		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
-		for (CaseStmtAST* case_stmt : case_stmts) case_stmt->SetSwitchId(label_id);
-
-		Register cond_reg = ctx.AllocateRegister();
-		condition->Codegen(ctx, &cond_reg);
-
-		BitCount bitmode = GetBitCount(condition->GetType()->GetSize());
-
-		CaseStmtAST* default_case = nullptr;
-		for (CaseStmtAST* case_stmt : case_stmts)
-		{
-			if (!case_stmt->IsDefault())
-			{
-				ctx.Cmp(cond_reg, case_stmt->GetValue(), bitmode);
-				ctx.Jmp(case_stmt->GetLabel().data(), label_id, ConditionCode::E);
-			}
-			else
-			{
-				LU_ASSERT(!default_case);
-				default_case = case_stmt;
-			}
-		}
-		if (default_case) ctx.Jmp(default_case->GetLabel().data(), label_id);
-		ctx.Jmp(end_label, label_id);
-		body_stmt->Codegen(ctx);
-		ctx.Label(end_label, label_id);
-		ctx.FreeRegister(cond_reg);
-	}
-
-	void CaseStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
-	{
-		ctx.Label(label_name.c_str(), switch_id);
-	}
-
 	void StringLiteralAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!result) return;
 		std::string str_label = ctx.DeclareString(str.c_str());
 		ctx.MovOffset(*result, str_label.c_str());
 	}
-
 	void CastExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (GetType()->Is(TypeKind::Void))
@@ -1708,7 +1656,6 @@ namespace lucc
 		ctx.FreeRegister(tmp_reg);
 		if (!result) ctx.FreeRegister(cast_reg);
 	}
-
 	void MemberRefExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!result) return;
@@ -1740,5 +1687,4 @@ namespace lucc
 			
 		}
 	}
-
 }

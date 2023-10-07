@@ -46,7 +46,6 @@ namespace lucc
 		{
 			src.Prepend("#define NULL (void*)0\n");
 		}
-
 		void CompileTranslationUnit(std::string_view source_file, std::string_view assembly_file, bool only_pp, bool ast_dump, bool output_debug)
 		{
 			SourceBuffer src(source_file);
@@ -198,6 +197,7 @@ namespace lucc
 			x86_64CodeGenerator x86_64(assembly_file.string());
 			x86_64.Generate(ast);
 		}
+
 		std::string masm_cmd = std::format("\"{}/ml64.exe\"  /Fo {} /c {}", exe_path, object_file.string(), assembly_file.string());
 		system(masm_cmd.c_str());
 		std::string link_cmd = std::format("\"\"{}/link.exe\" /out:{} {}", exe_path, output_file.string(), object_file.string());

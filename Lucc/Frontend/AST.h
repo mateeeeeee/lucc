@@ -42,7 +42,7 @@ namespace lucc
 	class ContinueStmtAST;
 
 	class DeclAST;
-	class VarDeclAST;
+	class VariableDeclAST;
 	class FunctionDeclAST;
 	class TypedefDeclAST;
 
@@ -52,6 +52,12 @@ namespace lucc
 		virtual ~INodeVisitorAST() = default;
 		virtual void Visit(NodeAST const& node, uint32 depth) {}
 		virtual void Visit(TranslationUnitAST const& node, uint32 depth) {}
+
+		virtual void Visit(DeclAST const& node, uint32 depth) {}
+		virtual void Visit(VariableDeclAST const& node, uint32 depth) {}
+		virtual void Visit(FunctionDeclAST const& node, uint32 depth) {}
+		virtual void Visit(TypedefDeclAST const& node, uint32 depth) {}
+
 		virtual void Visit(ExprAST const& node, uint32 depth) {}
 		virtual void Visit(UnaryExprAST const& node, uint32 depth) {}
 		virtual void Visit(BinaryExprAST const& node, uint32 depth) {}
@@ -63,6 +69,7 @@ namespace lucc
 		virtual void Visit(IdentifierExprAST const& node, uint32 depth) {}
 		virtual void Visit(DeclRefExprAST const& node, uint32 depth) {}
 		virtual void Visit(MemberRefExprAST const& node, uint32 depth) {}
+
 		virtual void Visit(StmtAST const& node, uint32 depth) {}
 		virtual void Visit(CompoundStmtAST const& node, uint32 depth) {}
 		virtual void Visit(DeclStmtAST const& node, uint32 depth) {}
@@ -79,10 +86,6 @@ namespace lucc
 		virtual void Visit(LabelStmtAST const& node, uint32 depth) {}
 		virtual void Visit(BreakStmtAST const& node, uint32 depth) {}
 		virtual void Visit(ContinueStmtAST const& node, uint32 depth) {}
-		virtual void Visit(DeclAST const& node, uint32 depth) {}
-		virtual void Visit(VarDeclAST const& node, uint32 depth) {}
-		virtual void Visit(FunctionDeclAST const& node, uint32 depth) {}
-		virtual void Visit(TypedefDeclAST const& node, uint32 depth) {}
 	};
 
 	class x86_64Context;
@@ -146,10 +149,10 @@ namespace lucc
 	protected:
 		DeclAST(std::string_view name, DeclKind kind) : name(name), kind(kind) {}
 	};
-	class VarDeclAST : public DeclAST
+	class VariableDeclAST : public DeclAST
 	{
 	public:
-		explicit VarDeclAST(std::string_view name) : DeclAST(name, DeclKind::Var), local_offset(0) {}
+		explicit VariableDeclAST(std::string_view name) : DeclAST(name, DeclKind::Var), local_offset(0) {}
 
 		void SetInitExpression(std::unique_ptr<ExprAST>&& expr)
 		{
@@ -173,11 +176,11 @@ namespace lucc
 	public:
 		explicit FunctionDeclAST(std::string_view name) : DeclAST(name, DeclKind::Func) {}
 
-		void AddParamDeclaration(std::unique_ptr<VarDeclAST>&& param)
+		void AddParamDeclaration(std::unique_ptr<VariableDeclAST>&& param)
 		{
 			param_decls.push_back(std::move(param));
 		}
-		void AddLocalDeclaration(VarDeclAST const* var_decl)
+		void AddLocalDeclaration(VariableDeclAST const* var_decl)
 		{
 			local_variables.push_back(var_decl);
 		}
@@ -204,9 +207,9 @@ namespace lucc
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::vector<std::unique_ptr<VarDeclAST>> param_decls;
+		std::vector<std::unique_ptr<VariableDeclAST>> param_decls;
 		std::unique_ptr<CompoundStmtAST> body;
-		std::vector<VarDeclAST const*> local_variables;
+		std::vector<VariableDeclAST const*> local_variables;
 		std::vector<FunctionCallExprAST const*> function_calls;
 		uint32 stack_size = 0;
 
@@ -808,7 +811,6 @@ namespace lucc
 		*/
 		void SetCastType();
 	};
-
 	class IdentifierExprAST : public ExprAST
 	{
 	public:
@@ -829,7 +831,7 @@ namespace lucc
 	{
 	public:
 		DeclRefExprAST(DeclAST* decl_ast, SourceLocation const& loc) : IdentifierExprAST(decl_ast->GetName(), loc, decl_ast->GetType()),
-			decl_ast(decl_ast) {}
+			decl_ast(decl_ast)  {}
 
 		VarSymbol const& GetSymbol() const { return decl_ast->GetSymbol(); }
 		bool IsGlobal() const { return GetSymbol().global; }

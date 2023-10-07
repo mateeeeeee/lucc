@@ -179,7 +179,7 @@ namespace lucc
 				if (IsVoidType(declaration_info.qtype)) Diag(diag::void_not_expected);
 
 				std::string_view name = declarator_info.name;
-				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
+				std::unique_ptr<VariableDeclAST> var_decl = std::make_unique<VariableDeclAST>(name);
 				var_decl->SetLocation(current_token->GetLocation());
 				var_decl->SetSymbol(&var_symbol);
 
@@ -249,7 +249,7 @@ namespace lucc
 				Diag(diag::redefinition_of_identifier);
 				return nullptr;
 			}
-			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name);
+			std::unique_ptr<VariableDeclAST> param_decl = std::make_unique<VariableDeclAST>(func_param.name);
 			VarSymbol* sym = ctx.identifier_sym_table->LookUp(func_param.name);
 			param_decl->SetSymbol(sym);
 			sym->decl_ast = param_decl.get();
