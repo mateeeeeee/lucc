@@ -108,12 +108,12 @@ namespace lucc
 		{
 			if (!Consume(k, ts...))
 			{
-				Report(diag::unexpected_token);
+				Diag(diag::unexpected_token);
 				return false;
 			}
 			return true;
 		}
-		void Report(diag::DiagCode);
+		void Diag(diag::DiagCode);
 
 		[[nodiscard]] void ParseTranslationUnit();
 

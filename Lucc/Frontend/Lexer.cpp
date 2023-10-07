@@ -21,7 +21,7 @@ namespace lucc
 
 			if (!result)
 			{
-				Report(diag::lexing_failed);
+				Diag(diag::lexing_failed);
 				return;
 			}
 			if (!tokens.empty())
@@ -122,7 +122,7 @@ namespace lucc
 			return LexPunctuator(token);
 		}
 		}
-		Report(diag::lexing_failed, loc);
+		Diag(diag::lexing_failed, loc);
 		return false;
 	}
 
@@ -134,7 +134,7 @@ namespace lucc
 		else if (std::isalpha(*tmp_ptr))
 		{
 			UpdatePointersAndLocation();
-			Report(diag::invalid_number_literal, loc);
+			Diag(diag::invalid_number_literal, loc);
 			return false;
 		}
 		FillToken(t, TokenKind::number, tmp_ptr);

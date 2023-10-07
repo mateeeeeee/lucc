@@ -62,15 +62,15 @@ namespace lucc
 	{
 		if (!Consume(k))
 		{
-			Report(diag::unexpected_token);
+			Diag(diag::unexpected_token);
 			return false;
 		}
 		return true;
 	}
-	void Parser::Report(diag::DiagCode code)
+	void Parser::Diag(diag::DiagCode code)
 	{
 		--current_token;
-		diag::Report(code, current_token->GetLocation());
+		diag::Diag(code, current_token->GetLocation());
 		++current_token;
 	}
 
@@ -85,7 +85,7 @@ namespace lucc
 
 	std::vector<std::unique_ptr<DeclAST>> Parser::ParseDeclaration()
 	{
-		while (Consume(TokenKind::semicolon)) Report(diag::empty_statement);
+		while (Consume(TokenKind::semicolon)) Diag(diag::empty_statement);
 		bool is_global = ctx.identifier_sym_table->IsGlobal();
 
 		std::vector<std::unique_ptr<DeclAST>> decls;
@@ -110,7 +110,7 @@ namespace lucc
 			if (decl_spec.align)
 			{
 				if (decl_spec.align >= declarator_info.qtype->GetAlign()) declarator_info.qtype->SetAlign(decl_spec.align);
-				else Report(diag::alignas_cannot_reduce_default_align);
+				else Diag(diag::alignas_cannot_reduce_default_align);
 			}
 
 			LU_ASSERT(declarator_info.qtype.HasRawType());
@@ -123,7 +123,7 @@ namespace lucc
 			{
 				if (!IsFunctionType(declaration_info.qtype))
 				{
-					Report(diag::redefinition_of_identifier);
+					Diag(diag::redefinition_of_identifier);
 					return {};
 				}
 				if (IsFunctionType(sym->qtype))
@@ -131,7 +131,7 @@ namespace lucc
 					FunctionType& func_type = sym->qtype->As<FunctionType>();
 					if (!func_type.IsCompatible(declaration_info.qtype))
 					{
-						Report(diag::redefinition_of_identifier);
+						Diag(diag::redefinition_of_identifier);
 						return {};
 					}
 					if (func_type.HasDefinition())
@@ -141,7 +141,7 @@ namespace lucc
 				}
 				else
 				{
-					Report(diag::redefinition_of_identifier);
+					Diag(diag::redefinition_of_identifier);
 					return {};
 				}
 			}
@@ -153,7 +153,7 @@ namespace lucc
 
 			if (IsFunctionType(declarator_info.qtype))
 			{
-				if (!is_global) Report(diag::local_functions_not_allowed);
+				if (!is_global) Diag(diag::local_functions_not_allowed);
 
 				std::unique_ptr<FunctionDeclAST> func_decl = ParseFunctionDeclaration(declaration_info);
 				func_decl->SetLocation(current_token->GetLocation());
@@ -165,7 +165,7 @@ namespace lucc
 				{
 					if(check_redefinition) 
 					{
-						Report(diag::redefinition_of_identifier);
+						Diag(diag::redefinition_of_identifier);
 						return {};
 					}
 					LU_ASSERT(decls.empty());
@@ -176,7 +176,7 @@ namespace lucc
 			}
 			else
 			{
-				if (IsVoidType(declaration_info.qtype)) Report(diag::void_not_expected);
+				if (IsVoidType(declaration_info.qtype)) Diag(diag::void_not_expected);
 
 				std::string_view name = declarator_info.name;
 				std::unique_ptr<VarDeclAST> var_decl = std::make_unique<VarDeclAST>(name);
@@ -188,7 +188,7 @@ namespace lucc
 				if (Consume(TokenKind::equal))
 				{
 					std::unique_ptr<ExprAST> init_expr = ParseExpression();
-					if (is_global && !IsFunctionPointerType(declarator_info.qtype) && init_expr->GetExprKind() != ExprKind::IntLiteral) Report(diag::initializer_element_is_not_constant);
+					if (is_global && !IsFunctionPointerType(declarator_info.qtype) && init_expr->GetExprKind() != ExprKind::IntLiteral) Diag(diag::initializer_element_is_not_constant);
 					std::unique_ptr<ExprAST> init_expr_casted = GetAssignExpr(std::move(init_expr), declaration_info.qtype);
 					var_decl->SetInitExpression(std::move(init_expr_casted));
 				}
@@ -213,14 +213,14 @@ namespace lucc
 
 			if (typedef_info.name.empty())
 			{
-				Report(diag::typedef_name_empty);
+				Diag(diag::typedef_name_empty);
 				return {};
 			}
 			typedefs.push_back(std::make_unique<TypedefDeclAST>(typedef_info.name));
 			bool success = ctx.identifier_sym_table->Insert(VarSymbol{ typedef_info.name, typedef_info.qtype, Storage::Typedef });
 			if (!success)
 			{
-				Report(diag::redefinition_of_identifier);
+				Diag(diag::redefinition_of_identifier);
 				return {};
 			}
 		}
@@ -235,7 +235,7 @@ namespace lucc
 		std::string_view func_name = decl_info.name;
 		if (func_name.empty())
 		{
-			Report(diag::missing_name);
+			Diag(diag::missing_name);
 			return nullptr;
 		}
 
@@ -246,7 +246,7 @@ namespace lucc
 			bool success = ctx.identifier_sym_table->Insert(VarSymbol{ func_param.name, func_param.qtype, Storage::None });
 			if (!success)
 			{
-				Report(diag::redefinition_of_identifier);
+				Diag(diag::redefinition_of_identifier);
 				return nullptr;
 			}
 			std::unique_ptr<VarDeclAST> param_decl = std::make_unique<VarDeclAST>(func_param.name);
@@ -268,7 +268,7 @@ namespace lucc
 
 			if (func_name != "main" && ctx.current_func_type->GetReturnType()->IsNot(TypeKind::Void) && !ctx.return_stmt_encountered)
 			{
-				Report(diag::return_not_found);
+				Diag(diag::return_not_found);
 				return nullptr;
 			}
 
@@ -286,7 +286,7 @@ namespace lucc
 					break;
 				}
 			}
-			if (!found) Report(diag::undeclared_label);
+			if (!found) Diag(diag::undeclared_label);
 		}
 		ctx.gotos.clear();
 		ctx.labels.clear();
@@ -442,7 +442,7 @@ namespace lucc
 		Expect(TokenKind::KW_break);
 		Expect(TokenKind::semicolon);
 		std::unique_ptr<BreakStmtAST> break_stmt = std::make_unique<BreakStmtAST>();
-		if (ctx.break_callback_stack.empty()) Report(diag::stray_break);
+		if (ctx.break_callback_stack.empty()) Diag(diag::stray_break);
 		else ctx.break_callback_stack.back()(break_stmt.get());
 		return break_stmt;
 	}
@@ -452,7 +452,7 @@ namespace lucc
 		Expect(TokenKind::KW_continue);
 		Expect(TokenKind::semicolon);
 		std::unique_ptr<ContinueStmtAST> continue_stmt = std::make_unique<ContinueStmtAST>();
-		if (ctx.continue_callback_stack.empty()) Report(diag::stray_continue);
+		if (ctx.continue_callback_stack.empty()) Diag(diag::stray_continue);
 		else ctx.continue_callback_stack.back()(continue_stmt.get());
 		return continue_stmt;
 	}
@@ -483,19 +483,19 @@ namespace lucc
 
 	std::unique_ptr<CaseStmtAST> Parser::ParseCaseStatement()
 	{
-		if (ctx.switch_stack.empty()) Report(diag::stray_case);
+		if (ctx.switch_stack.empty()) Diag(diag::stray_case);
 
 		std::unique_ptr<CaseStmtAST> case_stmt = nullptr;
 		if (Consume(TokenKind::KW_default))
 		{
-			if (ctx.switch_stack.back()->HasDefaultCase()) Report(diag::multiple_default_cases);
+			if (ctx.switch_stack.back()->HasDefaultCase()) Diag(diag::multiple_default_cases);
 			case_stmt = std::make_unique<CaseStmtAST>();
 		}
 		else
 		{
 			Expect(TokenKind::KW_case);
 			std::unique_ptr<ExprAST> case_value = ParseExpression();
-			if (!case_value->IsConstexpr()) Report(diag::case_value_not_constexpr);
+			if (!case_value->IsConstexpr()) Diag(diag::case_value_not_constexpr);
 			case_stmt = std::make_unique<CaseStmtAST>(case_value->EvaluateConstexpr());
 		}
 		Expect(TokenKind::colon);
@@ -587,7 +587,7 @@ namespace lucc
 		}
 		if (!lhs->IsAssignable())
 		{
-			Report(diag::lhs_not_assignable);
+			Diag(diag::lhs_not_assignable);
 			return nullptr;
 		}
 		++current_token;
@@ -818,7 +818,7 @@ namespace lucc
 			ParseTypename(cast_type);
 			Expect(TokenKind::right_round);
 
-			if (!IsVoidType(cast_type) && !IsScalarType(cast_type)) Report(diag::cast_invalid_type);
+			if (!IsVoidType(cast_type) && !IsScalarType(cast_type)) Diag(diag::cast_invalid_type);
 			//#todo further check cast type compatibility
 			SourceLocation loc = current_token->GetLocation();
 			std::unique_ptr<CastExprAST> cast_expr = std::make_unique<CastExprAST>(loc, cast_type);
@@ -851,7 +851,7 @@ namespace lucc
 			std::unique_ptr<ExprAST> op_expr = ParseUnaryExpression();
 			if (!op_expr->IsLValue() && !IsFunctionType(op_expr->GetType()))
 			{
-				Report(diag::address_of_rvalue_error);
+				Diag(diag::address_of_rvalue_error);
 				return nullptr;
 			}
 			unary_expr->SetOperand(std::move(op_expr));
@@ -864,7 +864,7 @@ namespace lucc
 			std::unique_ptr<ExprAST> op_expr = ParseUnaryExpression();
 			if (!IsPointerLikeType(op_expr->GetType()))
 			{
-				Report(diag::dereferencing_non_pointer_type);
+				Diag(diag::dereferencing_non_pointer_type);
 				return nullptr;
 			}
 			unary_expr->SetOperand(std::move(op_expr));
@@ -918,7 +918,7 @@ namespace lucc
 			QualifiedType const& type = expr->GetType();
 			if (!IsFunctionPointerType(type) && !IsFunctionType(type))
 			{
-				Report(diag::invalid_function_call);
+				Diag(diag::invalid_function_call);
 				return nullptr;
 			}
 
@@ -946,7 +946,7 @@ namespace lucc
 					{
 						if (!func_type->IsVariadic())
 						{
-							Report(diag::invalid_function_call);
+							Diag(diag::invalid_function_call);
 							return nullptr;
 						}
 						else variadic_args = true;
@@ -962,7 +962,7 @@ namespace lucc
 			}
 			if (!func_type->IsVariadic() && func_params.size() != arg_index)
 			{
-				Report(diag::invalid_function_call);
+				Diag(diag::invalid_function_call);
 				return nullptr;
 			}
 			return func_call_expr;
@@ -986,7 +986,7 @@ namespace lucc
 			++current_token;
 			if (!IsArrayType(expr->GetType()) && !IsPointerType(expr->GetType()))
 			{
-				Report(diag::dereferencing_non_pointer_type);
+				Diag(diag::dereferencing_non_pointer_type);
 				return nullptr;
 			}
 
@@ -1005,14 +1005,14 @@ namespace lucc
 			--current_token; 
 			if (current_token->IsNot(TokenKind::identifier))
 			{
-				Report(diag::invalid_member_access);
+				Diag(diag::invalid_member_access);
 				return nullptr;
 			}
 			std::string_view struct_name = current_token->GetIdentifier();
 			VarSymbol* var = ctx.identifier_sym_table->LookUp(struct_name);
 			if (!var || var->is_enum || !IsStructType(var->qtype))
 			{
-				Report(diag::invalid_member_access);
+				Diag(diag::invalid_member_access);
 				return nullptr;
 			}
 			DeclAST* decl_ast = var->decl_ast;
@@ -1020,7 +1020,7 @@ namespace lucc
 			current_token += 2;
 			if (current_token->IsNot(TokenKind::identifier))
 			{
-				Report(diag::invalid_member_access);
+				Diag(diag::invalid_member_access);
 				return nullptr;
 			}
 			std::string_view member_name = current_token->GetIdentifier();
@@ -1029,7 +1029,7 @@ namespace lucc
 			StructType const& struct_type = var->qtype->As<StructType>();
 			if (!struct_type.HasMember(member_name))
 			{
-				Report(diag::invalid_member_access);
+				Diag(diag::invalid_member_access);
 				return nullptr;
 			}
 			std::unique_ptr<MemberRefExprAST> member_access_expr = std::make_unique<MemberRefExprAST>(decl_ast, member_name, loc);
@@ -1055,7 +1055,7 @@ namespace lucc
 				ParseTypename(type);
 				if (IsFunctionType(type) || !type->IsComplete())
 				{
-					Report(diag::sizeof_invalid_argument);
+					Diag(diag::sizeof_invalid_argument);
 				}
 				Expect(TokenKind::right_round);
 				return std::make_unique<IntLiteralAST>(type->GetSize(), loc);
@@ -1087,11 +1087,11 @@ namespace lucc
 		Expect(TokenKind::KW__Alignof);
 		Expect(TokenKind::left_round);
 
-		if (!IsTokenTypename()) Report(diag::alignof_expects_type_argument);
+		if (!IsTokenTypename()) Diag(diag::alignof_expects_type_argument);
 		SourceLocation loc = current_token->GetLocation();
 		QualifiedType type{};
 		ParseTypename(type);
-		if (IsFunctionType(type) || !type->IsComplete()) Report(diag::alignof_invalid_argument);
+		if (IsFunctionType(type) || !type->IsComplete()) Diag(diag::alignof_invalid_argument);
 		std::unique_ptr<IntLiteralAST> alignof_expr = std::make_unique<IntLiteralAST>(type->GetAlign(), loc);
 		Expect(TokenKind::right_round);
 		return alignof_expr;
@@ -1124,9 +1124,9 @@ namespace lucc
 		{
 			auto IsPowerOfTwo = [](int64 n) {return n > 0 && ((n & (n - 1)) == 0); };
 			std::unique_ptr<ExprAST> expr = ParseExpression();
-			if (!expr->IsConstexpr()) Report(diag::alignas_alignment_not_constexpr);
+			if (!expr->IsConstexpr()) Diag(diag::alignas_alignment_not_constexpr);
 			int64 alignment = expr->EvaluateConstexpr();
-			if (!IsPowerOfTwo(alignment)) Report(diag::alignas_alignment_not_power_of_two);
+			if (!IsPowerOfTwo(alignment)) Diag(diag::alignas_alignment_not_power_of_two);
 			alignas_expr = std::make_unique<IntLiteralAST>(alignment, loc);
 		}
 
@@ -1147,7 +1147,7 @@ namespace lucc
 		case TokenKind::number: return ParseIntegerLiteral();
 		case TokenKind::string_literal: return ParseStringLiteral(); break;
 		default:
-			Report(diag::unexpected_token);
+			Diag(diag::unexpected_token);
 		}
 		LU_ASSERT(false);
 		return nullptr;
@@ -1192,7 +1192,7 @@ namespace lucc
 				return decl_ref;
 			}
 		}
-		else Report(diag::variable_not_declared);
+		else Diag(diag::variable_not_declared);
 		return nullptr;
 	}
 
@@ -1211,8 +1211,8 @@ namespace lucc
 		if (!enum_tag.empty() && current_token->IsNot(TokenKind::left_brace))
 		{
 			TagSymbol* sym = ctx.tag_sym_table->LookUp(enum_tag);
-			if (!sym) Report(diag::unknown_enum);
-			else if (!sym->enum_type) Report(diag::not_enum_type);
+			if (!sym) Diag(diag::unknown_enum);
+			else if (!sym->enum_type) Diag(diag::not_enum_type);
 			decl_spec.qtype = sym->type;
 			return;
 		}
@@ -1222,13 +1222,13 @@ namespace lucc
 		while (true)
 		{
 			std::string enum_value_name;
-			if (current_token->IsNot(TokenKind::identifier)) Report(diag::enum_value_no_name);
+			if (current_token->IsNot(TokenKind::identifier)) Diag(diag::enum_value_no_name);
 			enum_value_name = current_token->GetIdentifier(); ++current_token;
 
 			if (Consume(TokenKind::equal))
 			{
 				std::unique_ptr<ExprAST> enum_value_expr = ParseAssignmentExpression();
-				if (!enum_value_expr->IsConstexpr()) Report(diag::enum_value_not_constexpr);
+				if (!enum_value_expr->IsConstexpr()) Diag(diag::enum_value_not_constexpr);
 				val = (int32)enum_value_expr->EvaluateConstexpr();
 			}
 
@@ -1313,7 +1313,7 @@ namespace lucc
 			}
 		}
 		bool success = struct_type.Finalize();
-		if (!success) Report(diag::invalid_member_declaration);
+		if (!success) Diag(diag::invalid_member_declaration);
 	}
 
 	//<declaration - specifier> :: = <storage - class - specifier>
@@ -1344,11 +1344,11 @@ namespace lucc
 		{
 			if (current_token->IsStorageSpecifier())
 			{
-				if (forbid_storage_specs) Report(diag::storage_specifier_forbidden_context);
+				if (forbid_storage_specs) Diag(diag::storage_specifier_forbidden_context);
 
 				TokenKind kind = current_token->GetKind();
 				++current_token;
-				if (decl_spec.storage != Storage::None) Report(diag::multiple_storage_specifiers);
+				if (decl_spec.storage != Storage::None) Diag(diag::multiple_storage_specifiers);
 
 				switch (kind)
 				{
@@ -1379,7 +1379,7 @@ namespace lucc
 
 			if (Consume(KW__Alignas))
 			{
-				if (forbid_storage_specs) Report(diag::storage_specifier_forbidden_context);
+				if (forbid_storage_specs) Diag(diag::storage_specifier_forbidden_context);
 				--current_token;
 				std::unique_ptr<IntLiteralAST> alignas_expr = ParseAlignasExpression();
 				decl_spec.align = (uint32)alignas_expr->GetValue();
@@ -1513,10 +1513,10 @@ namespace lucc
 				decl_spec.qtype.SetRawType(builtin_types::LongDouble);
 				break;
 			default:
-				Report(diag::declarator_specifier_error);
+				Diag(diag::declarator_specifier_error);
 			}
 		}
-		if (counter == 0) Report(diag::declarator_specifier_error);
+		if (counter == 0) Diag(diag::declarator_specifier_error);
 	}
 
 	//<declarator> :: = { <pointer> } ? <direct - declarator>
@@ -1642,7 +1642,7 @@ namespace lucc
 		{
 			FunctionType func_type(type);
 			type.SetRawType(func_type);
-			if (!Consume(TokenKind::right_round)) Report(diag::function_params_not_closed);
+			if (!Consume(TokenKind::right_round)) Diag(diag::function_params_not_closed);
 		}
 		else
 		{
@@ -1650,12 +1650,12 @@ namespace lucc
 			std::vector<FunctionParameter> param_types{};
 			while (!Consume(TokenKind::right_round))
 			{
-				if (!param_types.empty() && !Consume(TokenKind::comma)) Report(diag::function_params_missing_coma);
+				if (!param_types.empty() && !Consume(TokenKind::comma)) Diag(diag::function_params_missing_coma);
 
 				if (Consume(TokenKind::ellipsis))
 				{
 					is_variadic = true;
-					if (!Consume(TokenKind::right_round)) Report(diag::variadic_params_not_last);
+					if (!Consume(TokenKind::right_round)) Diag(diag::variadic_params_not_last);
 					else break;
 				}
 
@@ -1664,7 +1664,7 @@ namespace lucc
 				DeclaratorInfo param_declarator{};
 				abstract ? ParseAbstractDeclarator(param_decl_spec, param_declarator.qtype) : ParseDeclarator(param_decl_spec, param_declarator);
 				QualifiedType& qtype = param_declarator.qtype;
-				if (qtype->Is(TypeKind::Void)) Report(diag::void_not_first_and_only_parameter);
+				if (qtype->Is(TypeKind::Void)) Diag(diag::void_not_first_and_only_parameter);
 				else if (qtype->Is(TypeKind::Array))
 				{
 					ArrayType const& array_type = TypeCast<ArrayType>(*qtype);
@@ -1698,13 +1698,13 @@ namespace lucc
 		else
 		{
 			std::unique_ptr<ExprAST> dimensions_expr = ParseExpression();
-			if (!dimensions_expr->IsConstexpr()) Report(diag::array_dimensions_not_constexpr);
+			if (!dimensions_expr->IsConstexpr()) Diag(diag::array_dimensions_not_constexpr);
 			int64 array_size = dimensions_expr->EvaluateConstexpr();
-			if (array_size == 0) Report(diag::zero_size_array_not_allowed);
+			if (array_size == 0) Diag(diag::zero_size_array_not_allowed);
 
 			ArrayType arr_type(type, (uint32)array_size);
 			type.SetRawType(arr_type);
-			if (!Consume(TokenKind::right_square)) Report(diag::array_brackets_not_closed);
+			if (!Consume(TokenKind::right_square)) Diag(diag::array_brackets_not_closed);
 			else return ParseDeclaratorTail(type, abstract);
 		}
 	}

@@ -44,7 +44,7 @@ namespace lucc
 			break;
 			case TokenKind::PP_else:
 			{
-				if (!ProcessElse(curr)) Report(diag::preprocessing_failed);;
+				if (!ProcessElse(curr)) Diag(diag::preprocessing_failed);;
 				break;
 			}
 			break;
@@ -54,32 +54,32 @@ namespace lucc
 			}
 			break;
 			case TokenKind::PP_ifdef:
-				if (!ProcessIfDef(curr)) Report(diag::preprocessing_failed);
+				if (!ProcessIfDef(curr)) Diag(diag::preprocessing_failed);
 				break;
 			break;
 			case TokenKind::PP_ifndef:
-				if (!ProcessIfNDef(curr)) Report(diag::preprocessing_failed);
+				if (!ProcessIfNDef(curr)) Diag(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_elifdef:
-				if (!ProcessElifDef(curr)) Report(diag::preprocessing_failed);
+				if (!ProcessElifDef(curr)) Diag(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_elifndef:
-				if (!ProcessElifNDef(curr)) Report(diag::preprocessing_failed);
+				if (!ProcessElifNDef(curr)) Diag(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_endif:
-				if (!ProcessEndif(curr)) Report(diag::preprocessing_failed);
+				if (!ProcessEndif(curr)) Diag(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_include:
-				if (!ProcessInclude(curr)) Report(diag::preprocessing_failed);
+				if (!ProcessInclude(curr)) Diag(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_define:
-				if (!ProcessDefine(curr)) Report(diag::preprocessing_failed);
+				if (!ProcessDefine(curr)) Diag(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_undef:
-				if (!ProcessUndef(curr)) Report(diag::preprocessing_failed);
+				if (!ProcessUndef(curr)) Diag(diag::preprocessing_failed);
 				break;
 			case TokenKind::PP_defined:
-				Report(diag::defined_misplaced, curr->GetLocation());
+				Diag(diag::defined_misplaced, curr->GetLocation());
 			}
 		}
 
@@ -112,7 +112,7 @@ namespace lucc
 			std::advance(curr, -static_cast<int64>(include_lexer.tokens.size()));
 			return true;
 		}
-		Report(diag::header_name_error, curr->GetLocation());
+		Diag(diag::header_name_error, curr->GetLocation());
 		return false;
 	}
 

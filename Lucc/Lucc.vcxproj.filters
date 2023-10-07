@@ -141,7 +141,4 @@
       <Filter>Frontend\Lexer</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\todo.txt" />
-  </ItemGroup>
 </Project>

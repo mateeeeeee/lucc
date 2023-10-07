@@ -493,19 +493,19 @@ namespace lucc
 		}
 		else if (!IsScalarType(GetType()))
 		{
-			Report(diag::cast_invalid_type);
+			Diag(diag::cast_invalid_type);
 		}
 		else if (!IsScalarType(operand_type))
 		{
-			Report(diag::cast_invalid_type);
+			Diag(diag::cast_invalid_type);
 		}
 		else if (IsPointerType(GetType()) && IsFloatingType(operand_type))
 		{
-			Report(diag::cast_invalid_type);
+			Diag(diag::cast_invalid_type);
 		}
 		else if (IsPointerType(operand_type) && IsFloatingType(GetType()))
 		{
-			Report(diag::cast_invalid_type);
+			Diag(diag::cast_invalid_type);
 		}
 		else
 		{
