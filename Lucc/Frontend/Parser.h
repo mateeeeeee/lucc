@@ -163,7 +163,7 @@ namespace lucc
 		[[nodiscard]] std::unique_ptr<ExprAST> ParseIdentifier();
 
 		template<ExprParseFn ParseFn, TokenKind token_kind, BinaryExprKind op_kind>
-		std::unique_ptr<ExprAST> ParseBinaryExpression();
+		[[nodiscard]] std::unique_ptr<ExprAST> ParseBinaryExpression();
 
 		void ParseEnum(DeclarationSpecifier& decl_spec);
 		void ParseStruct(DeclarationSpecifier& decl_spec);

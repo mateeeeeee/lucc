@@ -101,7 +101,7 @@ namespace lucc
 	protected:
 		NodeAST() = default;
 	};
-	class TranslationUnitAST : public NodeAST
+	class TranslationUnitAST final : public NodeAST
 	{
 	public:
 		TranslationUnitAST() = default;
@@ -711,7 +711,7 @@ namespace lucc
 		std::unique_ptr<ExprAST> false_expr;
 	};
 
-	class FunctionCallExprAST : public ExprAST
+	class FunctionCallExprAST final : public ExprAST
 	{
 	public:
 		FunctionCallExprAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
@@ -739,8 +739,6 @@ namespace lucc
 		}
 
 		ExprAST* GetFunction() const { return func_expr.get(); }
-		std::vector<std::unique_ptr<ExprAST>> const& GetFunctionArgs() const { return func_args; }
-
 		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
@@ -848,7 +846,7 @@ namespace lucc
 	protected:
 		DeclAST* decl_ast;
 	};
-	class MemberRefExprAST : public DeclRefExprAST
+	class MemberRefExprAST final : public DeclRefExprAST
 	{
 	public:
 		MemberRefExprAST(DeclAST* decl_ast, std::string_view member_name, SourceLocation const& loc)
@@ -884,7 +882,6 @@ namespace lucc
 			SetType(member_type);
 		}
 	};
-
 
 	struct AST
 	{

@@ -102,7 +102,6 @@ namespace lucc
 	private:
 		FunctionDeclAST* func_ref;
 	};
-
 	class FunctionCallVisitorAST : public INodeVisitorAST
 	{
 	public:
@@ -115,8 +114,6 @@ namespace lucc
 	private:
 		FunctionDeclAST* func_ref;
 	};
-
-	/// Accept
 
 	void TranslationUnitAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
 	{
@@ -274,7 +271,6 @@ namespace lucc
 		operand->Accept(visitor, depth + 1);
 	}
 
-	/// Constexpr
 
 	bool UnaryExprAST::IsConstexpr() const
 	{
@@ -375,7 +371,6 @@ namespace lucc
 		return value;
 	}
 
-	/// Expression types
 
 	void UnaryExprAST::SetExpressionType()
 	{
@@ -487,7 +482,7 @@ namespace lucc
 		}
 	}
 
-	/// Misc
+
 	void FunctionDeclAST::AssignLocalOffsets()
 	{
 		FunctionCallVisitorAST func_call_visitor(this);
@@ -527,7 +522,6 @@ namespace lucc
 		stack_size = AlignTo(local_stack_space, 16);
 	}
 
-	/// Codegen
 
 	void TranslationUnitAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
