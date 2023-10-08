@@ -62,23 +62,23 @@ namespace lucc
 	};
 
 	template<typename T> requires std::derived_from<T, Type>
-	T& TypeCast(Type& t)
+	T& type_cast(Type& t)
 	{
 		return static_cast<T&>(t);
 	}
 	template<typename T> requires std::derived_from<T, Type>
-	T const& TypeCast(Type const& t)
+	T const& type_cast(Type const& t)
 	{
 		return static_cast<T const&>(t);
 	}
 
 	template<typename T> requires std::derived_from<T, Type>
-	T* DynamicTypeCast(Type& t)
+	T* dynamic_type_cast(Type& t)
 	{
 		return dynamic_cast<T*>(&t);
 	}
 	template<typename T> requires std::derived_from<T, Type>
-	T const* DynamicTypeCast(Type const& t)
+	T const* dynamic_type_cast(Type const& t)
 	{
 		return dynamic_cast<T const*>(&t);
 	}
@@ -86,22 +86,22 @@ namespace lucc
 	template<typename T>
 	T const& Type::As() const
 	{
-		return TypeCast<T>(*this);
+		return type_cast<T>(*this);
 	}
 	template<typename T>
 	T& Type::As()
 	{
-		return TypeCast<T>(*this);
+		return type_cast<T>(*this);
 	}
 	template<typename T>
 	T const* Type::TryAs() const
 	{
-		return DynamicTypeCast<T>(*this);
+		return dynamic_type_cast<T>(*this);
 	}
 	template<typename T>
 	T* Type::TryAs()
 	{
-		return DynamicTypeCast<T>(*this);
+		return dynamic_type_cast<T>(*this);
 	}
 
 	enum QualifierFlag : uint8
@@ -179,7 +179,7 @@ namespace lucc
 		virtual bool IsCompatible(Type const& other) const override
 		{
 			if (other.IsNot(TypeKind::Pointer)) return false;
-			auto const& other_ptr = TypeCast<PointerType>(other);
+			auto const& other_ptr = type_cast<PointerType>(other);
 			return pointee_qtype->IsCompatible(other_ptr.pointee_qtype);
 		}
 
@@ -210,7 +210,7 @@ namespace lucc
 		virtual bool IsCompatible(Type const& other) const override
 		{
 			if (other.IsNot(TypeKind::Array)) return false;
-			auto const& other_arr = TypeCast<ArrayType>(other);
+			auto const& other_arr = type_cast<ArrayType>(other);
 			return (elem_type->IsCompatible(other_arr.elem_type) &&
 				(IsComplete() != elem_type->IsComplete() || arr_size == other_arr.arr_size));
 		}
@@ -409,7 +409,7 @@ namespace lucc
 	}
 	inline bool IsBoolType(Type const& type)
 	{
-		return type.Is(TypeKind::Arithmetic) ? IsBoolType(TypeCast<ArithmeticType>(type)) : false;
+		return type.Is(TypeKind::Arithmetic) ? IsBoolType(type_cast<ArithmeticType>(type)) : false;
 	}
 	inline bool IsFloatingType(ArithmeticType const& arithmetic_type)
 	{
@@ -418,7 +418,7 @@ namespace lucc
 	}
 	inline bool IsFloatingType(Type const& type)
 	{
-		return type.Is(TypeKind::Arithmetic) ? IsFloatingType(TypeCast<ArithmeticType>(type)) : false;
+		return type.Is(TypeKind::Arithmetic) ? IsFloatingType(type_cast<ArithmeticType>(type)) : false;
 	}
 	inline bool IsIntegerType(ArithmeticType const& arithmetic_type)
 	{
@@ -433,7 +433,7 @@ namespace lucc
 	}
 	inline bool IsSignedType(Type const& type)
 	{
-		return type.Is(TypeKind::Arithmetic) ? IsSignedType(TypeCast<ArithmeticType>(type)) : false;
+		return type.Is(TypeKind::Arithmetic) ? IsSignedType(type_cast<ArithmeticType>(type)) : false;
 	}
 	inline bool IsUnsignedType(ArithmeticType const& arithmetic_type)
 	{
@@ -449,7 +449,7 @@ namespace lucc
 	}
 	inline bool IsFunctionPointerType(Type const& type)
 	{
-		return type.Is(TypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(TypeKind::Function);;
+		return type.Is(TypeKind::Pointer) && type_cast<PointerType>(type).PointeeType()->Is(TypeKind::Function);;
 	}
 	inline bool IsObjectPointerType(Type const& type)
 	{
@@ -457,18 +457,18 @@ namespace lucc
 	}
 	inline bool IsVoidPointerType(Type const& type)
 	{
-		return type.Is(TypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(TypeKind::Void);
+		return type.Is(TypeKind::Pointer) && type_cast<PointerType>(type).PointeeType()->Is(TypeKind::Void);
 	}
 	inline bool IsStructPointerType(Type const& type)
 	{
-		return type.Is(TypeKind::Pointer) && TypeCast<PointerType>(type).PointeeType()->Is(TypeKind::Struct);
+		return type.Is(TypeKind::Pointer) && type_cast<PointerType>(type).PointeeType()->Is(TypeKind::Struct);
 	}
 	inline bool IsCharArrayType(Type const& type)
 	{
 		if (type.IsNot(TypeKind::Array)) return false;
-		auto elem_type = TypeCast<ArrayType>(type).GetElementType();
+		auto elem_type = type_cast<ArrayType>(type).GetElementType();
 		if (elem_type->IsNot(TypeKind::Arithmetic)) return false;
-		ArithmeticType const& elem_arithmetic_type = TypeCast<ArithmeticType>(elem_type);
+		ArithmeticType const& elem_arithmetic_type = type_cast<ArithmeticType>(elem_type);
 		auto elem_arithmetic_flags = elem_arithmetic_type.GetFlags();
 		return (elem_arithmetic_flags & ArithmeticType::Char);
 	}

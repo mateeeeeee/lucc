@@ -239,7 +239,7 @@ namespace lucc
 			return nullptr;
 		}
 
-		FunctionType const& func_type = TypeCast<FunctionType>(decl_info.qtype);
+		FunctionType const& func_type = type_cast<FunctionType>(decl_info.qtype);
 		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_name);
 		for (auto&& func_param : func_type.GetParamTypes())
 		{
@@ -1667,14 +1667,14 @@ namespace lucc
 				if (qtype->Is(TypeKind::Void)) Diag(diag::void_not_first_and_only_parameter);
 				else if (qtype->Is(TypeKind::Array))
 				{
-					ArrayType const& array_type = TypeCast<ArrayType>(*qtype);
+					ArrayType const& array_type = type_cast<ArrayType>(*qtype);
 					QualifiedType base_type = array_type.GetElementType();
 					PointerType decayed_param_type(base_type);
 					qtype = QualifiedType(decayed_param_type);
 				}
 				else if (qtype->Is(TypeKind::Function))
 				{
-					FunctionType const& function_type = TypeCast<FunctionType>(*qtype);
+					FunctionType const& function_type = type_cast<FunctionType>(*qtype);
 					PointerType decayed_param_type(function_type);
 					qtype = QualifiedType(decayed_param_type);
 				}

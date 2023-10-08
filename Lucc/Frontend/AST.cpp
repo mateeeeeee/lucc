@@ -63,25 +63,25 @@ namespace lucc
 
 		template<typename To, typename From>
 		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
-		To* DynamicAstCast(From* from)
+		To* Dynamicast_cast(From* from)
 		{
 			return dynamic_cast<To*>(from);
 		}
 		template<typename To, typename From>
 		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
-		To const* DynamicAstCast(From const* from)
+		To const* Dynamicast_cast(From const* from)
 		{
 			return dynamic_cast<To const*>(from);
 		}
 		template<typename To, typename From>
 		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
-		To* AstCast(From* from)
+		To* ast_cast(From* from)
 		{
 			return static_cast<To*>(from);
 		}
 		template<typename To, typename From>
 		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
-		To const* AstCast(From const* from)
+		To const* ast_cast(From const* from)
 		{
 			return static_cast<To const*>(from);
 		}
@@ -540,7 +540,7 @@ namespace lucc
 				Result var_res(Register::RBP, local_offset);
 				if (init_expr->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(init_expr.get());
+					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(init_expr.get());
 					ctx.Mov(var_res, int_literal->GetValue(), bitcount);
 					if (result) ctx.Mov(*result, int_literal->GetValue(), bitcount);
 				}
@@ -572,7 +572,7 @@ namespace lucc
 				array_decl.is_extern = symbol.storage == Storage::Extern;
 				array_decl.is_const = symbol.qtype.IsConst();
 
-				ArrayType const& arr_type = TypeCast<ArrayType>(symbol.qtype);
+				ArrayType const& arr_type = type_cast<ArrayType>(symbol.qtype);
 				array_decl.array_size = arr_type.GetArraySize();
 				array_decl.align = arr_type.GetElementType()->GetAlign();
 				array_decl.bits = GetBitCount(arr_type.GetElementType()->GetSize());
@@ -808,19 +808,19 @@ namespace lucc
 				uint32 type_size = 0;
 				if (IsPointerType(operand->GetType()))
 				{
-					PointerType const& ptr_type = TypeCast<PointerType>(operand->GetType());
+					PointerType const& ptr_type = type_cast<PointerType>(operand->GetType());
 					type_size = ptr_type.PointeeType()->GetSize();
 				}
 				else if (IsArrayType(operand->GetType()))
 				{
-					ArrayType const& array_type = TypeCast<ArrayType>(operand->GetType());
+					ArrayType const& array_type = type_cast<ArrayType>(operand->GetType());
 					type_size = array_type.GetElementType()->GetSize();
 				}
 				LU_ASSERT(type_size);
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
+					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -853,7 +853,7 @@ namespace lucc
 			{
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
+					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -872,7 +872,7 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::Unary) //#todo fix this
 				{
-					UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(operand.get());
+					UnaryExprAST* unary_expr = ast_cast<UnaryExprAST>(operand.get());
 					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
 					ExprAST* dereference_operand = unary_expr->GetOperand();
 
@@ -899,19 +899,19 @@ namespace lucc
 				uint32 type_size = 0;
 				if (IsPointerType(operand->GetType()))
 				{
-					PointerType const& ptr_type = TypeCast<PointerType>(operand->GetType());
+					PointerType const& ptr_type = type_cast<PointerType>(operand->GetType());
 					type_size = ptr_type.PointeeType()->GetSize();
 				}
 				else if (IsArrayType(operand->GetType()))
 				{
-					ArrayType const& array_type = TypeCast<ArrayType>(operand->GetType());
+					ArrayType const& array_type = type_cast<ArrayType>(operand->GetType());
 					type_size = array_type.GetElementType()->GetSize();
 				}
 				LU_ASSERT(type_size);
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
+					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -944,7 +944,7 @@ namespace lucc
 				BitCount bitcount = GetBitCount(type_size);
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
+					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -964,7 +964,7 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::Unary)
 				{
-					UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(operand.get());
+					UnaryExprAST* unary_expr = ast_cast<UnaryExprAST>(operand.get());
 					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
 					ExprAST* dereference_operand = unary_expr->GetOperand();
 
@@ -988,13 +988,13 @@ namespace lucc
 				LU_ASSERT(!IsPointerType(operand->GetType()));
 				if (operand->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* literal = AstCast<IntLiteralAST>(operand.get());
+					IntLiteralAST* literal = ast_cast<IntLiteralAST>(operand.get());
 					ctx.Mov(*result, literal->GetValue(), bitcount);
 					if (op == UnaryExprKind::Minus) ctx.Neg(*result, bitcount);
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
+					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -1037,7 +1037,7 @@ namespace lucc
 			{
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
+					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -1065,13 +1065,13 @@ namespace lucc
 				BitCount bitcount = GetBitCount(operand->GetType()->GetSize());
 				if (operand->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* literal = AstCast<IntLiteralAST>(operand.get());
+					IntLiteralAST* literal = ast_cast<IntLiteralAST>(operand.get());
 					ctx.Mov(*result, literal->GetValue(), bitcount);
 					ctx.Not(*result, bitcount);
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(operand.get());
+					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -1135,7 +1135,7 @@ namespace lucc
 						{
 							QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
 							LU_ASSERT(IsPointerType(decayed_type));
-							PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+							PointerType const& pointer_type = type_cast<PointerType>(decayed_type);
 							Register tmp_reg = ctx.AllocateRegister();
 							lhs->Codegen(ctx, result);
 							rhs->Codegen(ctx, &tmp_reg);
@@ -1148,7 +1148,7 @@ namespace lucc
 						{
 							QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
 							LU_ASSERT(IsPointerType(decayed_type));
-							PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+							PointerType const& pointer_type = type_cast<PointerType>(decayed_type);
 							Register tmp_reg = ctx.AllocateRegister();
 							lhs->Codegen(ctx, result);
 							rhs->Codegen(ctx, &tmp_reg);
@@ -1165,7 +1165,7 @@ namespace lucc
 						{
 							QualifiedType const& decayed_type = ValueTransformation(lhs->GetType());
 							LU_ASSERT(IsPointerType(decayed_type));
-							PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+							PointerType const& pointer_type = type_cast<PointerType>(decayed_type);
 
 							Register tmp_reg = ctx.AllocateRegister();
 							lhs->Codegen(ctx, result);
@@ -1178,7 +1178,7 @@ namespace lucc
 						{
 							QualifiedType const& decayed_type = ValueTransformation(rhs->GetType());
 							LU_ASSERT(IsPointerType(decayed_type));
-							PointerType const& pointer_type = TypeCast<PointerType>(decayed_type);
+							PointerType const& pointer_type = type_cast<PointerType>(decayed_type);
 
 							Register tmp_reg = ctx.AllocateRegister();
 							rhs->Codegen(ctx, result);
@@ -1195,7 +1195,7 @@ namespace lucc
 				{
 					if (rhs->GetExprKind() == ExprKind::IntLiteral)
 					{
-						IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
+						IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
 						int32 value = (int32)int_literal->GetValue();
 						lhs->Codegen(ctx, result);
 
@@ -1241,7 +1241,7 @@ namespace lucc
 
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
+					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
 					Register reg = ctx.AllocateRegister();
 					lhs->Codegen(ctx, &reg);
 					ctx.Cmp(reg, int_literal->GetValue(), bitmode);
@@ -1290,7 +1290,7 @@ namespace lucc
 				if (!result) return;
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
+					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
 					lhs->Codegen(ctx, result);
 					if (kind == BinaryExprKind::ShiftLeft) ctx.Shl(*result, (uint8)int_literal->GetValue(), bitmode);
 					else if (kind == BinaryExprKind::ShiftRight)
@@ -1324,7 +1324,7 @@ namespace lucc
 
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
+					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
 					int32 value = (int32)int_literal->GetValue();
 					lhs->Codegen(ctx, result);
 
@@ -1357,7 +1357,7 @@ namespace lucc
 			LU_ASSERT_MSG(lhs->IsLValue(), "Cannot assign to rvalue!");
 			if (lhs->GetExprKind() == ExprKind::DeclRef)
 			{
-				DeclRefExprAST* decl_ref = AstCast<DeclRefExprAST>(lhs.get());
+				DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(lhs.get());
 				char const* var_name = decl_ref->GetName().data();
 				int32 local_offset = decl_ref->GetLocalOffset();
 				Result mem_ref(RBP, local_offset);
@@ -1365,13 +1365,13 @@ namespace lucc
 
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = AstCast<IntLiteralAST>(rhs.get());
+					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
 					if (global) ctx.Mov(var_name, int_literal->GetValue(), bitmode);
 					else ctx.Mov(mem_ref, int_literal->GetValue(), bitmode);
 				}
 				else if (rhs->GetExprKind() == ExprKind::FunctionCall)
 				{
-					FunctionCallExprAST* func_call = AstCast<FunctionCallExprAST>(rhs.get());
+					FunctionCallExprAST* func_call = ast_cast<FunctionCallExprAST>(rhs.get());
 					Register ret_reg = ctx.GetReturnRegister();
 					func_call->Codegen(ctx);
 					if (global) ctx.Mov(var_name, ret_reg, bitmode);
@@ -1389,7 +1389,7 @@ namespace lucc
 			}
 			else if (lhs->GetExprKind() == ExprKind::Unary)
 			{
-				UnaryExprAST* unary_expr = AstCast<UnaryExprAST>(lhs.get());
+				UnaryExprAST* unary_expr = ast_cast<UnaryExprAST>(lhs.get());
 				if (unary_expr->GetUnaryKind() == UnaryExprKind::Dereference)
 				{
 					Register rhs_reg = result ? *result : ctx.AllocateRegister();
@@ -1585,7 +1585,7 @@ namespace lucc
 		{
 			QualifiedType const& type = GetType();
 			uint32 type_size = type->GetSize();
-			DeclRefExprAST* func_ref = AstCast<DeclRefExprAST>(func_expr.get());
+			DeclRefExprAST* func_ref = ast_cast<DeclRefExprAST>(func_expr.get());
 			if (IsFunctionType(func_ref->GetType()))
 			{
 				ctx.Call(func_ref->GetDeclaration()->GetName().data());

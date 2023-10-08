@@ -30,7 +30,7 @@ namespace lucc
 	QualifiedType IntegerPromotion(QualifiedType const& qtype)
 	{
 		LU_ASSERT(IsIntegerType(qtype));
-		auto const& arithmetic_type = TypeCast<ArithmeticType>(qtype);
+		auto const& arithmetic_type = type_cast<ArithmeticType>(qtype);
 		if (arithmetic_type.ConversionRank() < builtin_types::Int.ConversionRank()) return builtin_types::Int;
 		else return builtin_types::UnsignedInt;
 	}
@@ -82,7 +82,7 @@ namespace lucc
 	{
 		if (qtype->Is(TypeKind::Array))
 		{
-			auto const& arr_type = TypeCast<ArrayType>(qtype);
+			auto const& arr_type = type_cast<ArrayType>(qtype);
 			return PointerType(arr_type.GetElementType());
 		}
 		else if (qtype->Is(TypeKind::Function))
@@ -133,8 +133,8 @@ namespace lucc
 		}
 		else if (IsPointerType(expr_type) && IsPointerType(dst_type))
 		{
-			QualifiedType expr_pte_qty = TypeCast<PointerType>(expr_type).PointeeType();
-			QualifiedType dst_pte_qty = TypeCast<PointerType>(dst_type).PointeeType();
+			QualifiedType expr_pte_qty = type_cast<PointerType>(expr_type).PointeeType();
+			QualifiedType dst_pte_qty = type_cast<PointerType>(dst_type).PointeeType();
 			if ((IsVoidType(expr_pte_qty) && IsObjectType(dst_pte_qty)) ||
 				(IsVoidType(dst_pte_qty) && IsObjectType(expr_pte_qty)) ||
 				expr_pte_qty->IsCompatible(dst_pte_qty))
@@ -166,7 +166,7 @@ namespace lucc
 		{
 			auto IsComplete = [](QualifiedType const& ptr_qtype)
 			{
-				if (!IsVoidPointerType(ptr_qtype) && !IsFunctionPointerType(ptr_qtype) && !TypeCast<PointerType>(ptr_qtype).PointeeType()->IsComplete())
+				if (!IsVoidPointerType(ptr_qtype) && !IsFunctionPointerType(ptr_qtype) && !type_cast<PointerType>(ptr_qtype).PointeeType()->IsComplete())
 				{
 					Diag(diag::arithmetic_on_incomplete_object_type);
 					return false;
@@ -188,8 +188,8 @@ namespace lucc
 
 			if (IsPointerType(lhs_qtype) && IsPointerType(rhs_qtype) && subtract)
 			{
-				QualifiedType lhs_pte_qty = TypeCast<PointerType>(lhs_qtype).PointeeType();
-				QualifiedType rhs_pte_qty = TypeCast<PointerType>(rhs_qtype).PointeeType();
+				QualifiedType lhs_pte_qty = type_cast<PointerType>(lhs_qtype).PointeeType();
+				QualifiedType rhs_pte_qty = type_cast<PointerType>(rhs_qtype).PointeeType();
 				if (!lhs_pte_qty->IsCompatible(rhs_pte_qty))
 				{
 					Diag(diag::arithmetic_on_incompatible_pointers);
@@ -257,8 +257,8 @@ namespace lucc
 		QualifiedType rhs_qtype = ValueTransformation(rhs_type);
 		if (IsPointerType(lhs_qtype) && IsPointerType(rhs_qtype)) 
 		{
-			QualifiedType lhs_pte_qty = TypeCast<PointerType>(lhs_qtype).PointeeType();
-			QualifiedType rhs_pte_qty = TypeCast<PointerType>(rhs_qtype).PointeeType();
+			QualifiedType lhs_pte_qty = type_cast<PointerType>(lhs_qtype).PointeeType();
+			QualifiedType rhs_pte_qty = type_cast<PointerType>(rhs_qtype).PointeeType();
 			if (!lhs_pte_qty->IsCompatible(rhs_pte_qty)) 
 			{
 				if (!IsVoidType(lhs_pte_qty) && !IsVoidType(rhs_pte_qty)) Diag(diag::comparison_between_incompatible_pointers);
@@ -278,8 +278,8 @@ namespace lucc
 	QualifiedType UsualArithmeticConversion(QualifiedType const& lhs, QualifiedType const& rhs)
 	{
 		LU_ASSERT(IsArithmeticType(lhs) && IsArithmeticType(rhs));
-		auto const& lhs_type = TypeCast<ArithmeticType>(lhs);
-		auto const& rhs_type = TypeCast<ArithmeticType>(rhs);
+		auto const& lhs_type = type_cast<ArithmeticType>(lhs);
+		auto const& rhs_type = type_cast<ArithmeticType>(rhs);
 		QualifiedType common_type = lhs_type.ConversionRank() < rhs_type.ConversionRank() ? rhs : lhs;
 		common_type = TryIntegerPromotion(common_type);
 		return common_type;
@@ -318,7 +318,7 @@ namespace lucc
 	{
 		QualifiedType operand_qty = ValueTransformation(op_type);
 		if (!IsPointerType(operand_qty)) Diag(diag::dereference_expected_pointer_operand);
-		return TypeCast<PointerType>(operand_qty).PointeeType();
+		return type_cast<PointerType>(operand_qty).PointeeType();
 	}
 	// C11 6.5.3.2p1: The operand of the unary & operator shall be either a function
 	// designator, the result of a [] or unary * operator, or an lvalue that
