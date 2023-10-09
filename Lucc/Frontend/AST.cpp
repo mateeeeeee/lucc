@@ -63,13 +63,13 @@ namespace lucc
 
 		template<typename To, typename From>
 		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
-		To* Dynamicast_cast(From* from)
+		To* dynamic_ast_cast(From* from)
 		{
 			return dynamic_cast<To*>(from);
 		}
 		template<typename To, typename From>
 		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
-		To const* Dynamicast_cast(From const* from)
+		To const* dynamic_ast_cast(From const* from)
 		{
 			return dynamic_cast<To const*>(from);
 		}
