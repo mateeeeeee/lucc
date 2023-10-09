@@ -1,4 +1,5 @@
 #include "Debug.h"
+#include "Frontend/AST.h"
 #include "Core/Logger.h"
 
 namespace lucc::debug
@@ -104,7 +105,7 @@ namespace lucc::debug
 		LU_DEBUG("\n\n");
 	}
 
-	DebugNodeVisitorAST::DebugNodeVisitorAST(AST* ast)
+	DebugNodeVisitorAST::DebugNodeVisitorAST(AST const* ast)
 	{
 		LU_DEBUG("AST Traversal:\n");
 		ast->translation_unit->Accept(*this, 0);

@@ -13,14 +13,14 @@ namespace lucc
 		os << buff.text_segment << "\nend\n";
 	}
 
-	x86_64CodeGenerator::x86_64CodeGenerator(std::string_view output_file) : output_file(output_file)
+	x86_64Codegen::x86_64Codegen(std::string_view output_file) : output_file(output_file)
 	{
 		ctx = std::make_unique<x86_64Context>(output_buffer);
 	}
 
-	x86_64CodeGenerator::~x86_64CodeGenerator() = default;
+	x86_64Codegen::~x86_64Codegen() = default;
 
-	void x86_64CodeGenerator::Generate(AST* ast)
+	void x86_64Codegen::Generate(AST const* ast)
 	{
 		std::ofstream output(output_file);
 		ast->translation_unit->Codegen(*ctx);

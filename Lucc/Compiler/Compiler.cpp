@@ -7,7 +7,7 @@
 #include "Frontend/Preprocessor.h"
 #include "Frontend/Lexer.h"
 #include "Frontend/Parser.h"
-#include "Backend/x86_64CodeGenerator.h"
+#include "Backend/x86_64Codegen.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/basic_file_sink.h"
@@ -68,7 +68,7 @@ namespace lucc
 			AST* ast = parser.GetAST();
 			if (ast_dump) debug::DebugNodeVisitorAST visitor(ast);
 
-			x86_64CodeGenerator x86_64(assembly_file);
+			x86_64Codegen x86_64(assembly_file);
 			x86_64.Generate(ast);
 		}
 	}
@@ -194,7 +194,7 @@ namespace lucc
 			AST* ast = parser.GetAST();
 			if (debug) debug::DebugNodeVisitorAST visitor(ast);
 
-			x86_64CodeGenerator x86_64(assembly_file.string());
+			x86_64Codegen x86_64(assembly_file.string());
 			x86_64.Generate(ast);
 		}
 

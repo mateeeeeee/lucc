@@ -1,6 +1,6 @@
 #pragma once
 #include "Frontend/Token.h"
-#include "Frontend/AST.h"
+#include "Frontend/IVisitorAST.h"
 
 
 namespace lucc::debug
@@ -11,7 +11,7 @@ namespace lucc::debug
 	{
 	public:
 
-		explicit DebugNodeVisitorAST(AST* ast);
+		explicit DebugNodeVisitorAST(AST const* ast);
 
 		virtual void Visit(TranslationUnitAST const& node, uint32 depth) override;
 		virtual void Visit(NodeAST const& node, uint32 depth) override;

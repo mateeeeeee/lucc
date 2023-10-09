@@ -8,13 +8,13 @@ namespace lucc
 	class x86_64Context;
 	struct AST;
 
-	class x86_64CodeGenerator 
+	class x86_64Codegen 
 	{
 	public:
-		explicit x86_64CodeGenerator(std::string_view output_file);
-		~x86_64CodeGenerator();
+		explicit x86_64Codegen(std::string_view output_file);
+		~x86_64Codegen();
 
-		void Generate(AST* ast);
+		void Generate(AST const* ast);
 
 	private:
 		std::string output_file;

@@ -5,6 +5,7 @@
 #include "Token.h"
 #include "Symbol.h"
 #include "Diagnostics.h"
+#include "ForwardAST.h"
 
 namespace lucc
 {
@@ -18,30 +19,6 @@ namespace lucc
 	class SymbolTable;
 	class QualifiedType;
 	class FunctionType;
-
-	struct AST;
-	class DeclAST;
-	class TypedefDeclAST;
-	class FunctionDeclAST;
-	class ExprAST;
-	class StmtAST;
-	class ExprStmtAST;
-	class CompoundStmtAST;
-	class IfStmtAST;
-	class WhileStmtAST;
-	class DoWhileStmtAST;
-	class SwitchStmtAST;
-	class CaseStmtAST;
-	class ForStmtAST;
-	class ReturnStmtAST;
-	class BreakStmtAST;
-	class ContinueStmtAST;
-	class CastExprAST;
-	class GotoStmtAST;
-	class LabelStmtAST;
-	class IntLiteralAST;
-	class StringLiteralAST;
-	class IdentifierExprAST;
 	class Parser;
 
 	using ExprParseFn = std::unique_ptr<ExprAST>(Parser::*)();

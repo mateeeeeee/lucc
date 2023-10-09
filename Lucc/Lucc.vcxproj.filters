@@ -50,7 +50,7 @@
     <ClCompile Include="Frontend\Type.cpp">
       <Filter>Frontend\Parser</Filter>
     </ClCompile>
-    <ClCompile Include="Backend\x86_64CodeGenerator.cpp">
+    <ClCompile Include="Backend\x86_64Codegen.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
     <ClCompile Include="Backend\x86_64Context.cpp">
@@ -98,7 +98,7 @@
     <ClInclude Include="Compiler\Compiler.h">
       <Filter>Compiler</Filter>
     </ClInclude>
-    <ClInclude Include="Backend\x86_64CodeGenerator.h">
+    <ClInclude Include="Backend\x86_64Codegen.h">
       <Filter>Backend</Filter>
     </ClInclude>
     <ClInclude Include="Backend\x86_64Context.h">
@@ -130,6 +130,12 @@
     </ClInclude>
     <ClInclude Include="Core\Logger.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\ForwardAST.h">
+      <Filter>Frontend\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\IVisitorAST.h">
+      <Filter>Frontend\Parser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

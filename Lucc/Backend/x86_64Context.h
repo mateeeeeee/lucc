@@ -2,7 +2,7 @@
 #include <array>
 #include <string>
 #include "x86_64.h"
-#include "x86_64CodeGenerator.h"
+#include "x86_64Codegen.h"
 
 
 namespace lucc
@@ -12,7 +12,6 @@ namespace lucc
 	public:
 		explicit x86_64Context(OutputBuffer& output_buffer);
 
-		
 		Register AllocateRegister();
 		Register GetCallRegister(uint32 arg_index);
 		Register GetReturnRegister();
