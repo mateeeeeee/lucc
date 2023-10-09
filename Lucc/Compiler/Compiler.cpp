@@ -13,7 +13,6 @@
 #include "spdlog/sinks/basic_file_sink.h"
 
 
-
 namespace fs = std::filesystem;
 
 namespace lucc
@@ -65,7 +64,7 @@ namespace lucc
 
 			Parser parser(lex.GetTokens());
 			parser.Parse();
-			AST* ast = parser.GetAST();
+			AST const* ast = parser.GetAST();
 			if (ast_dump) debug::DebugNodeVisitorAST visitor(ast);
 
 			x86_64Codegen x86_64(assembly_file);
@@ -191,7 +190,7 @@ namespace lucc
 			Parser parser(lex.GetTokens());
 			parser.Parse();
 
-			AST* ast = parser.GetAST();
+			AST const* ast = parser.GetAST();
 			if (debug) debug::DebugNodeVisitorAST visitor(ast);
 
 			x86_64Codegen x86_64(assembly_file.string());

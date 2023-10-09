@@ -53,7 +53,7 @@ namespace lucc
 		explicit Parser(std::vector<Token> const& tokens);
 		~Parser();
 		void Parse();
-		AST* GetAST() const { return ast.get(); }
+		AST const* GetAST() const { return ast.get(); }
 
 	private:
 		std::vector<Token> tokens;
