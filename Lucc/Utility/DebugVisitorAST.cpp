@@ -1,4 +1,4 @@
-#include "Debug.h"
+#include "DebugVisitorAST.h"
 #include "Frontend/AST.h"
 #include "Core/Logger.h"
 
@@ -105,144 +105,144 @@ namespace lucc::debug
 		LU_DEBUG("\n\n");
 	}
 
-	DebugNodeVisitorAST::DebugNodeVisitorAST(AST const* ast)
+	DebugVisitorAST::DebugVisitorAST(AST const* ast)
 	{
 		LU_DEBUG("AST Traversal:\n");
 		ast->translation_unit->Accept(*this, 0);
 	}
 
-	void DebugNodeVisitorAST::Visit(NodeAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(NodeAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}DoWhileStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(TranslationUnitAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(TranslationUnitAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}TranslationUnitAST \n", GetIndentation(depth));
 	}
 
-	void DebugNodeVisitorAST::Visit(DeclAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(DeclAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}DeclAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(VariableDeclAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(VariableDeclAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}VarDeclAST, name: {}\n", GetIndentation(depth), node.GetName());
 	}
-	void DebugNodeVisitorAST::Visit(FunctionDeclAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(FunctionDeclAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}FunctionDeclAST, type: {}\n", GetIndentation(depth), node.GetName());
 	}
-	void DebugNodeVisitorAST::Visit(TypedefDeclAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(TypedefDeclAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}TypedefDeclAST, name: {}\n", GetIndentation(depth), node.GetName());
 	}
 
-	void DebugNodeVisitorAST::Visit(StmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(StmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}StmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(CompoundStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(CompoundStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}CompoundStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(DeclStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(DeclStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}DeclStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(ExprStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(ExprStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}ExprStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(NullStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(NullStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}NullStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(IfStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(IfStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}IfStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(WhileStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(WhileStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}WhileStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(ForStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(ForStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}ForStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(ReturnStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(ReturnStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}ReturnStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(GotoStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(GotoStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}GotoStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(LabelStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(LabelStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}LabelStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(CaseStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(CaseStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}CaseStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(SwitchStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(SwitchStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}SwitchStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(DoWhileStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(DoWhileStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}DoWhileStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(ContinueStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(ContinueStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}ContinueStmtAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(BreakStmtAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(BreakStmtAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}BreakStmtAST \n", GetIndentation(depth));
 	}
 
-	void DebugNodeVisitorAST::Visit(ExprAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(ExprAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}ExprAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(MemberRefExprAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(MemberRefExprAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}MemberRefExprAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(DeclRefExprAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(DeclRefExprAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}DeclRefExprAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(CastExprAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(CastExprAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}CastExprAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(FunctionCallExprAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(FunctionCallExprAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}FunctionCallAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(UnaryExprAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(UnaryExprAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}UnaryExprAST, Op: {}\n", GetIndentation(depth), UnaryExprKindToString(node.GetUnaryKind()));
 	}
-	void DebugNodeVisitorAST::Visit(BinaryExprAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(BinaryExprAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}BinaryExprAST, Op: {}\n", GetIndentation(depth), BinaryExprKindToString(node.GetBinaryKind()));
 	}
-	void DebugNodeVisitorAST::Visit(TernaryExprAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(TernaryExprAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}TernaryExprAST \n", GetIndentation(depth));
 	}
-	void DebugNodeVisitorAST::Visit(IntLiteralAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(IntLiteralAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}IntegerLiteralAST, Value: {}\n", GetIndentation(depth), std::to_string(node.GetValue()));
 	}
-	void DebugNodeVisitorAST::Visit(StringLiteralAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(StringLiteralAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}StringLiteralAST, Value: {}\n", GetIndentation(depth), node.GetString());
 	}
-	void DebugNodeVisitorAST::Visit(IdentifierExprAST const& node, uint32 depth)
+	void DebugVisitorAST::Visit(IdentifierExprAST const& node, uint32 depth)
 	{
 		LU_DEBUG("{}IdentifierAST, Name: {}\n", GetIndentation(depth), node.GetName());
 	}

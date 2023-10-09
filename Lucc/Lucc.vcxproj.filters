@@ -56,7 +56,7 @@
     <ClCompile Include="Backend\x86_64Context.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\Debug.cpp">
+    <ClCompile Include="Utility\DebugVisitorAST.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
     <ClCompile Include="Frontend\Diagnostics.cpp">
@@ -107,7 +107,7 @@
     <ClInclude Include="Backend\x86_64.h">
       <Filter>Backend</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\Debug.h">
+    <ClInclude Include="Utility\DebugVisitorAST.h">
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="Utility\Enums.h">

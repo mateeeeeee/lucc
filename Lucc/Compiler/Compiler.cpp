@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <format>
 #include "Compiler.h"
-#include "Utility/Debug.h"
+#include "Utility/DebugVisitorAST.h"
 #include "Frontend/Diagnostics.h"
 #include "Frontend/SourceBuffer.h"
 #include "Frontend/Preprocessor.h"
@@ -65,7 +65,7 @@ namespace lucc
 			Parser parser(lex.GetTokens());
 			parser.Parse();
 			AST const* ast = parser.GetAST();
-			if (ast_dump) debug::DebugNodeVisitorAST visitor(ast);
+			if (ast_dump) debug::DebugVisitorAST visitor(ast);
 
 			x86_64Codegen x86_64(assembly_file);
 			x86_64.Generate(ast);
@@ -191,7 +191,7 @@ namespace lucc
 			parser.Parse();
 
 			AST const* ast = parser.GetAST();
-			if (debug) debug::DebugNodeVisitorAST visitor(ast);
+			if (debug) debug::DebugVisitorAST visitor(ast);
 
 			x86_64Codegen x86_64(assembly_file.string());
 			x86_64.Generate(ast);

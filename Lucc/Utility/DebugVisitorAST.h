@@ -7,11 +7,11 @@ namespace lucc::debug
 {
 	void PrintTokens(char const* name, std::vector<Token> const& tokens);
 
-	class DebugNodeVisitorAST : public IVisitorAST
+	class DebugVisitorAST : public IVisitorAST
 	{
 	public:
 
-		explicit DebugNodeVisitorAST(AST const* ast);
+		explicit DebugVisitorAST(AST const* ast);
 
 		virtual void Visit(TranslationUnitAST const& node, uint32 depth) override;
 		virtual void Visit(NodeAST const& node, uint32 depth) override;

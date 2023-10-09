@@ -32,7 +32,7 @@
     <ClCompile Include="Frontend\Type.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="precomp.cpp" />
-    <ClCompile Include="Utility\Debug.cpp" />
+    <ClCompile Include="Utility\DebugVisitorAST.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Backend\ASTCodegen.h" />
@@ -57,7 +57,7 @@
     <ClInclude Include="Frontend\TokenTypes.h" />
     <ClInclude Include="Frontend\Type.h" />
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="Utility\Debug.h" />
+    <ClInclude Include="Utility\DebugVisitorAST.h" />
     <ClInclude Include="Utility\Enums.h" />
   </ItemGroup>
   <ItemGroup>
