@@ -137,6 +137,9 @@
     <ClInclude Include="Frontend\IVisitorAST.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
+    <ClInclude Include="Backend\ASTCodegen.h">
+      <Filter>Backend</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />

@@ -35,6 +35,7 @@
     <ClCompile Include="Utility\Debug.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Backend\ASTCodegen.h" />
     <ClInclude Include="Backend\x86_64Codegen.h" />
     <ClInclude Include="Backend\x86_64Context.h" />
     <ClInclude Include="Backend\x86_64.h" />

@@ -16,3 +16,5 @@
 #define LU_FORCEINLINE	__forceinline
 #define LU_UNREACHABLE() __assume(false)
 #define LU_NODISCARD() [[nodiscard]]
+
+#define LU_ALIGN(n, align) ((n + align - 1) / align * align)
