@@ -67,7 +67,8 @@ namespace lucc
 		VarSymbol sym;
 
 	protected:
-		DeclAST(DeclKind kind, std::string_view name) : kind(kind), name(name) {}
+		DeclAST(DeclKind kind, std::string_view name) 
+			: kind(kind), name(name) {}
 	};
 	class VariableDeclAST : public DeclAST
 	{
@@ -139,7 +140,7 @@ namespace lucc
 	class TypedefDeclAST final : public DeclAST
 	{
 	public:
-		TypedefDeclAST(std::string_view typedef_name) : DeclAST(DeclKind::Typedef, name) {}
+		TypedefDeclAST(std::string_view typedef_name) : DeclAST(DeclKind::Typedef, typedef_name) {}
 		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 	};
 
