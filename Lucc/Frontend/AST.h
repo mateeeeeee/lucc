@@ -61,18 +61,18 @@ namespace lucc
 		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 
 	protected:
+		DeclKind const kind;
 		std::string name;
 		SourceLocation loc;
 		VarSymbol sym;
-		DeclKind kind;
 
 	protected:
-		DeclAST(std::string_view name, DeclKind kind) : name(name), kind(kind) {}
+		DeclAST(DeclKind kind, std::string_view name) : kind(kind), name(name) {}
 	};
 	class VariableDeclAST : public DeclAST
 	{
 	public:
-		explicit VariableDeclAST(std::string_view name) : DeclAST(name, DeclKind::Var), local_offset(0) {}
+		explicit VariableDeclAST(std::string_view name) : DeclAST(DeclKind::Var, name), local_offset(0) {}
 
 		void SetInitExpression(std::unique_ptr<ExprAST>&& expr)
 		{
@@ -94,7 +94,7 @@ namespace lucc
 	class FunctionDeclAST : public DeclAST
 	{
 	public:
-		explicit FunctionDeclAST(std::string_view name) : DeclAST(name, DeclKind::Func) {}
+		explicit FunctionDeclAST(std::string_view name) : DeclAST(DeclKind::Func, name) {}
 
 		void AddParamDeclaration(std::unique_ptr<VariableDeclAST>&& param)
 		{
@@ -139,7 +139,7 @@ namespace lucc
 	class TypedefDeclAST final : public DeclAST
 	{
 	public:
-		TypedefDeclAST(std::string_view typedef_name) : DeclAST(typedef_name, DeclKind::Typedef) {}
+		TypedefDeclAST(std::string_view typedef_name) : DeclAST(DeclKind::Typedef, name) {}
 		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 	};
 
@@ -168,7 +168,7 @@ namespace lucc
 		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 
 	protected:
-		StmtKind kind;
+		StmtKind const kind;
 
 	protected:
 		explicit StmtAST(StmtKind kind) : kind(kind) {}
@@ -544,7 +544,7 @@ namespace lucc
 		}
 
 	protected:
-		ExprKind kind;
+		ExprKind const kind;
 		SourceLocation loc;
 		QualifiedType type;
 		ExprValueCategory value_category = ExprValueCategory::RValue;
