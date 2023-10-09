@@ -44,7 +44,7 @@ namespace lucc
 			break;
 			case TokenKind::PP_else:
 			{
-				if (!ProcessElse(curr)) Diag(diag::preprocessing_failed);;
+				if (!ProcessElse(curr)) g_Diagnostics.Report(curr->GetLocation(), preprocessing_failed);
 				break;
 			}
 			break;
@@ -54,32 +54,32 @@ namespace lucc
 			}
 			break;
 			case TokenKind::PP_ifdef:
-				if (!ProcessIfDef(curr)) Diag(diag::preprocessing_failed);
+				if (!ProcessIfDef(curr)) g_Diagnostics.Report(curr->GetLocation(), preprocessing_failed);
 				break;
 			break;
 			case TokenKind::PP_ifndef:
-				if (!ProcessIfNDef(curr)) Diag(diag::preprocessing_failed);
+				if (!ProcessIfNDef(curr)) g_Diagnostics.Report(curr->GetLocation(), preprocessing_failed);
 				break;
 			case TokenKind::PP_elifdef:
-				if (!ProcessElifDef(curr)) Diag(diag::preprocessing_failed);
+				if (!ProcessElifDef(curr)) g_Diagnostics.Report(curr->GetLocation(), preprocessing_failed);
 				break;
 			case TokenKind::PP_elifndef:
-				if (!ProcessElifNDef(curr)) Diag(diag::preprocessing_failed);
+				if (!ProcessElifNDef(curr))  g_Diagnostics.Report(curr->GetLocation(), preprocessing_failed);
 				break;
 			case TokenKind::PP_endif:
-				if (!ProcessEndif(curr)) Diag(diag::preprocessing_failed);
+				if (!ProcessEndif(curr))  g_Diagnostics.Report(curr->GetLocation(), preprocessing_failed);
 				break;
 			case TokenKind::PP_include:
-				if (!ProcessInclude(curr)) Diag(diag::preprocessing_failed);
+				if (!ProcessInclude(curr)) g_Diagnostics.Report(curr->GetLocation(), preprocessing_failed);
 				break;
 			case TokenKind::PP_define:
-				if (!ProcessDefine(curr)) Diag(diag::preprocessing_failed);
+				if (!ProcessDefine(curr))  g_Diagnostics.Report(curr->GetLocation(), preprocessing_failed);
 				break;
 			case TokenKind::PP_undef:
-				if (!ProcessUndef(curr)) Diag(diag::preprocessing_failed);
+				if (!ProcessUndef(curr)) g_Diagnostics.Report(curr->GetLocation(), preprocessing_failed);
 				break;
 			case TokenKind::PP_defined:
-				Diag(diag::defined_misplaced, curr->GetLocation());
+				g_Diagnostics.Report(curr->GetLocation(), defined_misplaced);
 			}
 		}
 
@@ -112,7 +112,7 @@ namespace lucc
 			std::advance(curr, -static_cast<int64>(include_lexer.tokens.size()));
 			return true;
 		}
-		Diag(diag::header_name_error, curr->GetLocation());
+		g_Diagnostics.Report(curr->GetLocation(), header_name_error);
 		return false;
 	}
 

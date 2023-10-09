@@ -140,6 +140,9 @@
     <ClInclude Include="Backend\ASTCodegen.h">
       <Filter>Backend</Filter>
     </ClInclude>
+    <ClInclude Include="Utility\Singleton.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />

@@ -59,6 +59,7 @@
     <ClInclude Include="precomp.h" />
     <ClInclude Include="Utility\DebugVisitorAST.h" />
     <ClInclude Include="Utility\Enums.h" />
+    <ClInclude Include="Utility\Singleton.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />

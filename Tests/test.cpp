@@ -4,7 +4,6 @@
 #include "../Lucc/Frontend/Diagnostics.h"
 
 using namespace lucc;
-using namespace diag;
 
 TEST(Arithmetic, AdditiveMultiplicativeOperators)
 {

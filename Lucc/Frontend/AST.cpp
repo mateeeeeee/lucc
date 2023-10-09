@@ -262,7 +262,7 @@ namespace lucc
 
 	void UnaryExprAST::SetExpressionType()
 	{
-		diag::SetLocation(loc);
+		g_Diagnostics.SetDefaultLocation(GetLocation());
 		QualifiedType const& op_type = operand->GetType();
 		switch (op)
 		{
@@ -296,7 +296,7 @@ namespace lucc
 	}
 	void BinaryExprAST::SetExpressionType()
 	{
-		diag::SetLocation(loc);
+		g_Diagnostics.SetDefaultLocation(GetLocation());
 		switch (op)
 		{
 		case BinaryExprKind::Assign:
@@ -337,6 +337,7 @@ namespace lucc
 	}
 	void CastExprAST::SetCastType()
 	{
+		g_Diagnostics.SetDefaultLocation(GetLocation());
 		QualifiedType operand_type = ValueTransformation(operand->GetType());
 		if (IsVoidType(GetType()))
 		{
@@ -345,19 +346,19 @@ namespace lucc
 		}
 		else if (!IsScalarType(GetType()))
 		{
-			Diag(diag::cast_invalid_type);
+			g_Diagnostics.Report(cast_invalid_type);
 		}
 		else if (!IsScalarType(operand_type))
 		{
-			Diag(diag::cast_invalid_type);
+			g_Diagnostics.Report(cast_invalid_type);
 		}
 		else if (IsPointerType(GetType()) && IsFloatingType(operand_type))
 		{
-			Diag(diag::cast_invalid_type);
+			g_Diagnostics.Report(cast_invalid_type);
 		}
 		else if (IsPointerType(operand_type) && IsFloatingType(GetType()))
 		{
-			Diag(diag::cast_invalid_type);
+			g_Diagnostics.Report(cast_invalid_type);
 		}
 		else
 		{

@@ -75,7 +75,6 @@ namespace lucc
 	int32 Compile(CompilerInput const& input)
 	{
 		InitLogger();
-		diag::Initialize();
 		bool const output_debug = input.flags & CompilerFlag_OutputDebugInfo;
 		bool const ast_dump		= input.flags & CompilerFlag_DumpAST;
 		bool const only_pp		= input.flags & CompilerFlag_OnlyPreprocessor;
@@ -163,8 +162,6 @@ namespace lucc
 	int32 CompileTest(std::string_view test_code, bool debug)
 	{
 		InitLogger();
-		diag::Initialize();
-	
 		std::string code(test_code);
 
 		fs::path tmp_directory = std::filesystem::current_path() / "Temp";

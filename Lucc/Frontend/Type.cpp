@@ -125,11 +125,11 @@ namespace lucc
 
 		if (IsIntegerType(expr_type) && IsPointerType(dst_type) && !IsBoolType(expr_type))
 		{
-			Diag(diag::incompatible_integer_to_pointer_conversion);
+			g_Diagnostics.Report(incompatible_integer_to_pointer_conversion);
 		}
 		else if (IsIntegerType(dst_type) && IsPointerType(expr_type) && !IsBoolType(dst_type))
 		{
-			Diag(diag::incompatible_integer_to_pointer_conversion);
+			g_Diagnostics.Report(incompatible_integer_to_pointer_conversion);
 		}
 		else if (IsPointerType(expr_type) && IsPointerType(dst_type))
 		{
@@ -142,14 +142,14 @@ namespace lucc
 				if ((!dst_pte_qty.IsConst() && expr_pte_qty.IsConst()) ||
 					(!dst_pte_qty.IsVolatile() && expr_pte_qty.IsVolatile()))
 				{
-					Diag(diag::incompatible_pointer_types_conversion_discards_qualifiers);
+					g_Diagnostics.Report(incompatible_pointer_types_conversion_discards_qualifiers);
 				}
 			}
 			else if ((IsObjectType(expr_pte_qty) && IsObjectType(dst_pte_qty)) || (IsFunctionType(expr_pte_qty) && IsFunctionType(dst_pte_qty)))
 			{
 				if (!expr_pte_qty->IsCompatible(dst_pte_qty))
 				{
-					Diag(diag::incompatible_pointer_types_conversion);
+					g_Diagnostics.Report(incompatible_pointer_types_conversion);
 				}
 			}
 		}
@@ -168,18 +168,18 @@ namespace lucc
 			{
 				if (!IsVoidPointerType(ptr_qtype) && !IsFunctionPointerType(ptr_qtype) && !type_cast<PointerType>(ptr_qtype).PointeeType()->IsComplete())
 				{
-					Diag(diag::arithmetic_on_incomplete_object_type);
+					g_Diagnostics.Report(arithmetic_on_incomplete_object_type);
 					return false;
 				}
 				else
 				{
 					if (IsVoidPointerType(ptr_qtype))
 					{
-						Diag(diag::arithmetic_on_void_pointer_type);
+						g_Diagnostics.Report(arithmetic_on_void_pointer_type);
 					}
 					else if (IsFunctionPointerType(ptr_qtype))
 					{
-						Diag(diag::arithmetic_on_function_pointer_type);
+						g_Diagnostics.Report(arithmetic_on_function_pointer_type);
 					}
 					return true;
 				}
@@ -192,7 +192,7 @@ namespace lucc
 				QualifiedType rhs_pte_qty = type_cast<PointerType>(rhs_qtype).PointeeType();
 				if (!lhs_pte_qty->IsCompatible(rhs_pte_qty))
 				{
-					Diag(diag::arithmetic_on_incompatible_pointers);
+					g_Diagnostics.Report(arithmetic_on_incompatible_pointers);
 				}
 				else if (IsComplete(lhs_qtype))
 				{
@@ -204,11 +204,11 @@ namespace lucc
 			}
 			else if (!IsIntegerType(lhs_qtype) && !IsIntegerType(rhs_qtype))
 			{
-				Diag(diag::additive_operator_invalid_operands); 
+				g_Diagnostics.Report(additive_operator_invalid_operands); 
 			}
 			else if (IsIntegerType(lhs_qtype) && IsPointerType(rhs_qtype) && subtract)
 			{
-				Diag(diag::additive_operator_invalid_operands);
+				g_Diagnostics.Report(additive_operator_invalid_operands);
 			}
 			else
 			{
@@ -218,22 +218,22 @@ namespace lucc
 		}
 		else
 		{
-			Diag(diag::additive_operator_invalid_operands);
+			g_Diagnostics.Report(additive_operator_invalid_operands);
 		}
 		return QualifiedType{};
 	}
 	// C11 6.5.5p2: Each of the operands shall have arithmetic type. The operands of the % operator shall have integer type.
 	QualifiedType MultiplicativeOperatorType(QualifiedType const& lhs_type, QualifiedType const& rhs_type, bool modulo)
 	{
-		if (modulo && (!IsIntegerType(lhs_type) || !IsIntegerType(rhs_type))) Diag(diag::modulo_operands_invalid);
-		else if (!IsArithmeticType(lhs_type) || !IsArithmeticType(rhs_type)) Diag(diag::multiplicative_operator_invalid_operands);
+		if (modulo && (!IsIntegerType(lhs_type) || !IsIntegerType(rhs_type))) g_Diagnostics.Report(modulo_operands_invalid);
+		else if (!IsArithmeticType(lhs_type) || !IsArithmeticType(rhs_type)) g_Diagnostics.Report(multiplicative_operator_invalid_operands);
 		return UsualArithmeticConversion(lhs_type, rhs_type);
 	}
 
 	// C11 6.5.7p2: Each of the operands shall have integer type.
 	QualifiedType ShiftOperatorType(QualifiedType const& lhs_type, QualifiedType const& rhs_type)
 	{
-		if (!IsIntegerType(lhs_type) || !IsIntegerType(rhs_type)) Diag(diag::shift_operator_invalid_operands);
+		if (!IsIntegerType(lhs_type) || !IsIntegerType(rhs_type)) g_Diagnostics.Report(shift_operator_invalid_operands);
 		return IntegerPromotion(lhs_type);
 	}
 	// C11 6.5.13p2 & 6.5.14p2: Each of the operands shall have scalar type.
@@ -241,13 +241,13 @@ namespace lucc
 	{
 		QualifiedType lhs_qtype = ValueTransformation(lhs_type);
 		QualifiedType rhs_qtype = ValueTransformation(rhs_type);
-		if (!IsScalarType(lhs_qtype) || !IsScalarType(rhs_qtype)) Diag(diag::logic_operator_invalid_operands);
+		if (!IsScalarType(lhs_qtype) || !IsScalarType(rhs_qtype)) g_Diagnostics.Report(logic_operator_invalid_operands);
 		return builtin_types::Int;
 	}
 	// C11 6.5.10p2 & 6.5.11p2 & 6.5.12p2 : Each of the operands shall have integer type
 	QualifiedType BitLogicOperatorType(QualifiedType const& lhs_type, QualifiedType const& rhs_type)
 	{
-		if (!IsIntegerType(lhs_type) || !IsIntegerType(rhs_type)) Diag(diag::bit_logic_operator_invalid_operands);
+		if (!IsIntegerType(lhs_type) || !IsIntegerType(rhs_type)) g_Diagnostics.Report(bit_logic_operator_invalid_operands);
 		return UsualArithmeticConversion(lhs_type, rhs_type);
 	}
 	// C11 6.5.9 Equality operators
@@ -261,11 +261,11 @@ namespace lucc
 			QualifiedType rhs_pte_qty = type_cast<PointerType>(rhs_qtype).PointeeType();
 			if (!lhs_pte_qty->IsCompatible(rhs_pte_qty)) 
 			{
-				if (!IsVoidType(lhs_pte_qty) && !IsVoidType(rhs_pte_qty)) Diag(diag::comparison_between_incompatible_pointers);
-				else if (IsFunctionType(lhs_pte_qty) || IsFunctionType(rhs_pte_qty))  Diag(diag::pointer_comparison_between_func_and_void_pointer);
+				if (!IsVoidType(lhs_pte_qty) && !IsVoidType(rhs_pte_qty)) g_Diagnostics.Report(comparison_between_incompatible_pointers);
+				else if (IsFunctionType(lhs_pte_qty) || IsFunctionType(rhs_pte_qty))  g_Diagnostics.Report(pointer_comparison_between_func_and_void_pointer);
 			}
 		}
-		else if(!IsArithmeticType(lhs_qtype) || !IsArithmeticType(rhs_qtype)) Diag(diag::equality_operator_invalid_operands);
+		else if(!IsArithmeticType(lhs_qtype) || !IsArithmeticType(rhs_qtype)) g_Diagnostics.Report(equality_operator_invalid_operands);
 		return builtin_types::Int;
 	}
 	// C11 6.5.8 Relational operators
@@ -290,34 +290,34 @@ namespace lucc
 	// pointer type, and shall be a modifiable lvalue.
 	QualifiedType IncDecOperatorType(QualifiedType const& op_type)
 	{
-		if (op_type.IsConst())				Diag(diag::inc_dec_operand_cannot_be_const);
-		else if (!IsScalarType(op_type))	Diag(diag::inc_dec_expected_scalar_operand);
+		if (op_type.IsConst())				g_Diagnostics.Report(inc_dec_operand_cannot_be_const);
+		else if (!IsScalarType(op_type))	g_Diagnostics.Report(inc_dec_expected_scalar_operand);
 		return RemoveQualifiers(op_type);
 	}
 
 	QualifiedType PlusMinusOperatorType(QualifiedType const& op_type)
 	{
-		if (!IsArithmeticType(op_type)) Diag(diag::plus_minus_expected_arithmetic_operand);
+		if (!IsArithmeticType(op_type)) g_Diagnostics.Report(plus_minus_expected_arithmetic_operand);
 		return TryIntegerPromotion(op_type);
 	}
 
 	QualifiedType BitNotOperatorType(QualifiedType const& op_type)
 	{
-		if (!IsIntegerType(op_type)) Diag(diag::bit_not_expected_integer_operand);
+		if (!IsIntegerType(op_type)) g_Diagnostics.Report(bit_not_expected_integer_operand);
 		return TryIntegerPromotion(op_type);
 	}
 
 	QualifiedType LogicalNotOperatorType(QualifiedType const& op_type)
 	{
 		QualifiedType operand_qty = ValueTransformation(op_type);
-		if (!IsScalarType(operand_qty)) Diag(diag::logical_not_expected_scalar_operand);
+		if (!IsScalarType(operand_qty)) g_Diagnostics.Report(logical_not_expected_scalar_operand);
 		return builtin_types::Int;
 	}
 
 	QualifiedType DereferenceOperatorType(QualifiedType const& op_type)
 	{
 		QualifiedType operand_qty = ValueTransformation(op_type);
-		if (!IsPointerType(operand_qty)) Diag(diag::dereference_expected_pointer_operand);
+		if (!IsPointerType(operand_qty)) g_Diagnostics.Report(dereference_expected_pointer_operand);
 		return type_cast<PointerType>(operand_qty).PointeeType();
 	}
 	// C11 6.5.3.2p1: The operand of the unary & operator shall be either a function

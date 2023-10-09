@@ -18,3 +18,28 @@
 #define LU_NODISCARD() [[nodiscard]]
 
 #define LU_ALIGN(n, align) ((n + align - 1) / align * align)
+
+#define LU_NONCOPYABLE(ClassName)                 \
+    ClassName(ClassName const&)            = delete; \
+    ClassName& operator=(ClassName const&) = delete;
+
+#define LU_NONMOVABLE(ClassName)                      \
+    ClassName(ClassName&&) noexcept            = delete; \
+    ClassName& operator=(ClassName&&) noexcept = delete;
+
+#define LU_NONCOPYABLE_NONMOVABLE(ClassName) \
+        LU_NONCOPYABLE(ClassName)                \
+        LU_NONMOVABLE(ClassName)
+
+#define LU_DEFAULT_COPYABLE(ClassName)             \
+    ClassName(ClassName const&)            = default; \
+    ClassName& operator=(ClassName const&) = default;
+
+#define LU_DEFAULT_MOVABLE(ClassName)                  \
+    ClassName(ClassName&&) noexcept            = default; \
+    ClassName& operator=(ClassName&&) noexcept = default;
+
+#define LU_DEFAULT_COPYABLE_MOVABLE(ClassName) \
+    LU_DEFAULT_COPYABLE(ClassName)             \
+    LU_DEFAULT_MOVABLE(ClassName)
+

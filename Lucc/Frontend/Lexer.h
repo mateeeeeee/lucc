@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <string>
 #include "Token.h"
 
 namespace lucc
@@ -19,9 +18,7 @@ namespace lucc
 
 	public:
 		explicit Lexer(SourceBuffer const& source);
-		Lexer(Lexer const&) = delete;
-		Lexer& operator=(Lexer const&) = delete;
-
+		LU_NONCOPYABLE(Lexer)
 		void Lex();
 
 		std::vector<Token> const& GetTokens() const { return tokens; }

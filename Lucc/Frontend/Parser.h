@@ -20,6 +20,7 @@ namespace lucc
 	class QualifiedType;
 	class FunctionType;
 	class Parser;
+	class Diagnostics;
 
 	using ExprParseFn = std::unique_ptr<ExprAST>(Parser::*)();
 
@@ -85,12 +86,12 @@ namespace lucc
 		{
 			if (!Consume(k, ts...))
 			{
-				Diag(diag::unexpected_token);
+				g_Diagnostics.Report(unexpected_token);
 				return false;
 			}
 			return true;
 		}
-		void Diag(diag::DiagCode);
+		void Diag(DiagCode);
 
 		[[nodiscard]] void ParseTranslationUnit();
 

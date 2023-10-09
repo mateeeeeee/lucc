@@ -2,12 +2,12 @@
 #include "SourceBuffer.h"
 #include "Diagnostics.h"
 
-
 namespace lucc
 {
 
-	Lexer::Lexer(SourceBuffer const& source) : buf_ptr(source.GetBufferStart()), cur_ptr(buf_ptr),
-											   loc{ .filename = std::string(source.GetRefName().data(), source.GetRefName().size())}
+	Lexer::Lexer(SourceBuffer const& source) 
+		: buf_ptr(source.GetBufferStart()), cur_ptr(buf_ptr),
+		  loc{ .filename = std::string(source.GetRefName().data(), source.GetRefName().size())}
 	{
 	}
 
@@ -21,7 +21,7 @@ namespace lucc
 
 			if (!result)
 			{
-				Diag(diag::lexing_failed);
+				g_Diagnostics.Report(loc, lexing_failed);
 				return;
 			}
 			if (!tokens.empty())
@@ -122,7 +122,7 @@ namespace lucc
 			return LexPunctuator(token);
 		}
 		}
-		Diag(diag::lexing_failed, loc);
+		g_Diagnostics.Report(loc, lexing_failed);
 		return false;
 	}
 
@@ -134,7 +134,7 @@ namespace lucc
 		else if (std::isalpha(*tmp_ptr))
 		{
 			UpdatePointersAndLocation();
-			Diag(diag::invalid_number_literal, loc);
+			g_Diagnostics.Report(loc, invalid_number_literal);
 			return false;
 		}
 		FillToken(t, TokenKind::number, tmp_ptr);
