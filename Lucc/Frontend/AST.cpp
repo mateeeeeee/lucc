@@ -62,25 +62,25 @@ namespace lucc
 		}
 
 		template<typename To, typename From>
-		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+		requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
 		To* dynamic_ast_cast(From* from)
 		{
 			return dynamic_cast<To*>(from);
 		}
 		template<typename To, typename From>
-		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+		requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
 		To const* dynamic_ast_cast(From const* from)
 		{
 			return dynamic_cast<To const*>(from);
 		}
 		template<typename To, typename From>
-		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+		requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
 		To* ast_cast(From* from)
 		{
 			return static_cast<To*>(from);
 		}
 		template<typename To, typename From>
-		requires std::is_base_of_v<NodeAST, To>&& std::is_base_of_v<NodeAST, From>
+		requires std::is_base_of_v<NodeAST, To> && std::is_base_of_v<NodeAST, From>
 		To const* ast_cast(From const* from)
 		{
 			return static_cast<To const*>(from);
@@ -90,7 +90,7 @@ namespace lucc
 		inline T AlignTo(T n, T align) { return (n + align - 1) / align * align; }
 	}
 
-	class VarDeclVisitorAST : public INodeVisitorAST
+	class VarDeclVisitorAST : public IVisitorAST
 	{
 	public:
 		VarDeclVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
@@ -102,7 +102,7 @@ namespace lucc
 	private:
 		FunctionDeclAST* func_ref;
 	};
-	class FunctionCallVisitorAST : public INodeVisitorAST
+	class FunctionCallVisitorAST : public IVisitorAST
 	{
 	public:
 		FunctionCallVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
@@ -115,56 +115,56 @@ namespace lucc
 		FunctionDeclAST* func_ref;
 	};
 
-	void TranslationUnitAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void TranslationUnitAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& decl : declarations) decl->Accept(visitor, depth + 1);
 	}
 
-	void DeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void DeclAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void VariableDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void VariableDeclAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (init_expr) init_expr->Accept(visitor, depth + 1);
 	}
-	void FunctionDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void FunctionDeclAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& param : param_decls) param->Accept(visitor, depth + 1);
 		if (body) body->Accept(visitor, depth + 1);
 	}
-	void TypedefDeclAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void TypedefDeclAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void StmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void StmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(false);
 	}
-	void NullStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void NullStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void ExprStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void ExprStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (expr) expr->Accept(visitor, depth + 1);
 	}
-	void CompoundStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void CompoundStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& stmt : statements) stmt->Accept(visitor, depth + 1);
 	}
-	void DeclStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void DeclStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for(auto&& decl : decls) decl->Accept(visitor, depth + 1);
 	}
-	void IfStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void IfStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && then_stmt);
 		visitor.Visit(*this, depth);
@@ -172,32 +172,32 @@ namespace lucc
 		then_stmt->Accept(visitor, depth + 1);
 		if (else_stmt) else_stmt->Accept(visitor, depth + 1);
 	}
-	void WhileStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void WhileStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
 		condition->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-	void DoWhileStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void DoWhileStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
 		condition->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-	void SwitchStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void SwitchStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
 		condition->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-	void CaseStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void CaseStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void ForStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void ForStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(body_stmt);
 		visitor.Visit(*this, depth);
@@ -206,36 +206,36 @@ namespace lucc
 		if (iter_expr) iter_expr->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-	void ReturnStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void ReturnStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (ret_expr) ret_expr->Accept(visitor, depth + 1);
 	}
-	void GotoStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void GotoStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void LabelStmtAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void LabelStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void ExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void ExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(false);
 	}
-	void UnaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void UnaryExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		operand->Accept(visitor, depth + 1);
 	}
-	void BinaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void BinaryExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		lhs->Accept(visitor, depth + 1);
 		rhs->Accept(visitor, depth + 1);
 	}
-	void TernaryExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void TernaryExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		LU_ASSERT(cond_expr && true_expr && false_expr);
 		visitor.Visit(*this, depth);
@@ -243,29 +243,29 @@ namespace lucc
 		true_expr->Accept(visitor, depth + 1);
 		false_expr->Accept(visitor, depth + 1);
 	}
-	void FunctionCallExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void FunctionCallExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		func_expr->Accept(visitor, depth + 1);
 		for (auto const& arg : func_args) arg->Accept(visitor, depth + 1);
 	}
-	void IntLiteralAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void IntLiteralAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void StringLiteralAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void StringLiteralAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void DeclRefExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void DeclRefExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void MemberRefExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void MemberRefExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void CastExprAST::Accept(INodeVisitorAST& visitor, uint32 depth) const
+	void CastExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		operand->Accept(visitor, depth + 1);

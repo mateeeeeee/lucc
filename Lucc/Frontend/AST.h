@@ -46,10 +46,10 @@ namespace lucc
 	class FunctionDeclAST;
 	class TypedefDeclAST;
 
-	class INodeVisitorAST
+	class IVisitorAST
 	{
 	public:
-		virtual ~INodeVisitorAST() = default;
+		virtual ~IVisitorAST() = default;
 		virtual void Visit(NodeAST const& node, uint32 depth) {}
 		virtual void Visit(TranslationUnitAST const& node, uint32 depth) {}
 
@@ -95,7 +95,7 @@ namespace lucc
 	{
 	public:
 		virtual ~NodeAST() = default;
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const = 0;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const = 0;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const {}
 
 	protected:
@@ -111,7 +111,7 @@ namespace lucc
 		}
 		auto const& GetDeclarations() const { return declarations; }
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -138,7 +138,7 @@ namespace lucc
 		VarSymbol const& GetSymbol() const { return sym; }
 
 		virtual int32 GetLocalOffset() const { return 0; }
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 
 	protected:
 		std::string name;
@@ -163,7 +163,7 @@ namespace lucc
 		bool IsGlobal() const { return GetSymbol().global; }
 		virtual int32 GetLocalOffset() const override { return local_offset; }
 		ExprAST const* GetInitExpr() const { return init_expr.get(); }
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -203,7 +203,7 @@ namespace lucc
 			for (auto const* local : local_variables) fn(local);
 		}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -220,7 +220,7 @@ namespace lucc
 	{
 	public:
 		TypedefDeclAST(std::string_view typedef_name) : DeclAST(typedef_name, DeclKind::Typedef) {}
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 	};
 
 	enum class StmtKind
@@ -245,7 +245,7 @@ namespace lucc
 	{
 	public:
 		StmtKind GetStmtKind() const { return kind; }
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 
 	protected:
 		StmtKind kind;
@@ -264,7 +264,7 @@ namespace lucc
 			statements.push_back(std::move(stmt));
 		}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -276,7 +276,7 @@ namespace lucc
 		ExprStmtAST(std::unique_ptr<ExprAST>&& expr) : StmtAST(expr ? StmtKind::Expr : StmtKind::Null), expr(std::move(expr)) {}
 		ExprAST* GetExpr() const { return expr.get(); }
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -288,7 +288,7 @@ namespace lucc
 		DeclStmtAST(std::vector<std::unique_ptr<DeclAST>>&& decls) : StmtAST(StmtKind::Decl), decls(std::move(decls)) {}
 		auto const& GetDeclarations() const { return decls; }
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -298,7 +298,7 @@ namespace lucc
 	{
 	public:
 		NullStmtAST() : ExprStmtAST(nullptr) {}
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 	};
 	class IfStmtAST final : public StmtAST
 	{
@@ -318,7 +318,7 @@ namespace lucc
 			else_stmt = std::move(_else_stmt);
 		}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -332,7 +332,7 @@ namespace lucc
 		CaseStmtAST() : StmtAST(StmtKind::Case), switch_id(-1), is_default(true), value(0), label_name("L_default") {}
 		explicit CaseStmtAST(int64 value) : StmtAST(StmtKind::Case), switch_id(-1), is_default(false), value(value), label_name("L_case" + std::to_string(value)) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		void SetSwitchId(uint64 _switch_id) { switch_id = _switch_id; }
@@ -350,7 +350,7 @@ namespace lucc
 	public:
 		explicit GotoStmtAST(std::string_view label) : StmtAST(StmtKind::Goto), goto_label(label) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		std::string_view GetLabel() const { return goto_label; }
@@ -363,7 +363,7 @@ namespace lucc
 	public:
 		LabelStmtAST(std::string_view label) : StmtAST(StmtKind::Label), label_name(label) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		std::string_view GetLabel() const { return label_name; }
@@ -376,7 +376,7 @@ namespace lucc
 	public:
 		BreakStmtAST() : StmtAST(StmtKind::Break), label_id(-1) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override
 		{
 			visitor.Visit(*this, depth);
 		}
@@ -393,7 +393,7 @@ namespace lucc
 	public:
 		ContinueStmtAST() : StmtAST(StmtKind::Continue), label_id(-1) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override
 		{
 			visitor.Visit(*this, depth);
 		}
@@ -410,7 +410,7 @@ namespace lucc
 	public:
 		SwitchStmtAST() : StmtAST(StmtKind::Switch) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
@@ -452,7 +452,7 @@ namespace lucc
 	public:
 		WhileStmtAST() : StmtAST(StmtKind::While) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
@@ -484,7 +484,7 @@ namespace lucc
 	public:
 		DoWhileStmtAST() : StmtAST(StmtKind::DoWhile) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
@@ -516,7 +516,7 @@ namespace lucc
 	public:
 		ForStmtAST() : StmtAST(StmtKind::For) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		void SetInit(std::unique_ptr<StmtAST>&& _init)
@@ -559,7 +559,7 @@ namespace lucc
 		explicit ReturnStmtAST(std::unique_ptr<ExprStmtAST>&& ret_expr)
 			: StmtAST(StmtKind::Return), ret_expr(std::move(ret_expr)) {}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -607,7 +607,7 @@ namespace lucc
 	class ExprAST : public NodeAST
 	{
 	public:
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 
 		virtual bool IsConstexpr() const { return false; }
 		virtual int64 EvaluateConstexpr() const { return 0; }
@@ -649,7 +649,7 @@ namespace lucc
 		UnaryExprKind GetUnaryKind() const { return op; }
 		ExprAST* GetOperand() const { return operand.get(); }
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		virtual bool IsConstexpr() const override;
@@ -675,7 +675,7 @@ namespace lucc
 		ExprAST* GetLHS() const { return lhs.get(); }
 		ExprAST* GetRHS() const { return rhs.get(); }
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 		virtual bool IsConstexpr() const override;
 		virtual int64 EvaluateConstexpr() const override;
@@ -700,7 +700,7 @@ namespace lucc
 		void SetTrueExpr(std::unique_ptr<ExprAST>&& expr) { true_expr = std::move(expr); }
 		void SetFalseExpr(std::unique_ptr<ExprAST>&& expr) { false_expr = std::move(expr); }
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 		virtual bool IsConstexpr() const override;
 		virtual int64 EvaluateConstexpr() const override;
@@ -739,7 +739,7 @@ namespace lucc
 		}
 
 		ExprAST* GetFunction() const { return func_expr.get(); }
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -752,7 +752,7 @@ namespace lucc
 		IntLiteralAST(int64 value, SourceLocation const& loc) : ExprAST(ExprKind::IntLiteral, loc, builtin_types::Int), value(value) {}
 		int64 GetValue() const { return value; }
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 		virtual bool IsConstexpr() const override;
 		virtual int64 EvaluateConstexpr() const override;
@@ -766,7 +766,7 @@ namespace lucc
 		StringLiteralAST(std::string_view str, SourceLocation const& loc) : ExprAST(ExprKind::StringLiteral, loc, QualifiedType(ArrayType(builtin_types::Char, (uint32)str.size()))), str(str) {}
 		std::string_view GetString() const { return str; }
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -787,7 +787,7 @@ namespace lucc
 			SetCastType();
 		}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -840,7 +840,7 @@ namespace lucc
 
 		DeclAST const* GetDeclaration() const { return decl_ast; }
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	protected:
@@ -864,7 +864,7 @@ namespace lucc
 			return decl_ast->GetLocalOffset() + member_offset;
 		}
 
-		virtual void Accept(INodeVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
