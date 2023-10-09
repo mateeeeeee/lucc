@@ -24,7 +24,7 @@ namespace lucc
 		Invalid
 	};
 
-	struct VarSymbol
+	struct DeclSymbol
 	{
 		std::string name = "";
 		QualifiedType qtype = builtin_types::Int;
@@ -36,7 +36,6 @@ namespace lucc
 
 		class DeclAST* decl_ast = nullptr;
 	};
-
 	struct TagSymbol
 	{
 		std::string name = "";
@@ -44,14 +43,12 @@ namespace lucc
 		bool enum_type;
 	};
 
-	template<typename _Ty>
-	class ScopeTable
+	template<typename T>
+	class Scope
 	{
-		using SymType = _Ty;
+		using SymType = T;
 	public:
-		explicit ScopeTable(uint32 scope_id) : scope_id(scope_id) {}
-		uint32 GetScope() const { return scope_id; }
-
+		
 		bool Insert(SymType const& symbol)
 		{
 			if (scope_sym_table.contains(symbol.name)) return false;
@@ -65,30 +62,28 @@ namespace lucc
 			else return nullptr;
 		}
 
-
 	private:
-		uint32 const scope_id;
 		std::unordered_map<std::string, SymType> scope_sym_table;
 	};
 
-	template<typename _Ty>
-	class SymbolTable
+	template<typename T>
+	class ScopeStack
 	{
 	public:
-		using SymType = _Ty;
+		using SymType = T;
+
 	public:
-		SymbolTable()
+		ScopeStack()
 		{
-			scopes.emplace_back(scope_id++);
+			scopes.emplace_back();
 		}
 		void EnterScope()
 		{
-			scopes.emplace_back(scope_id++);
+			scopes.emplace_back();
 		}
 		void ExitScope()
 		{
 			scopes.pop_back();
-			--scope_id;
 		}
 
 		bool Insert(SymType const& symbol)
@@ -117,22 +112,21 @@ namespace lucc
 		bool IsGlobal() const { return scopes.size() == 1; }
 
 	private:
-		std::vector<ScopeTable<SymType>> scopes;
-		uint32 scope_id = 0;
+		std::vector<Scope<SymType>> scopes;
 	};
 
 	template<typename T>
-	struct ScopedSymbolTable
+	struct ScopeStackGuard
 	{
-		ScopedSymbolTable(SymbolTable<T>& sym_table) : sym_table(sym_table)
+		ScopeStackGuard(ScopeStack<T>& scope_stack) : scope_stack(scope_stack)
 		{
-			sym_table.EnterScope();
+			scope_stack.EnterScope();
 		}
-		~ScopedSymbolTable()
+		~ScopeStackGuard()
 		{
-			sym_table.ExitScope();
+			scope_stack.ExitScope();
 		}
-		SymbolTable<T>& sym_table;
+		ScopeStack<T>& scope_stack;
 	};
-	#define SCOPED_SYMBOL_TABLE(sym_table) ScopedSymbolTable<std::remove_reference_t<decltype(*sym_table)>::SymType> LU_CONCAT(_scoped_sym_table,__COUNTER__)(*sym_table)
+	#define SCOPE_STACK_GUARD(scope_stack) ScopeStackGuard<std::remove_reference_t<decltype(*scope_stack)>::SymType> LU_CONCAT(_scope_stack_,__COUNTER__)(*scope_stack)
 }	

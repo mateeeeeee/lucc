@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "Symbol.h"
+#include "Scope.h"
 #include "SourceLocation.h"
 #include "IVisitorAST.h"
 
@@ -48,14 +48,14 @@ namespace lucc
 	{
 	public:
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
-		void SetSymbol(VarSymbol* _sym) { sym = *_sym; }
+		void SetSymbol(DeclSymbol* _sym) { sym = *_sym; }
 
 		std::string_view GetName() const { return name; }
 		SourceLocation const& GetLocation() const { return loc; }
 		QualifiedType const& GetType() const { return sym.qtype;}
 		DeclKind GetDeclKind() const { return kind; }
 		Storage GetStorage() const { return sym.storage; }
-		VarSymbol const& GetSymbol() const { return sym; }
+		DeclSymbol const& GetSymbol() const { return sym; }
 
 		virtual int32 GetLocalOffset() const { return 0; }
 		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
@@ -64,7 +64,7 @@ namespace lucc
 		DeclKind const kind;
 		std::string name;
 		SourceLocation loc;
-		VarSymbol sym;
+		DeclSymbol sym;
 
 	protected:
 		DeclAST(DeclKind kind, std::string_view name) 
@@ -752,7 +752,7 @@ namespace lucc
 		DeclRefExprAST(DeclAST* decl_ast, SourceLocation const& loc) : IdentifierExprAST(decl_ast->GetName(), loc, decl_ast->GetType()),
 			decl_ast(decl_ast)  {}
 
-		VarSymbol const& GetSymbol() const { return decl_ast->GetSymbol(); }
+		DeclSymbol const& GetSymbol() const { return decl_ast->GetSymbol(); }
 		bool IsGlobal() const { return GetSymbol().global; }
 		virtual int32 GetLocalOffset() const 
 		{  

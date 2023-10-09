@@ -89,7 +89,7 @@
     <ClInclude Include="Frontend\AST.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
-    <ClInclude Include="Frontend\Symbol.h">
+    <ClInclude Include="Frontend\Scope.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Frontend\Type.h">

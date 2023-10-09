@@ -3,7 +3,7 @@
 #include <memory>
 #include <functional>
 #include "Token.h"
-#include "Symbol.h"
+#include "Scope.h"
 #include "Diagnostics.h"
 #include "ForwardAST.h"
 
@@ -16,7 +16,7 @@ namespace lucc
 	enum class BinaryExprKind : uint8;
 
 	template<typename>
-	class SymbolTable;
+	class ScopeStack;
 	class QualifiedType;
 	class FunctionType;
 	class Parser;
@@ -35,8 +35,8 @@ namespace lucc
 
 		struct Context
 		{
-			std::unique_ptr<SymbolTable<VarSymbol>> identifier_sym_table;
-			std::unique_ptr<SymbolTable<TagSymbol>> tag_sym_table;
+			std::unique_ptr<ScopeStack<DeclSymbol>> decl_scope_stack;
+			std::unique_ptr<ScopeStack<TagSymbol>> tag_scope_stack;
 
 			FunctionType const* current_func_type = nullptr;
 			bool return_stmt_encountered = false;

@@ -189,7 +189,7 @@ namespace lucc
 		}
 		else
 		{
-			VarSymbol const& symbol = GetSymbol();
+			DeclSymbol const& symbol = GetSymbol();
 			if (IsArrayType(symbol.qtype))
 			{
 				ArrayDeclCG array_decl{};

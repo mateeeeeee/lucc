@@ -54,8 +54,8 @@ namespace lucc
 	void Parser::Parse()
 	{
 		ast = std::make_unique<AST>();
-		ctx.identifier_sym_table = std::make_unique<SymbolTable<VarSymbol>>();
-		ctx.tag_sym_table = std::make_unique<SymbolTable<TagSymbol>>();
+		ctx.decl_scope_stack = std::make_unique<ScopeStack<DeclSymbol>>();
+		ctx.tag_scope_stack = std::make_unique<ScopeStack<TagSymbol>>();
 		ParseTranslationUnit();
 	}
 	bool Parser::Expect(TokenKind k)
@@ -86,7 +86,7 @@ namespace lucc
 	std::vector<std::unique_ptr<DeclAST>> Parser::ParseDeclaration()
 	{
 		while (Consume(TokenKind::semicolon)) Diag(empty_statement);
-		bool is_global = ctx.identifier_sym_table->IsGlobal();
+		bool is_global = ctx.decl_scope_stack->IsGlobal();
 
 		std::vector<std::unique_ptr<DeclAST>> decls;
 
@@ -116,10 +116,10 @@ namespace lucc
 			LU_ASSERT(declarator_info.qtype.HasRawType());
 
 			DeclarationInfo declaration_info(decl_spec, declarator_info);
-			VarSymbol var_symbol{ declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global };
+			DeclSymbol var_symbol{ declaration_info.name, declaration_info.qtype, declaration_info.storage, is_global };
 
 			bool check_redefinition = false;
-			if (VarSymbol* sym = ctx.identifier_sym_table->LookUpCurrentScope(declaration_info.name))
+			if (DeclSymbol* sym = ctx.decl_scope_stack->LookUpCurrentScope(declaration_info.name))
 			{
 				if (!IsFunctionType(declaration_info.qtype))
 				{
@@ -147,7 +147,7 @@ namespace lucc
 			}
 			else
 			{
-				bool success = ctx.identifier_sym_table->Insert(var_symbol);
+				bool success = ctx.decl_scope_stack->Insert(var_symbol);
 				LU_ASSERT(success);
 			}
 
@@ -159,7 +159,7 @@ namespace lucc
 				func_decl->SetLocation(current_token->GetLocation());
 				func_decl->SetSymbol(&var_symbol);
 
-				VarSymbol* sym = ctx.identifier_sym_table->LookUp(declaration_info.name);
+				DeclSymbol* sym = ctx.decl_scope_stack->LookUp(declaration_info.name);
 				sym->decl_ast = func_decl.get();
 				if (func_decl->IsDefinition())
 				{
@@ -183,7 +183,7 @@ namespace lucc
 				var_decl->SetLocation(current_token->GetLocation());
 				var_decl->SetSymbol(&var_symbol);
 
-				VarSymbol* sym = ctx.identifier_sym_table->LookUp(declaration_info.name);
+				DeclSymbol* sym = ctx.decl_scope_stack->LookUp(declaration_info.name);
 				sym->decl_ast = var_decl.get();
 				if (Consume(TokenKind::equal))
 				{
@@ -218,7 +218,7 @@ namespace lucc
 			}
 			std::unique_ptr<TypedefDeclAST> typedef_ast = std::make_unique<TypedefDeclAST>(typedef_info.name);
 			typedefs.push_back(std::move(typedef_ast));
-			bool success = ctx.identifier_sym_table->Insert(VarSymbol{ typedef_info.name, typedef_info.qtype, Storage::Typedef });
+			bool success = ctx.decl_scope_stack->Insert(DeclSymbol{ typedef_info.name, typedef_info.qtype, Storage::Typedef });
 			if (!success)
 			{
 				Diag(redefinition_of_identifier);
@@ -230,8 +230,8 @@ namespace lucc
 
 	std::unique_ptr<FunctionDeclAST> Parser::ParseFunctionDeclaration(DeclarationInfo const& decl_info)
 	{
-		LU_ASSERT(ctx.identifier_sym_table->IsGlobal());
-		SCOPED_SYMBOL_TABLE(ctx.identifier_sym_table);
+		LU_ASSERT(ctx.decl_scope_stack->IsGlobal());
+		SCOPE_STACK_GUARD(ctx.decl_scope_stack);
 
 		std::string_view func_name = decl_info.name;
 		if (func_name.empty())
@@ -244,14 +244,14 @@ namespace lucc
 		std::unique_ptr<FunctionDeclAST> func_decl = std::make_unique<FunctionDeclAST>(func_name);
 		for (auto&& func_param : func_type.GetParamTypes())
 		{
-			bool success = ctx.identifier_sym_table->Insert(VarSymbol{ func_param.name, func_param.qtype, Storage::None });
+			bool success = ctx.decl_scope_stack->Insert(DeclSymbol{ func_param.name, func_param.qtype, Storage::None });
 			if (!success)
 			{
 				Diag(redefinition_of_identifier);
 				return nullptr;
 			}
 			std::unique_ptr<VariableDeclAST> param_decl = std::make_unique<VariableDeclAST>(func_param.name);
-			VarSymbol* sym = ctx.identifier_sym_table->LookUp(func_param.name);
+			DeclSymbol* sym = ctx.decl_scope_stack->LookUp(func_param.name);
 			param_decl->SetSymbol(sym);
 			sym->decl_ast = param_decl.get();
 			func_decl->AddParamDeclaration(std::move(param_decl));
@@ -259,7 +259,7 @@ namespace lucc
 		func_type.EncounterPrototype();
 		if (current_token->Is(TokenKind::left_brace))
 		{
-			SCOPED_SYMBOL_TABLE(ctx.identifier_sym_table);
+			SCOPE_STACK_GUARD(ctx.decl_scope_stack);
 			ctx.current_func_type = &func_type;
 
 			func_type.EncounteredDefinition();
@@ -331,7 +331,7 @@ namespace lucc
 	std::unique_ptr<CompoundStmtAST> Parser::ParseCompoundStatement()
 	{
 		Expect(TokenKind::left_brace);
-		SCOPED_SYMBOL_TABLE(ctx.identifier_sym_table);
+		SCOPE_STACK_GUARD(ctx.decl_scope_stack);
 		std::unique_ptr<CompoundStmtAST> compound_stmt = std::make_unique<CompoundStmtAST>();
 		while (current_token->IsNot(TokenKind::right_brace))
 		{
@@ -1010,7 +1010,7 @@ namespace lucc
 				return nullptr;
 			}
 			std::string_view struct_name = current_token->GetIdentifier();
-			VarSymbol* var = ctx.identifier_sym_table->LookUp(struct_name);
+			DeclSymbol* var = ctx.decl_scope_stack->LookUp(struct_name);
 			if (!var || var->is_enum || !IsStructType(var->qtype))
 			{
 				Diag(invalid_member_access);
@@ -1177,7 +1177,7 @@ namespace lucc
 	{
 		LU_ASSERT(current_token->Is(TokenKind::identifier));
 		std::string_view name = current_token->GetIdentifier();
-		if (VarSymbol* sym = ctx.identifier_sym_table->LookUp(name))
+		if (DeclSymbol* sym = ctx.decl_scope_stack->LookUp(name))
 		{
 			if (sym->is_enum)
 			{
@@ -1211,7 +1211,7 @@ namespace lucc
 
 		if (!enum_tag.empty() && current_token->IsNot(TokenKind::left_brace))
 		{
-			TagSymbol* sym = ctx.tag_sym_table->LookUp(enum_tag);
+			TagSymbol* sym = ctx.tag_scope_stack->LookUp(enum_tag);
 			if (!sym) Diag(unknown_enum);
 			else if (!sym->enum_type) Diag(not_enum_type);
 			decl_spec.qtype = sym->type;
@@ -1233,12 +1233,12 @@ namespace lucc
 				val = (int32)enum_value_expr->EvaluateConstexpr();
 			}
 
-			ctx.identifier_sym_table->Insert(VarSymbol{ .name = enum_value_name, .is_enum = true, .enum_value = val++ });
+			ctx.decl_scope_stack->Insert(DeclSymbol{ .name = enum_value_name, .is_enum = true, .enum_value = val++ });
 			if (Consume(TokenKind::right_brace)) break;
 			Expect(TokenKind::comma);
 		}
 
-		if (!enum_tag.empty()) ctx.tag_sym_table->Insert(TagSymbol{ enum_tag, decl_spec.qtype, true });
+		if (!enum_tag.empty()) ctx.tag_scope_stack->Insert(TagSymbol{ enum_tag, decl_spec.qtype, true });
 	}
 
 	void Parser::ParseStruct(DeclarationSpecifier& decl_spec)
@@ -1254,7 +1254,7 @@ namespace lucc
 
 		if (!tag_name.empty() && !current_token->Is(TokenKind::left_brace))
 		{
-			TagSymbol* tag = ctx.tag_sym_table->LookUp(tag_name);
+			TagSymbol* tag = ctx.tag_scope_stack->LookUp(tag_name);
 			if (tag)
 			{
 				decl_spec.qtype = tag->type;
@@ -1262,7 +1262,7 @@ namespace lucc
 			}
 
 			decl_spec.qtype = StructType(tag_name);
-			ctx.tag_sym_table->Insert(TagSymbol(tag_name, decl_spec.qtype, false));
+			ctx.tag_scope_stack->Insert(TagSymbol(tag_name, decl_spec.qtype, false));
 			return;
 		}
 
@@ -1273,13 +1273,13 @@ namespace lucc
 
 		if (!tag_name.empty()) 
 		{
-			TagSymbol* tag = ctx.tag_sym_table->LookUpCurrentScope(tag_name);
+			TagSymbol* tag = ctx.tag_scope_stack->LookUpCurrentScope(tag_name);
 			if (tag)
 			{
 				tag->type = decl_spec.qtype;
 				return;
 			}
-			ctx.tag_sym_table->Insert(TagSymbol(tag_name, decl_spec.qtype, false));
+			ctx.tag_scope_stack->Insert(TagSymbol(tag_name, decl_spec.qtype, false));
 		}
 	}
 
@@ -1404,7 +1404,7 @@ namespace lucc
 			QualifiedType* typedef_type = nullptr;
 			if(current_token->Is(identifier))
 			{
-				VarSymbol* sym = ctx.identifier_sym_table->LookUp(current_token->GetIdentifier());
+				DeclSymbol* sym = ctx.decl_scope_stack->LookUp(current_token->GetIdentifier());
 				LU_ASSERT(sym);
 				typedef_type = &sym->qtype;
 			}
@@ -1714,7 +1714,7 @@ namespace lucc
 	{
 		if ((current_token + offset)->Is(TokenKind::identifier))
 		{
-			VarSymbol* sym = ctx.identifier_sym_table->LookUp((current_token + offset)->GetIdentifier());
+			DeclSymbol* sym = ctx.decl_scope_stack->LookUp((current_token + offset)->GetIdentifier());
 			return sym ? sym->storage == Storage::Typedef : false;
 		}
 		return (current_token + offset)->IsDeclSpec();
