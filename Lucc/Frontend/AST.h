@@ -1,10 +1,10 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include <string>
 #include "Scope.h"
 #include "SourceLocation.h"
-#include "IVisitorAST.h"
+#include "ASTVisitor.h"
+#include "ASTTypeAliases.h"
 
 namespace lucc
 {
@@ -15,27 +15,27 @@ namespace lucc
 	{
 	public:
 		virtual ~NodeAST() = default;
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const = 0;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const = 0;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const {}
 
 	protected:
 		NodeAST() = default;
 	};
-	class TranslationUnitAST final : public NodeAST
+	class TranslationUnit final : public NodeAST
 	{
 	public:
-		TranslationUnitAST() = default;
-		void AddDeclaration(std::unique_ptr<DeclAST>&& stmt)
+		TranslationUnit() = default;
+		void AddDeclaration(UniqueDeclPtr&& stmt)
 		{
 			declarations.push_back(std::move(stmt));
 		}
 		auto const& GetDeclarations() const { return declarations; }
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::vector<std::unique_ptr<DeclAST>> declarations;
+		UniqueDeclPtrList declarations;
 	};
 
 	enum class DeclKind
@@ -44,7 +44,7 @@ namespace lucc
 		Func,
 		Typedef
 	};
-	class DeclAST : public NodeAST
+	class Decl : public NodeAST
 	{
 	public:
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
@@ -58,7 +58,7 @@ namespace lucc
 		DeclSymbol const& GetSymbol() const { return sym; }
 
 		virtual int32 GetLocalOffset() const { return 0; }
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 
 	protected:
 		DeclKind const kind;
@@ -67,15 +67,15 @@ namespace lucc
 		DeclSymbol sym;
 
 	protected:
-		DeclAST(DeclKind kind, std::string_view name) 
+		Decl(DeclKind kind, std::string_view name) 
 			: kind(kind), name(name) {}
 	};
-	class VariableDeclAST : public DeclAST
+	class VariableDecl : public Decl
 	{
 	public:
-		explicit VariableDeclAST(std::string_view name) : DeclAST(DeclKind::Var, name), local_offset(0) {}
+		explicit VariableDecl(std::string_view name) : Decl(DeclKind::Var, name), local_offset(0) {}
 
-		void SetInitExpression(std::unique_ptr<ExprAST>&& expr)
+		void SetInitExpression(UniqueExprPtr&& expr)
 		{
 			init_expr = std::move(expr);
 		}
@@ -83,33 +83,33 @@ namespace lucc
 
 		bool IsGlobal() const { return GetSymbol().global; }
 		virtual int32 GetLocalOffset() const override { return local_offset; }
-		ExprAST const* GetInitExpr() const { return init_expr.get(); }
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		Expr const* GetInitExpr() const { return init_expr.get(); }
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::unique_ptr<ExprAST> init_expr;
+		UniqueExprPtr init_expr;
 		mutable int32 local_offset;
 
 	};
-	class FunctionDeclAST : public DeclAST
+	class FunctionDecl : public Decl
 	{
 	public:
-		explicit FunctionDeclAST(std::string_view name) : DeclAST(DeclKind::Func, name) {}
+		explicit FunctionDecl(std::string_view name) : Decl(DeclKind::Func, name) {}
 
-		void AddParamDeclaration(std::unique_ptr<VariableDeclAST>&& param)
+		void AddParamDeclaration(UniqueVariableDeclPtr&& param)
 		{
 			param_decls.push_back(std::move(param));
 		}
-		void AddLocalDeclaration(VariableDeclAST const* var_decl)
+		void AddLocalDeclaration(VariableDecl const* var_decl)
 		{
 			local_variables.push_back(var_decl);
 		}
-		void AddFunctionCall(FunctionCallExprAST const* func_call)
+		void AddFunctionCall(FunctionCallExpr const* func_call)
 		{
 			function_calls.push_back(func_call);
 		}
-		void SetFunctionBody(std::unique_ptr<CompoundStmtAST>&& _body)
+		void SetFunctionBody(UniqueCompoundStmtPtr&& _body)
 		{
 			body = std::move(_body);
 			AssignLocalOffsets();
@@ -117,31 +117,31 @@ namespace lucc
 
 		bool IsDefinition() const { return body != nullptr; }
 
-		template<typename F> requires std::is_invocable_v<F, DeclAST*>
+		template<typename F> requires std::is_invocable_v<F, Decl*>
 		void ForAllDeclarations(F&& fn) const
 		{
 			for (auto const& param : param_decls) fn(param.get());
 			for (auto const* local : local_variables) fn(local);
 		}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::vector<std::unique_ptr<VariableDeclAST>> param_decls;
-		std::unique_ptr<CompoundStmtAST> body;
-		std::vector<VariableDeclAST const*> local_variables;
-		std::vector<FunctionCallExprAST const*> function_calls;
+		UniqueVariableDeclPtrList param_decls;
+		UniqueCompoundStmtPtr body;
+		ConstVariableDeclPtrList local_variables;
+		ConstFunctionCallExprPtrList function_calls;
 		uint32 stack_size = 0;
 
 	private:
 		void AssignLocalOffsets();
 	};
-	class TypedefDeclAST final : public DeclAST
+	class TypedefDecl final : public Decl
 	{
 	public:
-		TypedefDeclAST(std::string_view typedef_name) : DeclAST(DeclKind::Typedef, typedef_name) {}
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		TypedefDecl(std::string_view typedef_name) : Decl(DeclKind::Typedef, typedef_name) {}
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 	};
 
 	enum class StmtKind
@@ -162,98 +162,98 @@ namespace lucc
 		Break,
 		Continue
 	};
-	class StmtAST : public NodeAST
+	class Stmt : public NodeAST
 	{
 	public:
 		StmtKind GetStmtKind() const { return kind; }
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 
 	protected:
 		StmtKind const kind;
 
 	protected:
-		explicit StmtAST(StmtKind kind) : kind(kind) {}
+		explicit Stmt(StmtKind kind) : kind(kind) {}
 	};
 
-	class CompoundStmtAST : public StmtAST
+	class CompoundStmt : public Stmt
 	{
 	public:
-		CompoundStmtAST() : StmtAST(StmtKind::Compound) {}
+		CompoundStmt() : Stmt(StmtKind::Compound) {}
 
-		void AddStatement(std::unique_ptr<StmtAST>&& stmt)
+		void AddStatement(UniqueStmtPtr&& stmt)
 		{
 			statements.push_back(std::move(stmt));
 		}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::vector<std::unique_ptr<StmtAST>> statements;
+		UniqueStmtPtrList statements;
 	};
-	class ExprStmtAST : public StmtAST
+	class ExprStmt : public Stmt
 	{
 	public:
-		ExprStmtAST(std::unique_ptr<ExprAST>&& expr) : StmtAST(expr ? StmtKind::Expr : StmtKind::Null), expr(std::move(expr)) {}
-		ExprAST* GetExpr() const { return expr.get(); }
+		ExprStmt(UniqueExprPtr&& expr) : Stmt(expr ? StmtKind::Expr : StmtKind::Null), expr(std::move(expr)) {}
+		Expr* GetExpr() const { return expr.get(); }
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::unique_ptr<ExprAST> expr;
+		UniqueExprPtr expr;
 	};
-	class DeclStmtAST : public StmtAST
+	class DeclStmt : public Stmt
 	{
 	public:
-		DeclStmtAST(std::vector<std::unique_ptr<DeclAST>>&& decls) : StmtAST(StmtKind::Decl), decls(std::move(decls)) {}
+		DeclStmt(UniqueDeclPtrList&& decls) : Stmt(StmtKind::Decl), decls(std::move(decls)) {}
 		auto const& GetDeclarations() const { return decls; }
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::vector<std::unique_ptr<DeclAST>> decls;
+		UniqueDeclPtrList decls;
 	};
-	class NullStmtAST final : public ExprStmtAST
+	class NullStmt final : public ExprStmt
 	{
 	public:
-		NullStmtAST() : ExprStmtAST(nullptr) {}
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		NullStmt() : ExprStmt(nullptr) {}
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 	};
-	class IfStmtAST final : public StmtAST
+	class IfStmt final : public Stmt
 	{
 	public:
-		IfStmtAST() : StmtAST(StmtKind::If) {}
+		IfStmt() : Stmt(StmtKind::If) {}
 
-		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
+		void SetCondition(UniqueExprPtr&& _condition)
 		{
 			condition = std::move(_condition);
 		}
-		void SetThenStatement(std::unique_ptr<StmtAST>&& _then_stmt)
+		void SetThenStatement(UniqueStmtPtr&& _then_stmt)
 		{
 			then_stmt = std::move(_then_stmt);
 		}
-		void SetElseStatement(std::unique_ptr<StmtAST>&& _else_stmt)
+		void SetElseStatement(UniqueStmtPtr&& _else_stmt)
 		{
 			else_stmt = std::move(_else_stmt);
 		}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::unique_ptr<ExprAST> condition;
-		std::unique_ptr<StmtAST> then_stmt;
-		std::unique_ptr<StmtAST> else_stmt;
+		UniqueExprPtr condition;
+		UniqueStmtPtr then_stmt;
+		UniqueStmtPtr else_stmt;
 	};
-	class CaseStmtAST final : public StmtAST
+	class CaseStmt final : public Stmt
 	{
 	public:
-		CaseStmtAST() : StmtAST(StmtKind::Case), switch_id(-1), is_default(true), value(0), label_name("L_default") {}
-		explicit CaseStmtAST(int64 value) : StmtAST(StmtKind::Case), switch_id(-1), is_default(false), value(value), label_name("L_case" + std::to_string(value)) {}
+		CaseStmt() : Stmt(StmtKind::Case), switch_id(-1), is_default(true), value(0), label_name("L_default") {}
+		explicit CaseStmt(int64 value) : Stmt(StmtKind::Case), switch_id(-1), is_default(false), value(value), label_name("L_case" + std::to_string(value)) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		void SetSwitchId(uint64 _switch_id) { switch_id = _switch_id; }
@@ -266,12 +266,12 @@ namespace lucc
 		int64 value;
 		bool is_default;
 	};
-	class GotoStmtAST final : public StmtAST
+	class GotoStmt final : public Stmt
 	{
 	public:
-		explicit GotoStmtAST(std::string_view label) : StmtAST(StmtKind::Goto), goto_label(label) {}
+		explicit GotoStmt(std::string_view label) : Stmt(StmtKind::Goto), goto_label(label) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		std::string_view GetLabel() const { return goto_label; }
@@ -279,12 +279,12 @@ namespace lucc
 	private:
 		std::string goto_label;
 	};
-	class LabelStmtAST final : public StmtAST
+	class LabelStmt final : public Stmt
 	{
 	public:
-		LabelStmtAST(std::string_view label) : StmtAST(StmtKind::Label), label_name(label) {}
+		LabelStmt(std::string_view label) : Stmt(StmtKind::Label), label_name(label) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		std::string_view GetLabel() const { return label_name; }
@@ -292,12 +292,12 @@ namespace lucc
 	private:
 		std::string label_name;
 	};
-	class BreakStmtAST final : public StmtAST
+	class BreakStmt final : public Stmt
 	{
 	public:
-		BreakStmtAST() : StmtAST(StmtKind::Break), label_id(-1) {}
+		BreakStmt() : Stmt(StmtKind::Break), label_id(-1) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override
 		{
 			visitor.Visit(*this, depth);
 		}
@@ -309,12 +309,12 @@ namespace lucc
 		std::string label_name;
 		uint64 label_id;
 	};
-	class ContinueStmtAST final : public StmtAST
+	class ContinueStmt final : public Stmt
 	{
 	public:
-		ContinueStmtAST() : StmtAST(StmtKind::Continue), label_id(-1) {}
+		ContinueStmt() : Stmt(StmtKind::Continue), label_id(-1) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override
 		{
 			visitor.Visit(*this, depth);
 		}
@@ -326,28 +326,28 @@ namespace lucc
 		std::string label_name;
 		uint64 label_id;
 	};
-	class SwitchStmtAST final : public StmtAST
+	class SwitchStmt final : public Stmt
 	{
 	public:
-		SwitchStmtAST() : StmtAST(StmtKind::Switch) {}
+		SwitchStmt() : Stmt(StmtKind::Switch) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
-		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
+		void SetCondition(UniqueExprPtr&& _condition)
 		{
 			condition = std::move(_condition);
 		}
-		void SetBody(std::unique_ptr<StmtAST>&& _body_stmt)
+		void SetBody(UniqueStmtPtr&& _body_stmt)
 		{
 			body_stmt = std::move(_body_stmt);
 		}
 
-		void AddBreakStmt(BreakStmtAST* break_stmt)
+		void AddBreakStmt(BreakStmt* break_stmt)
 		{
 			break_stmts.push_back(break_stmt);
 		}
-		void AddCaseStatement(CaseStmtAST* case_stmt)
+		void AddCaseStatement(CaseStmt* case_stmt)
 		{
 			if (case_stmt->IsDefault())
 			{
@@ -362,129 +362,129 @@ namespace lucc
 		}
 
 	private:
-		std::unique_ptr<ExprAST> condition;
-		std::unique_ptr<StmtAST> body_stmt;
-		std::vector<BreakStmtAST*> break_stmts;
-		std::vector<CaseStmtAST*> case_stmts;
+		UniqueExprPtr condition;
+		UniqueStmtPtr body_stmt;
+		BreakStmtPtrList break_stmts;
+		CaseStmtPtrList case_stmts;
 		bool has_default = false;
 	};
-	class WhileStmtAST final : public StmtAST
+	class WhileStmt final : public Stmt
 	{
 	public:
-		WhileStmtAST() : StmtAST(StmtKind::While) {}
+		WhileStmt() : Stmt(StmtKind::While) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
-		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
+		void SetCondition(UniqueExprPtr&& _condition)
 		{
 			condition = std::move(_condition);
 		}
-		void SetBody(std::unique_ptr<StmtAST>&& _body_stmt)
+		void SetBody(UniqueStmtPtr&& _body_stmt)
 		{
 			body_stmt = std::move(_body_stmt);
 		}
 
-		void AddContinueStmt(ContinueStmtAST* continue_stmt)
+		void AddContinueStmt(ContinueStmt* continue_stmt)
 		{
 			continue_stmts.push_back(continue_stmt);
 		}
-		void AddBreakStmt(BreakStmtAST* break_stmt)
+		void AddBreakStmt(BreakStmt* break_stmt)
 		{
 			break_stmts.push_back(break_stmt);
 		}
 
 	private:
-		std::unique_ptr<ExprAST> condition;
-		std::unique_ptr<StmtAST> body_stmt;
-		std::vector<ContinueStmtAST*> continue_stmts;
-		std::vector<BreakStmtAST*> break_stmts;
+		UniqueExprPtr condition;
+		UniqueStmtPtr body_stmt;
+		ContinueStmtPtrList continue_stmts;
+		BreakStmtPtrList break_stmts;
 	};
-	class DoWhileStmtAST final : public StmtAST
+	class DoWhileStmt final : public Stmt
 	{
 	public:
-		DoWhileStmtAST() : StmtAST(StmtKind::DoWhile) {}
+		DoWhileStmt() : Stmt(StmtKind::DoWhile) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
-		void SetCondition(std::unique_ptr<ExprAST>&& _condition)
+		void SetCondition(UniqueExprPtr&& _condition)
 		{
 			condition = std::move(_condition);
 		}
-		void SetBody(std::unique_ptr<StmtAST>&& _body_stmt)
+		void SetBody(UniqueStmtPtr&& _body_stmt)
 		{
 			body_stmt = std::move(_body_stmt);
 		}
 
-		void AddContinueStmt(ContinueStmtAST* continue_stmt)
+		void AddContinueStmt(ContinueStmt* continue_stmt)
 		{
 			continue_stmts.push_back(continue_stmt);
 		}
-		void AddBreakStmt(BreakStmtAST* break_stmt)
+		void AddBreakStmt(BreakStmt* break_stmt)
 		{
 			break_stmts.push_back(break_stmt);
 		}
 
 	private:
-		std::unique_ptr<ExprAST> condition;
-		std::unique_ptr<StmtAST> body_stmt;
-		std::vector<ContinueStmtAST*> continue_stmts;
-		std::vector<BreakStmtAST*> break_stmts;
+		UniqueExprPtr condition;
+		UniqueStmtPtr body_stmt;
+		ContinueStmtPtrList continue_stmts;
+		BreakStmtPtrList break_stmts;
 	};
-	class ForStmtAST final : public StmtAST
+	class ForStmt final : public Stmt
 	{
 	public:
-		ForStmtAST() : StmtAST(StmtKind::For) {}
+		ForStmt() : Stmt(StmtKind::For) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
-		void SetInit(std::unique_ptr<StmtAST>&& _init)
+		void SetInit(UniqueStmtPtr&& _init)
 		{
 			init_stmt = std::move(_init);
 		}
-		void SetCondition(std::unique_ptr<ExprAST>&& _cond_expr)
+		void SetCondition(UniqueExprPtr&& _cond_expr)
 		{
 			cond_expr = std::move(_cond_expr);
 		}
-		void SetIterExpression(std::unique_ptr<ExprAST>&& _iter_expr)
+		void SetIterExpression(UniqueExprPtr&& _iter_expr)
 		{
 			iter_expr = std::move(_iter_expr);
 		}
-		void SetBody(std::unique_ptr<StmtAST>&& _body_stmt)
+		void SetBody(UniqueStmtPtr&& _body_stmt)
 		{
 			body_stmt = std::move(_body_stmt);
 		}
 
-		void AddContinueStmt(ContinueStmtAST* continue_stmt)
+		void AddContinueStmt(ContinueStmt* continue_stmt)
 		{
 			continue_stmts.push_back(continue_stmt);
 		}
-		void AddBreakStmt(BreakStmtAST* break_stmt)
+		void AddBreakStmt(BreakStmt* break_stmt)
 		{
 			break_stmts.push_back(break_stmt);
 		}
 
 	private:
-		std::unique_ptr<StmtAST> init_stmt;
-		std::unique_ptr<ExprAST> cond_expr;
-		std::unique_ptr<ExprAST> iter_expr;
-		std::unique_ptr<StmtAST> body_stmt;
-		std::vector<ContinueStmtAST*> continue_stmts;
-		std::vector<BreakStmtAST*> break_stmts;
+		UniqueStmtPtr init_stmt;
+		UniqueExprPtr cond_expr;
+		UniqueExprPtr iter_expr;
+		UniqueStmtPtr body_stmt;
+		ContinueStmtPtrList continue_stmts;
+		BreakStmtPtrList break_stmts;
 	};
-	class ReturnStmtAST final : public StmtAST
+	class ReturnStmt final : public Stmt
 	{
 	public:
-		explicit ReturnStmtAST(std::unique_ptr<ExprStmtAST>&& ret_expr)
-			: StmtAST(StmtKind::Return), ret_expr(std::move(ret_expr)) {}
+		explicit ReturnStmt(UniqueExprStmtPtr&& ret_expr)
+			: Stmt(StmtKind::Return), ret_expr(std::move(ret_expr)) {}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::unique_ptr <ExprStmtAST> ret_expr;
+		UniqueExprStmtPtr ret_expr;
 	};
 
 	enum class ExprKind
@@ -525,10 +525,10 @@ namespace lucc
 		LValue,
 		RValue
 	};
-	class ExprAST : public NodeAST
+	class Expr : public NodeAST
 	{
 	public:
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 
 		virtual bool IsConstexpr() const { return false; }
 		virtual int64 EvaluateConstexpr() const { return 0; }
@@ -551,26 +551,26 @@ namespace lucc
 		ExprValueCategory value_category = ExprValueCategory::RValue;
 
 	protected:
-		ExprAST(ExprKind kind, SourceLocation const& loc, QualifiedType const& type = builtin_types::Int) : kind(kind), loc(loc), type(type) {}
+		Expr(ExprKind kind, SourceLocation const& loc, QualifiedType const& type = builtin_types::Int) : kind(kind), loc(loc), type(type) {}
 		void SetValueCategory(ExprValueCategory _value_category) { value_category = _value_category; }
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
 		void SetType(QualifiedType const& _type) { type = _type; }
 	};
 
-	class UnaryExprAST : public ExprAST
+	class UnaryExpr : public Expr
 	{
 	public:
-		UnaryExprAST(UnaryExprKind op, SourceLocation const& loc) : ExprAST(ExprKind::Unary, loc), op(op), operand(nullptr)
+		UnaryExpr(UnaryExprKind op, SourceLocation const& loc) : Expr(ExprKind::Unary, loc), op(op), operand(nullptr)
 		{}
-		void SetOperand(std::unique_ptr<ExprAST>&& _operand)
+		void SetOperand(UniqueExprPtr&& _operand)
 		{
 			operand = std::move(_operand);
 			SetExpressionType();
 		}
 		UnaryExprKind GetUnaryKind() const { return op; }
-		ExprAST* GetOperand() const { return operand.get(); }
+		Expr* GetOperand() const { return operand.get(); }
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 		virtual bool IsConstexpr() const override;
@@ -578,65 +578,65 @@ namespace lucc
 
 	private:
 		UnaryExprKind op;
-		std::unique_ptr<ExprAST> operand;
+		UniqueExprPtr operand;
 
 	private:
 		void SetExpressionType();
 	};
-	class BinaryExprAST : public ExprAST
+	class BinaryExpr : public Expr
 	{
 	public:
-		BinaryExprAST(BinaryExprKind op, SourceLocation const& loc) : ExprAST(ExprKind::Binary, loc), op(op) {}
-		void SetLHS(std::unique_ptr<ExprAST>&& _lhs) { lhs = std::move(_lhs); }
-		void SetRHS(std::unique_ptr<ExprAST>&& _rhs) {
+		BinaryExpr(BinaryExprKind op, SourceLocation const& loc) : Expr(ExprKind::Binary, loc), op(op) {}
+		void SetLHS(UniqueExprPtr&& _lhs) { lhs = std::move(_lhs); }
+		void SetRHS(UniqueExprPtr&& _rhs) {
 			rhs = std::move(_rhs); SetExpressionType();
 		}
 
 		BinaryExprKind GetBinaryKind() const { return op; }
-		ExprAST* GetLHS() const { return lhs.get(); }
-		ExprAST* GetRHS() const { return rhs.get(); }
+		Expr* GetLHS() const { return lhs.get(); }
+		Expr* GetRHS() const { return rhs.get(); }
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 		virtual bool IsConstexpr() const override;
 		virtual int64 EvaluateConstexpr() const override;
 
 	private:
-		std::unique_ptr<ExprAST> lhs, rhs;
+		UniqueExprPtr lhs, rhs;
 		BinaryExprKind op;
 
 	private:
 		void SetExpressionType();
 	};
-	class TernaryExprAST : public ExprAST
+	class TernaryExpr : public Expr
 	{
 	public:
-		explicit TernaryExprAST(SourceLocation const& loc) : ExprAST(ExprKind::Ternary, loc),
+		explicit TernaryExpr(SourceLocation const& loc) : Expr(ExprKind::Ternary, loc),
 			cond_expr(std::move(cond_expr)),
 			true_expr(std::move(true_expr)),
 			false_expr(std::move(false_expr))
 		{}
 
-		void SetCondition(std::unique_ptr<ExprAST>&& expr) { cond_expr = std::move(expr); }
-		void SetTrueExpr(std::unique_ptr<ExprAST>&& expr) { true_expr = std::move(expr); }
-		void SetFalseExpr(std::unique_ptr<ExprAST>&& expr) { false_expr = std::move(expr); }
+		void SetCondition(UniqueExprPtr&& expr) { cond_expr = std::move(expr); }
+		void SetTrueExpr(UniqueExprPtr&& expr) { true_expr = std::move(expr); }
+		void SetFalseExpr(UniqueExprPtr&& expr) { false_expr = std::move(expr); }
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 		virtual bool IsConstexpr() const override;
 		virtual int64 EvaluateConstexpr() const override;
 
 	private:
-		std::unique_ptr<ExprAST> cond_expr;
-		std::unique_ptr<ExprAST> true_expr;
-		std::unique_ptr<ExprAST> false_expr;
+		UniqueExprPtr cond_expr;
+		UniqueExprPtr true_expr;
+		UniqueExprPtr false_expr;
 	};
 
-	class FunctionCallExprAST final : public ExprAST
+	class FunctionCallExpr final : public Expr
 	{
 	public:
-		FunctionCallExprAST(std::unique_ptr<ExprAST>&& func, SourceLocation const& loc)
-			: ExprAST(ExprKind::FunctionCall, loc), func_expr(std::move(func))
+		FunctionCallExpr(UniqueExprPtr&& func, SourceLocation const& loc)
+			: Expr(ExprKind::FunctionCall, loc), func_expr(std::move(func))
 		{
 			auto const& type = func_expr->GetType();
 			if (FunctionType const* func_type = type->TryAs<FunctionType>())
@@ -654,26 +654,26 @@ namespace lucc
 			}
 			else LU_ASSERT(false);
 		}
-		void AddArgument(std::unique_ptr<ExprAST>&& arg)
+		void AddArgument(UniqueExprPtr&& arg)
 		{
 			func_args.push_back(std::move(arg));
 		}
 
-		ExprAST* GetFunction() const { return func_expr.get(); }
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		Expr* GetFunction() const { return func_expr.get(); }
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::unique_ptr<ExprAST> func_expr;
-		std::vector<std::unique_ptr<ExprAST>> func_args;
+		UniqueExprPtr func_expr;
+		UniqueExprPtrList func_args;
 	};
-	class IntLiteralAST final : public ExprAST
+	class IntLiteral final : public Expr
 	{
 	public:
-		IntLiteralAST(int64 value, SourceLocation const& loc) : ExprAST(ExprKind::IntLiteral, loc, builtin_types::Int), value(value) {}
+		IntLiteral(int64 value, SourceLocation const& loc) : Expr(ExprKind::IntLiteral, loc, builtin_types::Int), value(value) {}
 		int64 GetValue() const { return value; }
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 		virtual bool IsConstexpr() const override;
 		virtual int64 EvaluateConstexpr() const override;
@@ -681,38 +681,38 @@ namespace lucc
 	private:
 		int64 value;
 	};
-	class StringLiteralAST final : public ExprAST
+	class StringLiteral final : public Expr
 	{
 	public:
-		StringLiteralAST(std::string_view str, SourceLocation const& loc) : ExprAST(ExprKind::StringLiteral, loc, QualifiedType(ArrayType(builtin_types::Char, (uint32)str.size()))), str(str) {}
+		StringLiteral(std::string_view str, SourceLocation const& loc) : Expr(ExprKind::StringLiteral, loc, QualifiedType(ArrayType(builtin_types::Char, (uint32)str.size()))), str(str) {}
 		std::string_view GetString() const { return str; }
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
 		std::string str;
 	};
 
-	class CastExprAST : public ExprAST
+	class CastExpr : public Expr
 	{
 	public:
-		CastExprAST(SourceLocation const& loc, QualifiedType const& qtype) 
-			: ExprAST(ExprKind::Cast, loc, qtype), operand(nullptr) 
+		CastExpr(SourceLocation const& loc, QualifiedType const& qtype) 
+			: Expr(ExprKind::Cast, loc, qtype), operand(nullptr) 
 		{
 			SetValueCategory(ExprValueCategory::RValue);
 		}
-		void SetOperand(std::unique_ptr<ExprAST>&& _operand)
+		void SetOperand(UniqueExprPtr&& _operand)
 		{
 			operand = std::move(_operand);
 			SetCastType();
 		}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		std::unique_ptr<ExprAST> operand;
+		UniqueExprPtr operand;
 
 	private:
 		//// C11 6.5.4 Cast operators
@@ -730,13 +730,13 @@ namespace lucc
 		*/
 		void SetCastType();
 	};
-	class IdentifierExprAST : public ExprAST
+	class IdentifierExpr : public Expr
 	{
 	public:
 		std::string_view GetName() const { return name; }
 
 	protected:
-		explicit IdentifierExprAST(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : ExprAST(ExprKind::DeclRef, loc, type), name(name)
+		explicit IdentifierExpr(std::string_view name, SourceLocation const& loc, QualifiedType const& type) : Expr(ExprKind::DeclRef, loc, type), name(name)
 		{
 			SetValueCategory(ExprValueCategory::LValue);
 		}
@@ -746,10 +746,10 @@ namespace lucc
 	private:
 		std::string name;
 	};
-	class DeclRefExprAST : public IdentifierExprAST
+	class DeclRefExpr : public IdentifierExpr
 	{
 	public:
-		DeclRefExprAST(DeclAST* decl_ast, SourceLocation const& loc) : IdentifierExprAST(decl_ast->GetName(), loc, decl_ast->GetType()),
+		DeclRefExpr(Decl* decl_ast, SourceLocation const& loc) : IdentifierExpr(decl_ast->GetName(), loc, decl_ast->GetType()),
 			decl_ast(decl_ast)  {}
 
 		DeclSymbol const& GetSymbol() const { return decl_ast->GetSymbol(); }
@@ -759,19 +759,19 @@ namespace lucc
 			return decl_ast->GetLocalOffset();
 		}
 
-		DeclAST const* GetDeclaration() const { return decl_ast; }
+		Decl const* GetDeclaration() const { return decl_ast; }
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	protected:
-		DeclAST* decl_ast;
+		Decl* decl_ast;
 	};
-	class MemberRefExprAST final : public DeclRefExprAST
+	class MemberRefExpr final : public DeclRefExpr
 	{
 	public:
-		MemberRefExprAST(DeclAST* decl_ast, std::string_view member_name, SourceLocation const& loc)
-			: DeclRefExprAST(decl_ast, loc), member_name(member_name)
+		MemberRefExpr(Decl* decl_ast, std::string_view member_name, SourceLocation const& loc)
+			: DeclRefExpr(decl_ast, loc), member_name(member_name)
 		{
 			SetValueCategory(ExprValueCategory::LValue);
 			SetMemberType();
@@ -785,7 +785,7 @@ namespace lucc
 			return decl_ast->GetLocalOffset() + member_offset;
 		}
 
-		virtual void Accept(IVisitorAST& visitor, uint32 depth) const override;
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
@@ -806,29 +806,29 @@ namespace lucc
 
 	struct AST
 	{
-		AST() { translation_unit = std::make_unique<TranslationUnitAST>(); }
-		std::unique_ptr<TranslationUnitAST> translation_unit;
+		AST() { translation_unit = MakeUnique<TranslationUnit>(); }
+		UniqueTranslationUnitPtr translation_unit;
 	};
 
-	inline std::unique_ptr<ExprAST> GetAssignExpr(std::unique_ptr<ExprAST>&& init_expr, QualifiedType const& type)
+	inline UniqueExprPtr GetAssignExpr(UniqueExprPtr&& init_expr, QualifiedType const& type)
 	{
 		QualifiedType expr_type = ValueTransformation(init_expr->GetType());
 		QualifiedType ret_type = RemoveQualifiers(type);
 		if (expr_type->IsCompatible(ret_type)) return init_expr;
 		QualifiedType assign_type = AsIfByAssignment(expr_type, ret_type);
-		std::unique_ptr<CastExprAST> cast_expr = std::make_unique<CastExprAST>(init_expr->GetLocation(), assign_type);
+		UniqueCastExprPtr cast_expr = MakeUnique<CastExpr>(init_expr->GetLocation(), assign_type);
 		cast_expr->SetOperand(std::move(init_expr));
 		return cast_expr;
 	}
-	inline std::unique_ptr<ExprStmtAST> GetAssignExprStmt(std::unique_ptr<ExprStmtAST>&& init_expr, QualifiedType const& type)
+	inline UniqueExprStmtPtr GetAssignExprStmt(UniqueExprStmtPtr&& init_expr, QualifiedType const& type)
 	{
 		QualifiedType expr_type = ValueTransformation(init_expr->GetExpr()->GetType());
 		QualifiedType ret_type = RemoveQualifiers(type);
 		if (expr_type->IsCompatible(ret_type)) return init_expr;
 		QualifiedType assign_type = AsIfByAssignment(expr_type, ret_type);
-		std::unique_ptr<CastExprAST> cast_expr = std::make_unique<CastExprAST>(init_expr->GetExpr()->GetLocation(), assign_type);
-		std::unique_ptr<ExprAST> expr(init_expr.release()->GetExpr());
+		UniqueCastExprPtr cast_expr = MakeUnique<CastExpr>(init_expr->GetExpr()->GetLocation(), assign_type);
+		UniqueExprPtr expr(init_expr.release()->GetExpr());
 		cast_expr->SetOperand(std::move(expr));
-		return std::make_unique<ExprStmtAST>(std::move(cast_expr));
+		return MakeUnique<ExprStmt>(std::move(cast_expr));
 	}
 }

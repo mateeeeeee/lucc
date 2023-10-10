@@ -34,7 +34,7 @@ namespace lucc
 		bool is_enum = false;
 		int32 enum_value = 0;
 
-		class DeclAST* decl_ast = nullptr;
+		class Decl* decl_ast = nullptr;
 	};
 	struct TagSymbol
 	{
@@ -48,6 +48,7 @@ namespace lucc
 	{
 		using SymType = T;
 	public:
+		Scope() {}
 		
 		bool Insert(SymType const& symbol)
 		{

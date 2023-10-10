@@ -56,7 +56,7 @@
     <ClCompile Include="Backend\x86_64Context.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\DebugVisitorAST.cpp">
+    <ClCompile Include="Utility\DebugVisitor.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
     <ClCompile Include="Frontend\Diagnostics.cpp">
@@ -107,7 +107,7 @@
     <ClInclude Include="Backend\x86_64.h">
       <Filter>Backend</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\DebugVisitorAST.h">
+    <ClInclude Include="Utility\DebugVisitor.h">
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="Utility\Enums.h">
@@ -131,10 +131,10 @@
     <ClInclude Include="Core\Logger.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Frontend\ForwardAST.h">
+    <ClInclude Include="Frontend\ASTForwardDeclarations.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
-    <ClInclude Include="Frontend\IVisitorAST.h">
+    <ClInclude Include="Frontend\ASTVisitor.h">
       <Filter>Frontend\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Backend\ASTCodegen.h">
@@ -142,6 +142,9 @@
     </ClInclude>
     <ClInclude Include="Utility\Singleton.h">
       <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\ASTTypeAliases.h">
+      <Filter>Frontend\Parser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

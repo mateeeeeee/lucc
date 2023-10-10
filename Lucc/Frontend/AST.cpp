@@ -3,56 +3,56 @@
 
 namespace lucc
 {
-	void TranslationUnitAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void TranslationUnit::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& decl : declarations) decl->Accept(visitor, depth + 1);
 	}
 
-	void DeclAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void Decl::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void VariableDeclAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void VariableDecl::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (init_expr) init_expr->Accept(visitor, depth + 1);
 	}
-	void FunctionDeclAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void FunctionDecl::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& param : param_decls) param->Accept(visitor, depth + 1);
 		if (body) body->Accept(visitor, depth + 1);
 	}
-	void TypedefDeclAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void TypedefDecl::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void StmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void Stmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(false);
 	}
-	void NullStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void NullStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void ExprStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void ExprStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (expr) expr->Accept(visitor, depth + 1);
 	}
-	void CompoundStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void CompoundStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for (auto&& stmt : statements) stmt->Accept(visitor, depth + 1);
 	}
-	void DeclStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void DeclStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		for(auto&& decl : decls) decl->Accept(visitor, depth + 1);
 	}
-	void IfStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void IfStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && then_stmt);
 		visitor.Visit(*this, depth);
@@ -60,32 +60,32 @@ namespace lucc
 		then_stmt->Accept(visitor, depth + 1);
 		if (else_stmt) else_stmt->Accept(visitor, depth + 1);
 	}
-	void WhileStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void WhileStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
 		condition->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-	void DoWhileStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void DoWhileStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
 		condition->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-	void SwitchStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void SwitchStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
 		condition->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-	void CaseStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void CaseStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void ForStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void ForStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(body_stmt);
 		visitor.Visit(*this, depth);
@@ -94,36 +94,36 @@ namespace lucc
 		if (iter_expr) iter_expr->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
-	void ReturnStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void ReturnStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		if (ret_expr) ret_expr->Accept(visitor, depth + 1);
 	}
-	void GotoStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void GotoStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void LabelStmtAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void LabelStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
 
-	void ExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void Expr::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(false);
 	}
-	void UnaryExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void UnaryExpr::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		operand->Accept(visitor, depth + 1);
 	}
-	void BinaryExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void BinaryExpr::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		lhs->Accept(visitor, depth + 1);
 		rhs->Accept(visitor, depth + 1);
 	}
-	void TernaryExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void TernaryExpr::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(cond_expr && true_expr && false_expr);
 		visitor.Visit(*this, depth);
@@ -131,40 +131,40 @@ namespace lucc
 		true_expr->Accept(visitor, depth + 1);
 		false_expr->Accept(visitor, depth + 1);
 	}
-	void FunctionCallExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void FunctionCallExpr::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		func_expr->Accept(visitor, depth + 1);
 		for (auto const& arg : func_args) arg->Accept(visitor, depth + 1);
 	}
-	void IntLiteralAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void IntLiteral::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void StringLiteralAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void StringLiteral::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void DeclRefExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void DeclRefExpr::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void MemberRefExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void MemberRefExpr::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 	}
-	void CastExprAST::Accept(IVisitorAST& visitor, uint32 depth) const
+	void CastExpr::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		visitor.Visit(*this, depth);
 		operand->Accept(visitor, depth + 1);
 	}
 
 
-	bool UnaryExprAST::IsConstexpr() const
+	bool UnaryExpr::IsConstexpr() const
 	{
 		return operand->IsConstexpr();
 	}
-	int64 UnaryExprAST::EvaluateConstexpr() const
+	int64 UnaryExpr::EvaluateConstexpr() const
 	{
 		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
 		switch (op)
@@ -183,11 +183,11 @@ namespace lucc
 		return 0;
 	}
 
-	bool BinaryExprAST::IsConstexpr() const
+	bool BinaryExpr::IsConstexpr() const
 	{
 		return lhs->IsConstexpr() && rhs->IsConstexpr();
 	}
-	int64 BinaryExprAST::EvaluateConstexpr() const
+	int64 BinaryExpr::EvaluateConstexpr() const
 	{
 		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
 
@@ -237,30 +237,30 @@ namespace lucc
 		return 0;
 	}
 
-	bool TernaryExprAST::IsConstexpr() const
+	bool TernaryExpr::IsConstexpr() const
 	{
 		if (!cond_expr->IsConstexpr()) return false;
 		if (cond_expr->EvaluateConstexpr()) return true_expr->IsConstexpr();
 		else return false_expr->IsConstexpr();
 	}
-	int64 TernaryExprAST::EvaluateConstexpr() const
+	int64 TernaryExpr::EvaluateConstexpr() const
 	{
 		LU_ASSERT_MSG(IsConstexpr(), "Cannot call EvaluateConstexpr on Expr that isn't constexpr");
 		if (cond_expr->EvaluateConstexpr()) return true_expr->EvaluateConstexpr();
 		else return false_expr->EvaluateConstexpr();
 	}
 
-	bool IntLiteralAST::IsConstexpr() const
+	bool IntLiteral::IsConstexpr() const
 	{
 		return true;
 	}
-	int64 IntLiteralAST::EvaluateConstexpr() const
+	int64 IntLiteral::EvaluateConstexpr() const
 	{
 		return value;
 	}
 
 
-	void UnaryExprAST::SetExpressionType()
+	void UnaryExpr::SetExpressionType()
 	{
 		g_Diagnostics.SetDefaultLocation(GetLocation());
 		QualifiedType const& op_type = operand->GetType();
@@ -294,7 +294,7 @@ namespace lucc
 			LU_ASSERT(false);
 		}
 	}
-	void BinaryExprAST::SetExpressionType()
+	void BinaryExpr::SetExpressionType()
 	{
 		g_Diagnostics.SetDefaultLocation(GetLocation());
 		switch (op)
@@ -335,7 +335,7 @@ namespace lucc
 			LU_ASSERT(false);
 		}
 	}
-	void CastExprAST::SetCastType()
+	void CastExpr::SetCastType()
 	{
 		g_Diagnostics.SetDefaultLocation(GetLocation());
 		QualifiedType operand_type = ValueTransformation(operand->GetType());

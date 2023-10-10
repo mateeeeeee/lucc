@@ -1,82 +1,86 @@
-[2023-10-10 01:09:24.660] [lucc logger] [debug] After lexer:
+[2023-10-10 21:07:39.921] [lucc logger] [debug] After lexer:
 
-[2023-10-10 01:09:24.661] [lucc logger] [debug] Type: PP_define	Value: define
+[2023-10-10 21:07:39.923] [lucc logger] [debug] Type: PP_define	Value: define
 
-[2023-10-10 01:09:24.661] [lucc logger] [debug] Type: identifier	Value: NULL
+[2023-10-10 21:07:39.923] [lucc logger] [debug] Type: identifier	Value: NULL
 
-[2023-10-10 01:09:24.661] [lucc logger] [debug] Type: left_round	Value: 
+[2023-10-10 21:07:39.923] [lucc logger] [debug] Type: left_round	Value: 
 
-[2023-10-10 01:09:24.661] [lucc logger] [debug] Type: KW_void	Value: void
+[2023-10-10 21:07:39.923] [lucc logger] [debug] Type: KW_void	Value: void
 
-[2023-10-10 01:09:24.662] [lucc logger] [debug] Type: star	Value: 
+[2023-10-10 21:07:39.923] [lucc logger] [debug] Type: star	Value: 
 
-[2023-10-10 01:09:24.662] [lucc logger] [debug] Type: right_round	Value: 
+[2023-10-10 21:07:39.923] [lucc logger] [debug] Type: right_round	Value: 
 
-[2023-10-10 01:09:24.662] [lucc logger] [debug] Type: number	Value: 0
+[2023-10-10 21:07:39.924] [lucc logger] [debug] Type: number	Value: 0
 
-[2023-10-10 01:09:24.662] [lucc logger] [debug] Type: newline	Value: 
+[2023-10-10 21:07:39.924] [lucc logger] [debug] Type: newline	Value: 
 
-[2023-10-10 01:09:24.662] [lucc logger] [debug] Type: KW_typedef	Value: typedef
+[2023-10-10 21:07:39.924] [lucc logger] [debug] Type: KW_int	Value: int
 
-[2023-10-10 01:09:24.662] [lucc logger] [debug] Type: KW_int	Value: int
+[2023-10-10 21:07:39.924] [lucc logger] [debug] Type: identifier	Value: main
 
-[2023-10-10 01:09:24.662] [lucc logger] [debug] Type: identifier	Value: t
+[2023-10-10 21:07:39.924] [lucc logger] [debug] Type: left_round	Value: 
 
-[2023-10-10 01:09:24.662] [lucc logger] [debug] Type: semicolon	Value: 
+[2023-10-10 21:07:39.924] [lucc logger] [debug] Type: KW_void	Value: void
 
-[2023-10-10 01:09:24.663] [lucc logger] [debug] Type: identifier	Value: t
+[2023-10-10 21:07:39.924] [lucc logger] [debug] Type: right_round	Value: 
 
-[2023-10-10 01:09:24.663] [lucc logger] [debug] Type: identifier	Value: x
+[2023-10-10 21:07:39.925] [lucc logger] [debug] Type: left_brace	Value: 
 
-[2023-10-10 01:09:24.663] [lucc logger] [debug] Type: equal	Value: 
+[2023-10-10 21:07:39.925] [lucc logger] [debug] Type: KW_return	Value: return
 
-[2023-10-10 01:09:24.663] [lucc logger] [debug] Type: number	Value: 12
+[2023-10-10 21:07:39.925] [lucc logger] [debug] Type: number	Value: 42
 
-[2023-10-10 01:09:24.663] [lucc logger] [debug] Type: semicolon	Value: 
+[2023-10-10 21:07:39.925] [lucc logger] [debug] Type: semicolon	Value: 
 
-[2023-10-10 01:09:24.663] [lucc logger] [debug] Type: KW_return	Value: return
+[2023-10-10 21:07:39.925] [lucc logger] [debug] Type: right_brace	Value: 
 
-[2023-10-10 01:09:24.664] [lucc logger] [debug] Type: identifier	Value: x
+[2023-10-10 21:07:39.925] [lucc logger] [debug] Type: eof	Value: 
 
-[2023-10-10 01:09:24.664] [lucc logger] [debug] Type: semicolon	Value: 
-
-[2023-10-10 01:09:24.664] [lucc logger] [debug] Type: eof	Value: 
-
-[2023-10-10 01:09:24.664] [lucc logger] [debug] 
+[2023-10-10 21:07:39.926] [lucc logger] [debug] 
 
 
-[2023-10-10 01:09:24.664] [lucc logger] [debug] 
+[2023-10-10 21:07:39.926] [lucc logger] [debug] 
 
 After preprocessor:
 
-[2023-10-10 01:09:24.664] [lucc logger] [debug] Type: KW_typedef	Value: typedef
+[2023-10-10 21:07:39.926] [lucc logger] [debug] Type: KW_int	Value: int
 
-[2023-10-10 01:09:24.665] [lucc logger] [debug] Type: KW_int	Value: int
+[2023-10-10 21:07:39.926] [lucc logger] [debug] Type: identifier	Value: main
 
-[2023-10-10 01:09:24.665] [lucc logger] [debug] Type: identifier	Value: t
+[2023-10-10 21:07:39.926] [lucc logger] [debug] Type: left_round	Value: 
 
-[2023-10-10 01:09:24.665] [lucc logger] [debug] Type: semicolon	Value: 
+[2023-10-10 21:07:39.926] [lucc logger] [debug] Type: KW_void	Value: void
 
-[2023-10-10 01:09:24.665] [lucc logger] [debug] Type: identifier	Value: t
+[2023-10-10 21:07:39.927] [lucc logger] [debug] Type: right_round	Value: 
 
-[2023-10-10 01:09:24.665] [lucc logger] [debug] Type: identifier	Value: x
+[2023-10-10 21:07:39.927] [lucc logger] [debug] Type: left_brace	Value: 
 
-[2023-10-10 01:09:24.665] [lucc logger] [debug] Type: equal	Value: 
+[2023-10-10 21:07:39.927] [lucc logger] [debug] Type: KW_return	Value: return
 
-[2023-10-10 01:09:24.665] [lucc logger] [debug] Type: number	Value: 12
+[2023-10-10 21:07:39.927] [lucc logger] [debug] Type: number	Value: 42
 
-[2023-10-10 01:09:24.666] [lucc logger] [debug] Type: semicolon	Value: 
+[2023-10-10 21:07:39.927] [lucc logger] [debug] Type: semicolon	Value: 
 
-[2023-10-10 01:09:24.666] [lucc logger] [debug] Type: KW_return	Value: return
+[2023-10-10 21:07:39.927] [lucc logger] [debug] Type: right_brace	Value: 
 
-[2023-10-10 01:09:24.666] [lucc logger] [debug] Type: identifier	Value: x
+[2023-10-10 21:07:39.927] [lucc logger] [debug] Type: eof	Value: 
 
-[2023-10-10 01:09:24.666] [lucc logger] [debug] Type: semicolon	Value: 
-
-[2023-10-10 01:09:24.666] [lucc logger] [debug] Type: eof	Value: 
-
-[2023-10-10 01:09:24.666] [lucc logger] [debug] 
+[2023-10-10 21:07:39.928] [lucc logger] [debug] 
 
 
-[2023-10-10 01:09:29.468] [lucc logger] [error] [Diagnostics][Error]: Declarator specifier error in file  at line: 2, col: 24
+[2023-10-10 21:07:39.928] [lucc logger] [debug] AST Traversal:
+
+[2023-10-10 21:07:39.928] [lucc logger] [debug] TranslationUnitAST 
+
+[2023-10-10 21:07:39.928] [lucc logger] [debug] `->FunctionDeclAST, type: main
+
+[2023-10-10 21:07:39.929] [lucc logger] [debug]    `->CompoundStmtAST 
+
+[2023-10-10 21:07:39.929] [lucc logger] [debug]       `->ReturnStmtAST 
+
+[2023-10-10 21:07:39.929] [lucc logger] [debug]          `->ExprStmtAST 
+
+[2023-10-10 21:07:39.929] [lucc logger] [debug]             `->IntegerLiteralAST, Value: 42
 

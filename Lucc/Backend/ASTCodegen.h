@@ -87,42 +87,42 @@ namespace lucc
 		}
 	}
 
-	class VarDeclVisitorAST : public IVisitorAST
+	class VarDeclVisitor : public ASTVisitor
 	{
 	public:
-		VarDeclVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
-		virtual void Visit(VariableDeclAST const& node, uint32 depth) override
+		VarDeclVisitor(FunctionDecl* func_ref) : func_ref(func_ref) {}
+		virtual void Visit(VariableDecl const& node, uint32 depth) override
 		{
 			func_ref->AddLocalDeclaration(&node);
 		}
 
 	private:
-		FunctionDeclAST* func_ref;
+		FunctionDecl* func_ref;
 	};
-	class FunctionCallVisitorAST : public IVisitorAST
+	class FunctionCallVisitor : public ASTVisitor
 	{
 	public:
-		FunctionCallVisitorAST(FunctionDeclAST* func_ref) : func_ref(func_ref) {}
-		virtual void Visit(FunctionCallExprAST const& node, uint32 depth) override
+		FunctionCallVisitor(FunctionDecl* func_ref) : func_ref(func_ref) {}
+		virtual void Visit(FunctionCallExpr const& node, uint32 depth) override
 		{
 			func_ref->AddFunctionCall(&node);
 		}
 
 	private:
-		FunctionDeclAST* func_ref;
+		FunctionDecl* func_ref;
 	};
 
-	void FunctionDeclAST::AssignLocalOffsets()
+	void FunctionDecl::AssignLocalOffsets()
 	{
-		FunctionCallVisitorAST func_call_visitor(this);
+		FunctionCallVisitor func_call_visitor(this);
 		body->Accept(func_call_visitor, 0);
-		VarDeclVisitorAST var_decl_visitor(this);
+		VarDeclVisitor var_decl_visitor(this);
 		body->Accept(var_decl_visitor, 0);
 
 		int32 top = 16;
 		for (uint32 i = ARGUMENTS_PASSED_BY_REGISTERS; i < (uint32)param_decls.size(); ++i)
 		{
-			VariableDeclAST* param = param_decls[i].get();
+			VariableDecl* param = param_decls[i].get();
 			top = LU_ALIGN(top, 8);
 			param->SetLocalOffset(top);
 			top += (int32)param->GetSymbol().qtype->GetSize();
@@ -130,7 +130,7 @@ namespace lucc
 
 		for (uint32 i = 0; i < std::min<uint32>(ARGUMENTS_PASSED_BY_REGISTERS, (uint32)param_decls.size()); ++i)
 		{
-			VariableDeclAST* param = param_decls[i].get();
+			VariableDecl* param = param_decls[i].get();
 			top = LU_ALIGN(top, 8);
 			param->SetLocalOffset(top);
 			top += (int32)param->GetSymbol().qtype->GetSize();
@@ -140,7 +140,7 @@ namespace lucc
 		int32 local_stack_space = 0;
 		for (auto it = local_variables.rbegin(); it != local_variables.rend(); ++it)
 		{
-			VariableDeclAST const* local_var = *it;
+			VariableDecl const* local_var = *it;
 			int32 local_var_align = (int32)local_var->GetSymbol().qtype->GetAlign();
 			int32 local_var_size = (int32)local_var->GetSymbol().qtype->GetSize();
 			bottom += local_var_size;
@@ -150,11 +150,11 @@ namespace lucc
 		}
 		stack_size = LU_ALIGN(local_stack_space, 16);
 	}
-	void TranslationUnitAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void TranslationUnit::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		for (auto const& decl : declarations) decl->Codegen(ctx);
 	}
-	void VariableDeclAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void VariableDecl::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!IsGlobal())
 		{
@@ -166,7 +166,7 @@ namespace lucc
 				Result var_res(Register::RBP, local_offset);
 				if (init_expr->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(init_expr.get());
+					IntLiteral* int_literal = ast_cast<IntLiteral>(init_expr.get());
 					ctx.Mov(var_res, int_literal->GetValue(), bitcount);
 					if (result) ctx.Mov(*result, int_literal->GetValue(), bitcount);
 				}
@@ -228,7 +228,7 @@ namespace lucc
 			}
 		}
 	}
-	void FunctionDeclAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void FunctionDecl::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		FunctionDeclCG func_decl
 		{
@@ -244,7 +244,7 @@ namespace lucc
 
 		for (uint32 i = 0; i < std::min<uint32>(ARGUMENTS_PASSED_BY_REGISTERS, (uint32)param_decls.size()); ++i)
 		{
-			VariableDeclAST* param_var = param_decls[i].get();
+			VariableDecl* param_var = param_decls[i].get();
 			BitCount bitcount = GetBitCount(param_var->GetSymbol().qtype->GetSize());
 			Register arg_reg = ctx.GetCallRegister(i);
 			ctx.Mov(Result(RBP, param_var->GetLocalOffset()), arg_reg, bitcount);
@@ -258,15 +258,15 @@ namespace lucc
 		return;
 	}
 
-	void ExprStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void ExprStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (expr) expr->Codegen(ctx, result);
 	}
-	void CompoundStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void CompoundStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		for (auto& stmt : statements) stmt->Codegen(ctx);
 	}
-	void IfStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void IfStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		static char const* else_label = "L_else";
 		static char const* end_label = "L_end";
@@ -283,7 +283,7 @@ namespace lucc
 		ctx.Label(end_label, label_id);
 		ctx.FreeRegister(cond_reg);
 	}
-	void ReturnStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void ReturnStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		//#todo handle cast when return type and type of return expr are not the same
 
@@ -302,13 +302,13 @@ namespace lucc
 			ctx.FreeRegister(return_reg);
 		}
 	}
-	void WhileStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void WhileStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		static char const* start_label = "L_start";
 		static char const* end_label = "L_end";
 		uint64 label_id = ctx.GenerateLabelId();
-		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
-		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+		for (ContinueStmt* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
+		for (BreakStmt* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
 
 		ctx.Label(start_label, label_id);
 		Register cond_reg = ctx.AllocateRegister();
@@ -320,13 +320,13 @@ namespace lucc
 		ctx.Label(end_label, label_id);
 		ctx.FreeRegister(cond_reg);
 	}
-	void DoWhileStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void DoWhileStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		static char const* start_label = "L_start";
 		static char const* end_label = "L_end";
 		uint64 label_id = ctx.GenerateLabelId();
-		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
-		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+		for (ContinueStmt* continue_stmt : continue_stmts) continue_stmt->SetLabel(start_label, label_id);
+		for (BreakStmt* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
 
 		ctx.Label(start_label, label_id);
 		body_stmt->Codegen(ctx);
@@ -338,18 +338,18 @@ namespace lucc
 		ctx.Label(end_label, label_id);
 		ctx.FreeRegister(cond_reg);
 	}
-	void DeclStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void DeclStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		for (auto const& decl : decls) decl->Codegen(ctx);
 	}
-	void ForStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void ForStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		static char const* start_label = "L_start";
 		static char const* end_label = "L_end";
 		static char const* iter_label = "L_iter";
 		uint64 label_id = ctx.GenerateLabelId();
-		for (ContinueStmtAST* continue_stmt : continue_stmts) continue_stmt->SetLabel(iter_label, label_id);
-		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+		for (ContinueStmt* continue_stmt : continue_stmts) continue_stmt->SetLabel(iter_label, label_id);
+		for (BreakStmt* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
 
 		if (init_stmt) init_stmt->Codegen(ctx);
 		ctx.Label(start_label, label_id);
@@ -364,36 +364,36 @@ namespace lucc
 		ctx.Label(end_label, label_id);
 		ctx.FreeRegister(cond_reg);
 	}
-	void BreakStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void BreakStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		ctx.Jmp(label_name.c_str(), label_id);
 	}
-	void ContinueStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void ContinueStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		ctx.Jmp(label_name.c_str(), label_id);
 	}
-	void GotoStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void GotoStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		ctx.Jmp(goto_label.c_str());
 	}
-	void LabelStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void LabelStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		ctx.Label(label_name.c_str());
 	}
-	void SwitchStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void SwitchStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		static char const* end_label = "L_end";
 		uint64 label_id = ctx.GenerateLabelId();
-		for (BreakStmtAST* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
-		for (CaseStmtAST* case_stmt : case_stmts) case_stmt->SetSwitchId(label_id);
+		for (BreakStmt* break_stmt : break_stmts) break_stmt->SetLabel(end_label, label_id);
+		for (CaseStmt* case_stmt : case_stmts) case_stmt->SetSwitchId(label_id);
 
 		Register cond_reg = ctx.AllocateRegister();
 		condition->Codegen(ctx, &cond_reg);
 
 		BitCount bitmode = GetBitCount(condition->GetType()->GetSize());
 
-		CaseStmtAST* default_case = nullptr;
-		for (CaseStmtAST* case_stmt : case_stmts)
+		CaseStmt* default_case = nullptr;
+		for (CaseStmt* case_stmt : case_stmts)
 		{
 			if (!case_stmt->IsDefault())
 			{
@@ -412,12 +412,12 @@ namespace lucc
 		ctx.Label(end_label, label_id);
 		ctx.FreeRegister(cond_reg);
 	}
-	void CaseStmtAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void CaseStmt::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		ctx.Label(label_name.c_str(), switch_id);
 	}
 
-	void UnaryExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void UnaryExpr::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		uint32 type_size = GetType()->GetSize();
 		BitCount bitcount = GetBitCount(type_size);
@@ -446,7 +446,7 @@ namespace lucc
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
+					DeclRefExpr* decl_ref = ast_cast<DeclRefExpr>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -479,7 +479,7 @@ namespace lucc
 			{
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
+					DeclRefExpr* decl_ref = ast_cast<DeclRefExpr>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -498,9 +498,9 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::Unary) //#todo fix this
 				{
-					UnaryExprAST* unary_expr = ast_cast<UnaryExprAST>(operand.get());
+					UnaryExpr* unary_expr = ast_cast<UnaryExpr>(operand.get());
 					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
-					ExprAST* dereference_operand = unary_expr->GetOperand();
+					Expr* dereference_operand = unary_expr->GetOperand();
 
 					Register address_reg = ctx.AllocateRegister();
 					dereference_operand->Codegen(ctx, &address_reg);
@@ -537,7 +537,7 @@ namespace lucc
 
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
+					DeclRefExpr* decl_ref = ast_cast<DeclRefExpr>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -570,7 +570,7 @@ namespace lucc
 				BitCount bitcount = GetBitCount(type_size);
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
+					DeclRefExpr* decl_ref = ast_cast<DeclRefExpr>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -590,9 +590,9 @@ namespace lucc
 				}
 				else if (operand->GetExprKind() == ExprKind::Unary)
 				{
-					UnaryExprAST* unary_expr = ast_cast<UnaryExprAST>(operand.get());
+					UnaryExpr* unary_expr = ast_cast<UnaryExpr>(operand.get());
 					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
-					ExprAST* dereference_operand = unary_expr->GetOperand();
+					Expr* dereference_operand = unary_expr->GetOperand();
 
 					Register address_reg(ctx.AllocateRegister());
 					dereference_operand->Codegen(ctx, &address_reg);
@@ -614,13 +614,13 @@ namespace lucc
 				LU_ASSERT(!IsPointerType(operand->GetType()));
 				if (operand->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* literal = ast_cast<IntLiteralAST>(operand.get());
+					IntLiteral* literal = ast_cast<IntLiteral>(operand.get());
 					ctx.Mov(*result, literal->GetValue(), bitcount);
 					if (op == UnaryExprKind::Minus) ctx.Neg(*result, bitcount);
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
+					DeclRefExpr* decl_ref = ast_cast<DeclRefExpr>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -663,7 +663,7 @@ namespace lucc
 			{
 				if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
+					DeclRefExpr* decl_ref = ast_cast<DeclRefExpr>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -691,13 +691,13 @@ namespace lucc
 				BitCount bitcount = GetBitCount(operand->GetType()->GetSize());
 				if (operand->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* literal = ast_cast<IntLiteralAST>(operand.get());
+					IntLiteral* literal = ast_cast<IntLiteral>(operand.get());
 					ctx.Mov(*result, literal->GetValue(), bitcount);
 					ctx.Not(*result, bitcount);
 				}
 				else if (operand->GetExprKind() == ExprKind::DeclRef)
 				{
-					DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(operand.get());
+					DeclRefExpr* decl_ref = ast_cast<DeclRefExpr>(operand.get());
 					if (decl_ref->IsGlobal())
 					{
 						char const* name = decl_ref->GetName().data();
@@ -738,7 +738,7 @@ namespace lucc
 			LU_ASSERT(false);
 		}
 	}
-	void BinaryExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void BinaryExpr::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		uint32 type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
@@ -821,7 +821,7 @@ namespace lucc
 				{
 					if (rhs->GetExprKind() == ExprKind::IntLiteral)
 					{
-						IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
+						IntLiteral* int_literal = ast_cast<IntLiteral>(rhs.get());
 						int32 value = (int32)int_literal->GetValue();
 						lhs->Codegen(ctx, result);
 
@@ -867,7 +867,7 @@ namespace lucc
 
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
+					IntLiteral* int_literal = ast_cast<IntLiteral>(rhs.get());
 					Register reg = ctx.AllocateRegister();
 					lhs->Codegen(ctx, &reg);
 					ctx.Cmp(reg, int_literal->GetValue(), bitmode);
@@ -916,7 +916,7 @@ namespace lucc
 				if (!result) return;
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
+					IntLiteral* int_literal = ast_cast<IntLiteral>(rhs.get());
 					lhs->Codegen(ctx, result);
 					if (kind == BinaryExprKind::ShiftLeft) ctx.Shl(*result, (uint8)int_literal->GetValue(), bitmode);
 					else if (kind == BinaryExprKind::ShiftRight)
@@ -950,7 +950,7 @@ namespace lucc
 
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
+					IntLiteral* int_literal = ast_cast<IntLiteral>(rhs.get());
 					int32 value = (int32)int_literal->GetValue();
 					lhs->Codegen(ctx, result);
 
@@ -983,7 +983,7 @@ namespace lucc
 			LU_ASSERT_MSG(lhs->IsLValue(), "Cannot assign to rvalue!");
 			if (lhs->GetExprKind() == ExprKind::DeclRef)
 			{
-				DeclRefExprAST* decl_ref = ast_cast<DeclRefExprAST>(lhs.get());
+				DeclRefExpr* decl_ref = ast_cast<DeclRefExpr>(lhs.get());
 				char const* var_name = decl_ref->GetName().data();
 				int32 local_offset = decl_ref->GetLocalOffset();
 				Result mem_ref(RBP, local_offset);
@@ -991,13 +991,13 @@ namespace lucc
 
 				if (rhs->GetExprKind() == ExprKind::IntLiteral)
 				{
-					IntLiteralAST* int_literal = ast_cast<IntLiteralAST>(rhs.get());
+					IntLiteral* int_literal = ast_cast<IntLiteral>(rhs.get());
 					if (global) ctx.Mov(var_name, int_literal->GetValue(), bitmode);
 					else ctx.Mov(mem_ref, int_literal->GetValue(), bitmode);
 				}
 				else if (rhs->GetExprKind() == ExprKind::FunctionCall)
 				{
-					FunctionCallExprAST* func_call = ast_cast<FunctionCallExprAST>(rhs.get());
+					FunctionCallExpr* func_call = ast_cast<FunctionCallExpr>(rhs.get());
 					Register ret_reg = ctx.GetReturnRegister();
 					func_call->Codegen(ctx);
 					if (global) ctx.Mov(var_name, ret_reg, bitmode);
@@ -1015,7 +1015,7 @@ namespace lucc
 			}
 			else if (lhs->GetExprKind() == ExprKind::Unary)
 			{
-				UnaryExprAST* unary_expr = ast_cast<UnaryExprAST>(lhs.get());
+				UnaryExpr* unary_expr = ast_cast<UnaryExpr>(lhs.get());
 				if (unary_expr->GetUnaryKind() == UnaryExprKind::Dereference)
 				{
 					Register rhs_reg = result ? *result : ctx.AllocateRegister();
@@ -1117,7 +1117,7 @@ namespace lucc
 		break;
 		}
 	}
-	void TernaryExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void TernaryExpr::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		static char const* false_label = "L_false";
 		static char const* end_label = "L_end";
@@ -1133,7 +1133,7 @@ namespace lucc
 		false_expr->Codegen(ctx, result);
 		ctx.Label(end_label, label_id);
 	}
-	void DeclRefExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void DeclRefExpr::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!result) return;
 
@@ -1157,13 +1157,13 @@ namespace lucc
 		if (IsArrayType(GetType()) || IsFunctionType(GetType())) ctx.MovOffset(*result, GetName().data());
 		else ctx.Mov(*result, GetName().data(), bitmode);
 	}
-	void IntLiteralAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void IntLiteral::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		uint32 type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
 		if (result) ctx.Mov(*result, value, bitmode);
 	}
-	void FunctionCallExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void FunctionCallExpr::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		//shadow space
 		uint32 shadow_space_stack = 0;
@@ -1211,7 +1211,7 @@ namespace lucc
 		{
 			QualifiedType const& type = GetType();
 			uint32 type_size = type->GetSize();
-			DeclRefExprAST* func_ref = ast_cast<DeclRefExprAST>(func_expr.get());
+			DeclRefExpr* func_ref = ast_cast<DeclRefExpr>(func_expr.get());
 			if (IsFunctionType(func_ref->GetType()))
 			{
 				ctx.Call(func_ref->GetDeclaration()->GetName().data());
@@ -1241,13 +1241,13 @@ namespace lucc
 		//ctx.RestoreVolatileRegisters();
 		ctx.FreeStack(shadow_space_stack + (pushed_args & 1 ? 8 : 0));
 	}
-	void StringLiteralAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void StringLiteral::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!result) return;
 		std::string str_label = ctx.DeclareString(str.c_str());
 		ctx.MovOffset(*result, str_label.c_str());
 	}
-	void CastExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void CastExpr::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (GetType()->Is(TypeKind::Void))
 		{
@@ -1276,7 +1276,7 @@ namespace lucc
 		ctx.FreeRegister(tmp_reg);
 		if (!result) ctx.FreeRegister(cast_reg);
 	}
-	void MemberRefExprAST::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
+	void MemberRefExpr::Codegen(x86_64Context& ctx, Register* result /*= nullptr*/) const
 	{
 		if (!result) return;
 

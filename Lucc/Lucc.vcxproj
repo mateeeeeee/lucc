@@ -32,7 +32,7 @@
     <ClCompile Include="Frontend\Type.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="precomp.cpp" />
-    <ClCompile Include="Utility\DebugVisitorAST.cpp" />
+    <ClCompile Include="Utility\DebugVisitor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Backend\ASTCodegen.h" />
@@ -44,9 +44,10 @@
     <ClInclude Include="Core\Defines.h" />
     <ClInclude Include="Core\Logger.h" />
     <ClInclude Include="Frontend\AST.h" />
+    <ClInclude Include="Frontend\ASTTypeAliases.h" />
     <ClInclude Include="Frontend\Diagnostics.h" />
-    <ClInclude Include="Frontend\ForwardAST.h" />
-    <ClInclude Include="Frontend\IVisitorAST.h" />
+    <ClInclude Include="Frontend\ASTForwardDeclarations.h" />
+    <ClInclude Include="Frontend\ASTVisitor.h" />
     <ClInclude Include="Frontend\Lexer.h" />
     <ClInclude Include="Frontend\Parser.h" />
     <ClInclude Include="Frontend\Preprocessor.h" />
@@ -57,7 +58,7 @@
     <ClInclude Include="Frontend\TokenTypes.h" />
     <ClInclude Include="Frontend\Type.h" />
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="Utility\DebugVisitorAST.h" />
+    <ClInclude Include="Utility\DebugVisitor.h" />
     <ClInclude Include="Utility\Enums.h" />
     <ClInclude Include="Utility\Singleton.h" />
   </ItemGroup>
