@@ -10,7 +10,6 @@ namespace lucc
 	class BinaryExpr;
 	class TernaryExpr;
 	class CastExpr;
-	class ImplicitCastExprAST;
 	class FunctionCallExpr;
 	class IntLiteral;
 	class StringLiteral;

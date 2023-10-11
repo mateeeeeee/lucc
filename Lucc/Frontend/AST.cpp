@@ -107,6 +107,14 @@ namespace lucc
 	{
 		visitor.Visit(*this, depth);
 	}
+	void BreakStmt::Accept(ASTVisitor& visitor, uint32 depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
+	void ContinueStmt::Accept(ASTVisitor& visitor, uint32 depth) const
+	{
+		visitor.Visit(*this, depth);
+	}
 
 	void Expr::Accept(ASTVisitor& visitor, uint32 depth) const
 	{

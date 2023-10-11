@@ -93,7 +93,7 @@ namespace lucc
 		VarDeclVisitor(FunctionDecl* func_ref) : func_ref(func_ref) {}
 		virtual void Visit(VariableDecl const& node, uint32 depth) override
 		{
-			func_ref->AddLocalDeclaration(&node);
+			func_ref->AddLocalDecl(&node);
 		}
 
 	private:
@@ -500,7 +500,7 @@ namespace lucc
 				{
 					UnaryExpr* unary_expr = ast_cast<UnaryExpr>(operand.get());
 					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
-					Expr* dereference_operand = unary_expr->GetOperand();
+					Expr const* dereference_operand = unary_expr->GetOperand();
 
 					Register address_reg = ctx.AllocateRegister();
 					dereference_operand->Codegen(ctx, &address_reg);
@@ -592,7 +592,7 @@ namespace lucc
 				{
 					UnaryExpr* unary_expr = ast_cast<UnaryExpr>(operand.get());
 					LU_ASSERT(unary_expr->GetUnaryKind() == UnaryExprKind::Dereference);
-					Expr* dereference_operand = unary_expr->GetOperand();
+					Expr const* dereference_operand = unary_expr->GetOperand();
 
 					Register address_reg(ctx.AllocateRegister());
 					dereference_operand->Codegen(ctx, &address_reg);
@@ -1214,7 +1214,7 @@ namespace lucc
 			DeclRefExpr* func_ref = ast_cast<DeclRefExpr>(func_expr.get());
 			if (IsFunctionType(func_ref->GetType()))
 			{
-				ctx.Call(func_ref->GetDeclaration()->GetName().data());
+				ctx.Call(func_ref->GetDecl()->GetName().data());
 				if (result)
 				{
 					Register func_reg = ctx.GetReturnRegister();

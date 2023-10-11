@@ -79,7 +79,7 @@ namespace lucc
 		while (current_token->IsNot(TokenKind::eof))
 		{
 			auto declarations = ParseDeclaration();
-			for(auto&& declaration : declarations) ast->translation_unit->AddDeclaration(std::move(declaration));
+			for(auto&& declaration : declarations) ast->translation_unit->AddDecl(std::move(declaration));
 		}
 	}
 
@@ -190,7 +190,7 @@ namespace lucc
 					UniqueExprPtr init_expr = ParseExpression();
 					if (is_global && !IsFunctionPointerType(declarator_info.qtype) && init_expr->GetExprKind() != ExprKind::IntLiteral) Diag(initializer_element_is_not_constant);
 					UniqueExprPtr init_expr_casted = GetAssignExpr(std::move(init_expr), declaration_info.qtype);
-					var_decl->SetInitExpression(std::move(init_expr_casted));
+					var_decl->SetInitExpr(std::move(init_expr_casted));
 				}
 				decls.push_back(std::move(var_decl));
 			}
@@ -254,7 +254,7 @@ namespace lucc
 			DeclSymbol* sym = ctx.decl_scope_stack->LookUp(func_param.name);
 			param_decl->SetSymbol(sym);
 			sym->decl_ast = param_decl.get();
-			func_decl->AddParamDeclaration(std::move(param_decl));
+			func_decl->AddParamDecl(std::move(param_decl));
 		}
 		func_type.EncounterPrototype();
 		if (current_token->Is(TokenKind::left_brace))
@@ -338,12 +338,12 @@ namespace lucc
 			if (IsTokenTypename())
 			{
 				UniqueDeclPtrList decl = ParseDeclaration();
-				compound_stmt->AddStatement(MakeUnique<DeclStmt>(std::move(decl)));
+				compound_stmt->AddStmt(MakeUnique<DeclStmt>(std::move(decl)));
 			}
 			else
 			{
 				UniqueStmtPtr stmt = ParseStatement();
-				compound_stmt->AddStatement(std::move(stmt));
+				compound_stmt->AddStmt(std::move(stmt));
 			}
 		}
 		Expect(TokenKind::right_brace);
@@ -355,8 +355,8 @@ namespace lucc
 		Expect(TokenKind::KW_if);
 		UniqueIfStmtPtr if_stmt = MakeUnique<IfStmt>();
 		if_stmt->SetCondition(ParseParenthesizedExpression());
-		if_stmt->SetThenStatement(ParseStatement());
-		if (Consume(TokenKind::KW_else)) if_stmt->SetElseStatement(ParseStatement());
+		if_stmt->SetThenStmt(ParseStatement());
+		if (Consume(TokenKind::KW_else)) if_stmt->SetElseStmt(ParseStatement());
 		return if_stmt;
 	}
 
@@ -367,8 +367,8 @@ namespace lucc
 		UniqueWhileStmtPtr while_stmt = MakeUnique<WhileStmt>();
 		ctx.break_callback_stack.push_back([&](BreakStmt* break_stmt) { while_stmt->AddBreakStmt(break_stmt); });
 		ctx.continue_callback_stack.push_back([&](ContinueStmt* continue_stmt) { while_stmt->AddContinueStmt(continue_stmt); });
-		while_stmt->SetCondition(ParseParenthesizedExpression());
-		while_stmt->SetBody(ParseStatement());
+		while_stmt->SetConditionExpr(ParseParenthesizedExpression());
+		while_stmt->SetBodyStmt(ParseStatement());
 		ctx.continue_callback_stack.pop_back();
 		ctx.break_callback_stack.pop_back();
 		return while_stmt;
@@ -380,9 +380,9 @@ namespace lucc
 		UniqueDoWhileStmtPtr dowhile_stmt = MakeUnique<DoWhileStmt>();
 		ctx.break_callback_stack.push_back([&](BreakStmt* break_stmt) { dowhile_stmt->AddBreakStmt(break_stmt); });
 		ctx.continue_callback_stack.push_back([&](ContinueStmt* continue_stmt) { dowhile_stmt->AddContinueStmt(continue_stmt); });
-		dowhile_stmt->SetBody(ParseStatement());
+		dowhile_stmt->SetBodyStmt(ParseStatement());
 		Expect(TokenKind::KW_while);
-		dowhile_stmt->SetCondition(ParseParenthesizedExpression());
+		dowhile_stmt->SetConditionExpr(ParseParenthesizedExpression());
 		Expect(TokenKind::semicolon);
 		ctx.continue_callback_stack.pop_back();
 		ctx.break_callback_stack.pop_back();
@@ -400,26 +400,26 @@ namespace lucc
 		if (IsTokenTypename())
 		{
 			UniqueDeclPtrList decl = ParseDeclaration();
-			for_stmt->SetInit(MakeUnique<DeclStmt>(std::move(decl)));
+			for_stmt->SetInitStmt(MakeUnique<DeclStmt>(std::move(decl)));
 		}
-		else for_stmt->SetInit(ParseExpressionStatement());
+		else for_stmt->SetInitStmt(ParseExpressionStatement());
 
 		UniqueExprPtr cond_expr = nullptr;
 		if (!Consume(TokenKind::semicolon))
 		{
-			for_stmt->SetCondition(ParseExpression());
+			for_stmt->SetConditionExpr(ParseExpression());
 			Expect(TokenKind::semicolon);
 		}
 
 		UniqueExprPtr iter_expr = nullptr;
 		if (!Consume(TokenKind::right_round))
 		{
-			for_stmt->SetIterExpression(ParseExpression());
+			for_stmt->SetIterationExpr(ParseExpression());
 			Expect(TokenKind::right_round);
 		}
 		ctx.break_callback_stack.push_back([&](BreakStmt* break_stmt) { for_stmt->AddBreakStmt(break_stmt); });
 		ctx.continue_callback_stack.push_back([&](ContinueStmt* continue_stmt) { for_stmt->AddContinueStmt(continue_stmt); });
-		for_stmt->SetBody(ParseStatement());
+		for_stmt->SetBodyStmt(ParseStatement());
 		ctx.continue_callback_stack.pop_back();
 		ctx.break_callback_stack.pop_back();
 		return for_stmt;
@@ -475,8 +475,8 @@ namespace lucc
 		UniqueSwitchStmtPtr switch_stmt = MakeUnique<SwitchStmt>();
 		ctx.switch_stack.push_back(switch_stmt.get());
 		ctx.break_callback_stack.push_back([&](BreakStmt* break_stmt) { switch_stmt->AddBreakStmt(break_stmt); });
-		switch_stmt->SetCondition(ParseParenthesizedExpression());
-		switch_stmt->SetBody(ParseStatement());
+		switch_stmt->SetConditionExpr(ParseParenthesizedExpression());
+		switch_stmt->SetBodyStmt(ParseStatement());
 		ctx.break_callback_stack.pop_back();
 		ctx.switch_stack.pop_back();
 		return switch_stmt;
@@ -500,7 +500,7 @@ namespace lucc
 			case_stmt = MakeUnique<CaseStmt>(case_value->EvaluateConstexpr());
 		}
 		Expect(TokenKind::colon);
-		ctx.switch_stack.back()->AddCaseStatement(case_stmt.get());
+		ctx.switch_stack.back()->AddCaseStmt(case_stmt.get());
 		return case_stmt;
 	}
 
@@ -628,7 +628,7 @@ namespace lucc
 		if (Consume(TokenKind::question))
 		{
 			UniqueTernaryExprPtr ternary_expr = MakeUnique<TernaryExpr>(loc);
-			ternary_expr->SetCondition(std::move(cond));
+			ternary_expr->SetConditionExpr(std::move(cond));
 			ternary_expr->SetTrueExpr(ParseExpression());
 			Expect(TokenKind::colon);
 			ternary_expr->SetFalseExpr(ParseConditionalExpression());
@@ -954,7 +954,7 @@ namespace lucc
 					}
 
 					if (!variadic_args) arg_expr = GetAssignExpr(std::move(arg_expr), func_params[arg_index].qtype);
-					func_call_expr->AddArgument(std::move(arg_expr));
+					func_call_expr->AddArg(std::move(arg_expr));
 					++arg_index;
 
 					if (Consume(TokenKind::right_round)) break;
