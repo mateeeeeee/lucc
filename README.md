@@ -47,7 +47,7 @@ The assembly is generated from AST traversal.
   * -c: no linking is preformed, only .obj files are produced
   * -S: no assembling is preformed, only .asm files are produced
   * -E: Only preprocessor is run
-  * -d: Directory where the source files are located
+  * --directory: Directory where the source files are located
   * -i: Input files
   * -o: Output file
   * --dll: builds a dll

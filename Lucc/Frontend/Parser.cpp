@@ -187,7 +187,7 @@ namespace lucc
 				sym->decl_ast = var_decl.get();
 				if (Consume(TokenKind::equal))
 				{
-					UniqueExprPtr init_expr = ParseExpression();
+					UniqueExprPtr init_expr = ParseAssignmentExpression();
 					if (is_global && !IsFunctionPointerType(declarator_info.qtype) && init_expr->GetExprKind() != ExprKind::IntLiteral) Diag(initializer_element_is_not_constant);
 					UniqueExprPtr init_expr_casted = GetAssignExpr(std::move(init_expr), declaration_info.qtype);
 					var_decl->SetInitExpr(std::move(init_expr_casted));

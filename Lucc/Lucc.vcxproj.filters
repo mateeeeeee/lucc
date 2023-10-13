@@ -28,6 +28,9 @@
     <Filter Include="Frontend\Diagnostics">
       <UniqueIdentifier>{1c709f51-aaa9-4559-a84a-630ee8da40e5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Test">
+      <UniqueIdentifier>{453e7c97-ba2e-4ccf-a89b-3dcfc97fc214}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -67,6 +70,9 @@
     </ClCompile>
     <ClCompile Include="Frontend\SourceBuffer.cpp">
       <Filter>Frontend\Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="Test\test.c">
+      <Filter>Test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -155,5 +161,16 @@
     <None Include="Frontend\Tokens.def">
       <Filter>Frontend\Lexer</Filter>
     </None>
+    <None Include="Test\test.asm">
+      <Filter>Test</Filter>
+    </None>
+    <None Include="Test\test.exe">
+      <Filter>Test</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="Test\test.obj">
+      <Filter>Test</Filter>
+    </Object>
   </ItemGroup>
 </Project>

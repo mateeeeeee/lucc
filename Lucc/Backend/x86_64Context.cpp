@@ -547,7 +547,7 @@ namespace lucc
 		if (current_function == "main")
 		{
 			Mov(RCX, RAX, BitCount_64);
-			Sub(RSP, 32, BitCount_64);
+			Sub(RSP, 24, BitCount_64);
 			Call("ExitProcess");
 		}
 		Emit<Text>("ret");

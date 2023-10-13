@@ -18,7 +18,7 @@
 #define LUCC_EX(...) system(LU_STRINGIFY(Lucc --test -t LU_CODE_EX(__VA_ARGS__)))
 #define LUCC_EX_DEBUG(...) system(LU_STRINGIFY(Lucc --test --debug -t LU_CODE_EX(__VA_ARGS__)))
 
-#define LUCC(...) system(LU_STRINGIFY(Lucc --test -ti LU_CODE(__VA_ARGS__)))
+#define LUCC(...) system(LU_STRINGIFY(Lucc --test -t LU_CODE(__VA_ARGS__)))
 #define LUCC_DEBUG(...) system(LU_STRINGIFY(Lucc --test --debug -t LU_CODE(__VA_ARGS__)))
 
 #endif
