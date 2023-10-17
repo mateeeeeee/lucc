@@ -164,7 +164,7 @@ namespace lucc
 		InitLogger();
 		std::string code(test_code);
 
-		fs::path tmp_directory = std::filesystem::current_path() / "Temp";
+		fs::path tmp_directory = std::filesystem::current_path() / "Tmp";
 		fs::create_directory(tmp_directory);
 
 		fs::path file_name = "tmp";

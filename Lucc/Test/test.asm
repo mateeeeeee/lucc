@@ -1,10 +1,13 @@
 extern ExitProcess: proc
+public t
 
 .const
 
 .data?
 
 .data
+align 4
+t	word 5
 
 .code
 
@@ -60,56 +63,17 @@ pop rbp
 ret
 f4 endp
 
-f5 proc 
-push rbp
-mov rbp, rsp
-mov	dword ptr [rbp+24], ecx
-mov	dword ptr [rbp+32], edx
-mov	dword ptr [rbp+40], r8d
-mov	dword ptr [rbp+48], r9d
-mov	r13d, dword ptr [rbp+16]
-mov	r14d, dword ptr [rbp+48]
-mov	r15d, dword ptr [rbp+40]
-push	rbx
-mov	ebx, dword ptr [rbp+32]
-push	r10
-mov	r10d, dword ptr [rbp+24]
-add	ebx, r10d
-pop	r10
-add	r15d, ebx
-pop	rbx
-add	r14d, r15d
-add	r13d, r14d
-mov	r12d, r13d
-mov	eax, r12d
-jmp f5_end
-f5_end:
-pop rbp
-ret
-f5 endp
-
 main proc 
 push rbp
 mov rbp, rsp
-sub	rsp, 32
-mov	dword ptr [rbp-20], 1
-mov	dword ptr [rbp-16], 2
-mov	dword ptr [rbp-12], 3
-mov	dword ptr [rbp-8], 4
-mov	dword ptr [rbp-4], 5
-sub	rsp, 48
-mov	ecx, dword ptr [rbp-20]
-mov	edx, dword ptr [rbp-16]
-mov	r8d, dword ptr [rbp-12]
-mov	r9d, dword ptr [rbp-8]
-mov	r13d, dword ptr [rbp-4]
-push	r13
-call f5
-add	rsp, 56
+sub	rsp, 16
+mov	dword ptr [rbp-4], 12
+mov	r12d, dword ptr [rbp-4]
+mov	eax, r12d
 jmp main_end
 xor	rax, rax
 main_end:
-add	rsp, 32
+add	rsp, 16
 pop rbp
 mov	rcx, rax
 sub	rsp, 24
