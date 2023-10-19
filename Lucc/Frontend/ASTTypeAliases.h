@@ -62,8 +62,8 @@ namespace lucc
 	using VariableDeclPtrList		= std::vector<VariableDecl*>;
 	using FunctionCallExprPtrList	= std::vector<FunctionCallExpr*>;
 	using BreakStmtPtrList			= std::vector<BreakStmt*>;
-	using CaseStmtPtrList			= std::vector<CaseStmt*>;
 	using ContinueStmtPtrList		= std::vector<ContinueStmt*>;
+	using CaseStmtPtrList			= std::vector<CaseStmt*>;
 	using SwitchStmtPtrList			= std::vector<SwitchStmt*>;
 
 	using ConstVariableDeclPtrList		= std::vector<VariableDecl const*>;
