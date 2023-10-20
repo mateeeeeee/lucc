@@ -107,11 +107,11 @@ namespace lucc
 		{
 			local_variables.push_back(var_decl);
 		}
-		void AddFunctionCall(FunctionCallExpr const* func_call)
+		void AddFuncCallExpr(FunctionCallExpr const* func_call)
 		{
 			function_calls.push_back(func_call);
 		}
-		void SetFunctionBody(UniqueCompoundStmtPtr&& _body)
+		void SetBodyStmt(UniqueCompoundStmtPtr&& _body)
 		{
 			body = std::move(_body);
 			AssignLocalOffsets();
@@ -229,7 +229,7 @@ namespace lucc
 	public:
 		IfStmt() : Stmt(StmtKind::If) {}
 
-		void SetCondition(UniqueExprPtr&& _condition)
+		void SetCondExpr(UniqueExprPtr&& _condition)
 		{
 			condition = std::move(_condition);
 		}
@@ -329,7 +329,7 @@ namespace lucc
 	public:
 		SwitchStmt() : Stmt(StmtKind::Switch) {}
 
-		void SetConditionExpr(UniqueExprPtr&& _condition)
+		void SetCondExpr(UniqueExprPtr&& _condition)
 		{
 			condition = std::move(_condition);
 		}
@@ -371,7 +371,7 @@ namespace lucc
 	public:
 		WhileStmt() : Stmt(StmtKind::While) {}
 
-		void SetConditionExpr(UniqueExprPtr&& _condition)
+		void SetCondExpr(UniqueExprPtr&& _condition)
 		{
 			condition = std::move(_condition);
 		}
@@ -403,7 +403,7 @@ namespace lucc
 	public:
 		DoWhileStmt() : Stmt(StmtKind::DoWhile) {}
 
-		void SetConditionExpr(UniqueExprPtr&& _condition)
+		void SetCondExpr(UniqueExprPtr&& _condition)
 		{
 			condition = std::move(_condition);
 		}
@@ -439,11 +439,11 @@ namespace lucc
 		{
 			init_stmt = std::move(_init);
 		}
-		void SetConditionExpr(UniqueExprPtr&& _cond_expr)
+		void SetCondExpr(UniqueExprPtr&& _cond_expr)
 		{
 			cond_expr = std::move(_cond_expr);
 		}
-		void SetIterationExpr(UniqueExprPtr&& _iter_expr)
+		void SetIterExpr(UniqueExprPtr&& _iter_expr)
 		{
 			iter_expr = std::move(_iter_expr);
 		}
@@ -660,7 +660,7 @@ namespace lucc
 			func_args.push_back(std::move(arg));
 		}
 
-		Expr const* GetFunctionExpr() const { return func_expr.get(); }
+		Expr const* GetFuncExpr() const { return func_expr.get(); }
 
 		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;

@@ -265,7 +265,7 @@ namespace lucc
 			func_type.EncounteredDefinition();
 
 			UniqueCompoundStmtPtr compound_stmt = ParseCompoundStatement();
-			func_decl->SetFunctionBody(std::move(compound_stmt));
+			func_decl->SetBodyStmt(std::move(compound_stmt));
 
 			if (func_name != "main" && ctx.current_func_type->GetReturnType()->IsNot(TypeKind::Void) && !ctx.return_stmt_encountered)
 			{
@@ -354,7 +354,7 @@ namespace lucc
 	{
 		Expect(TokenKind::KW_if);
 		UniqueIfStmtPtr if_stmt = MakeUnique<IfStmt>();
-		if_stmt->SetCondition(ParseParenthesizedExpression());
+		if_stmt->SetCondExpr(ParseParenthesizedExpression());
 		if_stmt->SetThenStmt(ParseStatement());
 		if (Consume(TokenKind::KW_else)) if_stmt->SetElseStmt(ParseStatement());
 		return if_stmt;
@@ -367,7 +367,7 @@ namespace lucc
 		UniqueWhileStmtPtr while_stmt = MakeUnique<WhileStmt>();
 		ctx.break_callback_stack.push_back([&](BreakStmt* break_stmt) { while_stmt->AddBreakStmt(break_stmt); });
 		ctx.continue_callback_stack.push_back([&](ContinueStmt* continue_stmt) { while_stmt->AddContinueStmt(continue_stmt); });
-		while_stmt->SetConditionExpr(ParseParenthesizedExpression());
+		while_stmt->SetCondExpr(ParseParenthesizedExpression());
 		while_stmt->SetBodyStmt(ParseStatement());
 		ctx.continue_callback_stack.pop_back();
 		ctx.break_callback_stack.pop_back();
@@ -382,7 +382,7 @@ namespace lucc
 		ctx.continue_callback_stack.push_back([&](ContinueStmt* continue_stmt) { dowhile_stmt->AddContinueStmt(continue_stmt); });
 		dowhile_stmt->SetBodyStmt(ParseStatement());
 		Expect(TokenKind::KW_while);
-		dowhile_stmt->SetConditionExpr(ParseParenthesizedExpression());
+		dowhile_stmt->SetCondExpr(ParseParenthesizedExpression());
 		Expect(TokenKind::semicolon);
 		ctx.continue_callback_stack.pop_back();
 		ctx.break_callback_stack.pop_back();
@@ -407,14 +407,14 @@ namespace lucc
 		UniqueExprPtr cond_expr = nullptr;
 		if (!Consume(TokenKind::semicolon))
 		{
-			for_stmt->SetConditionExpr(ParseExpression());
+			for_stmt->SetCondExpr(ParseExpression());
 			Expect(TokenKind::semicolon);
 		}
 
 		UniqueExprPtr iter_expr = nullptr;
 		if (!Consume(TokenKind::right_round))
 		{
-			for_stmt->SetIterationExpr(ParseExpression());
+			for_stmt->SetIterExpr(ParseExpression());
 			Expect(TokenKind::right_round);
 		}
 		ctx.break_callback_stack.push_back([&](BreakStmt* break_stmt) { for_stmt->AddBreakStmt(break_stmt); });
@@ -475,7 +475,7 @@ namespace lucc
 		UniqueSwitchStmtPtr switch_stmt = MakeUnique<SwitchStmt>();
 		ctx.switch_stack.push_back(switch_stmt.get());
 		ctx.break_callback_stack.push_back([&](BreakStmt* break_stmt) { switch_stmt->AddBreakStmt(break_stmt); });
-		switch_stmt->SetConditionExpr(ParseParenthesizedExpression());
+		switch_stmt->SetCondExpr(ParseParenthesizedExpression());
 		switch_stmt->SetBodyStmt(ParseStatement());
 		ctx.break_callback_stack.pop_back();
 		ctx.switch_stack.pop_back();

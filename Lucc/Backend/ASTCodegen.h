@@ -105,7 +105,7 @@ namespace lucc
 		FunctionCallVisitor(FunctionDecl* func_ref) : func_ref(func_ref) {}
 		virtual void Visit(FunctionCallExpr const& node, uint32 depth) override
 		{
-			func_ref->AddFunctionCall(&node);
+			func_ref->AddFuncCallExpr(&node);
 		}
 
 	private:
