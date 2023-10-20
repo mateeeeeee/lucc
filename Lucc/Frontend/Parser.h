@@ -95,14 +95,14 @@ namespace lucc
 		[[nodiscard]] UniqueStmtPtr ParseStatement();
 		[[nodiscard]] UniqueExprStmtPtr ParseExpressionStatement();
 		[[nodiscard]] UniqueCompoundStmtPtr ParseCompoundStatement();
+		[[nodiscard]] UniqueReturnStmtPtr ParseReturnStatement();
 		[[nodiscard]] UniqueIfStmtPtr ParseIfStatement();
 		[[nodiscard]] UniqueWhileStmtPtr ParseWhileStatement();
 		[[nodiscard]] UniqueDoWhileStmtPtr ParseDoWhileStatement();
 		[[nodiscard]] UniqueForStmtPtr ParseForStatement();
-		[[nodiscard]] UniqueReturnStmtPtr ParseReturnStatement();
-		[[nodiscard]] UniqueLabelStmtPtr ParseLabelStatement();
 		[[nodiscard]] UniqueBreakStmtPtr ParseBreakStatement();
 		[[nodiscard]] UniqueContinueStmtPtr ParseContinueStatement();
+		[[nodiscard]] UniqueLabelStmtPtr ParseLabelStatement();
 		[[nodiscard]] UniqueGotoStmtPtr ParseGotoStatement();
 		[[nodiscard]] UniqueSwitchStmtPtr ParseSwitchStatement();
 		[[nodiscard]] UniqueCaseStmtPtr ParseCaseStatement();

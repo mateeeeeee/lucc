@@ -54,9 +54,9 @@ namespace lucc
 	}
 	void IfStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
-		LU_ASSERT(condition && then_stmt);
+		LU_ASSERT(cond_expr && then_stmt);
 		visitor.Visit(*this, depth);
-		condition->Accept(visitor, depth + 1);
+		cond_expr->Accept(visitor, depth + 1);
 		then_stmt->Accept(visitor, depth + 1);
 		if (else_stmt) else_stmt->Accept(visitor, depth + 1);
 	}

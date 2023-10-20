@@ -92,6 +92,7 @@ namespace lucc
 	private:
 		UniqueExprPtr init_expr;
 		mutable int32 local_offset;
+		mutable int64 init_value = 0;
 
 	};
 	class FunctionDecl : public Decl
@@ -224,14 +225,26 @@ namespace lucc
 		NullStmt() : ExprStmt(nullptr) {}
 		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 	};
+	class ReturnStmt final : public Stmt
+	{
+	public:
+		explicit ReturnStmt(UniqueExprStmtPtr&& ret_expr)
+			: Stmt(StmtKind::Return), ret_expr(std::move(ret_expr)) {}
+
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
+		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
+
+	private:
+		UniqueExprStmtPtr ret_expr;
+	};
 	class IfStmt final : public Stmt
 	{
 	public:
 		IfStmt() : Stmt(StmtKind::If) {}
 
-		void SetCondExpr(UniqueExprPtr&& _condition)
+		void SetCondExpr(UniqueExprPtr&& _cond_expr)
 		{
-			condition = std::move(_condition);
+			cond_expr = std::move(_cond_expr);
 		}
 		void SetThenStmt(UniqueStmtPtr&& _then_stmt)
 		{
@@ -246,55 +259,9 @@ namespace lucc
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		UniqueExprPtr condition;
+		UniqueExprPtr cond_expr;
 		UniqueStmtPtr then_stmt;
 		UniqueStmtPtr else_stmt;
-	};
-	class CaseStmt final : public Stmt
-	{
-	public:
-		CaseStmt() : Stmt(StmtKind::Case), switch_id(-1), is_default(true), value(0), label_name("L_default") {}
-		explicit CaseStmt(int64 value) : Stmt(StmtKind::Case), switch_id(-1), is_default(false), value(value), label_name("L_case" + std::to_string(value)) {}
-
-		void SetSwitchId(uint64 _switch_id) { switch_id = _switch_id; }
-		bool IsDefault() const { return is_default; }
-		int64 GetValue() const { return value; }
-		std::string_view GetLabel() const { return label_name; }
-
-		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
-		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
-
-	private:
-		std::string label_name;
-		uint64 switch_id;
-		int64 value;
-		bool is_default;
-	};
-	class GotoStmt final : public Stmt
-	{
-	public:
-		explicit GotoStmt(std::string_view label) : Stmt(StmtKind::Goto), goto_label(label) {}
-
-		std::string_view GetLabel() const { return goto_label; }
-
-		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
-		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
-
-	private:
-		std::string goto_label;
-	};
-	class LabelStmt final : public Stmt
-	{
-	public:
-		LabelStmt(std::string_view label) : Stmt(StmtKind::Label), label_name(label) {}
-
-		std::string_view GetLabel() const { return label_name; }
-
-		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
-		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
-
-	private:
-		std::string label_name;
 	};
 	class BreakStmt final : public Stmt
 	{
@@ -324,56 +291,14 @@ namespace lucc
 		std::string label_name;
 		uint64 label_id;
 	};
-	class SwitchStmt final : public Stmt
-	{
-	public:
-		SwitchStmt() : Stmt(StmtKind::Switch) {}
-
-		void SetCondExpr(UniqueExprPtr&& _condition)
-		{
-			condition = std::move(_condition);
-		}
-		void SetBodyStmt(UniqueStmtPtr&& _body_stmt)
-		{
-			body_stmt = std::move(_body_stmt);
-		}
-
-		void AddBreakStmt(BreakStmt* break_stmt)
-		{
-			break_stmts.push_back(break_stmt);
-		}
-		void AddCaseStmt(CaseStmt* case_stmt)
-		{
-			if (case_stmt->IsDefault())
-			{
-				LU_ASSERT(!has_default);
-				has_default = true;
-			}
-			case_stmts.push_back(case_stmt);
-		}
-		bool HasDefaultCase() const
-		{
-			return has_default;
-		}
-
-		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
-		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
-
-	private:
-		UniqueExprPtr condition;
-		UniqueStmtPtr body_stmt;
-		BreakStmtPtrList break_stmts;
-		CaseStmtPtrList case_stmts;
-		bool has_default = false;
-	};
 	class WhileStmt final : public Stmt
 	{
 	public:
 		WhileStmt() : Stmt(StmtKind::While) {}
 
-		void SetCondExpr(UniqueExprPtr&& _condition)
+		void SetCondExpr(UniqueExprPtr&& _cond_expr)
 		{
-			condition = std::move(_condition);
+			cond_expr = std::move(_cond_expr);
 		}
 		void SetBodyStmt(UniqueStmtPtr&& _body_stmt)
 		{
@@ -393,7 +318,7 @@ namespace lucc
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		UniqueExprPtr condition;
+		UniqueExprPtr cond_expr;
 		UniqueStmtPtr body_stmt;
 		ContinueStmtPtrList continue_stmts;
 		BreakStmtPtrList break_stmts;
@@ -403,9 +328,9 @@ namespace lucc
 	public:
 		DoWhileStmt() : Stmt(StmtKind::DoWhile) {}
 
-		void SetCondExpr(UniqueExprPtr&& _condition)
+		void SetCondExpr(UniqueExprPtr&& _cond_expr)
 		{
-			condition = std::move(_condition);
+			cond_expr = std::move(_cond_expr);
 		}
 		void SetBodyStmt(UniqueStmtPtr&& _body_stmt)
 		{
@@ -425,7 +350,7 @@ namespace lucc
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		UniqueExprPtr condition;
+		UniqueExprPtr cond_expr;
 		UniqueStmtPtr body_stmt;
 		ContinueStmtPtrList continue_stmts;
 		BreakStmtPtrList break_stmts;
@@ -472,17 +397,93 @@ namespace lucc
 		ContinueStmtPtrList continue_stmts;
 		BreakStmtPtrList break_stmts;
 	};
-	class ReturnStmt final : public Stmt
+	class CaseStmt final : public Stmt
 	{
 	public:
-		explicit ReturnStmt(UniqueExprStmtPtr&& ret_expr)
-			: Stmt(StmtKind::Return), ret_expr(std::move(ret_expr)) {}
+		CaseStmt() : Stmt(StmtKind::Case), switch_id(-1), is_default(true), value(0), label_name("L_default") {}
+		explicit CaseStmt(int64 value) : Stmt(StmtKind::Case), switch_id(-1), is_default(false), value(value), label_name("L_case" + std::to_string(value)) {}
+
+		void SetSwitchId(uint64 _switch_id) { switch_id = _switch_id; }
+		bool IsDefault() const { return is_default; }
+		int64 GetValue() const { return value; }
+		std::string_view GetLabel() const { return label_name; }
 
 		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	private:
-		UniqueExprStmtPtr ret_expr;
+		std::string label_name;
+		uint64 switch_id;
+		int64 value;
+		bool is_default;
+	};
+	class SwitchStmt final : public Stmt
+	{
+	public:
+		SwitchStmt() : Stmt(StmtKind::Switch) {}
+
+		void SetCondExpr(UniqueExprPtr&& _cond_expr)
+		{
+			cond_expr = std::move(_cond_expr);
+		}
+		void SetBodyStmt(UniqueStmtPtr&& _body_stmt)
+		{
+			body_stmt = std::move(_body_stmt);
+		}
+
+		void AddBreakStmt(BreakStmt* break_stmt)
+		{
+			break_stmts.push_back(break_stmt);
+		}
+		void AddCaseStmt(CaseStmt* case_stmt)
+		{
+			if (case_stmt->IsDefault())
+			{
+				LU_ASSERT(!has_default);
+				has_default = true;
+			}
+			case_stmts.push_back(case_stmt);
+		}
+		bool HasDefaultCase() const
+		{
+			return has_default;
+		}
+
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
+		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
+
+	private:
+		UniqueExprPtr cond_expr;
+		UniqueStmtPtr body_stmt;
+		BreakStmtPtrList break_stmts;
+		CaseStmtPtrList case_stmts;
+		bool has_default = false;
+	};
+	class GotoStmt final : public Stmt
+	{
+	public:
+		explicit GotoStmt(std::string_view label) : Stmt(StmtKind::Goto), goto_label(label) {}
+
+		std::string_view GetLabel() const { return goto_label; }
+
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
+		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
+
+	private:
+		std::string goto_label;
+	};
+	class LabelStmt final : public Stmt
+	{
+	public:
+		LabelStmt(std::string_view label) : Stmt(StmtKind::Label), label_name(label) {}
+
+		std::string_view GetLabel() const { return label_name; }
+
+		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
+		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
+
+	private:
+		std::string label_name;
 	};
 
 	enum class ExprKind
@@ -555,7 +556,6 @@ namespace lucc
 		void SetLocation(SourceLocation const& _loc) { loc = _loc; }
 		void SetType(QualifiedType const& _type) { type = _type; }
 	};
-
 	class UnaryExpr : public Expr
 	{
 	public:
@@ -617,7 +617,7 @@ namespace lucc
 			false_expr(std::move(false_expr))
 		{}
 
-		void SetConditionExpr(UniqueExprPtr&& expr) { cond_expr = std::move(expr); }
+		void SetCondExpr(UniqueExprPtr&& expr) { cond_expr = std::move(expr); }
 		void SetTrueExpr(UniqueExprPtr&& expr) { true_expr = std::move(expr); }
 		void SetFalseExpr(UniqueExprPtr&& expr) { false_expr = std::move(expr); }
 
@@ -752,29 +752,29 @@ namespace lucc
 	class DeclRefExpr : public IdentifierExpr
 	{
 	public:
-		DeclRefExpr(Decl* decl_ast, SourceLocation const& loc) : IdentifierExpr(decl_ast->GetName(), loc, decl_ast->GetType()),
-			decl_ast(decl_ast)  {}
+		DeclRefExpr(Decl* decl, SourceLocation const& loc) : IdentifierExpr(decl->GetName(), loc, decl->GetType()),
+			decl(decl)  {}
 
-		DeclSymbol const& GetSymbol() const { return decl_ast->GetSymbol(); }
+		DeclSymbol const& GetSymbol() const { return decl->GetSymbol(); }
 		bool IsGlobal() const { return GetSymbol().global; }
 		virtual int32 GetLocalOffset() const 
 		{  
-			return decl_ast->GetLocalOffset();
+			return decl->GetLocalOffset();
 		}
 
-		Decl const* GetDecl() const { return decl_ast; }
+		Decl const* GetDecl() const { return decl; }
 
 		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
 		virtual void Codegen(x86_64Context& ctx, Register* result = nullptr) const override;
 
 	protected:
-		Decl* decl_ast;
+		Decl* decl;
 	};
 	class MemberRefExpr final : public DeclRefExpr
 	{
 	public:
-		MemberRefExpr(Decl* decl_ast, std::string_view member_name, SourceLocation const& loc)
-			: DeclRefExpr(decl_ast, loc), member_name(member_name)
+		MemberRefExpr(Decl* decl, std::string_view member_name, SourceLocation const& loc)
+			: DeclRefExpr(decl, loc), member_name(member_name)
 		{
 			SetValueCategory(ExprValueCategory::LValue);
 			SetMemberType();
@@ -782,10 +782,10 @@ namespace lucc
 
 		virtual int32 GetLocalOffset() const
 		{
-			LU_ASSERT(IsStructType(decl_ast->GetType()));
-			StructType const& struct_type = decl_ast->GetType()->As<StructType>();
+			LU_ASSERT(IsStructType(decl->GetType()));
+			StructType const& struct_type = decl->GetType()->As<StructType>();
 			int32 member_offset = (int32)struct_type.GetMemberOffset(member_name);
-			return decl_ast->GetLocalOffset() + member_offset;
+			return decl->GetLocalOffset() + member_offset;
 		}
 
 		virtual void Accept(ASTVisitor& visitor, uint32 depth) const override;
@@ -797,7 +797,7 @@ namespace lucc
 	private:
 		void SetMemberType()
 		{
-			QualifiedType const& qtype = decl_ast->GetType();
+			QualifiedType const& qtype = decl->GetType();
 			LU_ASSERT(qtype->Is(TypeKind::Struct));
 			StructType const& struct_type = qtype->As<StructType>();
 

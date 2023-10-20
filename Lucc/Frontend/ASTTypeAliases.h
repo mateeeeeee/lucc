@@ -33,17 +33,17 @@ namespace lucc
 	using UniqueDeclStmtPtr			= UniquePtr<DeclStmt>;
 	using UniqueExprStmtPtr			= UniquePtr<ExprStmt>;
 	using UniqueNullStmtPtr			= UniquePtr<NullStmt>;
+	using UniqueReturnStmtPtr		= UniquePtr<ReturnStmt>;
 	using UniqueIfStmtPtr			= UniquePtr<IfStmt>;
+	using UniqueBreakStmtPtr		= UniquePtr<BreakStmt>;
+	using UniqueContinueStmtPtr		= UniquePtr<ContinueStmt>;
 	using UniqueWhileStmtPtr		= UniquePtr<WhileStmt>;
 	using UniqueDoWhileStmtPtr		= UniquePtr<DoWhileStmt>;
 	using UniqueForStmtPtr			= UniquePtr<ForStmt>;
-	using UniqueSwitchStmtPtr		= UniquePtr<SwitchStmt>;
 	using UniqueCaseStmtPtr			= UniquePtr<CaseStmt>;
-	using UniqueReturnStmtPtr		= UniquePtr<ReturnStmt>;
+	using UniqueSwitchStmtPtr		= UniquePtr<SwitchStmt>;
 	using UniqueGotoStmtPtr			= UniquePtr<GotoStmt>;
 	using UniqueLabelStmtPtr		= UniquePtr<LabelStmt>;
-	using UniqueBreakStmtPtr		= UniquePtr<BreakStmt>;
-	using UniqueContinueStmtPtr		= UniquePtr<ContinueStmt>;
 
 	using UniqueDeclPtr				= UniquePtr<Decl>;
 	using UniqueVariableDeclPtr		= UniquePtr<VariableDecl>;

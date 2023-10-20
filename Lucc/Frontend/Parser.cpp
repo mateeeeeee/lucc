@@ -350,6 +350,19 @@ namespace lucc
 		return compound_stmt;
 	}
 
+	//<return - statement> ::= return {<expression>}? ;
+	UniqueReturnStmtPtr Parser::ParseReturnStatement()
+	{
+		LU_ASSERT(ctx.current_func_type != nullptr);
+		Expect(TokenKind::KW_return);
+		UniqueExprStmtPtr ret_expr_stmt = ParseExpressionStatement();
+		Expr* ret_expr = ret_expr_stmt->GetExpr();
+		QualifiedType ret_type = ctx.current_func_type->GetReturnType();
+		ctx.return_stmt_encountered = true;
+		UniqueExprStmtPtr ret_expr_cast = GetAssignExprStmt(std::move(ret_expr_stmt), ret_type);
+		return MakeUnique<ReturnStmt>(std::move(ret_expr_cast));
+	}
+
 	UniqueIfStmtPtr Parser::ParseIfStatement()
 	{
 		Expect(TokenKind::KW_if);
@@ -425,19 +438,6 @@ namespace lucc
 		return for_stmt;
 	}
 
-	//<return - statement> ::= return {<expression>}? ;
-	UniqueReturnStmtPtr Parser::ParseReturnStatement()
-	{
-		LU_ASSERT(ctx.current_func_type != nullptr);
-		Expect(TokenKind::KW_return);
-		UniqueExprStmtPtr ret_expr_stmt = ParseExpressionStatement();
-		Expr* ret_expr = ret_expr_stmt->GetExpr();
-		QualifiedType ret_type = ctx.current_func_type->GetReturnType();
-		ctx.return_stmt_encountered = true;
-		UniqueExprStmtPtr ret_expr_cast = GetAssignExprStmt(std::move(ret_expr_stmt), ret_type);
-		return MakeUnique<ReturnStmt>(std::move(ret_expr_cast));
-	}
-
 	UniqueBreakStmtPtr Parser::ParseBreakStatement()
 	{
 		Expect(TokenKind::KW_break);
@@ -456,17 +456,6 @@ namespace lucc
 		if (ctx.continue_callback_stack.empty()) Diag(stray_continue);
 		else ctx.continue_callback_stack.back()(continue_stmt.get());
 		return continue_stmt;
-	}
-
-	UniqueGotoStmtPtr Parser::ParseGotoStatement()
-	{
-		Expect(TokenKind::KW_goto);
-		std::string_view label_name = current_token->GetIdentifier();
-		Expect(TokenKind::identifier);
-		Expect(TokenKind::semicolon);
-		UniqueGotoStmtPtr goto_stmt = MakeUnique<GotoStmt>(label_name);
-		ctx.gotos.push_back(label_name.data());
-		return goto_stmt;
 	}
 
 	UniqueSwitchStmtPtr Parser::ParseSwitchStatement()
@@ -502,6 +491,17 @@ namespace lucc
 		Expect(TokenKind::colon);
 		ctx.switch_stack.back()->AddCaseStmt(case_stmt.get());
 		return case_stmt;
+	}
+
+	UniqueGotoStmtPtr Parser::ParseGotoStatement()
+	{
+		Expect(TokenKind::KW_goto);
+		std::string_view label_name = current_token->GetIdentifier();
+		Expect(TokenKind::identifier);
+		Expect(TokenKind::semicolon);
+		UniqueGotoStmtPtr goto_stmt = MakeUnique<GotoStmt>(label_name);
+		ctx.gotos.push_back(label_name.data());
+		return goto_stmt;
 	}
 
 	UniqueLabelStmtPtr Parser::ParseLabelStatement()
@@ -628,7 +628,7 @@ namespace lucc
 		if (Consume(TokenKind::question))
 		{
 			UniqueTernaryExprPtr ternary_expr = MakeUnique<TernaryExpr>(loc);
-			ternary_expr->SetConditionExpr(std::move(cond));
+			ternary_expr->SetCondExpr(std::move(cond));
 			ternary_expr->SetTrueExpr(ParseExpression());
 			Expect(TokenKind::colon);
 			ternary_expr->SetFalseExpr(ParseConditionalExpression());

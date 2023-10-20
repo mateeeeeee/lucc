@@ -219,7 +219,7 @@ namespace lucc
 				{
 					if (init_expr->IsConstexpr())
 					{
-						int64 init_value = init_expr->EvaluateConstexpr();
+						init_value = init_expr->EvaluateConstexpr();
 						var_decl.init_value = &init_value;
 					}
 					else {} //#todo address of another global variable, dereference of another pointer global variable
@@ -273,7 +273,7 @@ namespace lucc
 		uint64 label_id = ctx.GenerateLabelId();
 
 		Register cond_reg = ctx.AllocateRegister();
-		condition->Codegen(ctx, &cond_reg);
+		cond_expr->Codegen(ctx, &cond_reg);
 		ctx.Cmp(cond_reg, int64(0), BitCount_8);
 		ctx.Jmp(else_label, label_id, ConditionCode::E);
 		then_stmt->Codegen(ctx);
@@ -1283,7 +1283,7 @@ namespace lucc
 		uint32 type_size = GetType()->GetSize();
 		BitCount bitmode = GetBitCount(type_size);
 
-		if (!decl_ast->GetSymbol().global)
+		if (!decl->GetSymbol().global)
 		{
 			if (IsArrayType(GetType()))
 			{

@@ -22,17 +22,17 @@ namespace lucc
 	class DeclStmt;
 	class ExprStmt;
 	class NullStmt;
+	class ReturnStmt;
 	class IfStmt;
+	class BreakStmt;
+	class ContinueStmt;
 	class WhileStmt;
 	class DoWhileStmt;
 	class ForStmt;
-	class SwitchStmt;
 	class CaseStmt;
-	class ReturnStmt;
+	class SwitchStmt;
 	class GotoStmt;
 	class LabelStmt;
-	class BreakStmt;
-	class ContinueStmt;
 
 	class Decl;
 	class VariableDecl;
