@@ -59,3 +59,5 @@ The assembly is generated from AST traversal.
 ## Dependencies
   * MASM (included with Visual Studio) is used as an assembler.
   * Microsoft Linker (included with Visual Studio) is used for linking.
+  * [spdlog](https://github.com/gabime/spdlog) for logging.
+  * [CLI11](https://github.com/CLIUtils/CLI11) for command line parsing.
