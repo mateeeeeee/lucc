@@ -64,21 +64,21 @@ namespace lucc
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
-		condition->Accept(visitor, depth + 1);
+		cond_expr->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
 	void DoWhileStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
-		condition->Accept(visitor, depth + 1);
+		cond_expr->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
 	void SwitchStmt::Accept(ASTVisitor& visitor, uint32 depth) const
 	{
 		LU_ASSERT(condition && body_stmt);
 		visitor.Visit(*this, depth);
-		condition->Accept(visitor, depth + 1);
+		cond_expr->Accept(visitor, depth + 1);
 		body_stmt->Accept(visitor, depth + 1);
 	}
 	void CaseStmt::Accept(ASTVisitor& visitor, uint32 depth) const

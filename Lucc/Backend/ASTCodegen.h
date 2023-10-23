@@ -312,7 +312,7 @@ namespace lucc
 
 		ctx.Label(start_label, label_id);
 		Register cond_reg = ctx.AllocateRegister();
-		condition->Codegen(ctx, &cond_reg);
+		cond_expr->Codegen(ctx, &cond_reg);
 		ctx.Cmp(cond_reg, (int64)0, BitCount_8);
 		ctx.Jmp(end_label, label_id, ConditionCode::E);
 		body_stmt->Codegen(ctx);
@@ -331,7 +331,7 @@ namespace lucc
 		ctx.Label(start_label, label_id);
 		body_stmt->Codegen(ctx);
 		Register cond_reg = ctx.AllocateRegister();
-		condition->Codegen(ctx, &cond_reg);
+		cond_expr->Codegen(ctx, &cond_reg);
 		ctx.Cmp(cond_reg, int64(0), BitCount_8);
 		ctx.Jmp(end_label, label_id, ConditionCode::E);
 		ctx.Jmp(start_label, label_id);
@@ -388,9 +388,9 @@ namespace lucc
 		for (CaseStmt* case_stmt : case_stmts) case_stmt->SetSwitchId(label_id);
 
 		Register cond_reg = ctx.AllocateRegister();
-		condition->Codegen(ctx, &cond_reg);
+		cond_expr->Codegen(ctx, &cond_reg);
 
-		BitCount bitmode = GetBitCount(condition->GetType()->GetSize());
+		BitCount bitmode = GetBitCount(cond_expr->GetType()->GetSize());
 
 		CaseStmt* default_case = nullptr;
 		for (CaseStmt* case_stmt : case_stmts)

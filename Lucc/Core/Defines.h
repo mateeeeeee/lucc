@@ -15,7 +15,12 @@
 #define LU_DEBUGBREAK() __debugbreak()
 #define LU_FORCEINLINE	__forceinline
 #define LU_UNREACHABLE() __assume(false)
-#define LU_NODISCARD() [[nodiscard]]
+#define LU_INLINE				inline
+#define LU_NODISCARD			[[nodiscard]]
+#define LU_NORETURN				[[noreturn]]
+#define LU_DEPRECATED			[[deprecated]]
+#define LU_DEPRECATED_MSG(msg)	[[deprecated(#msg)]]
+#define LU_ALIGNAS(align)       alignas(align) 
 
 #define LU_ALIGN(n, align) ((n + align - 1) / align * align)
 
