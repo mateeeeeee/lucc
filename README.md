@@ -31,10 +31,11 @@ The assembly is generated from AST traversal.
   * scopes
   * casts & conversions
   * enums
+  * structs (wip)
 
 ## Todo
   * postprocessor: #if,#elif, macro functions
-  * tags (structs, unions)
+  * unions
   * floating point numbers
  
 ## Not planned
