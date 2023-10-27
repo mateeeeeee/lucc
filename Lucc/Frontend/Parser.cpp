@@ -407,8 +407,9 @@ namespace lucc
 	{
 		Expect(TokenKind::KW_for);
 		Expect(TokenKind::left_round);
-		UniqueForStmtPtr for_stmt = MakeUnique<ForStmt>();
+		SCOPE_STACK_GUARD(ctx.decl_scope_stack);
 
+		UniqueForStmtPtr for_stmt = MakeUnique<ForStmt>();
 		UniqueStmtPtr init = nullptr;
 		if (IsTokenTypename())
 		{
