@@ -4,43 +4,35 @@ The assembly is generated from AST traversal.
 
 ## Features
   * operators:
-    - additive: +, -, +=, -=, ++, --
-    - multiplicative: *, /, *=, /=
-    - relation: ==, !=, >, >=, <, <=
-    - shift: >>, <<, >>=, <<=
-    - bitwise: &, |, ^, ~, &=, |=, ^=
-    - logic: &&, ||, !
+    - additive: `+`, `-`, `+=`, `-=`, `++`, `--`
+    - multiplicative: `*`, `/`, `*=`, `/=`
+    - relation: `==`, `!=`, `>`, `>=`, `<`, `<=`
+    - shift: `>>`, `<<`, `>>=`, `<<=`
+    - bitwise: `&`, `|`, `^`, `~`, `&=`, `|=`, `^=`
+    - logic: `&&`, `||`, `!`
+  * control statements: `if` `else`, `switch`, `goto`, `?:`
+  * loop statements: `for`, `while`, `do` `while`, `break`, `continue`
   * pointers and arrays
-  * control statements
-    - if statement
-    - switch statement
-    - goto statement
-    - ternary operator
-  * loop statements 
-    - while statement
-    - for statement
-    - do while statement
-    - break & continue
   * string literals
-  * typedefs
-  * subset of C Postprocessor
-  * static, extern
-  * sizeof, alignof, alignas
+  * `typedef`
+  * C Postprocessor subset
+  * `static`, `extern`
+  * `sizeof`, `alignof`, `alignas`
   * constant folding
   * functions
   * scopes
   * casts & conversions
-  * enums
-  * structs (wip)
+  * `enum`
+  * `struct` (wip)
 
 ## Todo
-  * postprocessor: #if,#elif, macro functions
-  * unions
+  * postprocessor: `#if`,`#elif`, macro functions
+  * `union`
   * floating point numbers
  
 ## Not planned
   * variadic functions and macros
-  * thread local, atomic
+  * thread local storage, atomic numbers
   * bitfields
 
 ## Command line options
